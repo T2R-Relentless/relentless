@@ -1,0 +1,8 @@
+# Netlify: statische App aus "public", Garmin-Vermittler aus "netlify/functions" (kein Build-Schritt nötig)
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = ""
+
+[functions]
+  node_bundler = "esbuild"
