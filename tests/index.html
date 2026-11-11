@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relentless – Tests</title>
+<link rel="icon" href="data:,">
+<style>
+  :root{--bg:#f5f9fa;--ink:#0b1c49;--ok:#0a8f6a;--bad:#b3261e;--line:#d3e1e5}
+  body{margin:0;padding:16px;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,'Segoe UI',sans-serif}
+  h1{font-size:20px;margin:0 0 4px}
+  p{margin:4px 0 12px;color:#5b6f80}
+  button{font:inherit;font-weight:700;padding:8px 14px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;margin:0 8px 8px 0}
+  button.ghost{background:#fff;color:var(--ink)}
+  #sum{font-weight:700;margin:8px 0}
+  #sum.ok{color:var(--ok)} #sum.bad{color:var(--bad)}
+  ol{padding-left:20px} li{margin:2px 0} li.ok{color:var(--ok)} li.bad{color:var(--bad)}
+  pre{white-space:pre-wrap;background:#fff;border:1px solid var(--line);color:var(--ink);padding:8px;margin:4px 0 8px;font-size:12px}
+  /* Die App läuft in fester Handybreite, damit Texte immer gleich umbrechen */
+  #stage{position:fixed;left:-2000px;top:0;width:390px;height:844px;overflow:hidden}
+  #stage iframe{width:390px;height:844px;border:0}
+</style>
+</head>
+<body>
+<h1>Relentless – Tests</h1>
+<p>Die App läuft für jeden Test frisch in einem abgeschotteten Rahmen: eigener Speicher, angehaltene Uhr, kein Netz nach außen. Deine echten Daten bleiben unberührt.</p>
+<button id="run">Tests starten</button><button id="upd" class="ghost">Vergleichsstände neu schreiben</button>
+<div id="sum"></div>
+<ol id="list"></ol>
+<div id="stage"></div>
+<script src="lib/harness.js"></script>
+<script src="unit.test.js"></script>
+<script src="files.test.js"></script>
+<script src="plan.test.js"></script>
+<script src="storage.test.js"></script>
+<script src="i18n.test.js"></script>
+<script src="voice.test.js"></script>
+<script>
+  const q = new URLSearchParams(location.search), only = q.get('nur') ? new RegExp(q.get('nur'), 'i') : null;
+  document.getElementById('run').onclick = () => (window.__run = runAll({only}));
+  document.getElementById('upd').onclick = () => { if (confirm('Alle Vergleichsstände mit dem aktuellen Stand der App überschreiben? Danach mit git diff prüfen, ob die Änderungen gewollt sind.')) window.__run = runAll({update:true, only}); };
+  if (q.has('auto')) window.__run = runAll({update:q.get('auto') === 'neu', only});
+</script>
+</body>
+</html>

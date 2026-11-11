@@ -1,0 +1,68 @@
+{
+ "export-namen": [
+  "relentless-w1-mi-sweet-spot-3x12.fit",
+  "relentless-w1-mi-sweet-spot-3x12.zwo"
+ ],
+ "fit-schritte": [
+  {
+   "dur": 0,
+   "dv": 900000,
+   "hi": 1163,
+   "it": 2,
+   "lo": 1125,
+   "name": "Einfahren",
+   "tt": 4,
+   "tv": 0
+  },
+  {
+   "dur": 0,
+   "dv": 720000,
+   "hi": 1235,
+   "it": 0,
+   "lo": 1220,
+   "name": "Intervall",
+   "tt": 4,
+   "tv": 0
+  },
+  {
+   "dur": 0,
+   "dv": 300000,
+   "hi": 1138,
+   "it": 1,
+   "lo": 1100,
+   "name": "Pause",
+   "tt": 4,
+   "tv": 0
+  },
+  {
+   "dur": 6,
+   "dv": 1,
+   "hi": 0,
+   "it": 0,
+   "lo": 0,
+   "name": "",
+   "tt": 2,
+   "tv": 2
+  },
+  {
+   "dur": 0,
+   "dv": 720000,
+   "hi": 1235,
+   "it": 0,
+   "lo": 1220,
+   "name": "Intervall",
+   "tt": 4,
+   "tv": 0
+  },
+  {
+   "dur": 0,
+   "dv": 600000,
+   "hi": 1138,
+   "it": 3,
+   "lo": 1113,
+   "name": "Ausfahren",
+   "tt": 4,
+   "tv": 0
+  }
+ ]
+}
