@@ -1,0 +1,39 @@
+{
+  "manifest_version": "0.3",
+  "name": "garmin",
+  "display_name": "Garmin für Relentless",
+  "version": "1.1.0",
+  "description": "Liest deine Radfahrten aus Garmin Connect (Personal API) für die Trainingsplan-App Relentless. Nur lesend.",
+  "long_description": "Die Erweiterung verbindet Claude mit deinem eigenen Garmin-Connect-Konto über Garmins offizielle Personal API. Sie listet Aktivitäten auf und lädt die Original-FIT-Dateien, damit die Trainingsplan-App deine Fahrten mit Watt und Puls auswerten kann. Sie schreibt nichts in dein Garmin-Konto. Den persönlichen API-Schlüssel erstellst du unter connect.garmin.com > Einstellungen > Persönlicher API-Schlüssel.",
+  "author": { "name": "Relentless Trainingsplan" },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": { "GARMIN_PERSONAL_API_KEY": "${user_config.api_key}" }
+    }
+  },
+  "tools": [
+    { "name": "list_activities", "description": "Aktivitäten aus Garmin Connect auflisten" },
+    { "name": "get_activity_recording", "description": "Originaldatei (FIT) einer Aktivität laden" },
+    { "name": "check_connection", "description": "Garmin-Schlüssel prüfen" }
+  ],
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "Garmin Personal API-Schlüssel",
+      "description": "Erstellen unter connect.garmin.com > Einstellungen > Persönlicher API-Schlüssel (Gültigkeit am besten 1 Jahr). Wird sicher im Schlüsselbund gespeichert.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "keywords": ["garmin", "radfahren", "training", "fit"],
+  "license": "MIT",
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32"],
+    "runtimes": { "node": ">=18.0.0" }
+  }
+}
