@@ -1,0 +1,8 @@
+# Relentless auf Netlify: statische App ohne Build-Schritt plus Garmin-Vermittler.
+# Die Funktion legt ihre Adresse /api/garmin selbst fest (config.path in garmin.mjs), eine Weiterleitung ist nicht nötig.
+# Caching: Netlify liefert Dateien standardmäßig mit "max-age=0, must-revalidate" aus. Das passt zur Update-Prüfung
+# (version.json) und zum Service Worker (sw.js), deshalb hier keine eigenen Cache-Regeln.
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
