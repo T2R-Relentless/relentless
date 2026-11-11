@@ -18,6 +18,7 @@ async function uploadHist(inp){
     } catch (e) { histMsg.push([f.name, (e && e.message) || 'konnte nicht gelesen werden', false]); }
   }
   S.hist.sort((a, b) => b.ts.localeCompare(a.ts)); histBusy = false; inp.value = ''; save(); render();
+  if (histMsg.some(m => m[2])) track('fahrten-einstieg-hochgeladen');
 }
 function clearHist(){ S.hist = []; histMsg = []; if (S.d) { delete S.d.startH; delete S.d.longMin; } save(); render(); }
 
@@ -28,7 +29,7 @@ function pBests(w, t){
   return r;
 }
 /* ---------- Woher kommt der FTP? Selbst eintragen, aus Fahrten errechnen oder Fitnesstest zu Beginn ---------- */
-function setFtpSrc(k){ const was = S.d.ftpSrc; S.d.ftpSrc = k; S.d.test0 = k === 'test' || (k === 'nopwr' && S.d.npTest !== false); if (k === 'nopwr') S.d.noPwr = true; else if (was === 'nopwr') S.d.noPwr = false; save(); render(); }
+function setFtpSrc(k){ const was = S.d.ftpSrc; S.d.ftpSrc = k; S.d.test0 = k === 'test' || (k === 'nopwr' && S.d.npTest !== false); if (k === 'nopwr') S.d.noPwr = true; else if (was === 'nopwr') S.d.noPwr = false; save(); render(); track('ftp-quelle-' + String(k || '').replace(/[^a-z]/g, '')); }
 function togNoPwrL(){ const on = !S.d.noPwr; S.d.noPwr = on; if (on) { S.d.ftpSrc = 'nopwr'; if (!S.d.lthr) S.d.test0 = true; } else if (S.d.ftpSrc === 'nopwr') S.d.ftpSrc = S.d.test0 ? 'test' : 'manual'; save(); render(); }
 function togTest0(){ S.d.test0 = !S.d.test0; save(); render(); }
 const t0W = p => { if (!p.test0) return 0; const so = startOff(p); let slot = false; try { slot = [0, 1, 2, 3, 4, 5, 6].some(j => j >= so && p.avail[j] && capOf(p, j) >= 55); } catch (e) { elog(e); slot = true; } return 7 - so >= 3 && slot ? 1 : 2; };

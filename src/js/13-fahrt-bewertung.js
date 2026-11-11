@@ -168,7 +168,7 @@ async function exeUpload(inp, i, p){
     const {a, w:st, hr} = await readRideRaw(f);
     if (x && x.parts) { if (p == null) p = exePFor(i, a); exePStore(i, p, a, st, hr); } else exeStore(i, a, st, hr);
     S.man = (S.man || []).filter(m => m.id !== a.id); S.man.push({...a, day:dstr(i)}); S.man.sort((p, q) => q.ts.localeCompare(p.ts));
-    if (S.plan) analyze();
+    if (S.plan) analyze(); track('fahrt-bewertet');
   } catch (er) { exeErr = {i, t:(er && er.message) || 'Die Datei konnte nicht gelesen werden.'}; }
   exeBusy = null; save(); render();
 }

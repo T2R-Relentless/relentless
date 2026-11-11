@@ -257,7 +257,7 @@ function gtModal(){
 /* Android/Chrome: Installieren als App anbieten (das Ereignis kommt nur, wenn der Browser die Seite für installierbar hält) */
 let instEvt = null, instHide = false;
 try { window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); instEvt = e; try { render(); } catch (er) { elog(er); } }); window.addEventListener('appinstalled', () => { instEvt = null; try { render(); } catch (er) { elog(er); } }); } catch (e) { elog(e); }
-async function instGo(){ if (!instEvt) return; const e = instEvt; instEvt = null; try { await e.prompt(); } catch (er) { elog(er); } render(); }
+async function instGo(){ if (!instEvt) return; track('app-installieren-getippt'); const e = instEvt; instEvt = null; try { await e.prompt(); } catch (er) { elog(er); } render(); }
 const INST_KEY = 'relentless.inst.hide';
 try { if (localStorage.getItem(INST_KEY) === '1') instHide = true; } catch (e) { elog(e); }
 let instHelp = false;

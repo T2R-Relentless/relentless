@@ -20,24 +20,9 @@ function trFlush(){
 function track(name, title){ if (!trHost() || trOff()) return; trQ.push({path:name, title:title || name, event:true}); trLoad(); trFlush(); }
 function trPage(){ if (!trHost() || trOff()) return; let sa = false; try { sa = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch (e) { elog(e); } trQ.push({path:sa ? '/app' : '/', title:sa ? 'Start als installierte App' : 'Start im Browser'}); trLoad(); trFlush(); }
 function trSet(on){ try { if (on) localStorage.removeItem(TR_KEY); else localStorage.setItem(TR_KEY, '1'); } catch (e) { elog(e); } render(); }
-/* Funktion umhüllen, ohne ihr Verhalten zu ändern */
-function trWrap(name, before, after){
-  const f = window[name]; if (typeof f !== 'function' || f.__tr) return;
-  const w = function(){ let ctx; try { ctx = before ? before.apply(this, arguments) : null; } catch (e) { elog(e); } const r = f.apply(this, arguments);
-    const done = () => { try { after && after(ctx, arguments); } catch (e) { elog(e); } }; if (r && typeof r.then === 'function') r.then(done, () => {}); else done(); return r; };
-  w.__tr = true; window[name] = w;
-}
 function trInit(){
-  trWrap('finish', () => ({st:typeof editState === 'function' ? editState() : '', md:S.d && S.d.mode}), c => { if (S.step !== 0) return; track(c.st === 'new' || c.st === 'goal' ? (c.md === 'light' ? 'plan-erstellt-schnell' : 'plan-erstellt-ausfuehrlich') : c.st === 'same' ? 'plan-unveraendert' : 'plan-angepasst'); });
-  trWrap('exeUpload', null, () => { if (!exeErr) track('fahrt-bewertet'); });
-  trWrap('uploadRides', null, () => { if ((upMsg || []).some(m => m[2])) track('fahrten-hochgeladen'); });
-  trWrap('uploadHist', null, () => { if ((histMsg || []).some(m => m[2])) track('fahrten-einstieg-hochgeladen'); });
-  trWrap('saveTest', null, () => { if (!testMsg) track('fitness-check-eingetragen'); });
-  trWrap('npSaveHr', null, () => { if (!testMsg) track('fitness-check-schwellenpuls'); });
-  trWrap('exportPlans', null, () => track('sicherung-gespeichert'));
-  trWrap('importPlans', null, () => track('sicherung-geladen'));
-  trWrap('instGo', null, () => track('app-installieren-getippt'));
-  trWrap('setFtpSrc', null, (c, a) => track('ftp-quelle-' + String(a[0] || '').replace(/[^a-z]/g, '')));
+  /* Gezählt wird direkt in den Funktionen (track(…)): finish, exeUpload, uploadRides, uploadHist, saveTest, npSaveHr,
+     exportPlans, bkAddPlans/bkReplaceAll, instGo, setFtpSrc. Hier nur Seitenaufruf und Installation. */
   try { window.addEventListener('appinstalled', () => track('app-installiert')); } catch (e) { elog(e); }
   trPage();
 }

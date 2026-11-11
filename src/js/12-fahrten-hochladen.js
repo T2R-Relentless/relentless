@@ -125,6 +125,7 @@ async function uploadRides(inp){
   }
   S.man = S.man.filter(a => Date.now() - new Date(a.ts) < 42 * 864e5).sort((a, b) => b.ts.localeCompare(a.ts));
   inp.value = ''; if (S.p && S.plan) analyze(); save(); render();
+  if (upMsg.some(m => m[2])) track('fahrten-hochgeladen');
 }
 function delMan(id){ S.man = (S.man || []).filter(a => a.id !== id); if (S.p && S.plan) analyze(); save(); render(); }
 function uploadCard(){

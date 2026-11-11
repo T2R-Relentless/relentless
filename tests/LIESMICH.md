@@ -23,6 +23,7 @@ Dann im Browser `http://localhost:8765/tests/` öffnen und **Tests starten** kli
 | `storage.test.js` | Speichern und Laden, zweiter Tab, voller Speicher, mehrere Pläne, Sicherungsdatei, manipulierte Daten |
 | `i18n.test.js` | Englische Übersetzung, Einzahl, Liste der noch fehlenden Übersetzungen |
 | `voice.test.js` | Zu jedem gesprochenen Satz gibt es eine abspielbare Datei mit stimmender Dauer |
+| `stats.test.js` | Anonyme Statistik: welche Aktion welches Ereignis zählt, jeweils genau einmal |
 | `elog.test.js` | Fehlerprotokoll: Erfassen, Zusammenfassen, Speichern, Anzeige; normale Nutzung erzeugt keine Einträge |
 
 Die App läuft dabei in einem abgeschotteten Rahmen: eigener Speicher (deine echten Daten bleiben unberührt), angehaltene

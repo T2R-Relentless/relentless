@@ -89,7 +89,7 @@ async function exportPlans(){
   save(); const raw = bkRaw(!!S.bkKey); if (storeErr || !raw.state) raw.state = JSON.stringify(S); if (!bkPlansOf(raw.lib) && !S.p) return;
   const body = {app:'relentless', v:3, exported:new Date().toISOString(), active:(readLib().active || null), state:JSON.parse(raw.state || 'null'), lib:JSON.parse(raw.lib || 'null'), side:raw.side, plans:Object.values(readLib().plans)};
   const data = new TextEncoder().encode(JSON.stringify(body));
-  try { await saveFile('relentless-sicherung-' + iso(0) + '.json', data); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.now(); S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
+  try { await saveFile('relentless-sicherung-' + iso(0) + '.json', data); track('sicherung-gespeichert'); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.now(); S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
   catch (e) { impMsg = e && e.code === 'declined' ? '' : 'Sicherung nicht möglich.'; }
   render();
 }

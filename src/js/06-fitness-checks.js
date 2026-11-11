@@ -65,7 +65,7 @@ function saveTest(w, i){
   S.p.res = {...(S.p.res || {}), [w]:{date:iso(0), kind:testKind, val:v, ftp, lo:e.lo, mid:e.mid, hi:e.hi, base:e.base, st}}; S.d.res = S.p.res;
   if (i != null && i >= 0 && S.wk === w) S.done[i] = true;
   note('Fitness-Check eingetragen', `FTP etwa ${ftp} W, erwartet waren ${e.lo} bis ${e.hi} W.`, -2);
-  queueCheer({key:'test|' + S.p.start + '|' + w + '|' + ftp, kind:'test', w}); testMsg = ''; save(); render();
+  queueCheer({key:'test|' + S.p.start + '|' + w + '|' + ftp, kind:'test', w}); testMsg = ''; save(); render(); track('fitness-check-eingetragen');
 }
 function delTest(w){ const r = {...(S.p.res || {})}; delete r[w]; S.p.res = S.d.res = r; save(); render(); }
 function setFtpNow(v, w){

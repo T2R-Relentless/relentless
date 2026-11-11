@@ -1153,7 +1153,7 @@ function saveTest(w, i){
   S.p.res = {...(S.p.res || {}), [w]:{date:iso(0), kind:testKind, val:v, ftp, lo:e.lo, mid:e.mid, hi:e.hi, base:e.base, st}}; S.d.res = S.p.res;
   if (i != null && i >= 0 && S.wk === w) S.done[i] = true;
   note('Fitness-Check eingetragen', `FTP etwa ${ftp} W, erwartet waren ${e.lo} bis ${e.hi} W.`, -2);
-  queueCheer({key:'test|' + S.p.start + '|' + w + '|' + ftp, kind:'test', w}); testMsg = ''; save(); render();
+  queueCheer({key:'test|' + S.p.start + '|' + w + '|' + ftp, kind:'test', w}); testMsg = ''; save(); render(); track('fitness-check-eingetragen');
 }
 function delTest(w){ const r = {...(S.p.res || {})}; delete r[w]; S.p.res = S.d.res = r; save(); render(); }
 function setFtpNow(v, w){
@@ -1931,7 +1931,7 @@ function tgtSugHtml(d){
 }
 
 function finish(){
-  const bkSt = editState(); /* für die Sicherungs-Erinnerung: neuer oder geänderter Plan? */
+  const st0 = editState(), md0 = S.d && S.d.mode; /* Art der Änderung: für Sicherungs-Erinnerung und Statistik */
   if (S.d && S.d.goal === 'event' && S.d.season === false && (S.d.subs || []).length) S.d.subs = [];
   goalMsg = ''; if (S.d.goal === 'event' && !String(S.d.eventName || '').trim()) S.d.eventName = 'Mein Event';
   { const es = editState(); if (es === 'new' || es === 'goal') { S.d.ftpStart = rngClamp('ftp', S.d.ftp, 0); delete S.d.res; delete S.d.xTests; delete S.d.recW; } else if (S.p && !S.d.ftpStart) S.d.ftpStart = S.p.ftpStart || S.p.ftp; }
@@ -1944,7 +1944,8 @@ function finish(){
   S.edit = false; S.step = 0; S.newFrom = null; pg = null; pgFrom = null; if (!S.pid) { S.pid = uid(); S.pname = planName(S.p); } else if (!S.pnameManual && (S.pname === oldAuto || isAutoName(S.pname))) S.pname = planName(S.p); analyze(); save();
   try { const v = planCheck(S.p, true).verdict; if ((v === 'high' || v === 'mid') && !ackOn(S.p) && S.goalSeen !== goalKey(S.p)) { goalCache = goalOpts(S.p, true); goalOpen = goalCache ? 'dash' : null; } } catch (e) { elog(e); }
   render();
-  if (S.step === 0 && bkSt !== 'same') { bkMarkChange(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
+  if (S.step === 0 && st0 !== 'same') { bkMarkChange(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
+  if (S.step === 0) track(st0 === 'new' || st0 === 'goal' ? (md0 === 'light' ? 'plan-erstellt-schnell' : 'plan-erstellt-ausfuehrlich') : st0 === 'same' ? 'plan-unveraendert' : 'plan-angepasst');
 }
 function editCopy(){ return {...S.p, avail:[...S.p.avail], commute:[...S.p.commute], commuter: isComm(S.p), dayMin:[...(S.p.dayMin || [60,60,60,60,60,180,240])], subs:[...(S.p.subs || [])]}; }
 function cancelEdit(){ if (S.p) S.d = editCopy(); S.edit = false; S.step = 0; pg = null; save(); render(); window.scrollTo(0, 0); }
@@ -2109,6 +2110,7 @@ async function uploadRides(inp){
   }
   S.man = S.man.filter(a => Date.now() - new Date(a.ts) < 42 * 864e5).sort((a, b) => b.ts.localeCompare(a.ts));
   inp.value = ''; if (S.p && S.plan) analyze(); save(); render();
+  if (upMsg.some(m => m[2])) track('fahrten-hochgeladen');
 }
 function delMan(id){ S.man = (S.man || []).filter(a => a.id !== id); if (S.p && S.plan) analyze(); save(); render(); }
 function uploadCard(){
@@ -2290,7 +2292,7 @@ async function exeUpload(inp, i, p){
     const {a, w:st, hr} = await readRideRaw(f);
     if (x && x.parts) { if (p == null) p = exePFor(i, a); exePStore(i, p, a, st, hr); } else exeStore(i, a, st, hr);
     S.man = (S.man || []).filter(m => m.id !== a.id); S.man.push({...a, day:dstr(i)}); S.man.sort((p, q) => q.ts.localeCompare(p.ts));
-    if (S.plan) analyze();
+    if (S.plan) analyze(); track('fahrt-bewertet');
   } catch (er) { exeErr = {i, t:(er && er.message) || 'Die Datei konnte nicht gelesen werden.'}; }
   exeBusy = null; save(); render();
 }
@@ -2597,6 +2599,7 @@ async function uploadHist(inp){
     } catch (e) { histMsg.push([f.name, (e && e.message) || 'konnte nicht gelesen werden', false]); }
   }
   S.hist.sort((a, b) => b.ts.localeCompare(a.ts)); histBusy = false; inp.value = ''; save(); render();
+  if (histMsg.some(m => m[2])) track('fahrten-einstieg-hochgeladen');
 }
 function clearHist(){ S.hist = []; histMsg = []; if (S.d) { delete S.d.startH; delete S.d.longMin; } save(); render(); }
 
@@ -2607,7 +2610,7 @@ function pBests(w, t){
   return r;
 }
 /* ---------- Woher kommt der FTP? Selbst eintragen, aus Fahrten errechnen oder Fitnesstest zu Beginn ---------- */
-function setFtpSrc(k){ const was = S.d.ftpSrc; S.d.ftpSrc = k; S.d.test0 = k === 'test' || (k === 'nopwr' && S.d.npTest !== false); if (k === 'nopwr') S.d.noPwr = true; else if (was === 'nopwr') S.d.noPwr = false; save(); render(); }
+function setFtpSrc(k){ const was = S.d.ftpSrc; S.d.ftpSrc = k; S.d.test0 = k === 'test' || (k === 'nopwr' && S.d.npTest !== false); if (k === 'nopwr') S.d.noPwr = true; else if (was === 'nopwr') S.d.noPwr = false; save(); render(); track('ftp-quelle-' + String(k || '').replace(/[^a-z]/g, '')); }
 function togNoPwrL(){ const on = !S.d.noPwr; S.d.noPwr = on; if (on) { S.d.ftpSrc = 'nopwr'; if (!S.d.lthr) S.d.test0 = true; } else if (S.d.ftpSrc === 'nopwr') S.d.ftpSrc = S.d.test0 ? 'test' : 'manual'; save(); render(); }
 function togTest0(){ S.d.test0 = !S.d.test0; save(); render(); }
 const t0W = p => { if (!p.test0) return 0; const so = startOff(p); let slot = false; try { slot = [0, 1, 2, 3, 4, 5, 6].some(j => j >= so && p.avail[j] && capOf(p, j) >= 55); } catch (e) { elog(e); slot = true; } return 7 - so >= 3 && slot ? 1 : 2; };
@@ -4469,7 +4472,7 @@ function npSaveHr(w, i){
   const el = document.getElementById('npv' + w), v = Math.round(Number(el && el.value) || 0); if (v < 100 || v > 220) { testMsg = 'Bitte einen Puls zwischen 100 und 220 eintragen.'; return render(); }
   const prev = S.p.lthr || S.d.lthr || 0; S.p.lthr = S.d.lthr = v; S.p.hrRes = {...(S.p.hrRes || {}), [w]:{date:iso(0), lthr:v, prev}};
   if (i != null && i >= 0 && S.wk === w) S.done[i] = true; note('Schwellenpuls eingetragen', `Schwellenpuls ${v}${prev ? `, vorher ${prev}` : ''}. Die Pulsbereiche sind angepasst.`, -2);
-  testMsg = ''; save(); render();
+  testMsg = ''; save(); render(); track('fitness-check-schwellenpuls');
 }
 function npSaveClimb(w, i){
   const r = climbCalc(S.p.climbT, kgOf(S.p)); if (!r) { testMsg = 'Bitte Länge, Höhenmeter und Zeit eintragen.'; return render(); }
@@ -4737,7 +4740,7 @@ function gtModal(){
 /* Android/Chrome: Installieren als App anbieten (das Ereignis kommt nur, wenn der Browser die Seite für installierbar hält) */
 let instEvt = null, instHide = false;
 try { window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); instEvt = e; try { render(); } catch (er) { elog(er); } }); window.addEventListener('appinstalled', () => { instEvt = null; try { render(); } catch (er) { elog(er); } }); } catch (e) { elog(e); }
-async function instGo(){ if (!instEvt) return; const e = instEvt; instEvt = null; try { await e.prompt(); } catch (er) { elog(er); } render(); }
+async function instGo(){ if (!instEvt) return; track('app-installieren-getippt'); const e = instEvt; instEvt = null; try { await e.prompt(); } catch (er) { elog(er); } render(); }
 const INST_KEY = 'relentless.inst.hide';
 try { if (localStorage.getItem(INST_KEY) === '1') instHide = true; } catch (e) { elog(e); }
 let instHelp = false;
@@ -4783,24 +4786,9 @@ function trFlush(){
 function track(name, title){ if (!trHost() || trOff()) return; trQ.push({path:name, title:title || name, event:true}); trLoad(); trFlush(); }
 function trPage(){ if (!trHost() || trOff()) return; let sa = false; try { sa = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch (e) { elog(e); } trQ.push({path:sa ? '/app' : '/', title:sa ? 'Start als installierte App' : 'Start im Browser'}); trLoad(); trFlush(); }
 function trSet(on){ try { if (on) localStorage.removeItem(TR_KEY); else localStorage.setItem(TR_KEY, '1'); } catch (e) { elog(e); } render(); }
-/* Funktion umhüllen, ohne ihr Verhalten zu ändern */
-function trWrap(name, before, after){
-  const f = window[name]; if (typeof f !== 'function' || f.__tr) return;
-  const w = function(){ let ctx; try { ctx = before ? before.apply(this, arguments) : null; } catch (e) { elog(e); } const r = f.apply(this, arguments);
-    const done = () => { try { after && after(ctx, arguments); } catch (e) { elog(e); } }; if (r && typeof r.then === 'function') r.then(done, () => {}); else done(); return r; };
-  w.__tr = true; window[name] = w;
-}
 function trInit(){
-  trWrap('finish', () => ({st:typeof editState === 'function' ? editState() : '', md:S.d && S.d.mode}), c => { if (S.step !== 0) return; track(c.st === 'new' || c.st === 'goal' ? (c.md === 'light' ? 'plan-erstellt-schnell' : 'plan-erstellt-ausfuehrlich') : c.st === 'same' ? 'plan-unveraendert' : 'plan-angepasst'); });
-  trWrap('exeUpload', null, () => { if (!exeErr) track('fahrt-bewertet'); });
-  trWrap('uploadRides', null, () => { if ((upMsg || []).some(m => m[2])) track('fahrten-hochgeladen'); });
-  trWrap('uploadHist', null, () => { if ((histMsg || []).some(m => m[2])) track('fahrten-einstieg-hochgeladen'); });
-  trWrap('saveTest', null, () => { if (!testMsg) track('fitness-check-eingetragen'); });
-  trWrap('npSaveHr', null, () => { if (!testMsg) track('fitness-check-schwellenpuls'); });
-  trWrap('exportPlans', null, () => track('sicherung-gespeichert'));
-  trWrap('importPlans', null, () => track('sicherung-geladen'));
-  trWrap('instGo', null, () => track('app-installieren-getippt'));
-  trWrap('setFtpSrc', null, (c, a) => track('ftp-quelle-' + String(a[0] || '').replace(/[^a-z]/g, '')));
+  /* Gezählt wird direkt in den Funktionen (track(…)): finish, exeUpload, uploadRides, uploadHist, saveTest, npSaveHr,
+     exportPlans, bkAddPlans/bkReplaceAll, instGo, setFtpSrc. Hier nur Seitenaufruf und Installation. */
   try { window.addEventListener('appinstalled', () => track('app-installiert')); } catch (e) { elog(e); }
   trPage();
 }
@@ -5175,7 +5163,7 @@ async function exportPlans(){
   save(); const raw = bkRaw(!!S.bkKey); if (storeErr || !raw.state) raw.state = JSON.stringify(S); if (!bkPlansOf(raw.lib) && !S.p) return;
   const body = {app:'relentless', v:3, exported:new Date().toISOString(), active:(readLib().active || null), state:JSON.parse(raw.state || 'null'), lib:JSON.parse(raw.lib || 'null'), side:raw.side, plans:Object.values(readLib().plans)};
   const data = new TextEncoder().encode(JSON.stringify(body));
-  try { await saveFile('relentless-sicherung-' + iso(0) + '.json', data); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.now(); S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
+  try { await saveFile('relentless-sicherung-' + iso(0) + '.json', data); track('sicherung-gespeichert'); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.now(); S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
   catch (e) { impMsg = e && e.code === 'declined' ? '' : 'Sicherung nicht möglich.'; }
   render();
 }

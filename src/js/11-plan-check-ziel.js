@@ -296,7 +296,7 @@ function tgtSugHtml(d){
 }
 
 function finish(){
-  const bkSt = editState(); /* für die Sicherungs-Erinnerung: neuer oder geänderter Plan? */
+  const st0 = editState(), md0 = S.d && S.d.mode; /* Art der Änderung: für Sicherungs-Erinnerung und Statistik */
   if (S.d && S.d.goal === 'event' && S.d.season === false && (S.d.subs || []).length) S.d.subs = [];
   goalMsg = ''; if (S.d.goal === 'event' && !String(S.d.eventName || '').trim()) S.d.eventName = 'Mein Event';
   { const es = editState(); if (es === 'new' || es === 'goal') { S.d.ftpStart = rngClamp('ftp', S.d.ftp, 0); delete S.d.res; delete S.d.xTests; delete S.d.recW; } else if (S.p && !S.d.ftpStart) S.d.ftpStart = S.p.ftpStart || S.p.ftp; }
@@ -309,7 +309,8 @@ function finish(){
   S.edit = false; S.step = 0; S.newFrom = null; pg = null; pgFrom = null; if (!S.pid) { S.pid = uid(); S.pname = planName(S.p); } else if (!S.pnameManual && (S.pname === oldAuto || isAutoName(S.pname))) S.pname = planName(S.p); analyze(); save();
   try { const v = planCheck(S.p, true).verdict; if ((v === 'high' || v === 'mid') && !ackOn(S.p) && S.goalSeen !== goalKey(S.p)) { goalCache = goalOpts(S.p, true); goalOpen = goalCache ? 'dash' : null; } } catch (e) { elog(e); }
   render();
-  if (S.step === 0 && bkSt !== 'same') { bkMarkChange(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
+  if (S.step === 0 && st0 !== 'same') { bkMarkChange(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
+  if (S.step === 0) track(st0 === 'new' || st0 === 'goal' ? (md0 === 'light' ? 'plan-erstellt-schnell' : 'plan-erstellt-ausfuehrlich') : st0 === 'same' ? 'plan-unveraendert' : 'plan-angepasst');
 }
 function editCopy(){ return {...S.p, avail:[...S.p.avail], commute:[...S.p.commute], commuter: isComm(S.p), dayMin:[...(S.p.dayMin || [60,60,60,60,60,180,240])], subs:[...(S.p.subs || [])]}; }
 function cancelEdit(){ if (S.p) S.d = editCopy(); S.edit = false; S.step = 0; pg = null; save(); render(); window.scrollTo(0, 0); }

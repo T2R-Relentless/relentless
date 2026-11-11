@@ -51,7 +51,7 @@ function npSaveHr(w, i){
   const el = document.getElementById('npv' + w), v = Math.round(Number(el && el.value) || 0); if (v < 100 || v > 220) { testMsg = 'Bitte einen Puls zwischen 100 und 220 eintragen.'; return render(); }
   const prev = S.p.lthr || S.d.lthr || 0; S.p.lthr = S.d.lthr = v; S.p.hrRes = {...(S.p.hrRes || {}), [w]:{date:iso(0), lthr:v, prev}};
   if (i != null && i >= 0 && S.wk === w) S.done[i] = true; note('Schwellenpuls eingetragen', `Schwellenpuls ${v}${prev ? `, vorher ${prev}` : ''}. Die Pulsbereiche sind angepasst.`, -2);
-  testMsg = ''; save(); render();
+  testMsg = ''; save(); render(); track('fitness-check-schwellenpuls');
 }
 function npSaveClimb(w, i){
   const r = climbCalc(S.p.climbT, kgOf(S.p)); if (!r) { testMsg = 'Bitte Länge, Höhenmeter und Zeit eintragen.'; return render(); }
