@@ -58,3 +58,11 @@ test('Normale Nutzung erzeugt keine (neuen) Protokolleinträge', async () => {
   }
   await snap('elog', 'normale-nutzung', [...seen.keys()].sort());
 });
+
+test('Erster Start und Sicherung im Hintergrund erzeugen keine Protokolleinträge', async () => {
+  /* Die Datensicherung läuft verzögert (IndexedDB, nach 1,5 s). Deshalb hier bewusst warten. */
+  const a = await boot(); await a.tick(1800); eq(a.$('elogRead()').map(x => x.m), [], 'erster Start mit leerem Speicher');
+  makePlan(a, {goal:'event', eventName:'Testrennen', eventDate:'2027-03-20'}); await a.tick(1800);
+  eq(a.$('elogRead()').map(x => x.m), [], 'nach Plan und täglicher Sicherung');
+  ok(a.$('bkReady'), 'Datensicherung bereit'); a.noErrors();
+});

@@ -5107,7 +5107,7 @@ function bkWriteRaw(r){
     throw e;
   }
 }
-const bkPlansOf = lib => { try { return Object.keys((typeof lib === 'string' ? JSON.parse(lib) : lib).plans || {}).length; } catch (e) { elog(e); return 0; } };
+const bkPlansOf = lib => { try { const o = typeof lib === 'string' ? JSON.parse(lib) : lib; return o && o.plans ? Object.keys(o.plans).length : 0; } catch (e) { elog(e); return 0; } };
 
 /* ---------- IndexedDB ---------- */
 function bkDb(){ return new Promise((res, rej) => { try { const r = indexedDB.open('relentless-backup', 1); r.onupgradeneeded = () => { try { r.result.createObjectStore('kv'); } catch (e) { elog(e); } }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); }
