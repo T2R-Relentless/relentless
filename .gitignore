@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# Editor / Werkzeuge
+.vscode/
+.idea/
+.claude/settings.local.json
+
+# Netlify lokal
+.netlify/
+node_modules/
+
+# Geheimnisse niemals einchecken
+.env
+.env.*
