@@ -1918,7 +1918,7 @@ function setDayMin(i, v){ S.d.dayMin[i] = Math.max(0, Number(v) || 0); S.d.hours
 const dayTotal = d => { const t = dsum(d); return `${SD.map((x, i) => d.avail[i] ? x + ' ' + (d.dayMin[i] || 0) : null).filter(Boolean).join(' + ')} Min. = ${hm2(t)} Std. pro Woche`; };
 function setLong(i){ S.d.longDay = i; S.d.avail[i] = true; save(); render(); }
 function goWeek(n){ const t = phases(S.p).slice(-1)[0].to; n = Math.min(t, Math.max(1, n)); vw = n === S.wk ? null : n; render(); }
-const wd = (p, w) => new Date(new Date(p.start).getTime() + (w - 1) * 6048e5).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+const wd = (p, w) => new Date(dOnly(p.start).getTime() + (w - 1) * 6048e5).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
 const fmt = x => dOnly(x).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
 const SD = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const lstr = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -7784,11 +7784,21 @@ function iVal(x){
   return r;
 }
 let I18N = {};
+/* Nachträge zum komprimierten Wörterbuch (ab Version 175). Neue Einträge hier ergänzen, nicht im komprimierten Block. */
+const I18N_ADD = {
+  'Du kannst dich in ganzen Sätzen unterhalten · frei, {0}–{1} U/min':'You can talk in full sentences · cadence free, {0}–{1} rpm',
+  'Apple, Google, Outlook · {0} Termine ab heute':'Apple, Google, Outlook · {0} events from today',
+  'Einzelne Einheiten exportierst du direkt bei der Einheit im Wochenplan: {0} oder {1}.':'You can export single sessions directly from the session in the weekly plan: {0} or {1}.',
+  'Sobald du Fahrten mit Wattmesser hochlädst, stehen hier deine besten Werte über {0} Sekunden bis {1} Minuten.':'As soon as you upload rides with a power meter, your best values from {0} seconds to {1} minutes appear here.',
+  'Dein Ziel läuft bis {0}.':'Your goal runs until {0}.'
+};
+/* Englisch: Einzahl, wo das deutsche Wort für Ein- und Mehrzahl gleich ist („1 Riegel“ → „1 bar“, nicht „1 bars“) */
+const iSing = s => s.replace(/(^|[^\d.,])1 (bars|bottles|gels)\b/g, (m, a, w) => a + '1 ' + w.slice(0, -1));
 /* Englisches Wörterbuch komprimiert in der Datei, wird erst bei Bedarf entpackt */
 let i18nReady = false, i18nLoading = null;
 function i18nLoad(){
   if (i18nReady) return Promise.resolve(true);
-  if (!i18nLoading) i18nLoading = (async () => { try { const el = document.getElementById('i18n-en'), b = Uint8Array.from(atob(el.textContent.trim()), c => c.charCodeAt(0)); const st = new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip')); I18N = JSON.parse(await new Response(st).text()); i18nReady = true; } catch (e) { i18nReady = false; } document.documentElement.classList.remove('i18nwait'); return i18nReady; })();
+  if (!i18nLoading) i18nLoading = (async () => { try { const el = document.getElementById('i18n-en'), b = Uint8Array.from(atob(el.textContent.trim()), c => c.charCodeAt(0)); const st = new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip')); I18N = Object.assign(JSON.parse(await new Response(st).text()), I18N_ADD); i18nReady = true; } catch (e) { i18nReady = false; } document.documentElement.classList.remove('i18nwait'); return i18nReady; })();
   return i18nLoading;
 }
 
@@ -7815,6 +7825,9 @@ const I18P = [
 ];
 const I18X = [
  [/^Tage bis (.+)$/, 'Days until $1'],
+ [/^Heute: (.+), (\S+) Std\.$/, (m, a, h) => 'Today: ' + trS(a) + ', ' + h + ' h'],
+ [/^Heute: (.+), (\S+) Min\.$/, (m, a, n) => 'Today: ' + trS(a) + ', ' + n + ' min'],
+ [/^Heute, (.+)$/, (m, a) => 'Today, ' + trS(a)],
  [/^(.+?) \+ (.+)$/, (m, a, b) => trS(a) + ' + ' + trS(b)],
  [/^(.+), (draußen|mit Trittfrequenz|mit Fahrtechnik|neue Runde|mit Einteilung|auf der Rolle|mit hoher Trittfrequenz|Kaffeerunde)$/, (m, a, b) => trS(a) + ', ' + ({'draußen':'outdoors', 'mit Trittfrequenz':'with cadence work', 'mit Fahrtechnik':'with bike handling', 'neue Runde':'new route', 'mit Einteilung':'with pacing', 'auf der Rolle':'on the trainer', 'mit hoher Trittfrequenz':'high cadence', 'Kaffeerunde':'coffee ride'})[b]],
  [/^Aktivierung vor (.+)$/, 'Activation before $1'],
@@ -7846,11 +7859,11 @@ function trS(s){
 const I_ABBR = /(?:\b(?:Std|Min|Sek|ca|bzw|Nr|evtl|inkl|ggf|vgl|etc|Mo|Di|Mi|Do|Fr|Sa|So|B|h|z|d|u|a|o|Jan|Feb|Okt|Nov|Dez|Dr|Prof|al)|\d)\.$/;
 function trText(s){
   const lead = s.match(/^\s*/)[0], trail = s.match(/\s*$/)[0], core = s.trim(); if (!core) return s;
-  if (I18N[iNorm(core).k] != null) return lead + trS(core) + trail;
+  if (I18N[iNorm(core).k] != null) return lead + iSing(trS(core)) + trail;
   const re = /[.!?]\s+(?=[A-ZÄÖÜ„(\d])/g, out = []; let st = 0, m;
   while ((m = re.exec(core))) { const end = m.index + 1; if (I_ABBR.test(core.slice(Math.max(0, end - 5), end))) continue; out.push(trS(core.slice(st, end)), m[0].slice(1)); st = re.lastIndex; }
   out.push(trS(core.slice(st)));
-  return lead + out.join('') + trail;
+  return lead + iSing(out.join('')) + trail;
 }
 const trTxt = s => lang() === 'en' ? trText(s) : s;
 function i18nDom(root){
