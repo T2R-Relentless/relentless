@@ -74,6 +74,3 @@ function wfProgCard(){
 }
 function wfGo(){ wfMsg = ''; goPg('settings'); goPg('set-wf'); }
 
-/* Punkt 4: jede FTP-Übernahme (Test, Schätzung, Einstellungen) landet im Verlauf Gewicht und FTP */
-(function(){ const o = setFtpNow; setFtpNow = function(v, w){ try { wfHist(); const L = S.wf[S.wf.length - 1], c = wfCur();
-  if (!L || Math.round(L.ftp) !== Math.round(v) || L.d !== iso(0)) S.wf.push({d:iso(0), at:Date.now(), ftp:Math.round(v), kg:c.kg || 0}); } catch (e) { elog(e); } return o(v, w); }; })();

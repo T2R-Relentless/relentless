@@ -104,7 +104,7 @@ let dtab = {};
 function setTab(i, k){ dtab[strWeek + '-' + i] = k; render(); }
 const MINI = {ride:'<circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l5-8h4l3 8"/>', str:'<path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/>', mob:'<path d="M4 18c3-9 13-9 16 0M12 4v4"/>', stab:'<path d="M3 17h18M5 17l3-5h10"/>'};
 const mini = (k, c) => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${c || 'currentColor'}" stroke-width="2" stroke-linecap="square" aria-hidden="true" style="flex:none">${MINI[k]}</svg>`;
-function dayCard(x, i, cur = true){
+function dayCard(x, i, cur = true){ try { /* npOver gilt nur während dieses Aufbaus, siehe finally */
   npOver = cur ? npFlag(i) : null;
   const T = TYPES[x.t], t = cur ? todayIdx() : -1, dn = cur && S.done[i], isOpen = open === i, past = i < t;
   const sm = strMap[i], mb = mobMap[i], sDn = cur && sm && S.strDone && S.strDone[strKey(i)], mDn = cur && mb && S.mobDone && S.mobDone[mobKey(i)];
@@ -135,4 +135,4 @@ function dayCard(x, i, cur = true){
     det = `<div class="space-y-3 border-t px-4 pb-4 pt-3 text-sm" style="border-color:var(--line)">${tabBar}${pane}</div>`;
   }
   return `<div data-day="${esc((cur && i >= todayIdx() && !S.done[i] && x.m > 0) || (!cur && typeof strWeek === 'number' && S.wk && strWeek > S.wk && x.m > 0 && !mvLocked(x)) ? i : '')}" class="panel overflow-hidden ${esc((cur && flashIdx===i)?'flash':'')}" style="${esc(x.adapted?'border-color:#0a8f6a':'')}${esc(past?';opacity:.72':'')}">${head}${det}</div>`;
-}
+} finally { npOver = null; } }

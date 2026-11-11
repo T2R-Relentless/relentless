@@ -69,6 +69,9 @@ function saveTest(w, i){
 }
 function delTest(w){ const r = {...(S.p.res || {})}; delete r[w]; S.p.res = S.d.res = r; save(); render(); }
 function setFtpNow(v, w){
+  /* jede FTP-Übernahme (Test, Schätzung, Einstellungen) landet im Verlauf Gewicht und FTP (38-gewicht-ftp.js) */
+  try { wfHist(); const L = S.wf[S.wf.length - 1], c = wfCur();
+  if (!L || Math.round(L.ftp) !== Math.round(v) || L.d !== iso(0)) S.wf.push({d:iso(0), at:Date.now(), ftp:Math.round(v), kg:c.kg || 0}); } catch (e) { elog(e); }
   const old = S.p.ftp; S.p.ftp = S.d.ftp = v; try { ftpTrack(); } catch (e) { elog(e); } if (w != null && S.p.res && S.p.res[w]) { S.p.res[w].adopted = true; S.d.res = S.p.res; if (S.p.res[w].st === 'base') S.p.ftpStart = S.d.ftpStart = v; }
   replanCyc(); note('FTP aktualisiert', `Neuer FTP ${v} W statt ${old} W. Alle Wattvorgaben im Plan haben sich um ${v > old ? '+' : ''}${Math.round((v / old - 1) * 100)} % angepasst, die Prognose rechnet ab jetzt von diesem Wert aus.`, -2);
   cheerShow = null; save(); render();

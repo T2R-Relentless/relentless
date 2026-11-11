@@ -217,5 +217,5 @@ function tog(i){ open = open === i ? null : i; render(); }
 let askReset = false;
 function reset(){ askReset = true; render(); }
 function cancelReset(){ askReset = false; render(); }
-function doReset(){ try { localStorage.removeItem(LIBK); } catch (e) { elog(e); } S = load(true); save(); open = null; vw = null; askReset = false; render(); }
+function doReset(){ bkPre('Vor dem Zurücksetzen'); try { localStorage.removeItem(LIBK); } catch (e) { elog(e); } S = load(true); save(); open = null; vw = null; askReset = false; render(); bkMirrorSoon(); }
 

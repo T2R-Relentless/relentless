@@ -53,5 +53,3 @@ function woCtl(x, i){
   return h;
 }
 
-/* B4: gespeicherte Änderungen kommender Wochen beim Erzeugen der Woche anwenden (nicht für Statistik-Läufe mit base) */
-(function(){ const o = genWeek; genWeek = function(p, w, base){ const P = o(p, w, base); return !base && p && S.p && p === S.p ? woApply(P, w) : P; }; })();

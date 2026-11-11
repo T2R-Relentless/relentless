@@ -32,6 +32,7 @@ function doRename(id){ const n = renVal.trim().slice(0, 60); if (n) { const lib 
 function dupPlan(id){ save(); const lib = readLib(), e = lib.plans[id]; if (!e) return; const nid = uid(); lib.plans[nid] = {...JSON.parse(JSON.stringify(e)), id:nid, name:(e.name + ' (Kopie)').slice(0, 60), created:Date.now(), updated:Date.now()}; try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (x) { elog(x); storeErr = true; } render(); }
 function askDelPlan(id){ delId = id; render(); }
 function doDelPlan(id){
+  bkPre('Vor dem Löschen eines Plans');
   const lib = readLib(); delete lib.plans[id]; const rest = Object.values(lib.plans).sort((a, b) => b.updated - a.updated);
   try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (e) { elog(e); storeErr = true; } delId = null;
   if (S.pid === id) { if (rest.length) { S.pid = null; applySnap(rest[0].snap); S.pid = rest[0].id; S.pname = rest[0].name; S.step = 0; resetView(); save(); } else { const f = load(true); PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.pid = null; S.pname = ''; S.d = f.d; S.step = 1; S.edit = false; S.newFrom = null; save(); } }

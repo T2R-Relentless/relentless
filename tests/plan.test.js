@@ -70,6 +70,27 @@ test('Saisonende: Übergangsphase wird angezeigt', async () => {
   ok(/Saison geschafft/.test(a.page(null)), 'Text zum Saisonende');
 });
 
+test('Kommende Woche: gespeicherte Verschiebung gilt nur für den aktiven Plan (B4)', async () => {
+  const a = await boot(); makePlan(a, SCEN[0].d); const w = a.$('S.wk') + 2, P0 = a.$('genWeek(S.p, ' + w + ')');
+  const i = P0.findIndex(x => x.m > 0), j = P0.findIndex((x, k) => k !== i && x.m > 0); ok(i >= 0 && j >= 0, 'zwei Einheiten');
+  a.$(`woAdd(${w}, {op:'mv', i:${i}, j:${j}, mode:'swap'})`);
+  const P = a.$(`genWeek(S.p, ${w})`), B = a.$(`genWeek(S.p, ${w}, true)`), C = a.$(`genWeek({...S.p}, ${w})`);
+  eq([P[i].n, P[j].n], [P0[j].n, P0[i].n], 'getauscht im aktiven Plan'); ok(P[i].moved && P[j].moved, 'als verschoben markiert');
+  eq(B.map(x => x.n), P0.map(x => x.n), 'Statistik-Lauf (base) unverändert'); eq(C.map(x => x.n), P0.map(x => x.n), 'Kopie des Plans unverändert');
+  a.noErrors();
+});
+
+test('Zeitbudget nach Jahreszeit greift je Monat, auch für Statistik-Läufe (Punkt 7)', async () => {
+  const a = await boot(); makePlan(a, {...SCEN[0].d, eventDate:'2027-07-10'});
+  a.$("const tb = tbInit(S.p); tb.on = true; tb.prof.w.h = 4; tb.prof.s.h = 12; S.p.tb = tb;");
+  const tot = P => P.reduce((q, x) => q + (x.m || 0), 0), wOf = d => a.$(`Math.floor((new Date('${d}T12:00:00') - new Date(S.p.start + 'T12:00:00')) / 6048e5) + 1`);
+  const win = wOf('2027-01-13'), sum = wOf('2027-05-12');
+  const tw = tot(a.$(`genWeek(S.p, ${win})`)), ts = tot(a.$(`genWeek(S.p, ${sum})`));
+  ok(tw <= 4 * 60 + 30, `Winterwoche im 4-Std.-Budget (${tw} Min.)`); ok(ts > tw + 120, `Sommerwoche deutlich länger (${ts} gegen ${tw} Min.)`);
+  eq(tot(a.$(`genWeek(S.p, ${win}, true)`)), tw, 'Statistik-Lauf nutzt dasselbe Budget');
+  await snap('plan-ablauf', 'zeitbudget', {winter:tw, sommer:ts}); a.noErrors();
+});
+
 test('Einheit erledigt markieren und wieder zurück', async () => {
   const a = await boot(); makePlan(a, SCEN[0].d); const i = a.$('todayIdx()');
   a.w.tick(i); eq(!!a.$('S.done')[i], true); a.w.tick(i); eq(!!a.$('S.done')[i], false); a.noErrors();

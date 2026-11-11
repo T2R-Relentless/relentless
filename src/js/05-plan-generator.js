@@ -167,7 +167,10 @@ function evProfCard(p, compact){
   return compact ? `<div class="panel p-4"><p class="eyebrow mb-2">Anforderungsprofil des Events</p>${inner}</div>` : fold('evp', 'Anforderungsprofil des Events', inner, true, t[0]);
 }
 
-function genWeek(p, w, base){
+/* Woche w erzeugen. Reihenfolge: Zeitbudget des Monats anwenden (Punkt 7, tbApply), Woche bauen (genWeekCore), dann
+   gespeicherte Änderungen kommender Wochen einspielen (B4, woApply; nur für den aktiven Plan, nicht für Statistik-Läufe mit base). */
+function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base); return !base && p && S.p && p === S.p ? woApply(P, w) : P; }
+function genWeekCore(p, w, base){
   const o = (!base && S.ov && S.ov[w]) || {off:{}, com:{}};
   const cm0 = isComm(p), p0 = p;
   const so = w === 1 ? startOff(p0) : 0;

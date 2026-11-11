@@ -145,10 +145,11 @@ let storeWhy = '', syncMsg = '';
 function save(){
   try {
     const st = +(localStorage.getItem(REVK) || 0);
-    if (st > (+S.rev || 0)) { storeConflict(); return; }
+    if (st > (+S.rev || 0)) { storeConflict(); bkMirrorSoon(); return; }
     S.rev = st + 1;
     localStorage.setItem(K, JSON.stringify(S)); localStorage.setItem(REVK, String(S.rev)); writeLib(); storeErr = false; storeWhy = '';
   } catch(e){ storeErr = true; storeWhy = e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014) ? 'quota' : e && e.name === 'SecurityError' ? 'blocked' : 'other'; }
+  bkMirrorSoon(); /* Spiegel in IndexedDB, gebündelt (Datensicherung) */
 }
 function storeConflict(){ try { S = load(); } catch (e) { elog(e); } syncMsg = 'Deine Daten wurden in einem anderen Tab oder Fenster geändert. Diese Ansicht zeigt jetzt den neuesten Stand. Deine letzte Änderung hier wurde nicht übernommen, bitte wiederhole sie.'; setTimeout(() => render(), 0); }
 function storeRetry(){ save(); render(); }

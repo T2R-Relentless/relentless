@@ -667,10 +667,11 @@ let storeWhy = '', syncMsg = '';
 function save(){
   try {
     const st = +(localStorage.getItem(REVK) || 0);
-    if (st > (+S.rev || 0)) { storeConflict(); return; }
+    if (st > (+S.rev || 0)) { storeConflict(); bkMirrorSoon(); return; }
     S.rev = st + 1;
     localStorage.setItem(K, JSON.stringify(S)); localStorage.setItem(REVK, String(S.rev)); writeLib(); storeErr = false; storeWhy = '';
   } catch(e){ storeErr = true; storeWhy = e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014) ? 'quota' : e && e.name === 'SecurityError' ? 'blocked' : 'other'; }
+  bkMirrorSoon(); /* Spiegel in IndexedDB, gebündelt (Datensicherung) */
 }
 function storeConflict(){ try { S = load(); } catch (e) { elog(e); } syncMsg = 'Deine Daten wurden in einem anderen Tab oder Fenster geändert. Diese Ansicht zeigt jetzt den neuesten Stand. Deine letzte Änderung hier wurde nicht übernommen, bitte wiederhole sie.'; setTimeout(() => render(), 0); }
 function storeRetry(){ save(); render(); }
@@ -726,6 +727,7 @@ function doRename(id){ const n = renVal.trim().slice(0, 60); if (n) { const lib 
 function dupPlan(id){ save(); const lib = readLib(), e = lib.plans[id]; if (!e) return; const nid = uid(); lib.plans[nid] = {...JSON.parse(JSON.stringify(e)), id:nid, name:(e.name + ' (Kopie)').slice(0, 60), created:Date.now(), updated:Date.now()}; try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (x) { elog(x); storeErr = true; } render(); }
 function askDelPlan(id){ delId = id; render(); }
 function doDelPlan(id){
+  bkPre('Vor dem Löschen eines Plans');
   const lib = readLib(); delete lib.plans[id]; const rest = Object.values(lib.plans).sort((a, b) => b.updated - a.updated);
   try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (e) { elog(e); storeErr = true; } delId = null;
   if (S.pid === id) { if (rest.length) { S.pid = null; applySnap(rest[0].snap); S.pid = rest[0].id; S.pname = rest[0].name; S.step = 0; resetView(); save(); } else { const f = load(true); PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.pid = null; S.pname = ''; S.d = f.d; S.step = 1; S.edit = false; S.newFrom = null; save(); } }
@@ -931,7 +933,10 @@ function evProfCard(p, compact){
   return compact ? `<div class="panel p-4"><p class="eyebrow mb-2">Anforderungsprofil des Events</p>${inner}</div>` : fold('evp', 'Anforderungsprofil des Events', inner, true, t[0]);
 }
 
-function genWeek(p, w, base){
+/* Woche w erzeugen. Reihenfolge: Zeitbudget des Monats anwenden (Punkt 7, tbApply), Woche bauen (genWeekCore), dann
+   gespeicherte Änderungen kommender Wochen einspielen (B4, woApply; nur für den aktiven Plan, nicht für Statistik-Läufe mit base). */
+function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base); return !base && p && S.p && p === S.p ? woApply(P, w) : P; }
+function genWeekCore(p, w, base){
   const o = (!base && S.ov && S.ov[w]) || {off:{}, com:{}};
   const cm0 = isComm(p), p0 = p;
   const so = w === 1 ? startOff(p0) : 0;
@@ -1152,6 +1157,9 @@ function saveTest(w, i){
 }
 function delTest(w){ const r = {...(S.p.res || {})}; delete r[w]; S.p.res = S.d.res = r; save(); render(); }
 function setFtpNow(v, w){
+  /* jede FTP-Übernahme (Test, Schätzung, Einstellungen) landet im Verlauf Gewicht und FTP (38-gewicht-ftp.js) */
+  try { wfHist(); const L = S.wf[S.wf.length - 1], c = wfCur();
+  if (!L || Math.round(L.ftp) !== Math.round(v) || L.d !== iso(0)) S.wf.push({d:iso(0), at:Date.now(), ftp:Math.round(v), kg:c.kg || 0}); } catch (e) { elog(e); }
   const old = S.p.ftp; S.p.ftp = S.d.ftp = v; try { ftpTrack(); } catch (e) { elog(e); } if (w != null && S.p.res && S.p.res[w]) { S.p.res[w].adopted = true; S.d.res = S.p.res; if (S.p.res[w].st === 'base') S.p.ftpStart = S.d.ftpStart = v; }
   replanCyc(); note('FTP aktualisiert', `Neuer FTP ${v} W statt ${old} W. Alle Wattvorgaben im Plan haben sich um ${v > old ? '+' : ''}${Math.round((v / old - 1) * 100)} % angepasst, die Prognose rechnet ab jetzt von diesem Wert aus.`, -2);
   cheerShow = null; save(); render();
@@ -1923,6 +1931,7 @@ function tgtSugHtml(d){
 }
 
 function finish(){
+  const bkSt = editState(); /* für die Sicherungs-Erinnerung: neuer oder geänderter Plan? */
   if (S.d && S.d.goal === 'event' && S.d.season === false && (S.d.subs || []).length) S.d.subs = [];
   goalMsg = ''; if (S.d.goal === 'event' && !String(S.d.eventName || '').trim()) S.d.eventName = 'Mein Event';
   { const es = editState(); if (es === 'new' || es === 'goal') { S.d.ftpStart = rngClamp('ftp', S.d.ftp, 0); delete S.d.res; delete S.d.xTests; delete S.d.recW; } else if (S.p && !S.d.ftpStart) S.d.ftpStart = S.p.ftpStart || S.p.ftp; }
@@ -1935,6 +1944,7 @@ function finish(){
   S.edit = false; S.step = 0; S.newFrom = null; pg = null; pgFrom = null; if (!S.pid) { S.pid = uid(); S.pname = planName(S.p); } else if (!S.pnameManual && (S.pname === oldAuto || isAutoName(S.pname))) S.pname = planName(S.p); analyze(); save();
   try { const v = planCheck(S.p, true).verdict; if ((v === 'high' || v === 'mid') && !ackOn(S.p) && S.goalSeen !== goalKey(S.p)) { goalCache = goalOpts(S.p, true); goalOpen = goalCache ? 'dash' : null; } } catch (e) { elog(e); }
   render();
+  if (S.step === 0 && bkSt !== 'same') { bkMarkChange(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
 }
 function editCopy(){ return {...S.p, avail:[...S.p.avail], commute:[...S.p.commute], commuter: isComm(S.p), dayMin:[...(S.p.dayMin || [60,60,60,60,60,180,240])], subs:[...(S.p.subs || [])]}; }
 function cancelEdit(){ if (S.p) S.d = editCopy(); S.edit = false; S.step = 0; pg = null; save(); render(); window.scrollTo(0, 0); }
@@ -2786,7 +2796,7 @@ function tog(i){ open = open === i ? null : i; render(); }
 let askReset = false;
 function reset(){ askReset = true; render(); }
 function cancelReset(){ askReset = false; render(); }
-function doReset(){ try { localStorage.removeItem(LIBK); } catch (e) { elog(e); } S = load(true); save(); open = null; vw = null; askReset = false; render(); }
+function doReset(){ bkPre('Vor dem Zurücksetzen'); try { localStorage.removeItem(LIBK); } catch (e) { elog(e); } S = load(true); save(); open = null; vw = null; askReset = false; render(); bkMirrorSoon(); }
 
 /* ---------- Bausteine ---------- */
 const spinner = '<svg class="spin" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="9" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>';
@@ -3450,7 +3460,7 @@ let dtab = {};
 function setTab(i, k){ dtab[strWeek + '-' + i] = k; render(); }
 const MINI = {ride:'<circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l5-8h4l3 8"/>', str:'<path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/>', mob:'<path d="M4 18c3-9 13-9 16 0M12 4v4"/>', stab:'<path d="M3 17h18M5 17l3-5h10"/>'};
 const mini = (k, c) => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${c || 'currentColor'}" stroke-width="2" stroke-linecap="square" aria-hidden="true" style="flex:none">${MINI[k]}</svg>`;
-function dayCard(x, i, cur = true){
+function dayCard(x, i, cur = true){ try { /* npOver gilt nur während dieses Aufbaus, siehe finally */
   npOver = cur ? npFlag(i) : null;
   const T = TYPES[x.t], t = cur ? todayIdx() : -1, dn = cur && S.done[i], isOpen = open === i, past = i < t;
   const sm = strMap[i], mb = mobMap[i], sDn = cur && sm && S.strDone && S.strDone[strKey(i)], mDn = cur && mb && S.mobDone && S.mobDone[mobKey(i)];
@@ -3481,7 +3491,7 @@ function dayCard(x, i, cur = true){
     det = `<div class="space-y-3 border-t px-4 pb-4 pt-3 text-sm" style="border-color:var(--line)">${tabBar}${pane}</div>`;
   }
   return `<div data-day="${esc((cur && i >= todayIdx() && !S.done[i] && x.m > 0) || (!cur && typeof strWeek === 'number' && S.wk && strWeek > S.wk && x.m > 0 && !mvLocked(x)) ? i : '')}" class="panel overflow-hidden ${esc((cur && flashIdx===i)?'flash':'')}" style="${esc(x.adapted?'border-color:#0a8f6a':'')}${esc(past?';opacity:.72':'')}">${head}${det}</div>`;
-}
+} finally { npOver = null; } }
 /* ---------- Trainingszustand ---------- */
 /* Ursprünglich geplante Einheit eines Tages: Anpassungen (Befinden, Krankheit, Kürzen, Pendeln) zurückverfolgen.
    Ein gesperrter Tag zählt mit seiner Einheit, wenn sie auf keinen anderen Tag verschoben werden konnte. */
@@ -6502,9 +6512,6 @@ function wfProgCard(){
 }
 function wfGo(){ wfMsg = ''; goPg('settings'); goPg('set-wf'); }
 
-/* Punkt 4: jede FTP-Übernahme (Test, Schätzung, Einstellungen) landet im Verlauf Gewicht und FTP */
-(function(){ const o = setFtpNow; setFtpNow = function(v, w){ try { wfHist(); const L = S.wf[S.wf.length - 1], c = wfCur();
-  if (!L || Math.round(L.ftp) !== Math.round(v) || L.d !== iso(0)) S.wf.push({d:iso(0), at:Date.now(), ftp:Math.round(v), kg:c.kg || 0}); } catch (e) { elog(e); } return o(v, w); }; })();
 /* ---------- Backlog 07.11.2026, Punkt 5 (F10): Einheit gegen eine gleichwertige Variante austauschen ----------
    Gleichwertig heißt: gleicher Reiz (Grundlage, Sweet Spot, Schwelle, VO2max, Sprint, Erholung), TSS und Zeit in der
    Zielzone innerhalb von ±10 %, Gesamtdauer innerhalb von ±15 %. Die Bibliothek beschreibt nur die Struktur; Länge und
@@ -6869,8 +6876,6 @@ function tbScale(t, ch){
   return {...ch, tb};
 }
 
-/* Punkt 7: Wochenplanung im Zeitbudget des Monats */
-(function(){ const o = genWeek; genWeek = function(p, w, base){ return o(tbApply(p, w), w, base); }; })();
 /* ---------- F11: Kraft- und Stabilitätsübungen als Sequenz mit Tonsignalen ----------
    Baut auf dem bestehenden Modell auf: MOB (Mobilität/Stabilität: [id, Name, Dosis-Text]) und strSession (Kraft:
    Zeilen mit „Sätze × Wdh.“ plus Rumpfübungen). Der Dosis-Text wird in Sätze, Sekunden oder Wiederholungen und
@@ -7302,8 +7307,6 @@ function woCtl(x, i){
   return h;
 }
 
-/* B4: gespeicherte Änderungen kommender Wochen beim Erzeugen der Woche anwenden (nicht für Statistik-Läufe mit base) */
-(function(){ const o = genWeek; genWeek = function(p, w, base){ const P = o(p, w, base); return !base && p && S.p && p === S.p ? woApply(P, w) : P; }; })();
 /* ---------- F14: Versionsstand in der App ablesbar ----------
    Eine Quelle: APP_BUILD (aus build/BUILD_ID), APP_VERSION (aus build/APP_VERSION) und APP_SW (aus der Cache-Version
    in relentless/public/sw.js) setzt der Build ein; version.json enthält dieselben Werte, build.sh --check prüft das. */
@@ -7470,7 +7473,7 @@ function sqCatalog(){
   const srt = s => [...s].sort();
   return {de:srt(de), en:srt(en)};
 }
-function heroDay(p){
+function heroDay(p){ try { /* npOver gilt nur während dieses Aufbaus, siehe finally */
   t0Fix(p); tdFix(p);
   if (hasStarted(p) && endOf(p) && iso(0) > endOf(p)) return seasonOver(p);
   const started = hasStarted(p), plan = S.plan || [], t = started ? todayIdx() : 0, so = started ? 0 : startOff(p);
@@ -7494,7 +7497,7 @@ function heroDay(p){
 
     ${x.m ? wkHero(i, x, sm, mb) : ''}
     <div class="hact">${cur && x.m ? `<button class="hbtn" onclick="tick(${ja(i)})">${rideDn ? '✓ Erledigt' : 'Als erledigt markieren'}</button>` : ''}${cur && x.m && x.parts && exePNext(i) != null ? `<label class="hib">${svgI('<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>', 18)}<span>${exeBusy === i ? '…' : x.parts[exePNext(i)].lbl}</span><input type="file" accept=".fit,.gpx,.tcx,.zip,.gz,.xml" style="display:none" onchange="exeUpload(this, ${ja(i)}, ${ja(exePNext(i))})"></label>` : ''}${cur && x.m && !(x.parts && exePNext(i) != null && !exeGet(S.wk, i)) ? (exeGet(S.wk, i) ? `<button class="hib" onclick="exeShow='${ja(S.wk)}-${ja(i)}';render()">${svgI('<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>', 18)}<span>${exeGet(S.wk, i).score}/100</span></button>` : `<label class="hib">${svgI('<path d="M12 16V4M7 9l5-5 5 5M4 20h16"/>', 18)}<span>${exeBusy === i ? '…' : 'Hochladen'}</span><input type="file" accept=".fit,.gpx,.tcx,.zip,.gz,.xml" style="display:none" onchange="exeUpload(this, ${ja(i)})"></label>`) : ''}${testChip ? `<button class="hib${esc(heroTab === 'test' ? ' on' : '')}" aria-expanded="${heroTab === 'test'}" onclick="heroOpen('test')">${svgI('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>', 18)}<span>${(S.p.res || {})[S.wk] ? 'Ergebnis ✓' : 'Ergebnis'}</span></button>` : ''}${cur && (x.m || sm || mb || x.feel) && !(S.done[i] || (S.actual && S.actual[i])) ? `<button class="hib${esc(heroTab === 'feel' ? ' on' : '')}${esc(x.feel ? ' fe' : '')}" aria-expanded="${heroTab === 'feel'}" onclick="heroOpen('feel')">${svgI('<path d=\"M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z\"/>', 18)}<span>${x.feel === 'sick' ? 'Wieder fit?' : x.feel ? 'Angepasst' : 'Befinden'}</span></button>` : ''}${cur && x.m ? `<button class="hib${esc(heroTab === 'clo' ? ' on' : '')}" aria-expanded="${heroTab === 'clo'}" onclick="heroOpen('clo')">${svgI(CLI, 18)}<span>${cloShort(x, i, dstr(i)) ? 'Kleidung ' + cloShort(x, i, dstr(i)) : 'Kleidung'}</span></button>` : ''}<button class="hib${esc(heroTab === 'fuel' ? ' on' : '')}" aria-expanded="${heroTab === 'fuel'}" onclick="heroOpen('fuel')">${svgI('<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>', 18)}<span>Essen</span></button><button class="hib" onclick="openDay(${ja(i)})">${svgI('<path d="M4 6h16M4 12h16M4 18h10"/>', 18)}<span>Details</span></button></div>${heroTab ? `<div class="hpane">${heroTab === 'test' ? testBox(S.wk, i, cur) : heroTab === 'str' ? strBlock(i, cur, true) : heroTab === 'mob' ? mobBlock(i, cur, true) : heroTab === 'feel' ? feelBox(i) : heroTab === 'clo' ? '<p class="font-semibold">Kleidung</p><div class="mt-1">' + cloBox(x, i, dstr(i)) + '</div>' : '<p class="font-semibold">Verpflegung</p>' + fuelTip(x, i, p)}</div>` : ''}</section>`;
-}
+} finally { npOver = null; } }
 /* ---------- Wissen: strukturierte Theorie mit persönlichem Verpflegungsrechner ---------- */
 function wGo(id){ if (!document.getElementById(id) && id !== 'w-src' && pg === 'science' && wGrpOf(id) !== (wGrp || 'ern')) { wGrp = wGrpOf(id); render(); } const el = document.getElementById(id); if (el) { el.open = true; el.scrollIntoView({behavior:'smooth', block:'start'}); } }
 const wsec = (id, title, sub, inner, open) => `<details id="${esc(id)}" class="wsec panel"${open ? ' open' : ''}><summary><span><span class="hd block text-xl font-semibold">${title}</span><span class="text-xs" style="color:var(--mute)">${sub}</span></span><span class="wchev" aria-hidden="true">▾</span></summary><div class="wbody">${inner}</div></details>`;
@@ -8026,8 +8029,7 @@ try { trInit(); } catch (e) { elog(e); }
 try { gtInit(); } catch (e) { elog(e); }
 try { updInit(); } catch (e) { elog(e); }
 try { wnBoot(); setTimeout(wnCheck, 1500); } catch (e) { elog(e); }
-try { const _npHd = heroDay; heroDay = function(p){ try { return _npHd(p); } finally { npOver = null; } }; const _npDc = dayCard; dayCard = function(...a){ try { return _npDc(...a); } finally { npOver = null; } }; } catch (e) { elog(e); }
-try { const _bkSave = save; save = function(){ _bkSave(); bkMirrorSoon(); }; const _bkDr = doReset; doReset = function(){ bkPre('Vor dem Zurücksetzen'); _bkDr(); bkMirrorSoon(); }; const _bkDp = doDelPlan; doDelPlan = function(id){ bkPre('Vor dem Löschen eines Plans'); _bkDp(id); }; const _bkFin = finish; finish = function(){ const st = typeof editState === 'function' ? editState() : null, r = _bkFin.apply(this, arguments); if (S.step === 0 && st !== 'same') { bkMarkChange(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } } return r; }; bkInit(); } catch (e) { elog(e); }
+try { bkInit(); } catch (e) { elog(e); }
 if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register("/sw.js").catch(() => {});
 </script>
 </body>

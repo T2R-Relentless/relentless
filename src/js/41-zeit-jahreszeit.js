@@ -120,5 +120,3 @@ function tbScale(t, ch){
   return {...ch, tb};
 }
 
-/* Punkt 7: Wochenplanung im Zeitbudget des Monats */
-(function(){ const o = genWeek; genWeek = function(p, w, base){ return o(tbApply(p, w), w, base); }; })();

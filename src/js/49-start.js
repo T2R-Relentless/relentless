@@ -25,6 +25,5 @@ try { trInit(); } catch (e) { elog(e); }
 try { gtInit(); } catch (e) { elog(e); }
 try { updInit(); } catch (e) { elog(e); }
 try { wnBoot(); setTimeout(wnCheck, 1500); } catch (e) { elog(e); }
-try { const _npHd = heroDay; heroDay = function(p){ try { return _npHd(p); } finally { npOver = null; } }; const _npDc = dayCard; dayCard = function(...a){ try { return _npDc(...a); } finally { npOver = null; } }; } catch (e) { elog(e); }
-try { const _bkSave = save; save = function(){ _bkSave(); bkMirrorSoon(); }; const _bkDr = doReset; doReset = function(){ bkPre('Vor dem Zurücksetzen'); _bkDr(); bkMirrorSoon(); }; const _bkDp = doDelPlan; doDelPlan = function(id){ bkPre('Vor dem Löschen eines Plans'); _bkDp(id); }; const _bkFin = finish; finish = function(){ const st = typeof editState === 'function' ? editState() : null, r = _bkFin.apply(this, arguments); if (S.step === 0 && st !== 'same') { bkMarkChange(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } } return r; }; bkInit(); } catch (e) { elog(e); }
+try { bkInit(); } catch (e) { elog(e); }
 if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register("/sw.js").catch(() => {});
