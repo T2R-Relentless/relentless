@@ -18,36 +18,14 @@ function iVal(x){
   return r;
 }
 let I18N = {};
-/* Nachträge zum komprimierten Wörterbuch (ab Version 175). Neue Einträge hier ergänzen, nicht im komprimierten Block. */
-const I18N_ADD = {
-  'Du kannst dich in ganzen Sätzen unterhalten · frei, {0}–{1} U/min':'You can talk in full sentences · cadence free, {0}–{1} rpm',
-  'Apple, Google, Outlook · {0} Termine ab heute':'Apple, Google, Outlook · {0} events from today',
-  'Einzelne Einheiten exportierst du direkt bei der Einheit im Wochenplan: {0} oder {1}.':'You can export single sessions directly from the session in the weekly plan: {0} or {1}.',
-  'Sobald du Fahrten mit Wattmesser hochlädst, stehen hier deine besten Werte über {0} Sekunden bis {1} Minuten.':'As soon as you upload rides with a power meter, your best values from {0} seconds to {1} minutes appear here.',
-  'Dein Ziel läuft bis {0}.':'Your goal runs until {0}.',
-  'Fehlerprotokoll':'Error log',
-  'Hier hält die App Fehler fest, die sie im Hintergrund abgefangen hat.':'This is where the app records errors it caught in the background.',
-  'Sie bleiben auf diesem Gerät.':'They stay on this device.',
-  'Wenn etwas nicht wie erwartet funktioniert, kopiere das Protokoll und schick es mit deiner Beschreibung.':'If something does not work as expected, copy the log and send it along with your description.',
-  'Keine Fehler aufgezeichnet.':'No errors recorded.',
-  '· zuletzt':'· last',
-  'und {0} weitere':'and {0} more',
-  'Kopieren':'Copy',
-  'Leeren':'Clear',
-  'Kopiert.':'Copied.',
-  'Du kannst es jetzt z. B. in eine Nachricht einfügen.':'You can now paste it into a message, for example.',
-  'Kopieren ist hier nicht möglich.':'Copying is not possible here.',
-  '{0} Einträge':'{0} entries',
-  '{0} Eintrag':'{0} entry',
-  'leer':'empty'
-};
 /* Englisch: Einzahl, wo das deutsche Wort für Ein- und Mehrzahl gleich ist („1 Riegel“ → „1 bar“, nicht „1 bars“) */
 const iSing = s => s.replace(/(^|[^\d.,])1 (bars|bottles|gels)\b/g, (m, a, w) => a + '1 ' + w.slice(0, -1));
-/* Englisches Wörterbuch komprimiert in der Datei, wird erst bei Bedarf entpackt */
+/* Englisches Wörterbuch: Quelle ist src/i18n/en.json („deutscher Satz“: „englischer Satz“, Platzhalter {0}, {1} … für
+   Zahlen, Daten und Namen). Beim Bauen wird es komprimiert in die Seite gelegt und erst bei Bedarf entpackt. */
 let i18nReady = false, i18nLoading = null;
 function i18nLoad(){
   if (i18nReady) return Promise.resolve(true);
-  if (!i18nLoading) i18nLoading = (async () => { try { const el = document.getElementById('i18n-en'), b = Uint8Array.from(atob(el.textContent.trim()), c => c.charCodeAt(0)); const st = new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip')); I18N = Object.assign(JSON.parse(await new Response(st).text()), I18N_ADD); i18nReady = true; } catch (e) { elog(e); i18nReady = false; } document.documentElement.classList.remove('i18nwait'); return i18nReady; })();
+  if (!i18nLoading) i18nLoading = (async () => { try { const el = document.getElementById('i18n-en'), b = Uint8Array.from(atob(el.textContent.trim()), c => c.charCodeAt(0)); const st = new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip')); I18N = JSON.parse(await new Response(st).text()); i18nReady = true; } catch (e) { elog(e); i18nReady = false; } document.documentElement.classList.remove('i18nwait'); return i18nReady; })();
   return i18nLoading;
 }
 
