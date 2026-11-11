@@ -1,0 +1,87 @@
+/* ---------- F14: Versionsstand in der App ablesbar ----------
+   Eine Quelle: APP_BUILD (aus build/BUILD_ID), APP_VERSION (aus build/APP_VERSION) und APP_SW (aus der Cache-Version
+   in relentless/public/sw.js) setzt der Build ein; version.json enthält dieselben Werte, build.sh --check prüft das. */
+const APP_VERSION = 174, APP_SW = 'relentless-v11';
+let viOpen = false, viMsg = '', updVer = 0;
+/* 20261107180000 → „07.11.2026, 18:00“ bzw. „07 Nov 2026, 18:00“ */
+function viDate(id){ const m = String(id || '').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/); if (!m) return String(id || '');
+  if (lang() === 'en') return `${m[3]} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m[2] - 1]} ${m[1]}, ${m[4]}:${m[5]}`;
+  return `${m[3]}.${m[2]}.${m[1]}, ${m[4]}:${m[5]}`; }
+/* Betriebsart: installiert (Home-Bildschirm), im Browser oder in Claude (Artifact) */
+function viMode(){ try { if (!updWeb()) return 'art'; if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone) return 'app'; } catch (e) { elog(e); } return 'web'; }
+const viModeTxt = m => m === 'app' ? 'Installiert (Home-Bildschirm)' : m === 'art' ? 'In Claude (Artifact)' : 'Im Browser';
+const viModeEn = m => m === 'app' ? 'Installed (home screen)' : m === 'art' ? 'In Claude (artifact)' : 'In the browser';
+/* Eine Textzeile zum Mitschicken bei Fehlermeldungen (in der App-Sprache, deshalb ohne Wörterbuch) */
+function viText(){ const m = viMode(), en = lang() === 'en';
+  return `Relentless · Version ${APP_VERSION} · Build ${APP_BUILD} · ${APP_SW} · ${en ? viModeEn(m) : viModeTxt(m)} · ${updNew ? (en ? 'update available' : 'neue Version verfügbar') : (en ? 'up to date' : 'aktuell')}`; }
+async function viCopy(){
+  const t = viText(); let ok = false;
+  try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {
+    try { const a = document.createElement('textarea'); a.value = t; a.setAttribute('readonly', ''); a.style.position = 'fixed'; a.style.opacity = '0'; document.body.appendChild(a); a.select(); ok = document.execCommand('copy'); a.remove(); } catch (er) { elog(er); } }
+  viMsg = ok ? 'Kopiert.' : 'Kopieren nicht möglich. Bitte die Angaben abschreiben.'; render();
+}
+function viSearch(){ updAt = 0; updNew = false; viMsg = 'Suche …'; render(); Promise.resolve(updCheck()).then(() => { viMsg = updNew ? '' : 'Du hast die neueste Version.'; render(); }); }
+function verLine(){
+  const m = viMode(), web = updWeb();
+  const row = (k, v) => `<div class="flex gap-3 py-1" style="border-top:1px solid var(--line)"><span class="flex-1 text-left">${k}</span><span class="font-semibold" data-noi18n>${v}</span></div>`;
+  const info = viOpen ? `<div id="viInfo" class="panel mx-auto mt-2 p-3 text-left text-sm" style="max-width:420px;color:var(--ink)">${row('Version', esc(APP_VERSION))}${row('Build-ID', esc(APP_BUILD))}${row('Service Worker', esc(APP_SW))}
+      <div class="flex gap-3 py-1" style="border-top:1px solid var(--line)"><span class="flex-1">So läuft die App</span><span class="font-semibold">${viModeTxt(m)}</span></div>
+      <div class="py-1" style="border-top:1px solid var(--line)">${!web ? `<p>In Claude wird immer die zuletzt veröffentlichte Version angezeigt.</p>` : updNew ? `<button class="btn w-full" style="min-height:44px" onclick="updGo()">Neue Version verfügbar – jetzt laden</button>` : `<p>Aktuell</p><button class="ghost mt-1 !w-auto !px-3 text-xs" style="min-height:44px" onclick="viSearch()">Nach neuer Version suchen</button>`}</div>
+      <button class="ghost mt-2 w-full text-sm" style="min-height:44px" onclick="wnOpenAll()">Was ist neu</button>
+      <button class="ghost mt-2 w-full text-sm" style="min-height:44px" onclick="viCopy()">Kopieren</button>${viMsg ? `<p class="mt-1 text-center text-xs" role="status">${esc(viMsg)}</p>` : ''}</div>` : '';
+  return `<div class="mt-6 text-center text-xs" style="color:var(--mute)"><button id="viLine" class="text-xs" style="background:none;border:0;color:var(--mute);min-height:44px" aria-expanded="${viOpen}" onclick="viOpen=!viOpen;viMsg='';render()">Relentless · Version <span data-noi18n>${esc(APP_VERSION)}</span> · Build <span data-noi18n>${esc(viDate(APP_BUILD))}</span></button>${info}</div>`;
+}
+/* ---------- F15: „Was ist neu“ nach einem Update, genau einmal ----------
+   Die Einträge stehen nur in build/modules/wn/WHATSNEW.json (je Version, Deutsch und Englisch) und werden beim Build als WN_DATA
+   eingesetzt. „Zuletzt gesehen“ liegt im Zustand (S.wnSeen: Speicher, IndexedDB-Spiegel, Schnappschüsse, Sicherung)
+   und zusätzlich unter einem eigenen Schlüssel im Speicher. Es gilt immer der höhere Wert, damit eine ältere
+   Sicherung oder eine Wiederherstellung das Pop-up nicht erneut auslöst. */
+const WN_DATA = {"171": [], "172": [{"ic": "book", "go": "nav:logbook", "de": "Logbuch: alle Fahrten und Übungseinheiten mit Bewertung an einem Ort.", "en": "Logbook: all rides and exercise sessions with their evaluation in one place."}, {"ic": "bike", "go": "nav:week", "de": "Zusätzliche Fahrten von Garmin erscheinen jetzt in der Woche und werden bewertet.", "en": "Extra rides from Garmin now appear in your week and are evaluated."}, {"ic": "move", "go": "nav:week", "de": "Einheiten verschieben, auch „heute statt Sonntag“.", "en": "Move sessions, including “today instead of Sunday”."}, {"ic": "swap", "go": "nav:week", "de": "Einheiten gegen eine gleichwertige Variante tauschen, auch für kommende Wochen.", "en": "Swap sessions for an equivalent variation, also in upcoming weeks."}, {"ic": "scale", "go": "set:set-wf", "de": "Gewicht und FTP direkt in den Einstellungen.", "en": "Weight and FTP right in the settings."}, {"ic": "play", "go": "nav:week", "de": "Stabi- und Kraftübungen laufen als Sequenz mit Tönen und Ansagen.", "en": "Stability and strength exercises run as a sequence with sounds and voice prompts."}, {"ic": "clock", "go": "set:set-ali", "de": "Zeitbudget für Winter und Sommer.", "en": "Time budget for winter and summer."}, {"ic": "info", "de": "Versionsanzeige ganz unten in den Einstellungen.", "en": "Version info at the bottom of the settings."}], "173": [{"ic": "voice", "go": "set:set-sq", "de": "Neue, natürliche Stimme für die Übungsansagen.", "en": "A new, natural voice for the exercise prompts."}], "174": []}, WN_BASE = 170, WN_KEY = 'relentless-wn-seen';
+let wnShow = null, wnTry = 0;
+const wnLs = () => { try { return +localStorage.getItem(WN_KEY) || 0; } catch (e) { elog(e); return 0; } };
+function wnSeen(){ return Math.max(+S.wnSeen || 0, wnLs()); }
+function wnMark(v){ v = Math.max(v, wnSeen()); S.wnSeen = v; try { localStorage.setItem(WN_KEY, String(v)); } catch (e) { elog(e); } try { save(); } catch (e) { elog(e); } }
+/* Einträge aller Versionen nach „from“ bis „to“, neueste zuerst; höchstens max Punkte, Rest zusammengefasst */
+function wnItems(from, to, data, max){
+  data = data || WN_DATA; max = max || 6; const L = [];
+  Object.keys(data).map(Number).filter(v => v > from && v <= to).sort((a, b) => b - a).forEach(v => (data[v] || []).forEach(x => L.push({...x, v})));
+  return {items:L.slice(0, max), more:L.length > max, n:L.length};
+}
+/* Hatte die App schon Daten? (Neuinstallation: still als gesehen speichern) */
+const wnHasData = () => { try { if (S.p || S.pid || +S.wnSeen) return true; const l = readLib(); return !!(l && l.plans && Object.keys(l.plans).length); } catch (e) { elog(e); return !!S.p; } };
+function wnDue(){
+  const seen = wnSeen();
+  if (!seen && !wnHasData()) { wnMark(APP_VERSION); return false; }
+  const from = seen || WN_BASE; if (from >= APP_VERSION) return false;
+  if (!wnItems(from, APP_VERSION).n) { wnMark(APP_VERSION); return false; }
+  return true;
+}
+/* erst zeigen, wenn die App fertig ist und kein anderer Dialog offen ist; sonst später in derselben Sitzung */
+const wnBusy = () => !!(document.querySelector('.exov, .sqov, .sqask, [role="dialog"], [role="alertdialog"]') || (typeof sq !== 'undefined' && sq) || (typeof exOpen !== 'undefined' && exOpen) || (typeof bkImp !== 'undefined' && bkImp));
+/* beim Start sofort (nicht erst verzögert) erkennen, ob das eine Neuinstallation ist; sonst würde ein in den ersten
+   Sekunden angelegter Plan als „vorhandene Daten“ gelten und das Pop-up auslösen */
+function wnBoot(){ try { if (S && !wnSeen() && !wnHasData()) { S.wnSeen = APP_VERSION; localStorage.setItem(WN_KEY, String(APP_VERSION)); } } catch (e) { elog(e); } }
+function wnCheck(){
+  try { if (wnShow || !S) return;
+    /* Neuinstallation (noch nie gesehen, keine Daten): still als gesehen merken, auch während der Einrichtung */
+    if (!wnSeen() && !wnHasData()) { S.wnSeen = APP_VERSION; try { localStorage.setItem(WN_KEY, String(APP_VERSION)); } catch (e) { elog(e); } return; }
+    /* beide Ablagen auf den höheren Wert bringen (z. B. nach Spiegel-Wiederherstellung fehlt der eigene Schlüssel) */
+    const sn = wnSeen(); if (sn && wnLs() < sn) { try { localStorage.setItem(WN_KEY, String(sn)); } catch (e) { elog(e); } } if (sn && (+S.wnSeen || 0) < sn) { S.wnSeen = sn; if (S.step === 0) { try { save(); } catch (e) { elog(e); } } }
+    if (S.step !== 0 || !wnDue()) { if (S.step !== 0 && ++wnTry < 60) setTimeout(wnCheck, 2000); return; } if (wnBusy()) { if (++wnTry < 60) setTimeout(wnCheck, 2000); return; }
+    const from = wnSeen() || WN_BASE; wnShow = {from, auto:true}; wnMark(APP_VERSION); render(); setTimeout(() => { const b = document.getElementById('wnGo'); if (b) b.focus(); }, 50); } catch (e) { elog(e); }
+}
+function wnOpenAll(){ wnShow = {from:Math.max(0, APP_VERSION - 5), auto:false}; render(); setTimeout(() => { const b = document.getElementById('wnGo'); if (b) b.focus(); }, 50); }
+function wnClose(){ if (!wnShow) return; wnShow = null; render(); }
+function wnJump(k){ const x = wnItems(wnShow ? wnShow.from : 0, APP_VERSION, null, 99).items[k]; wnShow = null; try { if (x && x.go) { const [a, b] = String(x.go).split(':'); if (a === 'nav') navGo(b === 'home' ? null : b); else { navGo('more'); goPg('settings'); goPg(b); } } } catch (e) { elog(e); } render(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && wnShow) wnClose(); });
+const WN_IC = {book:'<path d="M5 4.5h9a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h9"/>', bike:'<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l2 7"/>', move:'<path d="M4 12h15M14 7l5 5-5 5"/>', swap:'<path d="M5 8h13M14 4l4 4-4 4M19 16H6M10 12l-4 4 4 4"/>', scale:'<path d="M5 20h14l-2-11H7z"/><circle cx="12" cy="6" r="2.5"/>', play:'<circle cx="12" cy="12" r="8.5"/><path d="M10 8.8l5 3.2-5 3.2z" fill="currentColor"/>', clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', info:'<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".6" fill="currentColor"/>', voice:'<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>'};
+const wnIc = n => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none;color:var(--teal)">${WN_IC[n] || WN_IC.info}</svg>`;
+function wnModal(){
+  if (!wnShow) return '';
+  const en = lang() === 'en', R = wnItems(wnShow.from, APP_VERSION), all = !wnShow.auto;
+  const t = all ? (en ? 'What\'s new' : 'Was ist neu') : (en ? `New in version ${APP_VERSION}` : `Neu in Version ${APP_VERSION}`);
+  const li = (x, k) => `<li class="flex items-start gap-3 py-2" style="border-top:1px solid var(--line)">${wnIc(x.ic)}<span class="min-w-0 flex-1 text-sm">${esc(en ? x.en : x.de)}</span>${x.go ? `<button class="text-sm font-semibold" style="background:none;border:0;color:var(--teal);min-height:44px" onclick="wnJump(${ja(k)})">${en ? 'Show' : 'Zeigen'}</button>` : ''}</li>`;
+  return `<div class="exov" data-noi18n onclick="if(event.target===this)wnClose()"><div class="exbox" role="dialog" aria-modal="true" aria-labelledby="wnT" style="max-width:440px"><p id="wnT" class="hd text-2xl font-semibold">${esc(t)}</p>
+    ${R.items.length ? `<ul class="mt-3">${R.items.map(li).join('')}</ul>${R.more ? `<p class="mt-2 text-sm" style="color:var(--mute)">${en ? '… and further small improvements' : '… und weitere kleine Verbesserungen'}</p>` : ''}` : `<p class="mt-3 text-sm">${en ? 'No new features in the recent versions.' : 'In den letzten Versionen gab es keine neuen Funktionen.'}</p>`}
+    <button id="wnGo" class="btn mt-4 w-full" style="min-height:52px" onclick="wnClose()">${all ? (en ? 'Close' : 'Schließen') : (en ? 'Let\'s go' : 'Los geht\'s')}</button></div></div>`;
+}

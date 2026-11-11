@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relentless – Rennrad-Trainingsplan</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Relentless">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#071747">
+<style id="font-geist">{{include css/geist.css}}
+</style>
+<style>
+{{include css/app.css}}
+</style>
+<style id="tw">{{include css/tailwind.css}}</style>
+<style id="fx-date">{{include css/datumsfelder.css}}</style>
+<style id="rc-css">{{include css/rueckblicke.css}}</style>
+<style id="p2-a11y">{{include css/barrierefreiheit.css}}</style>
+<style id="f11-sq">{{include css/uebungssequenz.css}}</style>
+</head>
+<body>
+<!-- Reset ohne confirm(): Inline-Bestätigung -->
+<main id="app" class="mx-auto w-full max-w-xl px-4 pb-24 pt-5"></main>
+<script type="application/octet-stream" id="i18n-en">{{include i18n/en-blob.txt}}</script>
+
+<script>
+{{include js/*.js}}
+</script>
+</body>
+</html>
