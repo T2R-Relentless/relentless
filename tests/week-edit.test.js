@@ -41,3 +41,32 @@ test('Kein Pendeln für Tage in der Vergangenheit, erledigte Tage oder ohne Pend
   const b = await boot({now:THU}); makePlan(b, wDat({commuter:false, commute:[false, false, false, false, false, false, false]}));
   eq(b.$('comAble(S.plan.find(x => x.m > 0))'), false);
 });
+
+/* Fitness-Check fällt wegen Befinden aus → wird nachgeholt, auch nach einer Planänderung */
+const tDat = d => ({goal:'ftp', ftp:230, ftpTarget:260, endDate:'2027-03-28', hours:7, ftpSrc:'test', test0:true, startDate:'2026-11-09', ...d});
+const hasTest = L => L.some(x => x && x.t === 'test');
+for (const lv of ['neck', 'heavy', 'sick']) test(`Fitness-Check bei „${lv}“: vorgemerkt und in dieser oder der nächsten Woche nachgeholt`, async () => {
+  const a = await boot({now:at(2026, 11, 9)}); makePlan(a, tDat({}));
+  const i = a.$("S.plan.findIndex(x => x.t === 'test')"); ok(i >= 0, 'Test in Woche 1'); a.setNow(at(2026, 11, 9 + i)); a.$('render()');
+  a.$(`feelDay(${i}, '${lv}')`); await a.tick(5); a.$('render()');
+  ok(a.$('S.p.testDue') && a.$('testOwed(S.p)'), 'offen vorgemerkt'); ok(a.$("S.log.some(l => l.title === 'Fitness-Check verschoben')"), 'Hinweis');
+  const now = a.$('S.plan.slice(' + (i + 1) + ')'), nx = a.$('genWeek(S.p, 2)'); ok(hasTest(now) || hasTest(nx), 'in dieser Woche nach dem Tag oder in der Vorschau der nächsten Woche');
+  ok(!(hasTest(now) && hasTest(nx)), 'nicht doppelt');
+  a.setNow(at(2026, 11, 17)); a.$('render()'); if (!hasTest(now)) ok(hasTest(a.$('S.plan')), 'in Woche 2 eingeplant'); a.noErrors();
+});
+
+test('Fitness-Check: „Etwas müde“ lässt den Test stehen, Zurücknehmen löscht die Vormerkung', async () => {
+  const a = await boot({now:at(2026, 11, 9)}); makePlan(a, tDat({}));
+  const i = a.$("S.plan.findIndex(x => x.t === 'test')"); a.setNow(at(2026, 11, 9 + i)); a.$('render()');
+  a.$(`feelDay(${i}, 'tired')`); eq(a.$(`S.plan[${i}].t`), 'test'); ok(!a.$('S.p.testDue'));
+  a.$(`feelDay(${i}, 'neck')`); ok(a.$('S.p.testDue')); a.$(`feelDay(${i}, 'tired')`); ok(!a.$('S.p.testDue'), 'wieder aufgehoben');
+});
+
+test('Fitness-Check bleibt offen, wenn der Plan danach angepasst wird', async () => {
+  const a = await boot({now:at(2026, 11, 9)}); makePlan(a, tDat({}));
+  const i = a.$("S.plan.findIndex(x => x.t === 'test')"); a.setNow(at(2026, 11, 9 + i)); a.$('render()');
+  a.$(`feelDay(${i}, 'sick')`); await a.tick(5); const due = a.$('S.p.testDue.from');
+  a.$('S.edit = true; S.d.hours = 8; finish()'); a.noErrors('Anpassen');
+  eq(a.$('S.p.testDue && S.p.testDue.from'), due, 'Vormerkung erhalten'); ok(a.$('testOwed(S.p)'), 'weiter offen');
+  a.setNow(at(2026, 11, 17)); a.$('render()'); a.setNow(at(2026, 11, 24)); a.$('render()'); ok(hasTest(a.$('S.plan')) || hasTest(a.$('genWeek(S.p, 4)')), 'Test wird nachgeholt');
+});

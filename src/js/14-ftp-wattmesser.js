@@ -211,7 +211,7 @@ const sources = () => fold('src', 'Wissenschaftliche Grundlage', `<div class="te
   <p class="mt-3 text-xs" style="color:var(--mute)">Grenzen: FTP-Prozentzonen sind Näherungen, individuelle Laktatschwellen weichen ab. Die Drei-Wochen-Belastung plus Erholungswoche ist eine Praxisregel mit begrenzter Evidenz. Viele Studien nutzen trainierte, meist männliche Probanden. Schwellenwerte der Auswirkungskarte sind Faustwerte. Der Zielzeit-Check ist ein physikalisches Faustmodell mit etwa ±10 % Genauigkeit. Kein Ersatz für Trainer- oder ärztlichen Rat.</p></div>`, false);
 function undo(i){
   const x = S.plan[i]; if (!x || !x.orig) return;
-  if (x.orig.t === 'test' && S.p && S.p.testDue && S.p.testDue.w === S.wk) delete S.p.testDue;
+  if (x.orig.t === 'test' && S.p && S.p.testDue && S.p.testDue.w === S.wk) { delete S.p.testDue; if (S.d) delete S.d.testDue; }
   S.plan[i] = x.orig; S.log = S.log.filter(l => l.day !== i); [i + 1, i + 2].forEach(k => { const z = S.plan[k]; if (z && z.fu === i && z.orig) { S.plan[k] = z.orig; S.log = S.log.filter(l => l.day !== k); } }); save(); render();
 }
 function tick(i){ S.done[i] = !S.done[i]; try { if (S.plan[i] && S.plan[i].t === 'test' && S.p) { S.p.testDone = (S.p.testDone || []).filter(q => q !== S.wk); if (S.done[i]) S.p.testDone.push(S.wk); } } catch (e) { elog(e); } if (S.done[i]) cheerScan(0); save(); render(); }
