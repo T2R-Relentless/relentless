@@ -5,6 +5,7 @@ Startet einen Webserver im Projektordner (nicht nur public/), damit die Testseit
 
     python3 tests/serve.py            # dann http://localhost:8765/tests/ öffnen
 
+Bildschirmfotos für Berichte nimmt er als PUT /claude/bilder/<name>.png entgegen (nur PNG, nur von 127.0.0.1).
 Zusätzlich nimmt er Vergleichsstände (Snapshots) der Tests entgegen: PUT /tests/snapshots/<name>.json schreibt die
 Datei. Das geht nur von diesem Rechner aus (127.0.0.1) und nur für Dateinamen aus Buchstaben, Ziffern und Bindestrich.
 Ohne Abhängigkeiten, Python ab 3.7.
@@ -18,6 +19,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SNAP_DIR = os.path.join(ROOT, 'tests', 'snapshots')
 SNAP_RE = re.compile(r'^/tests/snapshots/([a-z0-9-]{1,60})\.json$')
+SHOT_DIR = os.path.join(ROOT, 'claude', 'bilder')
+SHOT_RE = re.compile(r'^/claude/bilder/([a-z0-9-]{1,80})\.png$')
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
 
 
@@ -31,6 +34,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_PUT(self):
+        shot = SHOT_RE.match(self.path)
+        if shot and self.client_address[0] in ('127.0.0.1', '::1'):
+            n = int(self.headers.get('Content-Length') or 0)
+            body = self.rfile.read(n) if 0 < n <= 20_000_000 else b''
+            if not body.startswith(b'\x89PNG'):
+                self.send_error(400, 'Kein PNG')
+                return
+            os.makedirs(SHOT_DIR, exist_ok=True)
+            with open(os.path.join(SHOT_DIR, shot.group(1) + '.png'), 'wb') as f:
+                f.write(body)
+            self.send_response(204)
+            self.end_headers()
+            return
         m = SNAP_RE.match(self.path)
         if not m or self.client_address[0] not in ('127.0.0.1', '::1'):
             self.send_error(403, 'Nicht erlaubt')

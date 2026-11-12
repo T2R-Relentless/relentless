@@ -13,3 +13,6 @@ node_modules/
 # Geheimnisse niemals einchecken
 .env
 .env.*
+
+# Testseite: Vergleichsstand des vorherigen Builds
+tests/tmp-*.html

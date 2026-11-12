@@ -48,6 +48,8 @@ async function snap(file, key, value){
 
 /* ---------- App im Rahmen starten ---------- */
 let SRC = null, bootN = 0;
+/* Eindeutig je Laden der Testseite: IndexedDB-Namen früherer Läufe (z. B. Sicherungs-Spiegel) dürfen nie gefunden werden */
+const RUN = Date.now().toString(36);
 async function appSource(){ if (SRC == null) SRC = await (await fetch('../public/index.html', {cache:'no-store'})).text(); return SRC; }
 /* Läuft im Rahmen, bevor die App startet. Wird als Text eingesetzt, darf also nichts von außen benutzen. */
 function PRELUDE(cfg){
@@ -73,7 +75,7 @@ function PRELUDE(cfg){
 /* Startet eine frische App. store: Inhalt des Speichers (z. B. von einem früheren Lauf), now: Uhrzeit */
 async function boot({now = NOW0, store = null} = {}){
   const html = await appSource(), n = ++bootN;
-  const pre = `<base href="${new URL('../public/', location.href).href}"><script>(${PRELUDE.toString()})(${JSON.stringify({now, store, n, origin:location.origin})});<\/script>`;
+  const pre = `<base href="${new URL('../public/', location.href).href}"><script>(${PRELUDE.toString()})(${JSON.stringify({now, store, n:RUN + '-' + n, origin:location.origin})});<\/script>`;
   const old = document.getElementById('app-frame'); if (old) old.remove();
   const f = document.createElement('iframe'); f.id = 'app-frame'; f.title = 'App unter Test';
   await new Promise((res, rej) => { f.onload = res; f.onerror = rej; f.srcdoc = html.replace('<head>', '<head>' + pre); document.getElementById('stage').appendChild(f); });
@@ -130,4 +132,21 @@ async function runAll({update = false, only = null} = {}){
   sum.textContent = `${n - bad} von ${n} bestanden${bad ? `, ${bad} fehlgeschlagen` : ''}${update ? ' · Vergleichsstände neu geschrieben' : ''} · ${(Math.round(performance.now() - t0) / 1000).toFixed(1)} s`;
   sum.className = bad ? 'bad' : 'ok';
   return {passed:n - bad, failed:bad, results:R.results};
+}
+
+/* ---------- Bildschirmfotos für Berichte ----------
+   Die App hat alle Styles und Schriften eingebettet. Deshalb lässt sich ihr DOM als SVG-foreignObject in ein Bild zeichnen
+   und als PNG speichern (tests/serve.py legt es unter claude/bilder/ ab). Breite in CSS-Pixeln (375 = iPhone), 2× Auflösung. */
+async function shot(app, name, {width = 375, height = 0, scale = 2} = {}){
+  const f = app.f; f.style.width = width + 'px'; f.parentNode.style.width = width + 'px'; await app.tick(60);
+  const d = app.w.document, h = height || Math.min(4000, d.documentElement.scrollHeight);
+  const html = new XMLSerializer().serializeToString(d.documentElement).replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/:root/g, 'html'); /* im Bild ist :root das SVG-Element, die Design-Variablen hängen aber an <html> */
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${h}"><foreignObject width="100%" height="100%">${html}</foreignObject></svg>`;
+  const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  await img.decode();
+  const c = document.createElement('canvas'); c.width = width * scale; c.height = h * scale; const g = c.getContext('2d'); g.scale(scale, scale); g.fillStyle = app.w.getComputedStyle(d.body).backgroundColor; g.fillRect(0, 0, width, h); g.drawImage(img, 0, 0);
+  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+  const r = await fetch(`../claude/bilder/${name}.png`, {method:'PUT', body:blob}); if (!r.ok) throw new Fail('Bild nicht gespeichert: HTTP ' + r.status);
+  f.style.width = ''; f.parentNode.style.width = ''; return `claude/bilder/${name}.png`;
 }
