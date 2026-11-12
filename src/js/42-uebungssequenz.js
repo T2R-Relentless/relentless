@@ -15,6 +15,7 @@ const IC_P = {
   close:'<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"/><circle cx="12" cy="12" r="6.6"/>',
   warn:'<path d="M12 4l9 16H3z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r=".6" fill="currentColor"/>',
+  chevL:'<path d="M14.5 6l-6 6 6 6"/>',
   chevR:'<path d="M9.5 6l6 6-6 6"/>',
   chevD:'<path d="M6 9.5l6 6 6-6"/>',
   star:'<path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z" fill="currentColor"/>',

@@ -82,7 +82,7 @@ function parseGPX(x){
 }
 function parseTCX(x){
   const act = x.getElementsByTagName('Activity')[0], sp = act && act.getAttribute('Sport'); if (sp && !/bik|cycl/i.test(sp)) throw new Error('Das ist keine Radfahrt (' + sp + ').');
-  const pts = []; for (const e of x.getElementsByTagName('Trackpoint')) { const tm = txt1(e, 'Time'), d = txt1(e, 'DistanceMeters'), a = txt1(e, 'AltitudeMeters'); pts.push({t:tm ? Date.parse(tm) / 1000 : null, d:d != null ? parseFloat(d) : null, a:a != null ? parseFloat(a) : null, p:pwr(e), h:hrv(e), lat:null, lon:null}); }
+  const pts = []; for (const e of x.getElementsByTagName('Trackpoint')) { const tm = txt1(e, 'Time'), d = txt1(e, 'DistanceMeters'), a = txt1(e, 'AltitudeMeters'); pts.push({t:tm ? Date.parse(tm) / 1000 : null, d:d != null ? parseFloat(d) : null, a:a != null ? parseFloat(a) : null, p:pwr(e), h:hrv(e), lat:txt1(e, 'LatitudeDegrees') != null ? parseFloat(txt1(e, 'LatitudeDegrees')) : null, lon:txt1(e, 'LongitudeDegrees') != null ? parseFloat(txt1(e, 'LongitudeDegrees')) : null}); }
   if (!pts.length) throw new Error('Die TCX-Datei enthält keine Trackpunkte.'); const nm = act && txt1(act, 'Notes'); return {pts, ses:[], name:nm || ''};
 }
 function hav(a, b){ const R = 6371000, r = Math.PI / 180, dl = (b.lat - a.lat) * r, dn = (b.lon - a.lon) * r, q = Math.sin(dl / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(q)); }
@@ -108,6 +108,8 @@ function summarize(r, fname){
   } else if (ses.length && ses[0].np) np = ses[0].np;
   const est = !(np && ftp), IF = est ? .65 : np / ftp, t0 = (pts[0] ? pts[0].t : 0) * 1000, iso8 = new Date(t0).toISOString();
   const out = {id:'m' + Math.round(t0 / 1000).toString(36) + sec.toString(36), n:(r.name || fname.replace(/\.[^.]+$/, '')).slice(0, 60) || 'Radfahrt', ts:iso8, day:lstr(new Date(t0)), km:Math.round(km * 10) / 10, hm:Math.round(hm), sec, tss:Math.round(sec * IF * IF / 36), IF:Math.round(IF * 100) / 100, est, src:'file', np:Math.round(np || 0), m1:mx && mx[60] || null, m5:mx && mx[300] || null, m20:mx && mx[1200] || null, m60:mx && mx[3600] || null};
+  /* F18: Fahrt ohne gültige GPS-Position = Rolle/Indoor (Zwift, Rollentrainer) */
+  if (pts.length >= 10 && !pts.some(q => q.lat != null && isFinite(q.lat) && Math.abs(q.lat) <= 90 && !(q.lat === 0 && q.lon === 0))) out.in = 1;
   return Object.assign(out, perfExt(sec1, hr1, tc1, np));
 }
 async function uploadRides(inp){

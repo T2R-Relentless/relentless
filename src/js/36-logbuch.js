@@ -38,8 +38,8 @@ function lbSync(withLib){
 function lbRides(){
   try { rcArchSync(); } catch (e) { elog(e); }
   const m = new Map();
-  (S.arch || []).forEach(a => m.set(a.id, {id:a.id, day:a.d, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0}));
-  (S.man || []).forEach(a => { const o = m.get(a.id) || {}; m.set(a.id, {...o, id:a.id, day:a.day, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, hr:a.hrAvg || null, ts:a.ts}); });
+  (S.arch || []).forEach(a => m.set(a.id, {id:a.id, day:a.d, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, in:a.in ? 1 : 0}));
+  (S.man || []).forEach(a => { const o = m.get(a.id) || {}; m.set(a.id, {...o, id:a.id, day:a.day, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, hr:a.hrAvg || null, ts:a.ts, in:a.in || o.in ? 1 : 0}); });
   return [...m.values()].filter(a => a.day).sort((a, b) => (b.day + (b.ts || '')).localeCompare(a.day + (a.ts || '')));
 }
 const lbKind = id => { const l = S.lb && S.lb[id]; return l ? l.k : ''; };
@@ -65,10 +65,13 @@ function lbPage(){
   let L = lbRides().concat(SS).sort((a, b) => (b.day + (b.ts || '')).localeCompare(a.day + (a.ts || '')));
   if (lbF === 'plan') L = L.filter(a => lbKind(a.id) === 'p' || lbKind(a.id) === 's'); else if (lbF === 'x') L = L.filter(a => lbKind(a.id) === 'x');
   if (lbPid) L = L.filter(a => S.lb[a.id] && S.lb[a.id].pid === lbPid);
+  /* F18: Balken angetippt → nur diese Woche bzw. diesen Monat */
+  if (lbCh.sel) L = L.filter(a => lbPerKey(lbCh.mode, a.day) === lbCh.sel);
+  if (!lbCh.roll) L = L.filter(a => !a.in);
   const chip = (k, l) => `<button class="${lbF === k ? 'btn' : 'ghost'} !w-auto !px-3 !py-2 text-sm" style="min-height:44px" aria-pressed="${lbF === k}" onclick="lbF='${ja(k)}';render()">${l}</button>`;
   const pl = lbPlans();
   const sel = pl.length > 1 ? `<select class="inp !w-auto !py-2 text-sm" style="min-height:44px" aria-label="Nach Plan filtern" onchange="lbPid=this.value;render()"><option value="">Alle Pläne</option>${pl.map(([id, n]) => `<option value="${esc(id)}"${lbPid === id ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>` : '';
-  if (!L.length) return lbHintUi() + `<section class="panel p-4"><div class="flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${sel}</div><p class="mt-3 text-sm" style="color:var(--mute)">${lbF === 'all' && !lbPid ? 'Noch keine Fahrten. Lade Fahrten hoch oder verbinde Garmin, dann erscheinen sie hier mit ihrer Bewertung.' : 'Keine Fahrten für diesen Filter.'}</p></section>`;
+  if (!L.length) return lbHintUi() + (lbRides().length ? lbChart() : '') + `<section class="panel p-4"><div class="flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${sel}</div><p class="mt-3 text-sm" style="color:var(--mute)">${lbF === 'all' && !lbPid ? 'Noch keine Fahrten. Lade Fahrten hoch oder verbinde Garmin, dann erscheinen sie hier mit ihrer Bewertung.' : 'Keine Fahrten für diesen Filter.'}</p></section>`;
   const groups = []; L.forEach(a => { const mo = lbMon(a.day), g = groups[groups.length - 1]; if (g && g.mo === mo) g.l.push(a); else groups.push({mo, l:[a]}); });
   const head = g => { const R = g.l.filter(a => !a.sq), nS = g.l.length - R.length, s = R.reduce((o, a) => ({km:o.km + a.km, sec:o.sec + a.sec, hm:o.hm + a.hm}), {km:0, sec:0, hm:0}), e = new Date(g.mo + 'T12:00:00'); e.setDate(e.getDate() + 6);
     return `<div class="flex items-baseline gap-2 px-1 pt-3 text-xs" style="color:var(--mute)"><span class="eyebrow">Woche ab ${fmt(g.mo)}</span><span class="flex-1 text-right">${R.length ? `<span>${R.length} ${R.length === 1 ? 'Fahrt' : 'Fahrten'} · ${Math.round(s.km).toLocaleString('de-DE')} km · ${mm(Math.round(s.sec / 60))} · ${Math.round(s.hm).toLocaleString('de-DE')} hm</span>` : ''}${R.length && nS ? ' · ' : ''}${nS ? `<span>${nS} ${nS === 1 ? 'Übungseinheit' : 'Übungseinheiten'}</span>` : ''}</span></div>`; };
@@ -77,7 +80,7 @@ function lbPage(){
   const row = a => { const l = S.lb && S.lb[a.id], d = lbDot(a.id), dt = new Date(a.day + 'T12:00:00'), wdn = SD[(dt.getDay() + 6) % 7];
     const nm = l && l.k === 'p' ? `<span data-noi18n>${esc(l.n)}</span>` : l && l.k === 'x' ? 'Zusätzliche Fahrt' : `<span data-noi18n>${esc(a.n || 'Fahrt')}</span>`;
     return `<button class="panel flex w-full items-center gap-3 p-3 text-left" style="min-height:44px" onclick="lbOpenRide('${ja(a.id)}')"><span class="h-3 w-3 shrink-0 rounded-full" style="background:${esc(d[0])}" title="${esc(d[1])}" aria-hidden="true"></span><span class="w-12 shrink-0 text-xs" style="color:var(--mute)">${wdn} ${fmt(a.day).slice(0, 6)}</span><span class="min-w-0 flex-1"><span class="block truncate font-semibold">${nm}</span><span class="block text-xs" style="color:var(--mute)">${blRideLine(a)}${l && l.k === 'p' && l.score != null ? ` · ${l.score}/100` : ''}${l && l.mv != null ? ` · verschoben von ${SD[l.mv]}` : ''}${l && l.vo ? ' · Variante' : ''}</span></span><span style="color:var(--mute)">${ic('chevR', 18)}</span></button>`; };
-  return lbHintUi() + `<section class="panel p-4"><p class="text-sm" style="color:var(--mute)">Alle Fahrten mit ihrer Bewertung, neueste zuerst. Bewertungen bleiben gespeichert, auch nach einem Planwechsel.</p><div class="mt-3 flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${sel}</div></section>
+  return lbHintUi() + lbChart() + `<section class="panel mt-3 p-4"><p class="text-sm" style="color:var(--mute)">Alle Fahrten mit ihrer Bewertung, neueste zuerst. Bewertungen bleiben gespeichert, auch nach einem Planwechsel.</p><div class="mt-3 flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${sel}</div></section>
     <div class="space-y-2">${groups.map(g => head(g) + g.l.map(a => a.sq ? srow(a) : row(a)).join('')).join('')}</div>`;
 }
 /* B7: „Fahrten ansehen“ (Wusstest du schon?): die neueste bewertete Fahrt direkt in der Detailansicht, sonst das Logbuch
@@ -112,3 +115,56 @@ function lbRidePage(){
 /* Bewertungen sofort festhalten, sobald sie entstehen */
 { const _w = fn => function(){ const r = fn.apply(this, arguments); try { lbSync(false); } catch (e) { elog(e); } return r; };
   exeStore = _w(exeStore); exeExtra = _w(exeExtra); }
+/* ---------- F18: Verlaufsgrafik im Logbuch (Kilometer, Zeit oder Höhenmeter je Woche bzw. Monat) ----------
+   Woche = ISO-Woche Montag bis Sonntag (lbMon), Monat = Kalendermonat; gezählt wird nach dem Kalenderdatum der Fahrt
+   (day, lokale Zeit), deshalb ohne Einfluss von Zeitumstellung und Jahreswechsel. Gezählt werden alle Fahrten im
+   Logbuch (geplante und zusätzliche); Rolle/Indoor optional, Kraft und Mobilität nur bei der Zeit und nur mit
+   „Alle Einheiten“. Zwölf Perioden je Ansicht, Pfeile oder Wischen blättern zurück. Antippen eines Balkens filtert die
+   Liste darunter. Für Screenreader steht dieselbe Reihe als Tabelle bereit. */
+var lbCh = {mode:'w', met:'km', off:0, sel:null, roll:true, all:false, yoy:false};
+const lbPerKey = (mode, day) => mode === 'm' ? day.slice(0, 7) : lbMon(day);
+/* Perioden einer Ansicht: 12 Schlüssel, neueste zuletzt; off = wie viele Zwölferblöcke zurück */
+function lbPeriods(mode, off, today){
+  const t = today || iso(0), out = [];
+  if (mode === 'm') { const d = dOnly(t.slice(0, 7) + '-01'); d.setMonth(d.getMonth() - off * 12 - 11); for (let k = 0; k < 12; k++) { out.push(lstr(d).slice(0, 7)); d.setMonth(d.getMonth() + 1); } }
+  else { const m0 = lbMon(t); for (let k = 11; k >= 0; k--) out.push(addD(m0, -7 * (off * 12 + k))); }
+  return out;
+}
+const lbPrevYear = (mode, key) => mode === 'm' ? (+key.slice(0, 4) - 1) + key.slice(4) : addD(key, -364);
+/* Summen je Periode: {key: {km, sec, hm, n}} */
+function lbSums(mode, o){
+  o = o || lbCh; const S0 = {}, add = (k, km, sec, hm) => { const x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0}); x.km += km || 0; x.sec += sec || 0; x.hm += hm || 0; x.n++; };
+  lbRides().forEach(a => { if (!a.day || (!o.roll && a.in)) return; add(lbPerKey(mode, a.day), a.km, a.sec, a.hm); });
+  if (o.all) Object.values(S.lb || {}).forEach(l => { if (l && l.k === 's' && l.day && l.sec > 0) { const k = lbPerKey(mode, l.day), x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0}); x.sec += l.sec; } });
+  return S0;
+}
+const LB_MET = {km:['Distanz', v => Math.round(v.km), v => `${Math.round(v).toLocaleString('de-DE')} km`], h:['Zeit', v => v.sec / 3600, v => hStd(Math.round(v * 4) / 4) + ' Std.'], hm:['Höhenmeter', v => Math.round(v.hm), v => `${Math.round(v).toLocaleString('de-DE')} hm`]};
+const lbPerLbl = (mode, key, long) => { const MO = lang() === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+  if (mode === 'm') { const m = +key.slice(5, 7) - 1; return long ? `${MO[m]} ${key.slice(0, 4)}` : MO[m]; }
+  const e = addD(key, 6); return long ? `${fmt(key).slice(0, 6)}–${fmt(e)}` : fmt(key).slice(0, 6); };
+function lbSet(k, v){ if (k === 'mode') { lbCh.mode = v; lbCh.off = 0; lbCh.sel = null; } else if (k === 'off') { lbCh.off = Math.max(0, Math.min(20, lbCh.off + v)); } else if (k === 'sel') lbCh.sel = lbCh.sel === v ? null : v; else lbCh[k] = v; render(); }
+let lbSwX = null;
+function lbSwS(e){ lbSwX = e.touches && e.touches[0] ? e.touches[0].clientX : null; }
+function lbSwE(e){ const t = e.changedTouches && e.changedTouches[0]; if (lbSwX == null || !t) return; const dx = t.clientX - lbSwX; lbSwX = null; if (Math.abs(dx) > 45) lbSet('off', dx > 0 ? 1 : -1); }
+function lbChart(){
+  const o = lbCh, keys = lbPeriods(o.mode, o.off), sums = lbSums(o.mode, o), M = LB_MET[o.met], val = k => M[1](sums[k] || {km:0, sec:0, hm:0}), V = keys.map(val);
+  const prev = o.yoy ? keys.map(k => val(lbPrevYear(o.mode, k))) : null, cur = lbPerKey(o.mode, iso(0));
+  /* Durchschnitt ab der ersten Periode mit Daten (leere Zeit vor der ersten Fahrt zählt nicht mit) */
+  const first = Object.keys(sums).sort()[0], from = Math.max(0, keys.findIndex(k => first && k >= first)), Va = first && first <= keys[keys.length - 1] ? V.slice(from) : V, avg = Va.reduce((q, v) => q + v, 0) / Math.max(1, Va.length);
+  const W = 340, H = 150, L = 6, R = 6, T = 12, B = 22, bw = (W - L - R) / keys.length, mx = Math.max(1, ...V, ...(prev || [0])) * 1.12, Y = v => T + (H - T - B) * (1 - v / mx);
+  const sk = o.sel || cur, sv = sums[sk] || {km:0, sec:0, hm:0, n:0}, isCur = sk === cur;
+  const head = `${isCur ? (o.mode === 'm' ? 'Dieser Monat' : 'Diese Woche') : lbPerLbl(o.mode, sk, true)}: ${Math.round(sv.km).toLocaleString('de-DE')} km · ${hm2(Math.round(sv.sec / 60))} h · ${Math.round(sv.hm).toLocaleString('de-DE')} Hm`;
+  const bars = keys.map((k, i) => { const x = L + i * bw, y = Y(V[i]), on = k === sk, py = prev ? Y(prev[i]) : 0;
+    return `${prev ? `<rect x="${(x + bw * .12).toFixed(1)}" y="${py.toFixed(1)}" width="${(bw * .28).toFixed(1)}" height="${Math.max(0, H - B - py).toFixed(1)}" class="lbc-prev"/>` : ''}<rect x="${(x + bw * (prev ? .42 : .15)).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * (prev ? .46 : .7)).toFixed(1)}" height="${Math.max(V[i] > 0 ? 1.5 : 0, H - B - y).toFixed(1)}" class="${on ? 'lbc-on' : 'lbc-bar'}" data-k="${esc(k)}"/>
+      <rect x="${x.toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent" style="cursor:pointer" onclick="lbSet('sel','${ja(k)}')"/>${i % (o.mode === 'm' ? 1 : 2) === (o.mode === 'm' ? 0 : 1) || on ? `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 7}" text-anchor="middle" class="tx"${on ? ' font-weight="700"' : ''}>${esc(lbPerLbl(o.mode, k))}</text>` : ''}`; }).join('');
+  const svg = `<svg viewBox="0 0 ${W} ${H}" class="pchart" aria-hidden="true" ontouchstart="lbSwS(event)" ontouchend="lbSwE(event)">${bars}<line x1="${L}" x2="${W - R}" y1="${Y(avg).toFixed(1)}" y2="${Y(avg).toFixed(1)}" class="lbc-avg"/><line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" class="gl0"/></svg>`;
+  const tbl = `<table class="sr-only"><caption>${M[0]} je ${o.mode === 'm' ? 'Monat' : 'Woche'}</caption><thead><tr><th>${o.mode === 'm' ? 'Monat' : 'Woche'}</th><th>${M[0]}</th>${prev ? '<th>Vorjahr</th>' : ''}</tr></thead><tbody>${keys.map((k, i) => `<tr><td>${esc(lbPerLbl(o.mode, k, true))}</td><td>${esc(M[2](V[i]))}</td>${prev ? `<td>${esc(M[2](prev[i]))}</td>` : ''}</tr>`).join('')}</tbody></table>`;
+  const seg = (k, v, l) => `<button class="${o[k] === v ? 'on' : ''}" aria-pressed="${o[k] === v}" style="min-height:44px" onclick="lbSet('${k}','${v}')">${l}</button>`;
+  const tog = (k, l) => chip(l, !!o[k], `lbSet('${k}',${o[k] ? 'false' : 'true'})`);
+  const arrow = (d, l, dis) => `<button class="ghost !w-auto !px-0" style="min-width:44px;min-height:44px${dis ? ';opacity:.35' : ''}" aria-label="${l}"${dis ? ' disabled' : ''} onclick="lbSet('off',${d})">${ic(d > 0 ? 'chevL' : 'chevR', 18)}</button>`;
+  return `<section class="panel p-4" id="lb-chart"><p class="hd text-xl font-semibold" aria-live="polite">${head}</p>
+    <div class="mt-3 flex items-center gap-2"><div class="dtabs flex-1">${seg('mode', 'w', 'Woche')}${seg('mode', 'm', 'Monat')}</div><div class="dtabs flex-1">${seg('met', 'km', 'km')}${seg('met', 'h', 'Zeit')}${seg('met', 'hm', 'Hm')}</div></div>
+    <div class="mt-2 flex items-center gap-1">${arrow(1, 'Früher')}<div class="min-w-0 flex-1">${svg}</div>${arrow(-1, 'Später', o.off === 0)}</div>${tbl}
+    <p class="mt-1 text-xs" style="color:var(--mute)"><span class="lbc-key"></span> Durchschnitt: ${esc(M[2](avg))} je ${o.mode === 'm' ? 'Monat' : 'Woche'}${o.yoy ? ' · blass: Vorjahr' : ''}</p>
+    <div class="mt-2 flex flex-wrap gap-2">${tog('roll', 'inkl. Rolle')}${o.met === 'h' ? tog('all', 'Alle Einheiten') : ''}${tog('yoy', 'Vorjahr')}${o.sel ? chip('Filter aufheben', false, "lbSet('sel',null)") : ''}</div></section>`;
+}

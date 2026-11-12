@@ -288,4 +288,11 @@
   html.sa-wrap{padding-top:0;height:100%;overflow:hidden}
   html.sa-wrap body{height:100%;overflow:hidden}
   html.sa-wrap #sc{position:fixed;top:var(--sat);left:0;right:0;bottom:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+  /* F18: Verlaufsgrafik im Logbuch */
+  .lbc-bar{fill:var(--ice);opacity:.55}
+  .lbc-on{fill:var(--teal)}
+  .lbc-prev{fill:var(--line)}
+  .lbc-avg{stroke:var(--mute);stroke-width:1;stroke-dasharray:3 3}
+  .lbc-key{display:inline-block;width:14px;border-top:1px dashed var(--mute);vertical-align:middle;margin-right:2px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 

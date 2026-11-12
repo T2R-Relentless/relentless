@@ -15,7 +15,7 @@ function rcArchSync(){
   try {
     S.arch = S.arch || []; const have = new Set(S.arch.map(a => a.id)); let add = 0;
     [...allActs(), ...(S.hist || [])].forEach(a => { if (!a || !a.id || !a.day || have.has(a.id)) return; have.add(a.id); add++;
-      S.arch.push({id:a.id, d:a.day, h:a.ts ? new Date(a.ts).getHours() : null, n:String(a.n || 'Radfahrt').slice(0, 50), km:a.km || 0, hm:a.hm || 0, sec:a.sec || 0, tss:a.tss || 0, np:a.np || 0, m1:a.m1 || null, m5:a.m5 || null, m20:a.m20 || null, m60:a.m60 || null}); });
+      S.arch.push({id:a.id, d:a.day, h:a.ts ? new Date(a.ts).getHours() : null, n:String(a.n || 'Radfahrt').slice(0, 50), km:a.km || 0, hm:a.hm || 0, sec:a.sec || 0, tss:a.tss || 0, np:a.np || 0, m1:a.m1 || null, m5:a.m5 || null, m20:a.m20 || null, m60:a.m60 || null, ...(a.in ? {in:1} : {})}); });
     if (add) { S.arch.sort((a, b) => a.d.localeCompare(b.d)); if (S.arch.length > 2500) S.arch = S.arch.slice(-2500); }
   } catch (e) { elog(e); }
 }
