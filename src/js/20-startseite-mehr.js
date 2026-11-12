@@ -105,7 +105,7 @@ function tipCard(){
   let t = null; try { t = tipToday(false); } catch (e) { elog(e); } if (!t) return '';
   const en = lang() === 'en', b = (l, f) => `<button class="text-sm font-semibold" style="color:var(--teal);background:none;border:0;padding:0;min-height:44px" onclick="${f}">${l}</button>`;
   return `<section class="tipc">${ico}<div class="min-w-0 flex-1"><p class="eyebrow">Tipp zu heute · <span>${TIP_CAT[t[1]]}</span></p><p class="mt-1 text-sm" data-noi18n>${esc(tipText(t, en))}</p>
-    <div class="mt-1 flex flex-wrap gap-x-4">${t[6] ? b('Mehr dazu ›', `wOpen('${ja(t[6])}')`) : ''}${b('Nächster Tipp', 'tipNext()')}${b('Nicht mehr zeigen', 'tipHide()')}</div></div></section>`;
+    <div class="mt-1 flex flex-wrap" style="column-gap:20px">${t[6] ? b('Mehr dazu ›', `wOpen('${ja(t[6])}')`) : ''}${b('Nächster Tipp', 'tipNext()')}${b('Nicht mehr zeigen', 'tipHide()')}</div></div></section>`;
 }
 
 /* ---------- Wissen in drei Gruppen ---------- */

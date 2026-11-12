@@ -4478,7 +4478,7 @@ function tipCard(){
   let t = null; try { t = tipToday(false); } catch (e) { elog(e); } if (!t) return '';
   const en = lang() === 'en', b = (l, f) => `<button class="text-sm font-semibold" style="color:var(--teal);background:none;border:0;padding:0;min-height:44px" onclick="${f}">${l}</button>`;
   return `<section class="tipc">${ico}<div class="min-w-0 flex-1"><p class="eyebrow">Tipp zu heute · <span>${TIP_CAT[t[1]]}</span></p><p class="mt-1 text-sm" data-noi18n>${esc(tipText(t, en))}</p>
-    <div class="mt-1 flex flex-wrap gap-x-4">${t[6] ? b('Mehr dazu ›', `wOpen('${ja(t[6])}')`) : ''}${b('Nächster Tipp', 'tipNext()')}${b('Nicht mehr zeigen', 'tipHide()')}</div></div></section>`;
+    <div class="mt-1 flex flex-wrap" style="column-gap:20px">${t[6] ? b('Mehr dazu ›', `wOpen('${ja(t[6])}')`) : ''}${b('Nächster Tipp', 'tipNext()')}${b('Nicht mehr zeigen', 'tipHide()')}</div></div></section>`;
 }
 
 /* ---------- Wissen in drei Gruppen ---------- */
@@ -5638,7 +5638,7 @@ function privSettings(){
 /* ---------- Neue Version erkennen (Web-App) ----------
    Auf dem iPhone bleibt eine Home-Bildschirm-App oft im Hintergrund geöffnet und lädt sich nicht neu. Die App fragt deshalb
    beim Start, beim Zurückkehren in den Vordergrund und alle 30 Minuten nach, ob es eine neuere Version gibt, und bietet „Neu laden“ an. */
-const APP_BUILD = '20261113224500';
+const APP_BUILD = '20261113230000';
 let updNew = false, updAt = 0;
 const updWeb = () => { try { return /^https?:$/.test(location.protocol) && !(window.claude && window.claude.use) && !/claude|anthropic/.test(location.hostname); } catch (e) { elog(e); return false; } };
 async function updCheck(){
@@ -8502,7 +8502,7 @@ function woCtl(x, i){
 /* ---------- F14: Versionsstand in der App ablesbar ----------
    Eine Quelle: APP_BUILD (aus build/BUILD_ID), APP_VERSION (aus build/APP_VERSION) und APP_SW (aus der Cache-Version
    in relentless/public/sw.js) setzt der Build ein; version.json enthält dieselben Werte, build.sh --check prüft das. */
-const APP_VERSION = 183, APP_SW = 'relentless-v20';
+const APP_VERSION = 184, APP_SW = 'relentless-v21';
 let viOpen = false, viMsg = '', updVer = 0;
 /* 20261107180000 → „07.11.2026, 18:00“ bzw. „07 Nov 2026, 18:00“ */
 function viDate(id){ const m = String(id || '').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/); if (!m) return String(id || '');
