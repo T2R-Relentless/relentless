@@ -37,7 +37,7 @@ function privSettings(){
 /* ---------- Neue Version erkennen (Web-App) ----------
    Auf dem iPhone bleibt eine Home-Bildschirm-App oft im Hintergrund geöffnet und lädt sich nicht neu. Die App fragt deshalb
    beim Start, beim Zurückkehren in den Vordergrund und alle 30 Minuten nach, ob es eine neuere Version gibt, und bietet „Neu laden“ an. */
-const APP_BUILD = '20261112120000';
+const APP_BUILD = '20261112180000';
 let updNew = false, updAt = 0;
 const updWeb = () => { try { return /^https?:$/.test(location.protocol) && !(window.claude && window.claude.use) && !/claude|anthropic/.test(location.hostname); } catch (e) { elog(e); return false; } };
 async function updCheck(){

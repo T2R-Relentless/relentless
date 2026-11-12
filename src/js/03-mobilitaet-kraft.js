@@ -99,7 +99,7 @@ function strSession(p, kind){
 function strOf(p, w, plan){
   const n0 = p.strN | 0; if (!n0 || !plan) return {};
   const ph = phases(p), P = ph.find(x => w >= x.from && w <= x.to) || ph[ph.length - 1]; if (P.key === 'taper') return {};
-  const rec = w % 4 === 0, kind = rec ? 'leicht' : P.key === 'peak' ? 'erh' : (p.strLvl !== 'exp' && w <= 4) ? 'tech' : P.key === 'base' ? 'base' : 'build';
+  const rec = recWk(p, w), kind = rec ? 'leicht' : P.key === 'peak' ? 'erh' : (p.strLvl !== 'exp' && w <= 4) ? 'tech' : P.key === 'base' ? 'base' : 'build';
   const n = rec || P.key === 'peak' ? 1 : n0, so = w === 1 ? startOff(p) : 0, hard = j => j >= 0 && j < 7 && plan[j] && ['long', 'sst', 'thr', 'vo2', 'race', 'test'].includes(plan[j].t), mine = p.strDays && p.strDays.some(Boolean);
   const sc = j => { const t = plan[j].t; let s = 0; if (hard(j)) s -= 4; if (hard(j + 1)) s -= 6; if (j < 5 && plan[j + 2] && plan[j + 2].t === 'long') s -= 1; if (hard(j - 1)) s += 2; if (['base', 'rec', 'com'].includes(t)) s += 1; if ((plan[j + 1] && plan[j + 1].subPre) || (plan[j + 2] && plan[j + 2].t === 'race' && plan[j + 2].subPrio === 'B') || (plan[j - 1] && plan[j - 1].t === 'race')) s -= 9; return s; };
   const c = [0, 1, 2, 3, 4, 5, 6].filter(j => j >= so && plan[j] && !plan[j].blocked && (mine ? p.strDays[j] : sc(j) > -6)).sort((a, b) => sc(b) - sc(a) || a - b), pick = [];

@@ -117,7 +117,7 @@ function impact(){
   if (!W.length) return null;
   const pct = rem ? lost / rem * 100 : 0, kc = keys.reduce((q, k) => q + k.c, 0), first = W[0];
   const lvl = pct <= 1 && kc === 0 ? 'ok' : pct > 8 || (crit && pct > 3) || (kc >= 3 && pct > 5) ? 'high' : pct > 3 || kc > 0 ? 'mid' : 'ok';
-  let cw2 = null; for (let w = first + 1; w < tot; w++) { if (W.includes(w) || w % 4 === 0 || ph.find(x => w >= x.from && w <= x.to).key === 'taper') continue; cw2 = w; break; }
+  let cw2 = null; for (let w = first + 1; w < tot; w++) { if (W.includes(w) || recWk(S.p, w) || ph.find(x => w >= x.from && w <= x.to).key === 'taper') continue; cw2 = w; break; }
   return {pct, lost, lvl, W, keys, kc, cw2, tot, avg: rem / (tot - S.wk + 1), comp: Math.min(120, Math.max(30, Math.round(Math.max(0, lost) / 40 * 60 / 15) * 15))};
 }
 function impactCard(){

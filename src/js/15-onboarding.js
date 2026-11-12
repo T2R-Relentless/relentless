@@ -113,7 +113,7 @@ function lightPage(d){
     <div class="panel mt-4 p-4"><div class="grid grid-cols-2 gap-3">${field('Gewicht (kg)', `<input type="number" inputmode="decimal" class="inp" value="${esc(d.weight || '')}" oninput="draft('weight',this.value)">`)}${field('FTP, falls bekannt (W)', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc(ftpE)}" value="${esc(d.ftpKnown || '')}" oninput="S.d.ftpKnown=Number(this.value)||0;save()">`)}</div>
       <p class="mt-2 text-xs" style="color:var(--mute)">Kennst du deinen FTP, trag ihn ein. Sonst schätzt die App ihn aus deiner Einschätzung oben (hier etwa ${ftpE} W).</p></div>
     <div class="mt-4 space-y-2">${pwAsk(d, true)}${d.pwMix && !d.noPwr ? pwMixHr(d) : ''}${d.noPwr ? `<div class="panel p-4">${field('Schwellenpuls, falls bekannt', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc((lthrEst() || {}).v || 'z. B. 165')}" value="${esc(d.lthr || '')}" onchange="setHr('lthr',this.value)">`)}<p class="mt-2 text-xs" style="color:var(--mute)">Kennst du ihn nicht, misst ihn der Fitnesstest in der ersten Woche: 30 Minuten gleichmäßig hart, dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Den FTP für die Prognose kannst du später im Plan über ein Bergzeitfahren schätzen lassen.</p></div>` : ''}${lopt(!!d.test0, 'togTest0()', 'Mit einem Fitnesstest starten', d.noPwr ? 'Ein 30-Minuten-Test in der ersten Woche für deinen Schwellenpuls. Danach zeigen die Einheiten deine persönlichen Pulsbereiche. Empfohlen, wenn du ihn nicht kennst.' : 'Ein 20-Minuten-Test in der ersten Woche. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, wenn du deinen FTP nicht kennst.', LIC.test, true)}</div>
-    <div class="panel mt-4 p-4">${sexUi(d, true)}</div>`
+    <div class="panel mt-4 p-4">${sexUi(d, true)}</div><div class="panel mt-4 p-4">${ageUi(d, true)}</div>`
     + navRow(1, 3);
   if (ls === 3) { const nD = d.avail.filter(Boolean).length, per = nD ? Math.round(d.hours * 60 / nD) : 0, ld = d.avail[6] ? 6 : d.avail[5] ? 5 : d.avail.lastIndexOf(true);
     return head('Wie viel Zeit hast du?', 'Der Plan richtet sich nach deiner Woche, nicht umgekehrt.')
@@ -312,7 +312,7 @@ function evCycNote(p){
     <ul class="list-disc space-y-1 pl-5"><li>Hygieneartikel und bei Bedarf Schmerzmittel einplanen, die du kennst und die ärztlich abgestimmt sind.</li><li>Bei Periode am Renntag: dunkle Hose, Wechselzeitpunkt an einer Verpflegungsstelle einplanen.</li><li>In der Lutealphase ist die Körpertemperatur leicht erhöht: etwas mehr trinken, bei Hitze mehr Salz.</li><li>Wenn du hormonell verhütest und den Zeitpunkt beeinflussen möchtest, sprich rechtzeitig mit deiner Frauenärztin oder deinem Frauenarzt.</li></ul></div></section>`;
 }
 /* Bearbeiten: Hat sich etwas geändert? 'new' = neuer Plan, 'same' = nichts geändert, 'adj' = angepasst, 'goal' = anderes Ziel oder Event */
-const SIGK = ['goal','evId','eventName','eventDate','endDate','targetTime','ftp','ftpTarget','weight','perDay','avail','commuter','commute','commuteMin','longDay','strN','strDays','strLvl','mobN','dist','hm','draft','fmt','ffocus','ftour','subs','sex','cycMode','cycLast','cycLen','cycSym','cycAdapt','lev','intF','longPri','startH','longMin'];
+const SIGK = ['goal','evId','eventName','eventDate','endDate','targetTime','ftp','ftpTarget','weight','perDay','avail','commuter','commute','commuteMin','longDay','strN','strDays','strLvl','mobN','dist','hm','draft','fmt','ffocus','ftour','subs','sex','cycMode','cycLast','cycLen','cycSym','cycAdapt','lev','intF','longPri','startH','longMin','birthYear','rhythm','gap2'];
 function planSig(d){
   const o = {};
   SIGK.forEach(k => { let v = d[k];
@@ -321,6 +321,7 @@ function planSig(d){
     else if (Array.isArray(v) && !v.length) v = null;
     else if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v.trim())) v = Number(v);
     if (v === undefined || v === '') v = null; o[k] = v; });
+  o.rhythm = rhyOf(d); o.gap2 = gapOf(d); /* M7: Vorschlag nach Alter zählt wie die ausdrückliche Wahl */
   if (!o.commuter) o.commute = null; if (o.sex !== 'f') { o.cycMode = o.cycLast = o.cycLen = o.cycSym = null; o.cycAdapt = true; }
   o.hours = Math.round((d.perDay ? dsum(d) / 60 : Number(d.hours) || 0) * 60);
   o.dayMin = d.perDay ? d.dayMin.map((m, i) => d.avail[i] ? Number(m) || 0 : 0) : null;
@@ -383,7 +384,8 @@ function onboarding(){
   if (s === 2) body = `<h2 class="hd text-3xl font-semibold">Dein aktueller Stand</h2><p class="mb-1 mt-1" style="color:var(--mute)">Von hier aus rechnet die App: Leistung und Gewicht bestimmen, was am Eventtag realistisch ist.</p><div class="mt-4 space-y-4">
       <div class="grid grid-cols-2 gap-3">${field('Körpergewicht (kg)',`<input type="number" inputmode="decimal" class="inp" value="${esc(d.weight)}" oninput="draft('weight',this.value)">`)}</div>
       ${ftpSrcUi(d)}
-      ${sexUi(d)}</div>
+      ${sexUi(d)}
+      ${ageUi(d)}</div>
       <div class="mt-6 flex gap-3">${back(1)}<button class="btn flex-1" onclick="nav(3)">Weiter</button></div>`;
   if (s === 3) {
     const nC = d.commuter ? d.commute.filter((c, i) => c && d.avail[i]).length : 0, leg = comLeg(d);

@@ -4,7 +4,7 @@ function testWeeks(p){
   if (!p) return []; const w0 = t0W(p);
   if (!testsOn(p)) return w0 ? [w0] : [];
   const ph = phases(p), tot = ph[ph.length - 1].to, tp = ph.filter(x => x.key === 'taper').pop(), tS = tp ? tp.from : tot + 1, out = [], bad = w => ph.some(x => w >= x.from && w <= x.to && (x.key === 'taper' || x.rec || x.keep)) || ph.some(x => x.key === 'taper' && x.from === w + 1);
-  if (tot >= 9) { for (let w = 5; w < tS - 1; w += 8) { const v = [w, w + 1, w - 1, w + 2].find(q => q >= 2 && q < tS - 1 && !bad(q)); if (v && !out.includes(v)) out.push(v); } }
+  if (tot >= 9) { for (let w = rhyN(p) + 1; w < tS - 1; w += 2 * rhyN(p)) { const v = [w, w + 1, w - 1, w + 2].find(q => q >= 2 && q < tS - 1 && !bad(q)); if (v && !out.includes(v)) out.push(v); } }
   else if (tot >= 6) out.push(Math.max(2, Math.floor(tot / 2)));
   if (p.goal === 'ftp' && tot >= 4 && !out.includes(tot)) out.push(tot);
   (p.xTests || []).forEach(w => { if (w >= 1 && w <= tot && !out.includes(w)) out.push(w); });
