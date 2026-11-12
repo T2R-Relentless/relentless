@@ -273,6 +273,14 @@ function genWeekCore(p, w, base){
       : {alpin:'Mit 2–4 langen Anstiegen von 15–30 Min. bei 75–85 % FTP, sonst Zone 2.', huegel:'Welliges Gelände, Anstiege in Zone 3 (76–90 %), sonst Zone 2.', punch:'Welliges Gelände oder Gruppe: 6–10 kurze Anstiege (30–90 Sek.) zügig drüberdrücken, sonst Zone 2.', flach:'Am besten in der Gruppe: 3×15 Min. Gruppentempo bei 80–88 % FTP, sonst Zone 2. Windschatten und Führungswechsel üben.', ultra:'Sehr gleichmäßig in Zone 2, Verpflegung wie im Rennen. Ab und zu zwei lange Tage hintereinander oder eine Fahrt in die Dämmerung mit Licht.'}[ty] + fuel;
     if (!sim) LONG.n = {alpin:'Long Ride mit Anstiegen', huegel:'Long Ride, wellig', punch:'Long Ride mit Rampen', flach:'Long Ride mit Gruppentempo', ultra:'Long Ride, Ultra-Tempo'}[ty];
     if (!sim && ty !== 'ultra') LONG.hi = 85;
+    /* M11 (Audit 12.11.2026): Ermüdungsresistenz (Durability). Im Aufbau jede zweite Belastungswoche für Events über 3 Std. und Rennen:
+       Long Ride mit Schwellenintervallen nach zwei Dritteln der Fahrt (Maunder et al. 2021; Jones 2024). Welche Trainingsform die
+       Ermüdungsresistenz am besten verbessert, ist noch kaum untersucht, darum nur jede zweite Woche und mit moderater Dosis. */
+    if (k === 'build' && !rec && !sim && ty !== 'ultra' && prof && (prof.tev > 180 || race) && LONG.m >= 120 && loadWk(p, w) % 2 === 0) {
+      const reps = w - P.from >= P.weeks / 2 ? 3 : 2; LONG.n = 'Long Ride mit hartem Finale'; LONG.fin = {reps, work:8, rest:4, lo:95, hi:100};
+      LONG.st = `Die ersten zwei Drittel locker in Zone 2, ab der ersten Stunde 30–60 g Kohlenhydrate pro Std. Danach ${reps}×8 Min. an der Schwelle (95–100 % FTP) mit 4 Min. locker dazwischen, dann locker ausrollen. So trainierst du, auch mit müden Beinen noch Leistung zu bringen, wie im letzten Teil des Rennens.`;
+      LONG.tip = 'Die Intervalle am Ende zählen. Lieber vorher ruhiger fahren als hinten einbrechen.';
+    }
   }
   if (!(ev && (k === 'build' || k === 'peak')) && !rec && k !== 'taper' && !sim) {
     const LV = [null, ['Long Ride, negativer Split', 'Erste Hälfte locker in Zone 2, zweite Hälfte oberes Zone 2 (70–75 % FTP). So trainierst du, hinten raus stark zu bleiben.'], ['Long Ride, wellig', 'Welliges Gelände, an Anstiegen höchstens oberes Zone 2 (bis 75 % FTP), bergab locker rollen.'], ['Long Ride mit Verpflegungstraining', 'Konstant in Zone 2. Alle 20 Min. essen oder trinken, insgesamt 60 g Kohlenhydrate pro Stunde. So gewöhnt sich der Magen an die Rennverpflegung.']], lv = LV[(w - 1) % LV.length];

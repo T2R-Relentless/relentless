@@ -99,12 +99,17 @@ function strSession(p, kind){
 function strOf(p, w, plan){
   const n0 = p.strN | 0; if (!n0 || !plan) return {};
   const ph = phases(p), P = ph.find(x => w >= x.from && w <= x.to) || ph[ph.length - 1]; if (P.key === 'taper') return {};
-  const rec = recWk(p, w), kind = rec ? 'leicht' : P.key === 'peak' ? 'erh' : (p.strLvl !== 'exp' && w <= 4) ? 'tech' : P.key === 'base' ? 'base' : 'build';
-  const n = rec || P.key === 'peak' ? 1 : n0, so = w === 1 ? startOff(p) : 0, hard = j => j >= 0 && j < 7 && plan[j] && ['long', 'sst', 'thr', 'vo2', 'race', 'test'].includes(plan[j].t), mine = p.strDays && p.strDays.some(Boolean);
+  /* M12 (Audit 12.11.2026): Nach 12 Wochen mit schwerem Krafttraining (Maximalkraft, Ausbau) folgt die Erhaltung mit einer Einheit pro
+     Woche. In Wochen mit Eventtag, A- oder B-Rennen höchstens eine Einheit und nicht in den drei Tagen davor (Rønnestad & Mujika 2014). */
+  const kOf = (q, Q) => recWk(p, q) ? 'leicht' : Q.key === 'peak' ? 'erh' : (p.strLvl !== 'exp' && q <= 4) ? 'tech' : Q.key === 'base' ? 'base' : 'build';
+  let heavy = 0; for (let q = 1; q < w; q++) { const Q = ph.find(x => q >= x.from && q <= x.to); if (Q && Q.key !== 'taper' && ['base', 'build'].includes(kOf(q, Q))) heavy++; }
+  const rec = recWk(p, w), kind0 = kOf(w, P), kind = (kind0 === 'base' || kind0 === 'build') && heavy >= 12 ? 'erh' : kind0;
+  const raceD = [0, 1, 2, 3, 4, 5, 6].filter(j => plan[j] && ((plan[j].t === 'race' && plan[j].subPrio !== 'C') || /^Eventtag/.test(plan[j].n || '')));
+  const n = rec || P.key === 'peak' || kind === 'erh' || raceD.length ? 1 : n0, so = w === 1 ? startOff(p) : 0, hard = j => j >= 0 && j < 7 && plan[j] && ['long', 'sst', 'thr', 'vo2', 'race', 'test'].includes(plan[j].t), mine = p.strDays && p.strDays.some(Boolean);
   const sc = j => { const t = plan[j].t; let s = 0; if (hard(j)) s -= 4; if (hard(j + 1)) s -= 6; if (j < 5 && plan[j + 2] && plan[j + 2].t === 'long') s -= 1; if (hard(j - 1)) s += 2; if (['base', 'rec', 'com'].includes(t)) s += 1; if ((plan[j + 1] && plan[j + 1].subPre) || (plan[j + 2] && plan[j + 2].t === 'race' && plan[j + 2].subPrio === 'B') || (plan[j - 1] && plan[j - 1].t === 'race')) s -= 9; return s; };
-  const c = [0, 1, 2, 3, 4, 5, 6].filter(j => j >= so && plan[j] && !plan[j].blocked && (mine ? p.strDays[j] : sc(j) > -6)).sort((a, b) => sc(b) - sc(a) || a - b), pick = [];
+  const c = [0, 1, 2, 3, 4, 5, 6].filter(j => j >= so && plan[j] && !plan[j].blocked && !raceD.some(r => r >= j && r - j <= 3) && (mine ? p.strDays[j] : sc(j) > -6)).sort((a, b) => sc(b) - sc(a) || a - b), pick = [];
   for (const pass of [0, 1]) for (const j of c) { if (pick.length >= n) break; if (!mine && pass === 0 && hard(j + 1)) continue; if (!pick.includes(j) && pick.every(q => Math.abs(q - j) >= 2)) pick.push(j); }
-  const out = {}; pick.forEach(j => { out[j] = strSession(p, kind); }); return out;
+  const out = {}; pick.forEach(j => { out[j] = {...strSession(p, kind), same:hard(j) && plan[j].t !== 'long'}; }); return out;
 }
 const strKey = i => `${S.p.start}|${strWeek}|${i}`;
 function togStr(i){ S.strDone = S.strDone || {}; S.strDone[strKey(i)] = !S.strDone[strKey(i)]; save(); render(); }
@@ -115,7 +120,7 @@ function strBlock(i, cur, pane){
     <p style="color:var(--mute)">${esc(s.intro)} Nach 10 Min. Aufwärmen (leichtes Einfahren, Mobilität). Intensität: ${esc(s.rir)}, nicht bis zum Muskelversagen.</p>
     <ul class="mt-2 list-disc space-y-1 pl-5">${s.lines.map(l => `<li><button class="exl" onclick="openEx('${ja(l.id)}')">${esc(l.n)}</button>: ${esc(l.r)}</li>`).join('')}<li>Rumpf (10 Min.), je 2 Sätze: ${s.core.map(c => `<button class="exl" onclick="openEx('${ja(c[1])}')">${esc(c[0])}</button>`).join(', ')}</li></ul>
     <p class="mt-1 text-xs" style="color:var(--mute)">Tippe auf eine Übung für Erklärung und Grafik.</p>
-    <p class="mt-2 text-xs" style="color:var(--mute)">Bewegung vor Gewicht, bei Schmerzen abbrechen. Die Radeinheit des Tages und die Wochenstunden bleiben unverändert, Kraft kommt zusätzlich.</p>
+    ${s.same ? '<p class="mt-2 text-sm"><b>Heute auch eine harte Radeinheit:</b> erst Rad, dann Kraft, möglichst mit einigen Stunden Abstand. So leidet die Qualität der Intervalle nicht.</p>' : ''}<p class="mt-2 text-xs" style="color:var(--mute)">Bewegung vor Gewicht, bei Schmerzen abbrechen. Die Radeinheit des Tages und die Wochenstunden bleiben unverändert, Kraft kommt zusätzlich.</p>
     ${cur ? sqBtn('str', i) : sqLater()}${cur ? `<button onclick="togStr(${ja(i)})" class="ghost mt-2 !py-2 text-sm" style="${esc(dn ? 'color:var(--ok);border-color:var(--ok)' : '')}">${dn === 'part' ? '◐ Kraft teilweise erledigt' : dn ? '✓ Kraft erledigt' : 'Kraft als erledigt markieren'}</button>` : ''}</div>`;
 }
 function setStr(n){ S.d.strN = n; if (n && !S.d.strLvl) S.d.strLvl = 'new'; if (n && !S.d.strPlace) S.d.strPlace = 'gym'; save(); render(); }
