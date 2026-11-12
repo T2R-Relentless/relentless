@@ -128,8 +128,10 @@ function vzPbCard(){
 /* ---------- Formkurve bis zum Event (Fitness, Ermüdung, Form) ---------- */
 function vzDaily(){
   const d = {}, seen = new Set(), add = (day, t, key) => { if (!day || !(t > 0)) return; if (key) { if (seen.has(key)) return; seen.add(key); } d[day] = (d[day] || 0) + t; };
+  /* M5: bewertete Fahrten zuerst (ohne Leistungsdaten mit Belastung aus Puls oder Empfinden), dann alle übrigen Fahrten */
+  const p = S.p; if (p) Object.values(p.exe || {}).forEach(e => add(e.day, exeLoad(e), (e.day || '') + '|' + Math.round((e.sec || 0) / 60)));
   [...(S.man || []), ...(S.hist || [])].forEach(m => add(m.day || (m.ts || '').slice(0, 10), m.tss, (m.day || '') + '|' + Math.round((m.sec || 0) / 60)));
-  const p = S.p; if (p) { Object.values(p.exe || {}).forEach(e => add(e.day, e.tss, (e.day || '') + '|' + Math.round((e.sec || 0) / 60)));
+  if (p) {
     /* Erledigte Einheiten ohne hochgeladene Fahrt: geplante Belastung */
     if (S.plan && S.done && hasStarted(p)) S.plan.forEach((x, i) => { if (S.done[i] && x && x.m > 0) { const day = dstr(i); if (!d[day]) { try { d[day] = tss(x); } catch (e) { elog(e); } } } });
     /* Ältere Wochen nur aus dem Wochenrückblick */

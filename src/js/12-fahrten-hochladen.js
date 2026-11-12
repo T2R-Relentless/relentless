@@ -106,8 +106,8 @@ function summarize(r, fname){
     if (roll.length) np = Math.pow(roll.reduce((q, x) => q + x ** 4, 0) / roll.length, .25);
     mx = {}; [60, 300, 1200, 3600].forEach(n => { if (v.length >= n) { let q = 0, b = 0; for (let i = 0; i < v.length; i++) { q += v[i]; if (i >= n) q -= v[i - n]; if (i >= n - 1 && q > b) b = q; } mx[n] = Math.round(b / n); } });
   } else if (ses.length && ses[0].np) np = ses[0].np;
-  const est = !(np && ftp), IF = est ? .65 : np / ftp, t0 = (pts[0] ? pts[0].t : 0) * 1000, iso8 = new Date(t0).toISOString();
-  const out = {id:'m' + Math.round(t0 / 1000).toString(36) + sec.toString(36), n:(r.name || fname.replace(/\.[^.]+$/, '')).slice(0, 60) || 'Radfahrt', ts:iso8, day:lstr(new Date(t0)), km:Math.round(km * 10) / 10, hm:Math.round(hm), sec, tss:Math.round(sec * IF * IF / 36), IF:Math.round(IF * 100) / 100, est, src:'file', np:Math.round(np || 0), m1:mx && mx[60] || null, m5:mx && mx[300] || null, m20:mx && mx[1200] || null, m60:mx && mx[3600] || null};
+  const est = !(np && ftp), hv = hr1.filter(h => h != null), hrA = hv.length > 300 && hv.length > .5 * hr1.length ? hv.reduce((q, h) => q + h, 0) / hv.length : 0, le = est && hrA ? loadEst(sec, {hrAvg:hrA}) : null, IF = est ? (le ? le.IF : .65) : np / ftp, t0 = (pts[0] ? pts[0].t : 0) * 1000, iso8 = new Date(t0).toISOString();
+  const out = {id:'m' + Math.round(t0 / 1000).toString(36) + sec.toString(36), n:(r.name || fname.replace(/\.[^.]+$/, '')).slice(0, 60) || 'Radfahrt', ts:iso8, day:lstr(new Date(t0)), km:Math.round(km * 10) / 10, hm:Math.round(hm), sec, tss:Math.round(sec * IF * IF / 36), IF:Math.round(IF * 100) / 100, est, ...(le ? {ld:le.src} : {}), ...(hrA ? {hrA:Math.round(hrA)} : {}), src:'file', np:Math.round(np || 0), m1:mx && mx[60] || null, m5:mx && mx[300] || null, m20:mx && mx[1200] || null, m60:mx && mx[3600] || null};
   /* F18: Fahrt ohne gültige GPS-Position = Rolle/Indoor (Zwift, Rollentrainer) */
   if (pts.length >= 10 && !pts.some(q => q.lat != null && isFinite(q.lat) && Math.abs(q.lat) <= 90 && !(q.lat === 0 && q.lon === 0))) out.in = 1;
   return Object.assign(out, perfExt(sec1, hr1, tc1, np));

@@ -110,7 +110,7 @@ function subsCard(p){
     <button class="ghost mt-3 !py-2 text-sm" onclick="editSubs()">Events bearbeiten</button>`, true, `${L.length} geplant`);
 }
 const subsInWeek = (p, w) => (p.subs || []).filter(s => { const a = absDay(p, s.date); return a >= (w - 1) * 7 && a < w * 7 && s.date < p.eventDate; });
-const tss = x => Math.round(x.m / 60 * Math.pow(TYPES[x.t].IF, 2) * 100);
+/* tss: siehe 08-belastung.js (M5) */
 const watt = (pct) => Math.round(S.p.ftp * pct / 100);
 const zone = hi => hi <= 55 ? 'Z1' : hi <= 75 ? 'Z2' : hi <= 90 ? 'Z3' : hi <= 105 ? 'Z4' : 'Z5';
 const mm = m0 => { const m = Math.round(Number(m0) || 0); return mmI(m); };
