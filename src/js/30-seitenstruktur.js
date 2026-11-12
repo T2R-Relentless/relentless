@@ -227,7 +227,7 @@ const SET_PAGES = {
   'set-lang':() => { const x = iaSetParts(); return iaNoHead(x.lang || '') + iaNoHead(x.theme || '') + elogUi(); },
   'set-ali':() => { const x = iaSetParts(); return iaNoHead(x.ali || '') + tbCard() + (x.shift || ''); },
   'set-hr':() => iaNoHead(iaSetParts().hr || ''),
-  'set-wf':() => wfPage(),
+  'set-wf':() => wfPage() + cmpUi(),
   'set-sq':() => sqCfgUi(false) + '<p class="mt-3 text-sm" style="color:var(--mute)">Gilt für alle Übungseinheiten, die du als Sequenz ablaufen lässt.</p>',
   'set-wx':() => iaNoHead(iaSetParts().wx || ''),
   'set-gm':() => `<section class="panel p-4">${gmCard('man')}</section>`,

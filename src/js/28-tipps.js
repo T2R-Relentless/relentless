@@ -37,7 +37,7 @@ const DYK = [
 ];
 function dykSet(p, k){ const sub = {wx:'set-wx', hr:'set-hr', shift:'set-ali', ali:'set-ali', theme:'set-lang', lang:'set-lang'}[k]; if (p === 'settings' && sub) { goPg('settings'); goPg(sub); return; } goPg(p); setTimeout(() => { const el = document.getElementById('fx-' + k); if (el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 80); }
 function dykGarmin(){ try { if (typeof gtOpen !== 'undefined') { gtOpen = true; gtStep = 1; render(); return; } } catch (e) { elog(e); } goPg('rides'); }
-const dykList = () => DYK.filter(t => { try { return t[4](); } catch (e) { elog(e); return false; } });
+const dykList = () => DYK.filter(t => { try { return t[4](); } catch (e) { elog(e); return false; } }).concat(typeof cmpDyk === 'function' ? cmpDyk() : []); /* F21: Vergleiche */
 function dykPick(force){
   const st = dykGet(), list = dykList(); if (!list.length) return null;
   const today = iso(0); let cur = list.find(t => t[0] === st.cur);
@@ -45,6 +45,7 @@ function dykPick(force){
     const seen = st.seen || [], fresh = list.filter(t => !seen.includes(t[0]) && t[0] !== st.cur), pool = fresh.length ? fresh : list.filter(t => t[0] !== st.cur);
     cur = pool[0] || list[0]; dykPut({cur:cur[0], day:today, seen:[...seen.filter(k => k !== cur[0]), cur[0]].slice(-40)});
   }
+  if (cur && cur.fact) cmpShown(cur[0]);
   return cur;
 }
 function dykNext(){ dykPick(true); try { track('tipp-weiter'); } catch (e) { elog(e); } render(); }
@@ -59,9 +60,9 @@ function dykCard(){
     const ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/></svg>';
     const act = DYK.indexOf(t);
     return `<section class="panel p-4" style="border-left:4px solid var(--ice)"><div class="flex items-start gap-3"><span style="color:var(--teal);margin-top:2px">${ICON}</span><div class="min-w-0 flex-1">
-      <div class="flex items-center gap-2"><p class="eyebrow flex-1">Wusstest du schon?</p><button class="text-sm" style="color:var(--mute);background:none;border:0;padding:0 2px" aria-label="Tipp für heute ausblenden" onclick="dykClose()" style="min-width:32px;min-height:32px">✕</button></div>
-      <p class="mt-1 text-sm">${t[1]}</p>
-      <div class="mt-3 flex flex-wrap items-center gap-2">${t[2] ? `<button class="btn !w-auto !px-3 !py-1.5 text-sm" onclick="dykGo(DYK[${ja(act)}][3])">${t[2]}</button>` : ''}<button class="ghost !px-3 !py-1.5 text-sm" onclick="dykNext()">Nächster Tipp</button></div></div></div></section>`;
+      <div class="flex items-center gap-2"><p class="eyebrow flex-1">Wusstest du schon?</p><button class="text-sm" style="color:var(--mute);background:none;border:0;padding:0 2px;min-width:44px;min-height:44px" aria-label="Tipp für heute ausblenden" onclick="dykClose()">✕</button></div>
+      ${t.fact ? `<p class="mt-1 text-sm" data-noi18n>${esc(lang() === 'en' ? t.en : t[1])}</p>` : `<p class="mt-1 text-sm">${t[1]}</p>`}
+      <div class="mt-3 flex flex-wrap items-center gap-2">${t.fact ? `<button class="btn !w-auto !px-3 !py-1.5 text-sm" onclick="cmpGo('${ja(t.go)}')">${t[2]}</button>` : t[2] ? `<button class="btn !w-auto !px-3 !py-1.5 text-sm" onclick="dykGo(DYK[${ja(act)}][3])">${t[2]}</button>` : ''}<button class="ghost !px-3 !py-1.5 text-sm" onclick="dykNext()">Nächster Tipp</button></div></div></div></section>`;
   } catch (e) { elog(e); return ''; }
 }
 
