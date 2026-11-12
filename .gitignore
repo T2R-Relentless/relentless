@@ -19,3 +19,7 @@ tests/tmp-*.html
 
 # Lokale Werkzeuge (Piper, Stimmen)
 .tools/
+
+# Synchronisationskopien von iCloud Drive (z. B. "08-belastung 2.js"); echte Projektdateien haben keine Leerzeichen im Namen
+* 2.*
+* 2
