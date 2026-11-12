@@ -141,25 +141,32 @@ const EV_KIND = {race:['Rennen', 'pel'], jed:['Jedermann', 'pel'], rtf:['RTF', '
 const evKindOf = (s, name) => s && EV_KIND[s.kind] ? s.kind : /zeitfahren|\bezf\b|\bitt\b|time trial/i.test(name || '') ? 'tt' : /\brtf\b|radtourenfahrt|tour\b/i.test(name || '') ? 'rtf' : /jedermann|marathon|gran fondo|granfondo|sportive/i.test(name || '') ? 'jed' : 'race';
 function evSrc(p, x){ return x.main ? p : (p.subs || []).find(s => s.id === x.id) || null; }
 /* Puls-Pacing nach Dauer (Minuten) in % des Schwellenpulses */
+/* Gemeinsame Annahmen für Plan-Check und Saisonprognose (F17: Werte dürfen sich nicht unterscheiden):
+   Windschatten: eigene Wahl (draft) zuerst, sonst die gewählte Event-Art; beim Hauptevent ohne beides „Gruppe“ wie bisher im Plan-Check.
+   Long-Ride-Abschlag: wie im Plan-Check bis zu 5 % weniger Dauerleistung bei Events über 3 Std., wenn der längste Ride kurz ist.
+   Trainingswochen bis zum Event: einschließlich der laufenden Woche. */
+const evDraftOf = (src, kind, main) => src && src.draft ? src.draft : main && !(src && src.kind) ? 'grp' : EV_KIND[kind][1];
+const evPen = (tev, maxL) => tev > 180 ? Math.max(0, Math.min(.05, (.7 - maxL / Math.min(tev, 420)) * .25)) : 0;
+const evWeeks = (p, ds, cw) => Math.max(0, seasWk(p, ds) - cw + 1);
 const evHrPct = t => t > 300 ? [78, 85] : t > 180 ? [81, 89] : t > 90 ? [85, 92] : [90, 96];
 function seasonForecast(p){
   if (!p || p.goal !== 'event') return [];
   let L = []; try { L = seasonEvs(p); } catch (e) { elog(e); return []; }
   const st = planStats(p), live = hasStarted(p), cw = live ? curWeek(p) : 1, kg = kgOf(p), today = iso(0);
-  let R = null; try { R = vzRows(); } catch (e) { elog(e); }
+  let R = null; try { R = formRows(p); } catch (e) { elog(e); } /* gemeinsame Formreihe: Formkurve, sonst Planrechnung (11-saison-check.js) */
   const rt = hAv(p) > 0 && st.hAvg > 0 ? Math.min(1, st.hAvg / hAv(p)) : .87;
   return L.map(x => {
-    const src = evSrc(p, x), pp = x.pp, kind = evKindOf(src, x.name), dr = EV_KIND[kind][1], past = x.date < today;
+    const src = evSrc(p, x), pp = x.pp, kind = evKindOf(src, x.name), dr = evDraftOf(src, kind, x.main), past = x.date < today;
     const miss = !(pp.dist > 0) ? 'dist' : !(pp.hm > 0) && !(src && src.hm0) ? 'hm' : '';
     const o = {id:x.id, name:x.name, date:x.date, prio:x.prio, main:!!x.main, kind, past, miss, dist:pp.dist || 0, hm:pp.hm || 0, days:Math.round((dOnly(x.date) - dOnly(today)) / 864e5)};
     if (past) return o;
-    const weeks = Math.max(0, seasWk(p, x.date) - cw), tev = x.r ? x.r.tev : 180;
+    const weeks = evWeeks(p, x.date, cw), tev = x.r ? x.r.tev : 180, pen = evPen(tev, st.maxL);
     try { const pj = ftpProj(p, st.hAvg, weeks); o.ftp = Math.round(pj.mid); o.ftpLo = Math.round(pj.lo); o.ftpHi = Math.round(pj.hi); } catch (e) { elog(e); }
     if (!miss && o.ftp) {
       try { const lm = levMult(pp, tev), q = {...pp, targetTime:'5:00', draft:dr};
-        const t = evTime(q, o.ftp * lm, kg, dr); if (t) { o.t = Math.ceil(t / 5) * 5; o.kmh = pp.dist / (t / 60); }
+        const t = evTime({...q, _prec:true}, o.ftp * (1 - pen) * lm, kg, dr); if (t) { o.tRaw = Math.round(t * 10) / 10; o.t = Math.ceil(t / 5) * 5; o.kmh = pp.dist / (o.t / 60); }
         /* ambitioniert: oberer empfohlener Umfang oder obere Spanne der FTP-Prognose (gutes Ansprechen auf Training), das Höhere */
-        const hv = Math.min(14, Math.max(hAv(p), hRec(pp, tev)[1])), pa = ftpProj(p, hv * rt, weeks), ta = evTime(q, Math.max(pa.mid, o.ftpHi || 0) * lm, kg, dr);
+        const hv = Math.min(14, Math.max(hAv(p), hRec(pp, tev)[1])), pa = ftpProj(p, hv * rt, weeks), ta = evTime(q, Math.max(pa.mid, o.ftpHi || 0) * (1 - pen) * lm, kg, dr);
         if (ta && (!o.t || ta < o.t)) o.tAmb = Math.floor(ta / 5) * 5; } catch (e) { elog(e); }
     }
     const T = o.t || tev, ifs = Math.max(.6, 1 - .1 * Math.log(Math.max(1, T / 60))), hi = Math.round(ifs * 100), F = o.ftp || p.ftp;
@@ -194,7 +201,7 @@ function evSeasonPage(){
       <div class="p-2.5" style="background:var(--tint);grid-column:span 2"><div class="text-xs" style="color:var(--mute)">Pacing</div><div class="font-semibold">${o.hr ? `Puls ${o.hr.lo}–${o.hr.hi} bpm` : `${o.pace.wLo}–${o.pace.wHi} W im Flachen, am Berg bis ${o.pace.wCl} W`}</div><div class="text-xs">${o.taper}</div></div></div>
       <div class="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Art des Events">${Object.keys(EV_KIND).map(k => `<button class="${o.kind === k ? 'btn' : 'ghost'} !w-auto !px-3 !py-1.5 text-xs" style="min-height:44px" aria-pressed="${o.kind === k}" onclick="evSet('${ja(o.id)}','kind','${ja(k)}')">${EV_KIND[k][0]}</button>`).join('')}</div>`;
     return `<div class="py-3" style="border-top:1px solid var(--line)" data-ev="${esc(o.id)}"><div class="flex items-center gap-2">${prioBadge(o.prio)}<b class="min-w-0 flex-1" data-noi18n>${esc(o.name)}</b><span class="text-xs" style="color:var(--mute)">${fmt(o.date)}${o.past ? '' : `, in ${o.days} ${o.days === 1 ? 'Tag' : 'Tagen'}`}</span></div><p class="mt-0.5 text-xs" style="color:var(--mute)">${dist}${o.main ? ' · Saisonhöhepunkt' : ''}</p>${cells}</div>`; };
-  const noForm = F.some(o => !o.past && !o.form) ? '<p class="mt-2 text-xs" style="color:var(--mute)">Die Form am Eventtag erscheint, sobald die App aus deinen Fahrten die Fitness kennt (Formkurve).</p>' : '';
+  const noForm = (() => { const R = formRows(p); return R && R.src === 'plan' ? '<p class="mt-2 text-xs" style="color:var(--mute)">Die Form ist aus den geplanten Einheiten gerechnet, bis die App aus deinen Fahrten die Fitness kennt (Formkurve).</p>' : ''; })();
   return askCard + `<section class="panel p-4"><p class="eyebrow">Alle Events der Saison</p><p class="mt-1 text-sm" style="color:var(--mute)">Zielzeit und Pacing rechnen mit deiner erwarteten FTP am jeweiligen Eventtag. Die Art des Events bestimmt den Windschatten: Rennen und Jedermann im Feld, RTF in der Gruppe, Zeitfahren solo.</p><div class="mt-2">${F.map(row).join('')}</div>${noForm}
     <p class="mt-2 text-xs" style="color:var(--mute)">Modell: Leistungsbilanz nach Martin et al. 1998, etwa ±10 %. FTP-Prognose: Faustmodell des Plan-Checks. Pacing: haltbarer Anteil der FTP über die Dauer.</p></section>`;
 }
