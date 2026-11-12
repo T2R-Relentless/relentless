@@ -153,3 +153,9 @@ test('Geburtsdatum über drei Felder: unvollständige Eingabe zeichnet nicht neu
   q('bdD').value = '31'; q('bdM').value = '2'; a.w.bdCommit(); ok(/Bitte ein gültiges Geburtsdatum/.test(a.text()), 'ungültiges Datum mit Hinweis'); a.noErrors();
   a.w.agCancel(); a.page('set-ali'); const v = a.w.document.getElementById('vacTo'); a.w.vacSet('from', '2026-12-01'); ok(a.w.document.getElementById('vacTo') === v && v.value === '2026-12-01', 'Urlaub: Feld bleibt, Ende folgt dem Beginn');
 });
+
+test('Abzeichen geänderter Einheiten nennt den Grund, nicht „KI-angepasst“', async () => {
+  const a = await boot(); makePlan(a, agPlan({})); const t = a.$('todayIdx()'); a.$(`S.plan[${t}] = {...S.plan[${t}], t:'thr', m:60, n:'Schwelle 3×10', lo:95, hi:105}`); a.w.feelDay(t, 'neck');
+  let s = a.page('week'); ok(/Nach Befinden/.test(s) && !/KI-angepasst/.test(s), 'Befinden'); eq(a.$("adLabel({fu:1})"), 'Schontag'); eq(a.$("adLabel({n:'Schwelle 2×20 (reduziert)'})"), 'Reduziert'); eq(a.$("adLabel({n:'x'})"), 'Angepasst');
+  await a.en(); s = a.page('week'); ok(/Adjusted to how you feel/.test(s) && !/AI-adjusted/.test(s), 'englisch'); a.noErrors();
+});

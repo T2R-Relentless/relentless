@@ -6646,5 +6646,8 @@
 "TT": "DD",
 "MM": "MM",
 "JJJJ": "YYYY",
-"Tag": "Day"
+"Tag": "Day",
+"Nach Befinden": "Adjusted to how you feel",
+"Schontag": "Easy day",
+"Reduziert": "Reduced"
 }

@@ -274,7 +274,9 @@
   .cloc{padding:5px 9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:.78rem;font-weight:600}
   .cloc.on{background:var(--ice);border-color:var(--ice);color:#071747}
   .hpane .cloc:not(.on){background:var(--tint)}
-  .hact .hib{flex:1 1 0;min-width:0;padding:6px 4px;text-align:center;line-height:1.15}
+  /* Schrift passt sich der Breite an, damit „Hochladen“ und „Angepasst“ auch bei fünf Knöpfen im Feld bleiben */
+  .hact .hib{flex:1 1 0;min-width:0;padding:6px 2px;text-align:center;line-height:1.15;font-size:clamp(.56rem, 2.5vw, .7rem);overflow:hidden}
+  .hact .hib span{max-width:100%;overflow-wrap:anywhere}
   .recb{display:inline-block;padding:2px 8px;font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--teal);color:#fff}
 
   /* B8: Statusleiste in der installierten App (iPhone, black-translucent). iOS 26 legt über Inhalt, der unter die
