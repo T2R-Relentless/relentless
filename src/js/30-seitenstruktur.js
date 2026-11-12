@@ -228,6 +228,7 @@ const SET_PAGES = {
   'set-ali':() => { const x = iaSetParts(); return iaNoHead(x.ali || '') + tbCard() + (x.shift || ''); },
   'set-hr':() => iaNoHead(iaSetParts().hr || ''),
   'set-wf':() => wfPage() + cmpUi(),
+  'tool-tire':() => tpPage(),
   'set-sq':() => sqCfgUi(false) + '<p class="mt-3 text-sm" style="color:var(--mute)">Gilt für alle Übungseinheiten, die du als Sequenz ablaufen lässt.</p>',
   'set-wx':() => iaNoHead(iaSetParts().wx || ''),
   'set-gm':() => `<section class="panel p-4">${gmCard('man')}</section>`,
@@ -269,7 +270,7 @@ function ridesGm(){
   if (S.gm && S.gm.mode) return `<section class="panel p-4"><p class="hd text-xl font-semibold">Garmin Connect</p>${gmCard('man')}</section>`;
   return `<div class="mlist">${iaRow('set-gm', 'gm', 'Garmin Connect verbinden', 'Fahrten automatisch holen statt Dateien hochladen')}</div>`;
 }
-const IA_PAR = {'set-lang':'settings', 'set-ali':'settings', 'set-hr':'settings', 'set-wx':'settings', 'set-wf':'settings', 'set-sq':'settings', 'set-gm':'settings', 'set-priv':'settings', 'exp-ics':'export', 'exp-zwo':'export', 'exp-fit':'export'};
+const IA_PAR = {'tool-tire':'more', 'set-lang':'settings', 'set-ali':'settings', 'set-hr':'settings', 'set-wx':'settings', 'set-wf':'settings', 'set-sq':'settings', 'set-gm':'settings', 'set-priv':'settings', 'exp-ics':'export', 'exp-zwo':'export', 'exp-fit':'export'};
 
 /* ---------- Event: Übersicht mit Unterseiten ----------
    Oben das Ziel (Name, Datum, Zielzeit, Stand). Darunter je Thema eine Zeile mit dem Kern: Anforderungsprofil, Pacing-Plan,

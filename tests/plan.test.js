@@ -6,7 +6,7 @@ R.file = 'plan';
 
 const PAGES = ['week', 'logbook', 'more', 'overview', 'state', 'check', 'event', 'ev-goal', 'ev-prof', 'ev-subs', 'ev-pace', 'ev-fuel',
   'ev-saison', 'rides', 'ms', 'sform', 'spb', 'sperf', 'pcp', 'pdu', 'pef', 'pmor', 'psw', 'shist', 'slog', 'rc', 'rc-w', 'rc-m', 'rc-y',
-  'settings', 'set-ali', 'set-hr', 'set-wf', 'set-wx', 'set-sq', 'set-gm', 'set-lang', 'plans', 'export', 'ex', 'science', 'cycle'];
+  'settings', 'set-ali', 'set-hr', 'set-wf', 'set-wx', 'set-sq', 'set-gm', 'set-lang', 'plans', 'export', 'ex', 'science', 'cycle', 'tool-tire'];
 
 const SCEN = [
   {id:'event-basis', d:{goal:'event', eventName:'Testrennen', eventDate:'2027-03-20', ftp:250, hours:8}},

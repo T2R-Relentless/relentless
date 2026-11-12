@@ -262,7 +262,7 @@ function dashboard(){
       <p class="text-center text-sm" style="color:var(--mute)">${mm(tm)} geplant von ${hStd(tbWkH(p, w))} Std. verfügbar${tm > tbWkH(p, w) * 60 + 1 ? ' (mehr, weil Event- oder Pendeltage feststehen)' : ''}, TSS ~${tt}${Object.keys(strMap).length ? ', zusätzlich ' + Object.keys(strMap).length + ' × Krafttraining' : ''}${Object.keys(mobMap).length ? (Object.keys(strMap).length ? ' und ' : ', zusätzlich ') + Object.keys(mobMap).length + ' × Mobilität/Stabilität' : ''}${cur?'':'. Vorschau, wird zur Woche hin aktualisiert.'}</p><p class="mb-2 text-center text-xs" style="color:var(--mute)">Zeit nach Belastungsbereich: ${dist(plan)}</p>
       ${weekPanel(w, cur)}${impactCard()}${cycWeek(p, w, plan)}
       ${mvModal()}${vaModal()}${blWeekSum(w)}${woNote(plan, w)}<div class="space-y-2.5">${plan.map((x, i) => dayCard(x, i, cur) + xrDayRows(w, i)).join('')}</div></section>`;
-  const T = {...ST_T, ...RC_T, ...PP_T, ...SET_T, ...EXP_T, ...EV_T, more:'Mehr', week:'Wochenplan', logbook:'Logbuch', 'lb-ride':'Fahrt', state:'Fortschritt', check:'Plan-Check', event:'Event', overview:'Gesamtplan', rides:'Fahrten bewerten', ex:'Übungen', export:'Export', plans:'Meine Pläne', settings:'Einstellungen', science:'Wissen', cycle:'Zyklus', ms:'Fitness-Checks'};
+  const T = {...ST_T, ...RC_T, ...PP_T, ...SET_T, ...EXP_T, ...EV_T, more:'Mehr', 'tool-tire':'Reifendruck', week:'Wochenplan', logbook:'Logbuch', 'lb-ride':'Fahrt', state:'Fortschritt', check:'Plan-Check', event:'Event', overview:'Gesamtplan', rides:'Fahrten bewerten', ex:'Übungen', export:'Export', plans:'Meine Pläne', settings:'Einstellungen', science:'Wissen', cycle:'Zyklus', ms:'Fitness-Checks'};
   foldFlat = page !== 'home';
   let body = '';
   if (page === 'home') {
