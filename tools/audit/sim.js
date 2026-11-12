@@ -10,8 +10,8 @@ const PROFILES = {
   C:{label:'Ambitioniert 4,2 W/kg, 12 h/Woche, Saison mit A/B/C-Rennen', ctl0:75,
      d:{goal:'event', season:true, eventName:'Hauptrennen 150 km', eventDate:'2027-08-29', dist:150, hm:2200, targetTime:'', fmt:'race', draft:'pel', ftp:294, weight:70, hours:12, avail:AV([1,2,3,4,5,6]), longDay:5, strN:2, strLvl:'exp'},
      subs:[{name:'Frühjahrsrennen C', date:'2027-04-11', prio:'C', dist:70, hm:500}, {name:'Rundfahrt B', date:'2027-05-09', prio:'B', dist:100, hm:1200}, {name:'Klassiker A', date:'2027-06-13', prio:'A', dist:120, hm:1500}, {name:'Kriterium C', date:'2027-07-25', prio:'C', dist:50, hm:200}]},
-  D:{label:'Masters 55+, 3,0 W/kg, 7 h/Woche, Radmarathon 150 km / 2.000 Hm in 29 Wochen', ctl0:40,
-     d:{goal:'event', eventName:'Radmarathon 150', eventDate:'2027-06-06', dist:150, hm:2000, targetTime:'', fmt:'mara', draft:'grp', ftp:234, weight:78, hours:7, avail:AV([1,3,4,5,6]), longDay:5, strN:2}},
+  D:{label:'Masters 56 Jahre (Geburtsjahr 1970), 3,0 W/kg, 7 h/Woche, Radmarathon 150 km / 2.000 Hm in 29 Wochen', ctl0:40,
+     d:{goal:'event', eventName:'Radmarathon 150', eventDate:'2027-06-06', dist:150, hm:2000, targetTime:'', fmt:'mara', draft:'grp', ftp:234, weight:78, hours:7, avail:AV([1,3,4,5,6]), longDay:5, strN:2, birthYear:1970}},
   E:{label:'Wenig Zeit: 4 h/Woche nur Samstag und Sonntag, Event 100 km / 800 Hm in 12 Wochen', ctl0:22,
      d:{goal:'event', eventName:'Frühjahrsklassiker 100', eventDate:'2027-02-07', dist:100, hm:800, targetTime:'', fmt:'mara', draft:'grp', ftp:210, weight:75, hours:4, avail:AV([5,6]), longDay:6}},
   E2:{label:'wie E, mit Option „Intensität statt Umfang“ und 80 km (unter 3 Std.)', ctl0:22,
@@ -46,7 +46,7 @@ function real(x){
 }
 async function simulate(key){
   const P = PROFILES[key], a = await boot({now:NOW}); makePlan(a, P.d, P.subs); const w = a.w, $ = a.$;
-  const tssF = $("tss"), p = $("S.p"), ph = w.phases(p), tot = ph[ph.length - 1].to, weeks = [], days = [];
+  const tssF = $("tss"), recWkF = $("typeof recWk === 'function' ? recWk : ((p, w) => w % 4 === 0)"), p = $("S.p"), ph = w.phases(p), tot = ph[ph.length - 1].to, weeks = [], days = [];
   const isHard = x => x && x.m > 0 && (['sst','thr','vo2','race','test'].includes(x.t) || /^Eventtag/.test(x.n || ''));
   const isKey = x => isHard(x) || (x && x.t === 'long' && x.m > 0);
   for (let k = 1; k <= tot; k++) {
@@ -55,7 +55,7 @@ async function simulate(key){
     const R = pl.map(real), min = pl.reduce((s, x) => s + (x.m || 0), 0), z = R.reduce((s, r) => ({lo:s.lo + r.z.lo, mid:s.mid + r.z.mid, hi:s.hi + r.z.hi}), {lo:0, mid:0, hi:0});
     const ev = pl.findIndex(x => /^Eventtag/.test(x.n || ''));
     pl.forEach((x, i) => days.push({w:k, i, t:x.t, n:x.n, m:x.m || 0, app:x.m ? tssF(x) : 0, real:R[i].tss, hard:isHard(x), key:isKey(x), ev:/^Eventtag/.test(x.n || '') || (x.t === 'race' && x.subPrio === 'A'), str:str[i] ? str[i].kind : ''}));
-    weeks.push({w:k, ph:F.key, phName:F.name, rec:(k % 4 === 0 || !!F.rec) && F.key !== 'taper', budget:pw.hours, nDays:pw.avail.filter(Boolean).length, h:min / 60,
+    weeks.push({w:k, ph:F.key, phName:F.name, rec:(recWkF(p, k) || !!F.rec) && F.key !== 'taper', budget:pw.hours, nDays:pw.avail.filter(Boolean).length, h:min / 60,
       tssApp:pl.reduce((s, x) => s + (x.m ? tssF(x) : 0), 0), tssReal:R.reduce((s, r) => s + r.tss, 0), z, hard:pl.filter(isHard).length, key:pl.filter(isKey).length, rides:pl.filter(x => x.m > 0).length,
       long:Math.max(0, ...pl.filter(x => x.t === 'long' || x.t === 'race').map(x => x.m)), maxSes:Math.max(0, ...pl.map(x => x.m || 0)), test:pl.some(x => x.t === 'test'),
       str:Object.values(str).map(s => s.kind).join('+'), strDays:Object.keys(str).map(Number),
