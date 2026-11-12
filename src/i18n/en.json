@@ -6728,5 +6728,9 @@
 "{0} fährst du deshalb auf Hin- und Rückweg verteilt ({1} Std. und {2} Min.).": "So you ride {0} split across the way there and back ({1} h and {2} min).",
 "{0} fährst du deshalb auf Hin- und Rückweg verteilt ({1} Std. und {2} Std.).": "So you ride {0} split across the way there and back ({1} h and {2} h).",
 "Wegen der Erkältung fällt der Fitness-Check heute aus. Er wird frühestens am {0} nachgeholt, wenn du wieder ganz fit bist.": "Because of your cold the fitness check is cancelled today. It will be made up on {0} at the earliest, once you're fully fit again.",
-"Weil du heute richtig platt bist, fällt der Fitness-Check heute aus. Er wird frühestens am {0} nachgeholt, wenn du wieder ganz fit bist.": "Because you're completely drained today the fitness check is cancelled. It will be made up on {0} at the earliest, once you're fully fit again."
+"Weil du heute richtig platt bist, fällt der Fitness-Check heute aus. Er wird frühestens am {0} nachgeholt, wenn du wieder ganz fit bist.": "Because you're completely drained today the fitness check is cancelled. It will be made up on {0} at the earliest, once you're fully fit again.",
+"Fitness-Check eingeplant": "Fitness check scheduled",
+"Der Fitness-Check dieser Woche fehlte im Plan.": "This week's fitness check was missing from the plan.",
+"Er steht jetzt am {0}.": "It's now on {0}.",
+"Der Fitness-Check dieser Woche fehlte im Plan. Er steht jetzt am {0}.": "This week's fitness check was missing from the plan. It's now on {0}."
 }

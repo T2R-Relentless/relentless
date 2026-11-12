@@ -44,8 +44,9 @@ function placeTest(res, p, w){
   let i = res.findIndex((x, j) => ok(j) && HARD.includes(x.t));
   if (i < 0) i = res.findIndex((x, j) => ok(j) && x.t === 'base' && !(res[j - 1] && res[j - 1].t === 'long'));
   if (i < 0) i = res.findIndex((x, j) => ok(j) && (x.t === 'base' || x.t === 'rec' || x.t === 'tempo'));
-  if (i < 0 && w === t0W(p)) i = res.findIndex((x, j) => ok(j) && x.t === 'long');
-  if (i < 0 && (w === t0W(p) || dueW)) i = res.findIndex((x, j) => ok(j) && p.avail[j] && !x.m);
+  /* Sind alle Trainingstage Pendeltage (geteilt), weicht der Test auf den Long-Ride-Tag oder einen freien verfügbaren Tag aus: nie im Stadtverkehr */
+  if (i < 0) i = res.findIndex((x, j) => ok(j) && x.t === 'long');
+  if (i < 0) i = res.findIndex((x, j) => ok(j) && p.avail[j] && !x.m);
   if (i < 0) return res;
   const out = res.slice(); out[i] = TESTX(); if (dueW && !testWeeks(p).includes(w)) out[i] = {...out[i], n:'Fitness-Check (nachgeholt): 20-Min-Test', st:out[i].st + ' Der Test wird nachgeholt, weil er zuletzt ausgefallen ist. Er ist wichtig, damit deine Trainingsbereiche stimmen.'}; return out;
 }

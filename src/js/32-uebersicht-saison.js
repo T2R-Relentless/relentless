@@ -33,13 +33,17 @@ function rcNext(){ try { if (!S.plan) return ''; const L = S.plan.map((x, i) => 
 function tdFix(p){
   try {
     if (!p || S.step !== 0 || !S.plan || !hasStarted(p)) return; if (p.owedSince == null) { p.owedSince = S.wk; save(); }
-    const due = testOwed(p); if (!due || !testDueWeek(p, S.wk) || S.plan.some(x => x && x.t === 'test')) return;
-    const t = todayIdx(), ok = j => j >= t && addD(p.start, (S.wk - 1) * 7 + j) >= due && !S.done[j] && !(S.actual && S.actual[j]) && p.avail[j] && capOf(p, j) >= 55 && S.plan[j] && !S.plan[j].sub && S.plan[j].feel !== 'sick' && !/^Eventtag/.test(S.plan[j].n || '') && S.plan[j].fu == null;
+    const due = testOwed(p), dueOn = !!due && testDueWeek(p, S.wk);
+    /* Testwoche, deren Plan noch ohne Fitness-Check erzeugt wurde (z. B. nur Pendeltage): einmalig nachtragen */
+    const curOn = !dueOn && testsOn(p) && testWeeks(p).includes(S.wk) && !testDoneSince(p, S.wk) && !(p.testDue && p.testDue.w === S.wk) && !(p.tdCur || []).includes(S.wk);
+    if ((!dueOn && !curOn) || S.plan.some(x => x && x.t === 'test')) return; const due0 = dueOn ? due : '';
+    const t = todayIdx(), ok = j => j >= t && addD(p.start, (S.wk - 1) * 7 + j) >= (due0 || '') && !S.plan[j].parts && !S.done[j] && !(S.actual && S.actual[j]) && p.avail[j] && capOf(p, j) >= 55 && S.plan[j] && !S.plan[j].sub && S.plan[j].feel !== 'sick' && !/^Eventtag/.test(S.plan[j].n || '') && S.plan[j].fu == null;
     if (S.plan.some(x => x && (x.sub || /^Eventtag/.test(x.n || '')))) return;
-    const c = [0, 1, 2, 3, 4, 5, 6].filter(ok), j = c.find(q => HARD.includes(S.plan[q].t)) ?? c.find(q => ['base', 'rec', 'tempo'].includes(S.plan[q].t)) ?? c.find(q => !S.plan[q].m);
+    const c = [0, 1, 2, 3, 4, 5, 6].filter(ok), j = c.find(q => HARD.includes(S.plan[q].t)) ?? c.find(q => ['base', 'rec', 'tempo'].includes(S.plan[q].t)) ?? c.find(q => S.plan[q].t === 'long') ?? c.find(q => !S.plan[q].m);
+    if (curOn) { p.tdCur = [...(p.tdCur || []), S.wk]; save(); }
     if (j == null) return;
-    S.plan[j] = {...TESTX(), n:'Fitness-Check (nachgeholt): 20-Min-Test', adapted:true, orig:S.plan[j].m ? S.plan[j] : undefined};
-    S.log.unshift({title:'Fitness-Check nachgeholt', day:j, text:`Der ausgefallene Fitness-Check steht jetzt am ${DAYS[j]}.`}); flashIdx = j; save();
+    S.plan[j] = {...TESTX(), ...(dueOn ? {n:'Fitness-Check (nachgeholt): 20-Min-Test'} : {}), adapted:true, orig:S.plan[j].m ? S.plan[j] : undefined};
+    S.log.unshift(dueOn ? {title:'Fitness-Check nachgeholt', day:j, text:`Der ausgefallene Fitness-Check steht jetzt am ${DAYS[j]}.`} : {title:'Fitness-Check eingeplant', day:j, text:`Der Fitness-Check dieser Woche fehlte im Plan. Er steht jetzt am ${DAYS[j]}.`}); flashIdx = j; save();
   } catch (e) { elog(e); }
 }
 function t0Fix(p){

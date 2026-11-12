@@ -70,3 +70,19 @@ test('Fitness-Check bleibt offen, wenn der Plan danach angepasst wird', async ()
   eq(a.$('S.p.testDue && S.p.testDue.from'), due, 'Vormerkung erhalten'); ok(a.$('testOwed(S.p)'), 'weiter offen');
   a.setNow(at(2026, 11, 17)); a.$('render()'); a.setNow(at(2026, 11, 24)); a.$('render()'); ok(hasTest(a.$('S.plan')) || hasTest(a.$('genWeek(S.p, 4)')), 'Test wird nachgeholt');
 });
+
+/* Fitness-Checks bei Pendlern: Sind alle Trainingstage unter der Woche Pendeltage, steht der Test trotzdem im Plan (nie auf einem Pendeltag) */
+const pDat = d => ({goal:'event', eventName:'X', eventDate:'2027-10-10', dist:150, hm:2000, ftp:300, weight:75, hours:8, commuter:true, commuteMin:45, startDate:'2026-11-03', ...d});
+for (const cm of [[0, 1, 1, 1, 1, 0, 0], [0, 1, 1, 1, 1, 1, 0]]) test(`Pendeltage ${cm.join('')}: jede Testwoche enthält den Fitness-Check`, async () => {
+  const a = await boot({now:at(2026, 11, 12)}); makePlan(a, pDat({commute:cm.map(Boolean), avail:[false, true, true, true, true, true, true]}));
+  const tw = a.$('testWeeks(S.p)'); ok(tw.length >= 4, 'Testwochen ' + tw);
+  for (const w of tw) { const pl = a.$(`genWeek(S.p, ${w})`), i = pl.findIndex(x => x.t === 'test'); ok(i >= 0, `Woche ${w}: Test fehlt`); if (i >= 0) ok(!cm[i] && !pl[i].parts, `Woche ${w}: nicht auf einem Pendeltag`); }
+});
+
+test('Laufende Testwoche ohne Test (älterer Plan) bekommt ihn einmalig nachgetragen', async () => {
+  const a = await boot({now:at(2026, 11, 12)}); makePlan(a, pDat({commute:[false, true, true, true, true, false, false], avail:[false, true, true, true, true, true, true]}));
+  const w = a.$('testWeeks(S.p)')[0]; a.setNow(new Date(a.$('S.p.start') + 'T09:30:00').getTime() + ((w - 1) * 7 + 1) * 864e5); a.$('render()'); eq(a.$('S.wk'), w);
+  a.$("S.plan = S.plan.map(x => x.t === 'test' ? {...REST} : x); delete S.p.tdCur; render()");
+  ok(a.$("S.plan.some(x => x.t === 'test')"), 'nachgetragen'); ok(a.$("S.log.some(l => l.title === 'Fitness-Check eingeplant')"), 'Hinweis');
+  a.$("S.plan = S.plan.map(x => x.t === 'test' ? {...REST} : x); render()"); ok(!a.$("S.plan.some(x => x.t === 'test')"), 'nur einmal, eigene Entscheidung bleibt'); a.noErrors();
+});

@@ -304,7 +304,7 @@ function finish(){
   const keepS = !!(S.edit && S.p && hasStarted(S.p)), sd0 = sd40(d, d.startDate && d.startDate > iso(0) ? d.startDate : iso(0));
   const cmu = !!d.commuter, dm = [...d.dayMin], tot = d.avail.reduce((q, a, i) => q + (a ? (dm[i] || 0) : 0), 0);
   /* Offene Fitness-Checks und Folgetage nach Krankheit gehören zum laufenden Plan und bleiben beim Anpassen erhalten */
-  const carry = keepS ? Object.fromEntries(['testDue', 'testDone', 'owedSince', 't0fix', 'sickNext'].filter(k => S.p[k] != null).map(k => [k, S.p[k]])) : {};
+  const carry = keepS ? Object.fromEntries(['testDue', 'testDone', 'owedSince', 't0fix', 'tdCur', 'sickNext'].filter(k => S.p[k] != null).map(k => [k, S.p[k]])) : {};
   S.p = {...d, avail:[...d.avail], commuter: cmu, commute: cmu ? [...d.commute] : d.commute.map(() => false), dayMin: dm, perDay: !!d.perDay, weight: rngClamp('weight', d.weight, 75), ftp: rngClamp('ftp', d.ftp, 200), hours: d.perDay ? Math.max(.5, tot / 60) : Math.max(rngClamp('hours', d.hours, 6), comSum(d) / 60), commuteMin: d.commuteMin > 0 ? d.commuteMin : 20, tb: d.tb ? JSON.parse(JSON.stringify(d.tb)) : d.tb, start: keepS ? S.p.start : mondayOf(sd0), startDate: keepS ? S.p.startDate : sd0};
   Object.keys(carry).forEach(k => { if (S.p[k] == null) S.p[k] = carry[k]; });
   if (keepP) { S.wk = curWeek(S.p); const nw = genWeek(S.p, S.wk), t = todayIdx(); S.plan = nw.map((x, i) => i <= t && oldPlan && oldPlan[i] ? (i === t ? {...oldPlan[i], kept:1} : oldPlan[i]) : x); S.blocked = {}; note('Plan angepasst', 'Deine Änderungen sind übernommen und gelten ab morgen. Das heutige Training, bisherige Einheiten und dein Fortschritt bleiben erhalten.', -2); }
