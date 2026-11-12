@@ -37,11 +37,15 @@ function tbApply(p, w){
 }
 /* ---- Einstellungen → Alltag und Planstart: Bearbeiten (Entwurf), Speichern, Vorschlag für die laufende Woche ---- */
 let tbD = null, tbMsg = '', tbProp = null;
-function tbEdit(){ const tb = tbInit(); if (!tb) return null; if (!tbD) tbD = JSON.parse(JSON.stringify(tb)); return tbD; }
-function tbSet(k, f, v){ const d = tbEdit(); if (!d) return; if (k === 'on') d.on = !!v; else if (f === 'h') d.prof[k].h = Math.max(1, Math.min(40, Math.round(wfNum(v) * 2) / 2)); else if (f === 'days') d.prof[k].days = Math.max(1, Math.min(7, Math.round(wfNum(v)))); tbMsg = ''; render(); }
-function tbDay(k, i){ const d = tbEdit(); if (!d) return; const a = d.prof[k].avail; a[i] = !a[i]; if (!a.some(Boolean)) a[i] = true; tbMsg = ''; render(); }
-function tbMon(m){ const d = tbEdit(); if (!d) return; d.mon[m] = d.mon[m] === 's' ? 'w' : 's'; tbMsg = ''; render(); }
-function tbDev(m, v){ const d = tbEdit(); if (!d) return; d.dev = d.dev || {}; const h = Math.round(wfNum(v) * 2) / 2; if (h > 0) d.dev[m] = {h:Math.min(40, h)}; else delete d.dev[m]; tbMsg = ''; render(); }
+/* B6: In der Planung (S.step > 0) gilt das Budget für den Entwurf S.d und wird direkt übernommen (es läuft noch kein Plan).
+   Im laufenden Plan wird ein Entwurf bearbeitet und erst mit „Speichern“ übernommen (mit Vorschlag für die laufende Woche). */
+const tbPl = () => !!(S.step && S.d);
+function tbEdit(){ if (tbPl()) return tbInit(S.d); const tb = tbInit(); if (!tb) return null; if (!tbD) tbD = JSON.parse(JSON.stringify(tb)); return tbD; }
+const tbDone = () => { if (tbPl()) save(); render(); };
+function tbSet(k, f, v){ const d = tbEdit(); if (!d) return; if (k === 'on') d.on = !!v; else if (f === 'h') d.prof[k].h = Math.max(1, Math.min(40, Math.round(wfNum(v) * 2) / 2)); else if (f === 'days') d.prof[k].days = Math.max(1, Math.min(7, Math.round(wfNum(v)))); tbMsg = ''; tbDone(); }
+function tbDay(k, i){ const d = tbEdit(); if (!d) return; const a = d.prof[k].avail; a[i] = !a[i]; if (!a.some(Boolean)) a[i] = true; tbMsg = ''; tbDone(); }
+function tbMon(m){ const d = tbEdit(); if (!d) return; d.mon[m] = d.mon[m] === 's' ? 'w' : 's'; tbMsg = ''; tbDone(); }
+function tbDev(m, v){ const d = tbEdit(); if (!d) return; d.dev = d.dev || {}; const h = Math.round(wfNum(v) * 2) / 2; if (h > 0) d.dev[m] = {h:Math.min(40, h)}; else delete d.dev[m]; tbMsg = ''; tbDone(); }
 function tbCancel(){ tbD = null; tbMsg = ''; render(); }
 function tbSave(){
   const p = S.p, d = tbD; if (!p || !d) return;
@@ -64,20 +68,21 @@ function tbAccept(){
 }
 function tbDecline(){ tbProp = null; tbMsg = 'Diese Woche bleibt, wie sie ist. Das Zeitbudget gilt ab der nächsten Woche.'; render(); }
 function tbCard(){
-  const p = S.p; if (!p) return '';
-  const tb = tbD || tbInit(p), ed = !!tbD, M = TB_MON(), cur = new Date().getMonth();
+  const pl = tbPl(), p = pl ? S.d : S.p; if (!p) return '';
+  const tb = (!pl && tbD) || tbInit(p), ed = !pl && !!tbD, M = TB_MON(), cur = new Date().getMonth();
   const prof = (k, l) => { const b = tb.prof[k];
     return `<div class="mt-3 p-3" style="border:1px solid var(--line)"><p class="font-semibold">${l}</p><div class="mt-2 grid grid-cols-2 gap-3">${field('Stunden pro Woche', `<input type="text" inputmode="decimal" class="inp" style="min-height:44px" value="${esc(String(b.h).replace('.', ','))}" onchange="tbSet('${k}','h',this.value)">`)}${field('Trainingstage', `<input type="number" inputmode="numeric" min="1" max="7" class="inp" style="min-height:44px" value="${esc(b.days)}" onchange="tbSet('${k}','days',this.value)">`)}</div>
       <p class="mt-2 text-xs" style="color:var(--mute)">Mögliche Wochentage</p><div class="mt-1 flex flex-wrap gap-1.5">${SD.map((d, i) => `<button class="${b.avail[i] ? 'btn' : 'ghost'} !w-auto !px-0 text-sm" style="min-width:44px;min-height:44px" aria-pressed="${!!b.avail[i]}" onclick="tbDay('${k}',${i})">${d}</button>`).join('')}</div></div>`; };
   const bar = `<div class="mt-2 grid gap-1" style="grid-template-columns:repeat(6,minmax(0,1fr))">${M.map((m, i) => { const b = tbOf(tb, i);
     return `<button class="${b.k === 's' ? 'btn' : 'ghost'} !w-auto !px-0 text-xs" style="min-height:52px;${i === cur ? 'outline:2px solid var(--ice);' : ''}" aria-label="${esc(m)}: ${b.k === 's' ? 'Sommer' : 'Winter'}" onclick="tbMon(${i})"><span class="block font-semibold">${m}</span><span class="block">${b.k === 's' ? 'S' : 'W'} · ${hStd(b.h)}${b.dev ? '*' : ''}</span></button>`; }).join('')}</div>`;
   const devRows = `<details class="mt-2"><summary class="cursor-pointer text-sm" style="color:var(--teal);min-height:44px;display:flex;align-items:center">Einzelne Monate abweichend</summary><div class="mt-2 grid grid-cols-2 gap-2">${M.map((m, i) => field(`${m} (Std./Woche)`, `<input type="text" inputmode="decimal" class="inp" style="min-height:44px" placeholder="${esc(hStd(tb.prof[tb.mon[i] === 's' ? 's' : 'w'].h))}" value="${esc(tb.dev && tb.dev[i] ? String(tb.dev[i].h).replace('.', ',') : '')}" onchange="tbDev(${i},this.value)">`)).join('')}</div><p class="mt-1 text-xs" style="color:var(--mute)">Leer lassen = Wert des Profils.</p></details>`;
-  const prop = tbProp && tbProp.w === S.wk ? `<div class="mt-3 p-3 text-sm" style="border:1px solid var(--line);border-left:3px solid var(--teal)"><p><b>Vorschlag für diese Woche:</b></p><ul class="mt-1 space-y-1">${tbProp.ch.map(i => `<li><span>${DAYS[i]}</span>: <span data-noi18n>${esc(S.plan[i].n || '')}</span> (<span>${S.plan[i].m ? mm(S.plan[i].m) : '–'}</span>) ${ic('chevR', 14)} <span data-noi18n>${esc(tbProp.P[i].n || '')}</span> (<span>${tbProp.P[i].m ? mm(tbProp.P[i].m) : '–'}</span>)</li>`).join('')}</ul>${tbProp.warns.map(w => `<p class="mt-1 flex gap-2">${ic('warn', 18, 'margin-top:2px;color:var(--teal)')}<span>${w}</span></p>`).join('')}<div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !px-3" style="min-height:44px" onclick="tbAccept()">Annehmen</button><button class="ghost !w-auto !px-3" style="min-height:44px" onclick="tbDecline()">Ablehnen</button></div></div>` : '';
+  const prop = !pl && tbProp && tbProp.w === S.wk ? `<div class="mt-3 p-3 text-sm" style="border:1px solid var(--line);border-left:3px solid var(--teal)"><p><b>Vorschlag für diese Woche:</b></p><ul class="mt-1 space-y-1">${tbProp.ch.map(i => `<li><span>${DAYS[i]}</span>: <span data-noi18n>${esc(S.plan[i].n || '')}</span> (<span>${S.plan[i].m ? mm(S.plan[i].m) : '–'}</span>) ${ic('chevR', 14)} <span data-noi18n>${esc(tbProp.P[i].n || '')}</span> (<span>${tbProp.P[i].m ? mm(tbProp.P[i].m) : '–'}</span>)</li>`).join('')}</ul>${tbProp.warns.map(w => `<p class="mt-1 flex gap-2">${ic('warn', 18, 'margin-top:2px;color:var(--teal)')}<span>${w}</span></p>`).join('')}<div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !px-3" style="min-height:44px" onclick="tbAccept()">Annehmen</button><button class="ghost !w-auto !px-3" style="min-height:44px" onclick="tbDecline()">Ablehnen</button></div></div>` : '';
   return `<section class="panel p-4" id="fx-tb"><p class="font-semibold">Zeitbudget nach Jahreszeit</p><p class="mt-1 text-sm" style="color:var(--mute)">Zwei Profile für Winter und Sommer. Jeder Monat gehört zu einem Profil, einzelne Monate können abweichen. Die Wochenplanung hält das Budget des jeweiligen Monats ein: bei wenig Zeit kürzere, intensivere Einheiten, bei mehr Zeit lange Ausfahrten.</p>
     <label class="mt-3 flex items-center gap-3" style="min-height:44px"><input type="checkbox" style="width:22px;height:22px" ${tb.on ? 'checked' : ''} onchange="tbSet('on',null,this.checked)"><span class="text-sm font-semibold">Zeitbudget nach Jahreszeit verwenden</span></label>
     ${tb.on ? prof('w', 'Winter') + prof('s', 'Sommer') + `<p class="mt-3 text-sm font-semibold">Monate</p><p class="text-xs" style="color:var(--mute)">Antippen wechselt zwischen Winter (W) und Sommer (S). * = eigener Wert.</p>${bar}${devRows}` : ''}
     ${ed ? `<div class="mt-3 flex flex-wrap gap-2"><button class="btn !w-auto !px-4" style="min-height:44px" onclick="tbSave()">Speichern</button><button class="ghost !w-auto !px-4" style="min-height:44px" onclick="tbCancel()">Verwerfen</button></div><p class="mt-1 text-xs" style="color:var(--mute)">Gilt nach dem Speichern ab der nächsten Woche. Für die laufende Woche schlägt die App eine Anpassung vor.</p>` : ''}
-    ${tbMsg ? `<p class="mt-2 text-sm" role="status">${esc(tbMsg)}</p>` : ''}${prop}</section>`;
+    ${pl && tb.on ? '<p class="mt-2 text-xs" style="color:var(--mute)">Gilt für den neuen Plan. Die Wochenvorschau oben und die Prognose rechnen schon damit. Die Stunden oben gelten dann nur noch als Ausgangswert.</p>' : ''}
+    ${!pl && tbMsg ? `<p class="mt-2 text-sm" role="status">${esc(tbMsg)}</p>` : ''}${prop}</section>`;
 }
 /* ---- Gesamtplan: geplante und verfügbare Stunden je Monat ---- */
 let tbSeaC = null;

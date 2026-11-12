@@ -136,7 +136,8 @@ function anaBody(box = ''){
     const f0 = x => Math.round(x), mx = Math.max(1, ...a.win), bars = [...a.win].reverse().map((v, i) => `<div class="flex-1" title="${f1(v)} Std."><div style="height:${Math.max(2, Math.round(56 * v / mx))}px;background:var(--ice)"></div></div>`).join('');
     const tile = (v, l) => `<div class="rounded-lg p-2" style="background:var(--tint)"><div class="hd text-lg font-semibold">${v}</div><div class="text-xs" style="color:var(--mute)">${l}</div></div>`;
     const form = a.spanW < 6 ? 'Noch wenig Daten, die Formwerte sind grob.' : a.tsb > 10 ? 'frisch, du bist gut erholt' : a.tsb > -10 ? 'ausgewogen' : a.tsb > -25 ? 'müde, in einem Trainingsblock' : 'sehr müde, Erholung einplanen';
-    const planH = d.perDay ? d.avail.reduce((q, x, i) => q + (x ? (d.dayMin[i] || 0) : 0), 0) / 60 : d.hours, ramp = 1.08;
+    const tbS = d.tb && d.tb.on && tbOk(d.tb) ? tbOf(d.tb, dOnly(d.startDate && d.startDate > iso(0) ? d.startDate : iso(0)).getMonth()).h : 0;
+    const planH = tbS || (d.perDay ? d.avail.reduce((q, x, i) => q + (x ? (d.dayMin[i] || 0) : 0), 0) / 60 : d.hours), ramp = 1.08; /* B6: mit Zeitbudget das des Startmonats */
     const wksN = a.startH < planH ? Math.ceil(Math.log(planH / a.startH) / Math.log(ramp)) : 0;
     const wksAvail = Math.max(0, Math.ceil((new Date(d[d.goal === 'event' ? 'eventDate' : 'endDate']) - new Date(d.startDate && d.startDate > iso(0) ? d.startDate : iso(0))) / 6048e5));
     const eff = !(planH > 0) ? '' : a.startH >= planH * .9 ? `Dein bisheriger Umfang (${hStd(a.avgH)} Std. pro Woche) passt zu den geplanten ${hStd(planH)} Std. Der Plan startet direkt auf diesem Niveau.`

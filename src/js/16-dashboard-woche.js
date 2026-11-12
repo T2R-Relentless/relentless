@@ -13,7 +13,7 @@ function goalCard(full = true){
       <div class="mt-3 h-2 overflow-hidden rounded-full" style="background:var(--line)"><div class="h-full rounded-full" style="width:${esc(pr)}%;background:var(--ice)"></div></div>
       <p class="mt-2 text-sm" style="color:var(--mute)">Ziel-FTP · ${f1(p.ftp / kg)} → ${f1(p.ftpTarget / kg)} W/kg bei ${f1(kg)} kg</p>`;
   }
-  return `<div class="hd text-5xl font-bold leading-none">${hStd(p.hours)}<span class="ml-2 text-xl font-medium" style="color:var(--mute)">Std. pro Woche, überwiegend Zone 2</span></div>
+  return `<div class="hd text-5xl font-bold leading-none">${hStd(S.wk ? tbWkH(p, S.wk) : p.hours)}<span class="ml-2 text-xl font-medium" style="color:var(--mute)">Std. pro Woche, überwiegend Zone 2</span></div>
     <p class="mt-2 text-sm" style="color:var(--mute)">${fitGoalText(p)} · FTP ${p.ftp} W, ${f1(p.ftp / kg)} W/kg</p>`;
 }
 function logCardV1(){
