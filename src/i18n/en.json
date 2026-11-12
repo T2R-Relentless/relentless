@@ -6494,5 +6494,20 @@
 "Die Woche wurde angepasst ({0}).": "The week has been adjusted ({0}).",
 "Vor dem Anpassen an Alter und Erholung": "Before adapting to age and recovery",
 "Alter und Erholung: Mit Geburtsdatum schlägt die App ab {0} jede dritte Woche Entlastung und mehr Abstand zwischen harten Einheiten vor.": "Age and recovery: with your date of birth the app suggests, from {0}, a recovery week every third week and more spacing between hard sessions.",
-"Rhythmus {0}": "Rhythm {0}"
+"Rhythmus {0}": "Rhythm {0}",
+"Am besten in der Gruppe: {0}×{1} Min. Gruppentempo bei {2}–{3} % FTP, sonst Zone {4}. Windschatten und Führungswechsel üben.": "Ideally in a group: {0}×{1} min at group pace at {2}–{3}% FTP, otherwise zone {4}. Practise drafting and rotating turns.",
+"Aufbauphase: Schwelle und VO{0}max, die Intervalle werden schrittweise länger.": "Build phase: threshold and VO{0}max, the intervals get longer step by step.",
+"Aufbauphase: VO{0}max und Sweet Spot, die Intervalle werden schrittweise länger.": "Build phase: VO{0}max and sweet spot, the intervals get longer step by step.",
+"Aufbauphase: {0} und Sweet Spot, die Belastungszeit steigt schrittweise.": "Build phase: {0} and sweet spot, the work time increases step by step.",
+"Aufbauphase: VO{0}max {1}/{2} und Sweet Spot, die Belastungszeit steigt schrittweise.": "Build phase: VO{0}max {1}/{2} and sweet spot, the work time increases step by step.",
+"Bei zwei Trainingstagen zählt jede Fahrt: Fahr die letzten {0} bis {1} Min. im Sweet Spot ({2}–{3} % FTP), wenn die Beine gut sind.": "With two training days every ride counts: ride the last {0} to {1} min at sweet spot ({2}–{3}% FTP) if your legs feel good.",
+"Spitzenphase: VO{0}max und Schwelle, dazu eine {1}.": "Peak phase: VO{0}max and threshold, plus an {1}.",
+"Spitzenphase: VO{0}max und Schwelle, dazu eine Eventsimulation.": "Peak phase: VO{0}max and threshold, plus an event simulation.",
+"Spitzenphase: {0} und VO{1}max, dazu eine {2}.": "Peak phase: {0} and VO{1}max, plus an {2}.",
+"Spitzenphase: Lange Schwelle {0}×{1} und VO{2}max, dazu eine Eventsimulation.": "Peak phase: long threshold {0}×{1} and VO{2}max, plus an event simulation.",
+"Spitzenphase: Schwelle und Sweet Spot {0}×{1}, dazu eine Eventsimulation.": "Peak phase: threshold and sweet spot {0}×{1}, plus an event simulation.",
+"Spitzenphase: VO{0}max {1}/{2} und Schwelle, dazu eine Eventsimulation.": "Peak phase: VO{0}max {1}/{2} and threshold, plus an event simulation.",
+"Heute mit längerem Ausfahren in Zone {0}, so nutzt du deine Wochenzeit.": "Today with a longer cool-down in zone {0}, so you use your weekly time.",
+"{0} Min. einfahren · {1}×{2} Sek. @ {3}–{4} % · {5} Min. locker dazwischen · {6} Min. ausfahren": "{0} min warm-up · {1}×{2} sec @ {3}–{4}% · {5} min easy in between · {6} min cool-down",
+"{0}: Grundlage, neue Strecke, {1} Min.": "{0}: Endurance, new route, {1} min"
 }

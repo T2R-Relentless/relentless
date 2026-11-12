@@ -140,17 +140,17 @@ function setFmt(v){ S.d.fmt = v; save(); render(); }
 const fmtChips = d => { const pr = evProfile({...d, fmt:undefined}), auto = pr ? (pr.race ? 'race' : 'mara') : 'mara', cur = d.fmt || auto;
   return `<div><p class="mb-2 text-sm" style="color:var(--mute)">Format des Events</p><div class="flex flex-wrap gap-2">${chip('Rennen mit Massenstart', cur === 'race', "setFmt('race')")}${chip('Marathon / Radrundfahrt', cur === 'mara', "setFmt('mara')")}</div></div>`; };
 const EVMIX = {
-  alpin:{build:'Schwelle 2×20 und VO2max 5×4', peak:'Lange Schwelle 3×15 und VO2max 5×4', long:'lange Anstiege von 15 bis 30 Minuten bei 75 bis 85 % FTP'},
-  huegel:{build:'VO2max 5×4 und Sweet Spot 3×12', peak:'VO2max 5×4 und Schwelle 2×20', long:'welliges Gelände, Anstiege in Zone 3'},
-  punch:{build:'VO2max 30/15 (3 Serien) und Sweet Spot 3×12', peak:'', long:'6 bis 10 kurze Anstiege (30 bis 90 Sekunden) zügig drüberdrücken'},
-  flach:{build:'VO2max 30/15 (3 Serien) und Sweet Spot 3×12', peak:'', long:'Gruppenfahrt mit 3×15 Minuten Gruppentempo bei 80 bis 88 % FTP'},
-  ultra:{build:'Sweet Spot 2×30 und Tempo 2×40', peak:'Schwelle 2×20 und Sweet Spot 2×30', long:'sehr gleichmäßig, Verpflegung und Licht wie im Rennen, ab und zu zwei lange Tage hintereinander'}
+  alpin:{build:'Schwelle und VO2max, die Intervalle werden schrittweise länger', peak:'Lange Schwelle 3×15 und VO2max', long:'lange Anstiege von 15 bis 30 Minuten bei 75 bis 85 % FTP'},
+  huegel:{build:'VO2max und Sweet Spot, die Intervalle werden schrittweise länger', peak:'VO2max und Schwelle', long:'welliges Gelände, Anstiege in Zone 3'},
+  punch:{build:'VO2max 30/15 und Sweet Spot, die Belastungszeit steigt schrittweise', peak:'', long:'6 bis 10 kurze Anstiege (30 bis 90 Sekunden) zügig drüberdrücken'},
+  flach:{build:'VO2max 30/15 und Sweet Spot, die Belastungszeit steigt schrittweise', peak:'', long:'Gruppenfahrt mit 3×15 Minuten Gruppentempo bei 80 bis 88 % FTP'},
+  ultra:{build:'Sweet Spot 2×30 und Tempo 2×40', peak:'Schwelle und Sweet Spot 2×30', long:'sehr gleichmäßig, Verpflegung und Licht wie im Rennen, ab und zu zwei lange Tage hintereinander'}
 };
 function evProfCard(p, compact){
   const r = evProfile(p); if (!r) return '';
   const t = EVTY[r.ty], dots = v => `<span aria-label="${esc(v)} von 3">${[1, 2, 3].map(i => `<span style="display:inline-block;width:14px;height:6px;margin-right:2px;background:${esc(i <= v ? 'var(--teal)' : 'var(--line)')}"></span>`).join('')}</span>`;
   const rows = [['Grundlagenausdauer', r.sc.dur], ['Lange Anstiege (Schwelle)', r.sc.lng], ['Mittlere Anstiege (VO2max)', r.sc.med], ['Spritzigkeit (Antritte, Rampen)', r.sc.spr], ['Tempohärte im Feld', r.sc.tmp]].map(([l, v]) => `<div class="flex items-center justify-between gap-2 text-sm"><span>${l}</span>${dots(v)}</div>`).join('');
-  const mx = EVMIX[r.ty], peak = mx.peak || (r.ty === 'punch' ? (r.race ? 'im Wechsel eine rennnahe Woche (Over-Under mit Antritten und kurze Rampen) und eine Woche für die Dauerleistung (kurze VO2max-Intervalle und Schwelle)' : 'VO2max 30/15 und Rampen 8×1 Min.') : (r.race ? 'im Wechsel eine rennnahe Woche (Over-Under mit Antritten und maximale Antritte) und eine Woche für die Dauerleistung (kurze VO2max-Intervalle und Schwelle)' : 'VO2max 30/15 und Schwelle 2×20'));
+  const mx = EVMIX[r.ty], peak = mx.peak || (r.ty === 'punch' ? (r.race ? 'im Wechsel eine rennnahe Woche (Over-Under mit Antritten und kurze Rampen) und eine Woche für die Dauerleistung (kurze VO2max-Intervalle und Schwelle)' : 'VO2max 30/15 und Rampen 8×1 Min.') : (r.race ? 'im Wechsel eine rennnahe Woche (Over-Under mit Antritten und maximale Antritte) und eine Woche für die Dauerleistung (kurze VO2max-Intervalle und Schwelle)' : 'VO2max 30/15 und Schwelle'));
   const facts = `${f1(p.dist)} km, ${(p.hm || 0).toLocaleString('de-DE')} hm (${f1(r.hk)} hm/km), geplante Dauer etwa ${hm2(r.tev)} Std. (${tMin(p.targetTime) && Math.abs(tMin(p.targetTime) - r.tev) > 2 ? 'aus deiner Zielzeit, auf ein realistisches Maß begrenzt' : 'nach deiner Zielzeit'}), ${r.race ? 'Rennen mit Massenstart' : 'Marathon / Radrundfahrt'}`;
   const cl = r.climbs ? (r.climbs.length ? `<p class="mt-3 text-sm"><b>Anstiege laut ${p.course.builtin ? 'hinterlegtem (rekonstruiertem) ' : ''}Streckenprofil${(p.course.laps || 1) > 1 ? ' (' + p.course.laps + ' Runden, Tabelle zeigt eine Runde)' : ''}:</b> ${r.nL} lange (über 12 Min.), ${r.nM} mittlere (3 bis 12 Min.), ${r.nS} kurze (unter 3 Min.).</p>
       <div class="mt-2 overflow-x-auto"><table class="text-xs"><thead><tr><th class="pr-2 text-left">ab km</th><th class="pr-2 text-left">Länge</th><th class="pr-2 text-left">hm</th><th class="pr-2 text-left">Ø Steigung</th><th class="text-left">Dauer bei 90 % FTP</th></tr></thead><tbody>${[...r.climbs].sort((a, b) => b.hm - a.hm).slice(0, 8).sort((a, b) => a.km - b.km).map(c => `<tr><td class="pr-2">${f1(c.km)}</td><td class="pr-2">${f1(c.len / 1000)} km</td><td class="pr-2">${Math.round(c.hm)}</td><td class="pr-2">${f1(c.g * 100)} %</td><td>${Math.round(c.min)} Min.</td></tr>`).join('')}</tbody></table></div>` : '<p class="mt-3 text-sm">Das Streckenprofil enthält keine nennenswerten Anstiege.</p>')
@@ -181,7 +181,11 @@ function genWeekCore(p, w, base){
   const r15 = m => Math.max(45, Math.round(m * f / 15) * 15);
   const prof = ev ? (() => { const sp = P.ev && !P.ev.main ? segP(p0, P.ev) : p0; return evProfile(sp) || evProfile(p0); })() : null, ty = prof ? prof.ty : 'huegel', race = !!(prof && prof.race), lbP = prof ? prof.lbP : 270;
   const lb = {event:{base:Math.max(120, Math.round(lbP * .55 / 15) * 15),build:Math.round(lbP * .8 / 15) * 15,peak:lbP,taper:120}, ftp:{base:120,build:150,peak:180,taper:90}, fitness:p.ffocus === 'endur' && p.ftour ? {base:Math.max(90, Math.round(p.ftour * .55 / 15) * 15), build:Math.round(p.ftour * .8 / 15) * 15, peak:p.ftour, taper:90} : {base:120,build:150,peak:150,taper:90}}[p.goal][k], sim = ev && k === 'peak';
-  const LONG = D('long', sim ? 'Eventsimulation' : 'Long Ride', p.longMin > 0 ? Math.min(Math.max(45, Math.round(lb * ramp / 15) * 15), lcap) : Math.min(ty === 'ultra' ? 480 : 390, (p.longPri || (p.goal === 'fitness' && p.ffocus === 'endur')) ? Math.max(45, Math.round(lb * Math.max(1, Math.min(1.4, hE / 8)) * ramp / 15) * 15) : r15(lb)), 56, sim ? 82 : 75, '85–95 U/min', sim ? 'Profil wie beim Event, Anstiege bei 75–82 % FTP, Verpflegung wie am Eventtag.' : 'Konstant in Zone 2. Ab der ersten Stunde 30–60 g Kohlenhydrate pro Std., bei mehr als 2,5 Std. bis 90 g (Glukose-Fruktose-Mix, Verträglichkeit im Training testen).', 'Die erste Stunde muss sich zu leicht anfühlen.');
+  /* M4 (Audit 12.11.2026): Der Long Ride richtet sich nach dem Event und nicht mehr nach Wochenstunden/8. Bei wenig Zeit darf er bis zu
+     45 % des Wochenbudgets dauern (bei höchstens zwei Trainingstagen 55 %). Er wird dadurch nie kürzer als bisher. */
+  const nDays = p.avail.map((a, i) => a || i === p.longDay).filter(Boolean).length;
+  const lrM4 = Math.max(r15(lb), Math.max(45, Math.round(Math.min(lb * Math.max(1, Math.min(1.4, hE / 8)), Math.max(60, hE * 60 * (nDays <= 2 ? .55 : .45))) * ramp / 15) * 15));
+  const LONG = D('long', sim ? 'Eventsimulation' : 'Long Ride', p.longMin > 0 ? Math.min(Math.max(45, Math.round(lb * ramp / 15) * 15), lcap) : Math.min(ty === 'ultra' ? 480 : 390, (p.longPri || (p.goal === 'fitness' && p.ffocus === 'endur')) ? Math.max(45, Math.round(lb * Math.max(1, Math.min(1.4, hE / 8)) * ramp / 15) * 15) : lrM4), 56, sim ? 82 : 75, '85–95 U/min', sim ? 'Profil wie beim Event, Anstiege bei 75–82 % FTP, Verpflegung wie am Eventtag.' : 'Konstant in Zone 2. Ab der ersten Stunde 30–60 g Kohlenhydrate pro Std., bei mehr als 2,5 Std. bis 90 g (Glukose-Fruktose-Mix, Verträglichkeit im Training testen).', 'Die erste Stunde muss sich zu leicht anfühlen.');
   const SST = {...D('sst','Sweet Spot 3×12',75,88,94,'85–95 U/min','15 Min. einfahren · 3×12 Min. @ 88–94 % · 5 Min. locker dazwischen · 10 Min. ausfahren','Schwere Gänge, runder Tritt.'), wm:36, iv:{reps:3, work:12, rest:5, lo:88, hi:94, wu:15, cd:10}};
   const THR = {...D('thr','Schwelle 2×20',90,95,105,'80–90 U/min','20 Min. einfahren · 2×20 Min. @ 95–105 % · 10 Min. locker dazwischen · 15 Min. ausfahren','Leistung in der zweiten Hälfte halten.'), wm:40, iv:{reps:2, work:20, rest:10, lo:95, hi:105, wu:20, cd:15}};
   const VO2 = {...D('vo2','VO2max 5×4',75,106,120,'95–105 U/min','15 Min. einfahren · 5×4 Min. @ 106–120 % · 4 Min. locker dazwischen · 10 Min. ausfahren','Ab Minute 2 Leistung halten, nicht zu schnell starten.'), wh:20, iv:{reps:5, work:4, rest:4, lo:106, hi:120, wu:15, cd:10}};
@@ -212,7 +216,38 @@ function genWeekCore(p, w, base){
     OPN:[OPN, mkV(OPN, 'VO2max Auffrischung 4×2', {reps:4, work:2, rest:4, lo:108, hi:115}, '', '95–105 U/min'), mkV(OPN, 'Spritzig 5×1', {reps:5, work:1, rest:3, lo:115, hi:125}, 'Kurz und spritzig: die Beine wach halten, ohne zu ermüden.', '110–120 U/min')],
     VOS:[VOS, mkV(VOS, 'VO2max 5×3', {reps:5, work:3, rest:3, lo:110, hi:120}, '', '100–110 U/min'), mkV(VOS, 'VO2max 8×2', {reps:8, work:2, rest:2, lo:115, hi:125}, 'Viele kurze Wiederholungen: jede gleich stark, die letzte zählt.', '105–115 U/min')]
   };
-  const vPick = (b, salt) => { const pool = b === SST ? VAR.SST : b === THR ? VAR.THR : b === VO2 ? VAR.VO2 : b === VOS ? VAR.VOS : b === OPN ? VAR.OPN : b === ANA ? VAR.ANA : null; if (!pool) return b; const lw = loadWk(p, w); return pool[((lw - 1) + salt) % pool.length]; };
+  /* M3 (Audit 12.11.2026): Die Belastungszeit steigt in Stufen. Sweet Spot läuft ab Planstart, Schwelle, VO2max und 30/15 ab der ersten
+     Phase nach der Basis. Eine Stufe dauert ein bis drei Belastungswochen, je nach Länge des Plans (ab 8 Belastungswochen mindestens
+     zwei). Einstieg: unter 2,5 W/kg auf der ersten Stufe (und die oberste Stufe entfällt), sonst auf der zweiten, ab 4 W/kg auf der dritten.
+     Die Form wechselt weiter (Over-Under, Kraftausdauer, Trittwechsel, Bergtempo), die Dosis folgt der Stufe. Sehr lange Einheiten
+     werden auf etwa ein Drittel der Wochenzeit begrenzt (fitIv). Grundlage: progressive Belastungssteigerung; für Intervalle zählt
+     die angesammelte Zeit im Zielbereich (Seiler et al. 2013). */
+  const LAD = {sst:[[3, 10], [3, 12], [2, 20], [3, 15], [2, 25], [3, 20]], thr:[[3, 8], [3, 10], [2, 15], [2, 18], [2, 20], [3, 15]], vo2:[[4, 3], [5, 3], [4, 4], [5, 4], [6, 4]], v30:[[2, 10], [2, 13], [3, 10], [3, 13], [4, 11], [4, 13]]};
+  const tot = ph[ph.length - 1].to, tpS = (ph.find(x => x.key === 'taper') || {from:tot + 1}).from, nb0 = (ph.find(x => x.key !== 'base' && x.key !== 'taper') || ph[0]).from;
+  const isLoadW = q => { const F = ph.find(x => q >= x.from && q <= x.to); return !!F && F.key !== 'taper' && !F.rec && !recWk(p, q) && !(p.recW || []).includes(q); };
+  const cntLoad = (a, b) => { let n = 0; for (let q = a; q <= b; q++) if (isLoadW(q)) n++; return n; };
+  const wkgP = (p0.ftp || 200) / kgOf(p0), lvS = wkgP < 2.5 ? 0 : wkgP >= 4 ? 2 : 1;
+  const stage = (L, from) => { const n = cntLoad(from, tpS - 1), i = Math.max(0, cntLoad(from, w) - 1), st = Math.min(3, Math.max(n >= 8 ? 2 : 1, Math.ceil(n / L))); return Math.max(0, Math.min(L - 1 - (lvS ? 0 : 1), Math.floor(i / st) + lvS)); };
+  const ivCap = x => fitIv(x, Math.max(60, Math.round(hE * 60 * .33)));
+  const ladder = (b, salt) => {
+    const lw = loadWk(p, w) - 1 + salt, osets = s => 2 + (s >= 2 ? 1 : 0) + (s >= 4 ? 1 : 0);
+    if (b === SST) { const s = stage(6, 1), [r, m] = LAD.sst[s], f = lw % 4, v = {reps:r, work:m, rest:m >= 20 ? 6 : 5};
+      if (f === 1) return ivCap(mkV(OUL, `Over-Under leicht ${osets(s)}×9`, {sets:osets(s)}));
+      if (f === 2 && m <= 15) return ivCap(mkV(SST, `Sweet Spot ${r}×${m} Kraftausdauer`, v, VAR.SST[2].tip, VAR.SST[2].cad));
+      if (f === 3 && r === 3) return ivCap(mkV(SST, `Sweet Spot ${r}×${m} Trittwechsel`, v, VAR.SST[4].tip, VAR.SST[4].cad));
+      return ivCap(mkV(SST, `Sweet Spot ${r}×${m}`, v, m >= 20 ? VAR.SST[3].tip : '', m >= 20 ? VAR.SST[3].cad : '')); }
+    if (b === THR) { const s = stage(6, nb0), [r, m] = LAD.thr[s], f = lw % 4, v = {reps:r, work:m, rest:m >= 15 ? 10 : m >= 10 ? 6 : 5};
+      if (f === 1) return ivCap(mkV(OU, `Over-Under ${osets(s)}×10`, {sets:osets(s)}));
+      if (f === 3 && ev && race && !(k === 'peak' && (ty === 'punch' || ty === 'flach'))) return ivCap(mkV(OUA, `Over-Under mit Antritten ${osets(s)}×8`, {sets:osets(s)}));
+      if (f === 2) return ivCap(mkV(THR, `Schwelle ${r}×${m} Bergtempo`, {...v, lo:95, hi:100}, VAR.THR[4].tip, VAR.THR[4].cad));
+      return ivCap(mkV(THR, `Schwelle ${r}×${m}`, v)); }
+    if (b === VO2) { const s = stage(5, nb0), [r, m] = LAD.vo2[s], f = lw % 3, v = {reps:r, work:m, rest:m, ...(m <= 3 ? {lo:110, hi:120} : {})};
+      if (f === 2 && s >= 3 && lvS > 0) return ivCap(VOL);
+      if (f === 1 && m >= 4) return ivCap(mkV(VO2, `VO2max ${r}×${m} am Berg`, {...v, lo:106, hi:115}, VAR.VO2[4].tip, VAR.VO2[4].cad));
+      return ivCap(mkV(VO2, `VO2max ${r}×${m}`, v, m <= 3 ? VAR.VO2[3].tip : '', m <= 3 ? VAR.VO2[3].cad : '')); }
+    const [sets, reps] = LAD.v30[stage(6, nb0)]; return ivCap(mkV(V30, 'VO2max 30/15', {sets, reps}));
+  };
+  const vPick = (b, salt) => { if (b === SST || b === THR || b === VO2 || b === V30) return ladder(b, salt); const pool = b === SST ? VAR.SST : b === THR ? VAR.THR : b === VO2 ? VAR.VO2 : b === VOS ? VAR.VOS : b === OPN ? VAR.OPN : b === ANA ? VAR.ANA : null; if (!pool) return b; const lw = loadWk(p, w); return pool[((lw - 1) + salt) % pool.length]; };
   /* M1: Rennen vom Typ „punch“ und „flach“ wechseln in der Spitze wochenweise zwischen einer rennnahen Woche (Over-Under mit Antritten, dazu Rampen
      bzw. Antritte) und einer Woche für die Dauerleistung (VO2max 30/15 und Schwelle). So bleibt die Schwellenleistung bis zum Rennen erhalten. */
   const pkA = loadWk(p, w) % 2 === 1;
@@ -231,13 +266,17 @@ function genWeekCore(p, w, base){
     if (lv) { LONG.n = lv[0]; LONG.cad = {['Long Ride, negativer Split']:'85–95, in der zweiten Hälfte 90–100 U/min', ['Long Ride, wellig']:'Anstiege 70–85, flach 85–95 U/min', ['Long Ride mit Verpflegungstraining']:'85–95 U/min'}[lv[0]] || LONG.cad; LONG.st = lv[1] + (LONG.m >= 120 ? ' Ab der ersten Stunde 30–60 g Kohlenhydrate pro Std.' : ''); }
   }
   VOL.st += ' Wähle die Leistung so, dass alle 4 Intervalle gleichmäßig gelingen.';
+  if (nDays <= 2 && !rec && k !== 'taper' && !sim && LONG.m >= 90) LONG.st = 'Bei zwei Trainingstagen zählt jede Fahrt: Fahr die letzten 20 bis 30 Min. im Sweet Spot (88–94 % FTP), wenn die Beine gut sind. ' + LONG.st; /* vorangestellt, damit der Satz einzeln übersetzt wird */
   const lev = (ev && p.lev) || {};
   if (lev.fuel && k !== 'taper' && prof) { const tg = prof.tev > 150 ? 80 : 45, pk = (ph.find(x => x.key === 'peak' && x.to >= w) || P).from, gh = Math.round((40 + (tg - 40) * Math.min(1, (w - 1) / Math.max(1, pk - 1))) / 5) * 5; LONG.st += ` Darmtraining: diese Woche etwa ${gh} g Kohlenhydrate pro Stunde, mit den Produkten, die du auch im Rennen nutzt.`; }
   if (lev.caf && sim) LONG.st += ` Koffein testen: 60 Min. vor dem Start etwa ${Math.round(kgOf(p0) * 3 / 10) * 10} mg, so wie am Eventtag.`;
   if (lev.pace && sim) LONG.st += ' ' + paceTxt(p0, prof);
   const H = {event:HE[ty] || HE.huegel, ftp:{base:[SST],build:[VO2,THR],peak:[VOL,VO2],taper:[OPN]}, fitness:{endur:{base:[SST],build:[SST],peak:[SSL],taper:[]}, speed:{base:[SST],build:[VOS,SST],peak:[V30,THR],taper:[OPN]}, health:{base:[],build:[SST],peak:[SST],taper:[]}, restart:{base:[],build:[SST],peak:[VOS],taper:[]}}[p.ffocus] || {base:[SST],build:[VOS],peak:[VOS],taper:[]}};
   const fF = p.goal === 'fitness' ? p.ffocus : null, iF = !!p.intF && fF !== 'health' && fF !== 'restart';
-  let hard = (rec ? (fF === 'health' || fF === 'restart' ? [] : [OPN]) : (fF === 'restart' && w <= 3 ? [] : H[p.goal][k])).slice(0, iF ? 2 : hE < 5 || fF === 'health' ? 1 : 2);
+  let hard = (rec ? (fF === 'health' || fF === 'restart' ? [] : [OPN]) : (fF === 'restart' && w <= 3 ? [] : H[p.goal][k])).slice(0, iF ? 2 : (hE < 5 && (nDays < 3 || hE < 3)) || fF === 'health' ? 1 : 2);
+  /* M4: Bei wenig Zeit (bis 6 Std.) reicht eine Sweet-Spot-Einheit in der Basis nicht als Reiz. Ab Woche 5 kommt eine kurze VO2max-Einheit
+     dazu (ab 3 Trainingstagen und 3 Std., nicht unter 2,5 W/kg und nicht beim Ziel „Ausdauer“). */
+  if (!rec && k === 'base' && hard.length === 1 && hard[0] === SST && hE <= 6 && hE >= 3 && nDays >= 3 && w > 4 && wkgP >= 2.5 && fF !== 'endur') hard = [SST, VOS];
   hard = hard.map((x, n) => rec || k === 'taper' ? (x === OPN ? vPick(x, Math.floor(w / rhyN(p))) : x) : vPick(x, n * 2));
   /* Intensität statt Umfang: mindestens 2 harte Einheiten, im Aufbau und in der Spitze eine dritte, kurze (bei gleicher Wochenzeit) */
   if (iF && !rec && k !== 'taper') { const ex = ev && (ty === 'punch' || ty === 'flach') ? RMP : VOS; if (hard.length < 2) hard = [...hard, hard.some(x => x.t === 'vo2') ? SST : ex]; if ((k === 'build' || k === 'peak') && p.avail.filter(Boolean).length >= 4) hard = [...hard, ex]; }
@@ -286,12 +325,23 @@ function genWeekCore(p, w, base){
   const a = (p.longDay + 1) % 7; if (p.longDay >= 0 && av[a] && !out[a] && !cm[a]) put(a, capS(REC, a));
   cm.forEach((c,i) => { if (c && !out[i]) out[i] = comSes(p, i); });
   let sum = out.reduce((x, y) => x + (y ? y.m : 0), 0); const target = hE * 60 * ramp;
+  /* M4: Eine Grundlagenfahrt ist nie länger als der Long Ride der Woche */
+  const lgMax = () => { const L = p.longDay >= 0 ? out[p.longDay] : null; return L && L.t === 'long' ? Math.max(60, L.m) : 120; };
   let rides = out.filter(Boolean).length; const need = k === 'taper' ? Math.min(5, av.filter(Boolean).length - 1) : 0;
   [0,1,2,3,4,5,6].filter(i => av[i] && !out[i]).forEach(i => {
     const more = sum < target - 20, cp = cap(i); if (cp < 30) return;
-    if (more || rides < need) { const m = Math.min(cp, more ? Math.min(120, Math.max(45, Math.round((target - sum) / 15) * 15)) : 30); out[i] = baseVar(m, i); sum += m; rides++; }
+    if (more || rides < need) { const m = Math.min(cp, more ? Math.min(120, lgMax(), Math.max(45, Math.round((target - sum) / 15) * 15)) : 30); out[i] = baseVar(m, i); sum += m; rides++; }
   });
   /* Zusätzliche Zeit an Pendeltagen (Zeit pro Tag): als Umweg auf dem Heimweg nutzen, wenn noch Umfang fehlt */
+  /* M4: Sind alle Trainingstage belegt und fehlt noch Wochenzeit, werden die vorhandenen Einheiten verlängert: erst der Long Ride (bis zur
+     Hälfte der Wochenzeit, bei höchstens zwei Trainingstagen 60 %, und höchstens ein Viertel über dem Zielwert aus dem Event), dann Grundlagenfahrten, zuletzt das Ausfahren der Intervalleinheiten. */
+  if (k !== 'taper' && sum < target - 20 && ![0,1,2,3,4,5,6].some(i => av[i] && !out[i] && cap(i) >= 30)) {
+    const li = p.longDay, L = li >= 0 ? out[li] : null;
+    if (L && L.t === 'long' && !L.parts) { const mx = Math.min(cap(li), ty === 'ultra' ? 480 : 390, Math.round(target * (nDays <= 2 ? .6 : .5) / 15) * 15, Math.max(L.m, Math.round(lb * Math.max(1, Math.min(1.4, hE / 8)) * 1.25 / 15) * 15)), add = Math.floor(Math.min(mx - L.m, target - sum) / 15) * 15; if (add >= 15) { out[li] = {...L, m:L.m + add}; sum += add; } }
+    out.forEach((x, i) => { if (!x || x.t !== 'base' || x.parts) return; const add = Math.floor(Math.min(Math.min(cap(i), 120, lgMax()) - x.m, target - sum) / 15) * 15; if (add >= 15) { out[i] = {...x, m:x.m + add}; sum += add; } });
+    out.forEach((x, i) => { if (!x || !x.iv || x.parts || !HARD.includes(x.t) || sum >= target - 10) return; const add = Math.floor(Math.min(20, cap(i) - x.m, target - sum) / 5) * 5;
+      if (add >= 10) { const iv = {...x.iv, cd:x.iv.cd + add}; out[i] = {...x, iv, m:x.m + add, st:'Heute mit längerem Ausfahren in Zone 2, so nutzt du deine Wochenzeit. ' + ivText(iv)}; sum += add; } });
+  }
   if (p.perDay) cm.forEach((c, i) => { const x = out[i]; if (!c || !x || x.t !== 'com' || !x.parts) return; const ex = Math.floor((cap(i) - x.m) / 5) * 5; if (ex < 15 || sum >= target - 15) return;
     const add = Math.min(ex, 120, Math.max(15, Math.round((target - sum) / 5) * 5)); out[i] = {...x, m:x.m + add, n:'Pendeln mit Umweg', parts:[x.parts[0], {...x.parts[1], m:x.parts[1].m + add, st:`Locker nach Hause mit einem Umweg von etwa ${add} Min. in Zone 2 (Gespräch muss möglich sein).`}], st:`Hinweg locker, auf dem Heimweg ein Umweg von etwa ${add} Min. in Zone 2.`, tip:'So nutzt du die zusätzliche Zeit an diesem Tag ohne extra Fahrt.'}; sum += add; });
   let res = out.map(x => x || {...REST});

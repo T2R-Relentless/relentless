@@ -1,6 +1,6 @@
 {
- "en-start": "RELENTLESS.\nDE\nFrühjahrsrennen ▾ · 1 plan\n\nFIRST SESSION · TUESDAY, 08/12/2026\n\nSweet Spot 3×12\n\n1:11 h\n211–226 W\nZ4 · TSS ~94\n\nHOW TO RIDE\n\n3× 12 min at 88–94%\n\n5 min easy in between · 15 min warm-up and 10 min cool-down\n\nSweet Spot: demanding but controlled\n\n85–95 rpm\n\nWHAT YOU NEED\n\n≈ 30 g carbohydrates on the bike\n\n1 bottle of sports drink\n\nFood\nDetails\n\nSTART WEEK\n\nWeekly plan ›\nMon\n–\nTue\n1:11\nWed\n2:00\nThu\n45′\nFri\n–\nSat\n–\nSun\n1:45\n\nDID YOU KNOW?\n\n✕\n\nUpload your ride after each session (FIT, GPX or TCX). The app matches it to the day, scores it, praises what went well and tells you what to improve next time.\n\nUpload ride\nNext tip\n171\ndays until\nFrühjahrsrennen\n\nGoal: reach the finish well prepared · currently base phase · 240 W, 3.2 W/kg\n\n›\n\nPLAN STARTS ON\n\n07/12/2026\n\nIn 26 days. Until then everything is a preview: you can block days and plan weeks, but nothing can be ticked off yet.\n\nStart now\nMove start\nToday\nWeek\nLogbook\nProgress\nMore",
- "en-week": "RELENTLESS.\nDE\nFrühjahrsrennen ▾ · 1 plan\n‹\nStart week\nWeek 1 of 21, base\n›\n\n5:41 h planned of 6 h available, TSS ~300. Preview, updated as the week approaches.\n\nTime by intensity: 89% low, 11% moderate, 0% high\n\nPlan week 1 in advance\nMonday\nRest day\noff\nTuesday\nSweet Spot 3×12\n1:11 h\nTSS ~94\nWednesday\nEndurance with skills\n2 h\nTSS ~87\nThursday\nEndurance, easy start\n45 min\nTSS ~33\nFriday\nRest day\noff\nSaturday\nRest day\noff\nSunday\nlong ride\n1:45 h\nTSS ~86\nToday\nWeek\nLogbook\nProgress\nMore",
+ "en-start": "RELENTLESS.\nDE\nFrühjahrsrennen ▾ · 1 plan\n\nFIRST SESSION · TUESDAY, 08/12/2026\n\nSweet Spot 3×12\n\n1:11 h\n211–226 W\nZ4 · TSS ~94\n\nHOW TO RIDE\n\n3× 12 min at 88–94%\n\n5 min easy in between · 15 min warm-up and 10 min cool-down\n\nSweet Spot: demanding but controlled\n\n85–95 rpm\n\nWHAT YOU NEED\n\n≈ 30 g carbohydrates on the bike\n\n1 bottle of sports drink\n\nFood\nDetails\n\nSTART WEEK\n\nWeekly plan ›\nMon\n–\nTue\n1:11\nWed\n1:45\nThu\n–\nFri\n–\nSat\n–\nSun\n2:15\n\nDID YOU KNOW?\n\n✕\n\nUpload your ride after each session (FIT, GPX or TCX). The app matches it to the day, scores it, praises what went well and tells you what to improve next time.\n\nUpload ride\nNext tip\n171\ndays until\nFrühjahrsrennen\n\nGoal: reach the finish well prepared · currently base phase · 240 W, 3.2 W/kg\n\n›\n\nPLAN STARTS ON\n\n07/12/2026\n\nIn 26 days. Until then everything is a preview: you can block days and plan weeks, but nothing can be ticked off yet.\n\nStart now\nMove start\nToday\nWeek\nLogbook\nProgress\nMore",
+ "en-week": "RELENTLESS.\nDE\nFrühjahrsrennen ▾ · 1 plan\n‹\nStart week\nWeek 1 of 21, base\n›\n\n5:11 h planned of 6 h available, TSS ~280. Preview, updated as the week approaches.\n\nTime by intensity: 88% low, 12% moderate, 0% high\n\nPlan week 1 in advance\nMonday\nRest day\noff\nTuesday\nSweet Spot 3×12\n1:11 h\nTSS ~94\nWednesday\nEndurance with skills\n1:45 h\nTSS ~76\nThursday\nRest day\noff\nFriday\nRest day\noff\nSaturday\nRest day\noff\nSunday\nlong ride\n2:15 h\nTSS ~110\nToday\nWeek\nLogbook\nProgress\nMore",
  "plan": {
   "ftp": 240,
   "hours": 6,
@@ -51,17 +51,17 @@
     ],
     [
      "base",
-     120,
+     105,
      "Grundlage mit Fahrtechnik",
      75,
-     87
+     76
     ],
     [
-     "base",
-     45,
-     "Grundlage, ruhiger Einstieg",
-     75,
-     33
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
     ],
     [
      "rest",
@@ -79,10 +79,10 @@
     ],
     [
      "long",
-     105,
+     135,
      "Long Ride",
      75,
-     86
+     110
     ]
    ],
    [
@@ -95,10 +95,10 @@
     ],
     [
      "sst",
-     62,
-     "Over-Under leicht 3×9",
+     48,
+     "Over-Under leicht 2×9",
      94,
-     82
+     63
     ],
     [
      "base",
@@ -130,10 +130,10 @@
     ],
     [
      "long",
-     105,
+     135,
      "Long Ride, negativer Split",
      75,
-     86
+     110
     ]
    ],
    [
@@ -146,24 +146,24 @@
     ],
     [
      "sst",
-     77,
-     "Sweet Spot 4×10 Kraftausdauer",
+     71,
+     "Sweet Spot 3×12 Kraftausdauer",
      94,
-     102
+     94
     ],
     [
      "base",
-     105,
+     120,
      "Grundlage mit Fahrtechnik",
      75,
-     76
+     87
     ],
     [
-     "base",
-     45,
-     "Grundlage, ruhiger Einstieg",
-     75,
-     33
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
     ],
     [
      "rest",
@@ -181,10 +181,10 @@
     ],
     [
      "long",
-     120,
+     150,
      "Long Ride, wellig",
      75,
-     98
+     122
     ]
    ],
    [
@@ -204,10 +204,10 @@
     ],
     [
      "base",
-     120,
+     90,
      "Grundlage Z2",
      75,
-     87
+     65
     ],
     [
      "rest",
@@ -232,10 +232,10 @@
     ],
     [
      "long",
-     75,
+     105,
      "Long Ride",
      75,
-     61
+     86
     ]
    ],
    [
@@ -255,17 +255,17 @@
     ],
     [
      "base",
-     120,
+     60,
      "Grundlage mit Fahrtechnik",
      75,
-     87
+     44
     ],
     [
-     "base",
-     45,
-     "Grundlage, ruhiger Einstieg",
-     75,
-     33
+     "vo2",
+     55,
+     "VO2max 8×2",
+     120,
+     92
     ],
     [
      "rest",
@@ -283,61 +283,10 @@
     ],
     [
      "long",
-     105,
+     135,
      "Long Ride",
      75,
-     86
-    ]
-   ],
-   [
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "sst",
-     80,
-     "Sweet Spot 3×15 Trittwechsel",
-     94,
-     106
-    ],
-    [
-     "base",
-     120,
-     "Grundlage, neue Strecke",
-     75,
-     87
-    ],
-    [
-     "base",
-     45,
-     "Grundlage Z2",
-     75,
-     33
-    ],
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "long",
-     105,
-     "Long Ride, negativer Split",
-     75,
-     86
+     110
     ]
    ],
    [
@@ -351,23 +300,23 @@
     [
      "sst",
      71,
-     "Sweet Spot 3×12",
+     "Sweet Spot 2×20",
      94,
      94
     ],
     [
      "base",
-     120,
-     "Grundlage mit Fahrtechnik",
      75,
-     87
+     "Grundlage, neue Strecke",
+     75,
+     54
     ],
     [
-     "base",
-     45,
-     "Grundlage, ruhiger Einstieg",
-     75,
-     33
+     "vo2",
+     50,
+     "VO2max 4×4",
+     120,
+     83
     ],
     [
      "rest",
@@ -385,10 +334,61 @@
     ],
     [
      "long",
+     135,
+     "Long Ride, negativer Split",
+     75,
+     110
+    ]
+   ],
+   [
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "sst",
+     62,
+     "Over-Under leicht 3×9",
+     94,
+     82
+    ],
+    [
+     "base",
+     90,
+     "Grundlage mit Fahrtechnik",
+     75,
+     65
+    ],
+    [
+     "vo2",
+     52,
+     "VO2max 5×3",
      120,
+     87
+    ],
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "long",
+     150,
      "Long Ride, wellig",
      75,
-     98
+     122
     ]
    ],
    [
@@ -408,10 +408,10 @@
     ],
     [
      "base",
-     120,
+     90,
      "Grundlage Z2",
      75,
-     87
+     65
     ],
     [
      "rest",
@@ -436,10 +436,10 @@
     ],
     [
      "long",
-     75,
+     105,
      "Long Ride",
      75,
-     61
+     86
     ]
    ],
    [
@@ -452,10 +452,10 @@
     ],
     [
      "vo2",
-     61,
-     "VO2max 5×4",
+     52,
+     "VO2max 5×3",
      120,
-     102
+     87
     ],
     [
      "base",
@@ -466,59 +466,8 @@
     ],
     [
      "sst",
-     71,
-     "Sweet Spot 2×20",
-     94,
-     94
-    ],
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "long",
-     135,
-     "Long Ride, wellig",
-     85,
-     110
-    ]
-   ],
-   [
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "vo2",
-     60,
-     "VO2max 30/15",
-     125,
-     100
-    ],
-    [
-     "base",
-     45,
-     "Grundlage, neue Strecke",
-     75,
-     33
-    ],
-    [
-     "sst",
      80,
-     "Sweet Spot 3×15 Trittwechsel",
+     "Sweet Spot 3×15",
      94,
      106
     ],
@@ -554,24 +503,75 @@
     ],
     [
      "vo2",
-     66,
-     "VO2max 4×8",
-     110,
-     110
+     52,
+     "VO2max 5×3",
+     120,
+     87
     ],
     [
      "base",
-     45,
-     "Grundlage mit Fahrtechnik",
      75,
-     33
+     "Grundlage, neue Strecke",
+     75,
+     54
     ],
     [
      "sst",
-     71,
-     "Sweet Spot 3×12",
+     62,
+     "Over-Under leicht 3×9",
      94,
-     94
+     82
+    ],
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "long",
+     150,
+     "Long Ride, wellig",
+     85,
+     122
+    ]
+   ],
+   [
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "vo2",
+     53,
+     "VO2max 4×4",
+     120,
+     88
+    ],
+    [
+     "base",
+     60,
+     "Grundlage mit Fahrtechnik",
+     75,
+     44
+    ],
+    [
+     "sst",
+     80,
+     "Sweet Spot 3×15 Kraftausdauer",
+     94,
+     106
     ],
     [
      "rest",
@@ -663,68 +663,17 @@
     ],
     [
      "base",
-     60,
-     "Grundlage mit Fahrtechnik",
-     75,
-     44
-    ],
-    [
-     "sst",
-     62,
-     "Over-Under leicht 3×9",
-     94,
-     82
-    ],
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "long",
-     135,
-     "Long Ride, wellig",
-     85,
-     110
-    ]
-   ],
-   [
-    [
-     "rest",
-     0,
-     "Ruhetag",
-     0,
-     0
-    ],
-    [
-     "vo2",
-     60,
-     "VO2max 4×5 am Berg",
-     120,
-     100
-    ],
-    [
-     "base",
      45,
-     "Grundlage, neue Strecke",
+     "Grundlage mit Fahrtechnik",
      75,
      33
     ],
     [
      "sst",
-     77,
-     "Sweet Spot 4×10 Kraftausdauer",
+     81,
+     "Sweet Spot 2×25",
      94,
-     102
+     107
     ],
     [
      "rest",
@@ -758,24 +707,75 @@
     ],
     [
      "vo2",
-     52,
-     "VO2max 5×3",
+     61,
+     "VO2max 5×4 am Berg",
      120,
-     87
+     102
     ],
     [
      "base",
-     60,
-     "Grundlage mit Fahrtechnik",
+     45,
+     "Grundlage, neue Strecke",
      75,
-     44
+     33
     ],
     [
      "sst",
-     71,
-     "Sweet Spot 2×20",
+     81,
+     "Sweet Spot 2×25",
      94,
-     94
+     107
+    ],
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "long",
+     150,
+     "Long Ride, wellig",
+     85,
+     122
+    ]
+   ],
+   [
+    [
+     "rest",
+     0,
+     "Ruhetag",
+     0,
+     0
+    ],
+    [
+     "vo2",
+     66,
+     "VO2max 4×8",
+     110,
+     110
+    ],
+    [
+     "base",
+     45,
+     "Grundlage mit Fahrtechnik",
+     75,
+     33
+    ],
+    [
+     "sst",
+     76,
+     "Over-Under leicht 4×9",
+     94,
+     100
     ],
     [
      "rest",
@@ -860,10 +860,10 @@
     ],
     [
      "vo2",
-     61,
-     "VO2max 5×4",
+     69,
+     "VO2max 6×4",
      120,
-     102
+     115
     ],
     [
      "rest",
@@ -874,10 +874,10 @@
     ],
     [
      "thr",
-     61,
-     "Over-Under mit Antritten 3×8",
+     85,
+     "Schwelle 2×20 Bergtempo",
      105,
-     94
+     131
     ],
     [
      "rest",
@@ -911,10 +911,10 @@
     ],
     [
      "vo2",
-     60,
-     "VO2max 30/15",
-     125,
-     100
+     69,
+     "VO2max 6×4 am Berg",
+     120,
+     115
     ],
     [
      "rest",
@@ -925,10 +925,10 @@
     ],
     [
      "thr",
-     83,
-     "Schwelle 3×12",
+     85,
+     "Schwelle 2×20",
      105,
-     127
+     131
     ],
     [
      "rest",
@@ -976,10 +976,10 @@
     ],
     [
      "thr",
-     90,
-     "Schwelle 4×10 Bergtempo",
+     100,
+     "Schwelle 3×15",
      105,
-     138
+     154
     ],
     [
      "rest",
@@ -997,10 +997,10 @@
     ],
     [
      "long",
-     195,
+     180,
      "Eventsimulation",
      82,
-     159
+     147
     ]
    ],
    [
@@ -1020,10 +1020,10 @@
     ],
     [
      "base",
-     75,
+     60,
      "Grundlage Z2",
      75,
-     54
+     44
     ],
     [
      "thr",
@@ -1048,10 +1048,10 @@
     ],
     [
      "long",
-     60,
+     75,
      "Long Ride",
      75,
-     49
+     61
     ]
    ],
    [
@@ -1118,11 +1118,11 @@
  "seite-ev-subs": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Event\nSAISON UND EVENTS\n\nNoch keine weiteren Events. Trag alle Rennen deiner Saison ein, beliebig viele: als A-Event mit eigenem Formhöhepunkt oder als B- und C-Rennen auf dem Weg zum Hauptevent.\n\nEvents hinzufügen\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-event": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nEVENT\n171\nTage bis\nFrühjahrsrennen\n\nZiel: gut vorbereitet ins Ziel kommen · aktuell Basis-Phase · 240 W, 3,2 W/kg\n\nVORBEREITUNG AUF DAS EVENT\n\nPlan-Check\nStrecke eintragen\n›\nAnforderungsprofil\nStrecke und Höhenmeter eintragen, dann zeigt die App, worauf es ankommt\n›\nErnährungsstrategie\nVorbereitung, Renntag und danach, mit Mengen für dich\n›\nSaison und Events\nNoch keine weiteren Events\n›\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-ex": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nÜBUNGEN\nRoutinen zum Mitmachen\n\nGeführt mit Tönen und Ansagen. Jedes Mal eine andere Variante.\n\nVor der Fahrt\netwa 5 Min. · Beinpendel, Hüftkreise, Ausfallschritt mit Rotation, Katze-Kuh, Sprunggelenk-Kreise\nNach der Fahrt\netwa 10 Min. · Hüftbeuger-Dehnung, Beinrückseite mit Band, Gesäß-Dehnung (Figur 4), Brustdehnung im Türrahmen, Kind-Position\nRuhetag\netwa 20 Min. · Katze-Kuh, World's Greatest Stretch, Couch Stretch, Taube, Adduktoren-Rock-Back, Tiefe Hocke, Open Book, Hamstring Floss, Sphinx\nSchreibtisch\netwa 5 Min. · Kinn zurück, Nackenmobilisation, Gesäß-Dehnung im Sitzen, Handgelenkdehnung\n\nAlle Übungen aus Kraft-, Stabilitäts- und Mobilitätstraining. Tippe auf eine Übung für Erklärung und Grafik.\n\nKraft\nRumpf und Stabilität\nMobilität: Hüfte und Beine\nMobilität: Rücken, Schultern, Nacken\nKniebeuge oder Beinpresse\nRumänisches Kreuzheben\nBulgarian Split Squat oder Ausfallschritte\nHip Thrust\nWadenheben\nStep-ups auf Stuhl oder Treppe\nEinbeiniges Rumänisches Kreuzheben\nEinbeinige Glute Bridge\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
- "seite-export": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nEXPORT\n\nBring deine Einheiten in deinen Kalender, auf die Rolle oder auf deinen Radcomputer.\n\nZIEL\n\nKalender\nApple, Google, Outlook · 79 Termine ab heute\n›\nZwift\nAlle Einheiten auf einmal als ZIP\n›\nGarmin-Gerät\nEinzelne Einheit als Workout (.fit), so kommt sie aufs Gerät\n›\n\nEinzelne Einheiten exportierst du direkt bei der Einheit im Wochenplan: „Garmin (.fit)“ oder „Zwift (.zwo)“.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
+ "seite-export": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nEXPORT\n\nBring deine Einheiten in deinen Kalender, auf die Rolle oder auf deinen Radcomputer.\n\nZIEL\n\nKalender\nApple, Google, Outlook · 77 Termine ab heute\n›\nZwift\nAlle Einheiten auf einmal als ZIP\n›\nGarmin-Gerät\nEinzelne Einheit als Workout (.fit), so kommt sie aufs Gerät\n›\n\nEinzelne Einheiten exportierst du direkt bei der Einheit im Wochenplan: „Garmin (.fit)“ oder „Zwift (.zwo)“.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-logbook": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\nLOGBUCH\nAlle\nGeplant\nZusätzlich\n\nNoch keine Fahrten. Lade Fahrten hoch oder verbinde Garmin, dann erscheinen sie hier mit ihrer Bewertung.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-more": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\nMEHR\n\nDEIN PLAN\n\nPlan-Check\nStrecke eintragen\n›\nEvent\nZielzeit und Strecke\n›\nGesamtplan\n21 Wochen bis 01.05.2027\n›\nFitness-Checks\nNächster Check: Woche 5\n›\nMeine Pläne\nPlan anpassen, 1 gespeichert\n›\n\nTRAINING\n\nFahrten bewerten\nFahrt hochladen und bewerten lassen\n›\nÜbungen\n41 Übungen mit Grafik\n›\nWissen\nErnährung, Training, Gesundheit\n›\n\nWERKZEUGE\n\nReifendruck\nStartwert vorn und hinten für dein Rad\n›\n\nAPP\n\nExport\nKalender, Garmin und Zwift\n›\nEinstellungen\n6 Std. pro Woche, 240 W\n›\n\nTEAM\n\nTeam Relentless Riders\nteamrelentlessriders.de\n↗\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-ms": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nFITNESS-CHECKS\nBist du auf Kurs?\n\nNach jeder zweiten Erholungswoche plant die App einen kurzen Fitness-Check ein: einen 20-Minuten-Test, ausgeruht gefahren. Daraus ergibt sich dein FTP. Die App vergleicht ihn mit dem Korridor, den dein Plan erwarten lässt, und sagt dir, ob du auf Kurs bist oder ob etwas angepasst werden sollte. Du entscheidest, was übernommen wird.\n\nWoche 1\nWoche 21\n240\n erwarteter Korridor\n dein Ergebnis\n unter dem Korridor\n┆ Fitness-Check\nDeine Checks\nWoche 5, 05.01.2027 · geplant\nErwartet: 237 bis 250 W\nWoche 13, 02.03.2027 · geplant\nErwartet: 240 bis 257 W\n\nFitness-Checks einplanen?\n\nJa\nNein\nSo machst du den Test\n20-Min-Test: 20 Min. einfahren mit 3 kurzen Steigerungen, 5 Min. locker, dann 20 Min. so hart, wie du es gleichmäßig durchhältst. FTP ≈ 95 % der Durchschnittsleistung.\nRampentest (z. B. in Zwift): Die Leistung steigt jede Minute, bis du nicht mehr kannst. FTP ≈ 75 % der besten Minute.\nAusgeruht, gut gegessen, gleiche Bedingungen wie beim letzten Test (gleiches Rad oder gleicher Rollentrainer). Lädst du die Fahrt als Datei hoch, liest die App die Werte selbst aus.\n\nDer Korridor kommt aus der FTP-Prognose der App (Faustmodell, siehe Plan-Check) plus etwa ±2 % Messtoleranz. Tests schwanken von Tag zu Tag, darum zählt der Trend über mehrere Checks mehr als ein einzelner Wert.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
- "seite-overview": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nGESAMTPLAN\n\nStunden je Monat\n\nGeplante Trainingszeit neben der verfügbaren Zeit. Rot: mehr geplant als verfügbar.\n\nDez 26\ngeplant 19:42 Std.\nverfügbar 21:30 Std.\nJan 27\ngeplant 22:31 Std.\nverfügbar 26:30 Std.\nFeb 27\ngeplant 20:31 Std.\nverfügbar 24 Std.\nMär 27\ngeplant 21:35 Std.\nverfügbar 26:30 Std.\nApr 27\ngeplant 22:22 Std.\nverfügbar 25:30 Std.\nMai 27\ngeplant 8 Std.\nverfügbar 1:30 Std.\nZeitbudget ändern\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\nBasis Woche 1–8, ab 07.12.\nAerobe Grundlage: viel Zone 2, wenig Intensität\nAufbau Woche 9–15, ab 01.02.\nJe eine Intervalleinheit über der Schwelle und eine Sweet-Spot- oder Schwelleneinheit, Umfang steigt\nSpitze Woche 16–19, ab 22.03.\nEventspezifisch: lange Ritte, VO2max-Schärfe\nTapering Woche 20–21, ab 19.04.\nUmfang sinkt um etwa 40 bis 60 %, Intensität und Fahrhäufigkeit bleiben\n\nDick umrandet: aktuelle Woche. Gestrichelt: Erholungswoche. Tippe eine Woche an, um sie anzusehen.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
+ "seite-overview": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nGESAMTPLAN\n\nStunden je Monat\n\nGeplante Trainingszeit neben der verfügbaren Zeit. Rot: mehr geplant als verfügbar.\n\nDez 26\ngeplant 18:52 Std.\nverfügbar 21:30 Std.\nJan 27\ngeplant 22:20 Std.\nverfügbar 26:30 Std.\nFeb 27\ngeplant 21:01 Std.\nverfügbar 24 Std.\nMär 27\ngeplant 22:11 Std.\nverfügbar 26:30 Std.\nApr 27\ngeplant 22:52 Std.\nverfügbar 25:30 Std.\nMai 27\ngeplant 8 Std.\nverfügbar 1:30 Std.\nZeitbudget ändern\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n21\nBasis Woche 1–8, ab 07.12.\nAerobe Grundlage: viel Zone 2, wenig Intensität\nAufbau Woche 9–15, ab 01.02.\nJe eine Intervalleinheit über der Schwelle und eine Sweet-Spot- oder Schwelleneinheit, Umfang steigt\nSpitze Woche 16–19, ab 22.03.\nEventspezifisch: lange Ritte, VO2max-Schärfe\nTapering Woche 20–21, ab 19.04.\nUmfang sinkt um etwa 40 bis 60 %, Intensität und Fahrhäufigkeit bleiben\n\nDick umrandet: aktuelle Woche. Gestrichelt: Erholungswoche. Tippe eine Woche an, um sie anzusehen.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-pcp": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ FTP und Leistung\nLEISTUNGSKURVE UND SCHWELLE\n\nNoch keine Fahrten mit Leistungsdaten. Die App braucht aus den letzten Wochen harte, gleichmäßige Anstrengungen über etwa 3, 7 und 12 Minuten (z. B. Intervalle, Anstiege, Rennen oder ein Fitness-Check).\n\nWie wird das berechnet?\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-pdu": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ FTP und Leistung\nERMÜDUNGSRESISTENZ\n\nDafür braucht es lange Fahrten mit Leistungsdaten, in denen du nach etwa 1125 kJ Arbeit (15 kJ pro kg, bei dir rund 1:44 Std. ruhiges Fahren) noch einmal 5 Minuten hart fährst, z. B. am letzten Anstieg.\n\nWarum ist das wichtig?\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-pef": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ FTP und Leistung\nAEROBE EFFIZIENZ\n\nDafür braucht die App mindestens 4 lockere, gleichmäßige Fahrten ab 60 Minuten mit Watt und Puls aus den letzten 8 Wochen (bisher 0).\n\nWie wird das berechnet?\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
@@ -1133,7 +1133,7 @@
  "seite-rc-m": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Rückblicke\nMONATSRÜCKBLICK\n\nOKTOBER 2026\n\nEin ruhiger Monat\n\nIn diesem Monat sind keine Fahrten gespeichert. Lade Fahrten hoch oder verbinde Garmin, dann wird der Rückblick persönlich.\n\nAUSBLICK\n\nBis Frühjahrsrennen sind es noch 182 Tage, du bist in der Basis-Phase.\n\nDein Fokus für den nächsten Monat: die geplanten Intervalle sauber treffen und die Long Rides mit Verpflegung üben.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-rc-w": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Rückblicke\nWOCHENRÜCKBLICK\n\nNoch keine abgeschlossene Woche.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-rc-y": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Rückblicke\nJAHRESRÜCKBLICK\n\n01.01.2026 BIS 11.11.2026\n\n2026: der Anfang\n\nFür dieses Jahr sind noch kaum Fahrten gespeichert. Ab jetzt sammelt die App alles, im nächsten Jahresrückblick steht hier deine ganze Saison.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
- "seite-rides": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nFAHRTEN BEWERTEN\n\nEinheiten bewerten\n\nLade zu jeder Einheit dieser Woche die tatsächlich gefahrene Fahrt hoch, zum Beispiel aus Strava (Aktivität, Menü ⋯, „Original exportieren“), Garmin Connect, Wahoo oder Zwift. Die App bewertet, wie gut du die Vorgabe getroffen hast, gibt dir eine Rückmeldung und passt den Plan bei Bedarf an.\n\nDienstag\nSweet Spot 3×12\nHochladen\nMittwoch\nGrundlage mit Fahrtechnik\nHochladen\nDonnerstag\nGrundlage, ruhiger Einstieg\nHochladen\nSonntag\nLong Ride\nHochladen\nMaximale Herzfrequenz (für die Pulsprüfung)\nFahrten hochladen\n\nLade aufgezeichnete Fahrten als Datei hoch. Die App gleicht sie mit deinem Plan ab, und Fahrten dieser Woche werden automatisch der Einheit am selben Tag zugeordnet und bewertet. Erlaubt sind FIT, GPX und TCX, auch als ZIP oder GZ. Die Dateien werden nur in deinem Browser ausgewertet und nicht hochgeladen.\n\nDateien wählen\nWoher bekomme ich die Dateien?\nGarmin Connect verbinden\nFahrten automatisch holen statt Dateien hochladen\n›\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
+ "seite-rides": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nFAHRTEN BEWERTEN\n\nEinheiten bewerten\n\nLade zu jeder Einheit dieser Woche die tatsächlich gefahrene Fahrt hoch, zum Beispiel aus Strava (Aktivität, Menü ⋯, „Original exportieren“), Garmin Connect, Wahoo oder Zwift. Die App bewertet, wie gut du die Vorgabe getroffen hast, gibt dir eine Rückmeldung und passt den Plan bei Bedarf an.\n\nDienstag\nSweet Spot 3×12\nHochladen\nMittwoch\nGrundlage mit Fahrtechnik\nHochladen\nSonntag\nLong Ride\nHochladen\nMaximale Herzfrequenz (für die Pulsprüfung)\nFahrten hochladen\n\nLade aufgezeichnete Fahrten als Datei hoch. Die App gleicht sie mit deinem Plan ab, und Fahrten dieser Woche werden automatisch der Einheit am selben Tag zugeordnet und bewertet. Erlaubt sind FIT, GPX und TCX, auch als ZIP oder GZ. Die Dateien werden nur in deinem Browser ausgewertet und nicht hochgeladen.\n\nDateien wählen\nWoher bekomme ich die Dateien?\nGarmin Connect verbinden\nFahrten automatisch holen statt Dateien hochladen\n›\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-science": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nWISSEN\n\nDas Wichtigste aus Trainingslehre und Sporternährung, kurz erklärt. Der Schwerpunkt liegt auf Verpflegung, weil sie bei langen Ausfahrten oft über Erfolg oder Einbruch entscheidet.\n\nErnährung\nTraining\nGesundheit\nDein Verpflegungsrechner\nPersönliche Mengen für heute und dein Event\n▾\n\nHeute\n\nWas\tMenge für 75 kg\nKohlenhydrate am Tag\t225 bis 375 g (3 bis 5 g/kg, Ruhetag oder sehr leicht)\nEiweiß am Tag\t90 bis 150 g, verteilt auf 4 bis 5 Mahlzeiten mit je etwa 23 g\nEnergie der Einheit\t–\nUnterwegs pro Stunde\tnicht nötig, Wasser reicht\nDanach\tnormale Mahlzeit mit etwa 23 g Eiweiß\n\nRichtwerte nach ACSM/AND/DC 2016 und Jeukendrup 2014, berechnet mit deinem Gewicht und dem heutigen Plan. Individuelle Verträglichkeit geht vor.\n\nErnährung im Alltag\nKohlenhydrate nach Trainingslast, Eiweiß, Mikronährstoffe\n▾\nVor dem Training und am Renntag\nFrühstück, Kohlenhydrat-Laden, Timing\n▾\nWährend der Fahrt\nWie viel, was und wann: Kohlenhydrate, Trinken, Salz\n▾\nNach dem Training\nRegeneration und Auffüllen\n▾\nSupplemente mit Evidenz\nKoffein, Nitrat und worauf du achten solltest\n▾\nWissenschaftliche Grundlage\nQuellen der App und ihre Grenzen\n▾\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-set-ali": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Einstellungen\nALLTAG UND PLANSTART\n\nTraining: Di, Mi, Do, Fr, Sa, So, 6 Std. pro Woche\nRadpendeln: nein\nLong Ride: Sonntag\nKrafttraining: nein, Mobilität und Stabilität: nein\nKörpergewicht: 75 kg, FTP 240 W (3,2 W/kg)\n\nAlltag bearbeiten\nGanzen Plan anpassen\n\nTrainingstage, Zeit pro Woche oder Tag, Pendeln, Long-Ride-Tag, Kraft und Mobilität. Dein Fortschritt und die bisherigen Einheiten bleiben erhalten.\n\nZeitbudget nach Jahreszeit\n\nZwei Profile für Winter und Sommer. Jeder Monat gehört zu einem Profil, einzelne Monate können abweichen. Die Wochenplanung hält das Budget des jeweiligen Monats ein: bei wenig Zeit kürzere, intensivere Einheiten, bei mehr Zeit lange Ausfahrten.\n\nZeitbudget nach Jahreszeit verwenden\nPlanstart verschieben\n\nStart 07.12.2026\n\nDer Plan startet am 07.12.2026.\n\nNächsten Montag\nMontag in 2 Wochen\nAm 1. Dezember\nAnderes Datum\n\nDas Eventdatum bleibt, die Trainingszeit davor wird kürzer.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-set-gm": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Einstellungen\nGARMIN CONNECT\n\nFahrten aus Garmin Connect\n\nLade Fahrten als Datei hoch: Im Browser connect.garmin.com öffnen, Fahrt antippen, Zahnrad → „Original exportieren“, dann unten „Dateien wählen“ und die ZIP-Datei aus den Downloads nehmen.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
@@ -1142,15 +1142,15 @@
  "seite-set-sq": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Einstellungen\nÜBUNGSABLAUF UND TÖNE\nTonsignale\nSprachansage\nAusführungshinweise ansagen\n\nStimme\n\nNatürlich (empfohlen)\nSystemstimme\nVibration\n\nLautstärke\n\nLeise\nMittel\nLaut\n\nÜbergangszeit zwischen den Übungen\n\n5 Sek.\n10 Sek.\n15 Sek.\n20 Sek.\nTöne testen\n\nGilt für alle Übungseinheiten, die du als Sequenz ablaufen lässt.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-set-wf": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Einstellungen\nGEWICHT UND FTP\nGewicht (kg)\nFTP (W)\n\nLeistung pro Kilo: 3,20 W/kg\n\nStand seit 07.12.2026\n\nSpeichern\n\nEine neue FTP rechnet die Wattbereiche aller kommenden Einheiten neu. Vergangene Fahrten und Bewertungen behalten den Wert, der damals galt.\n\nVerlauf\n\n07.12.2026\n240 W\n75,0 kg\n3,20 W/kg\n\nVergleichsgruppe\n\nFür Vergleiche wie „du trittst etwa 40 % mehr als ein untrainierter Erwachsener“ in „Wusstest du schon?“. Freiwillig. Ohne Angabe vergleicht die App mit Erwachsenen allgemein.\n\nMänner\nFrauen\nKeine Angabe\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-set-wx": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Einstellungen\nWETTER UND KLEIDUNG\n\nFür jeden Trainingstag zeigt die App, was du anziehen solltest, passend zur Wettervorhersage an deinem Ort.\n\nOrt suchen\nMeinen Standort verwenden\n\nWann fährst du meistens los?\n\nMo bis Fr\n5:00\n6:00\n7:00\n8:00\n9:00\n10:00\n11:00\n12:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00\n20:00\n21:00\nSa und So\n5:00\n6:00\n7:00\n8:00\n9:00\n10:00\n11:00\n12:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00\n20:00\n21:00\n\nDie App nimmt die Temperatur in dem Zeitraum, in dem du fährst. Bei harten Einheiten rechnet sie etwas wärmer, weil du mehr Wärme erzeugst, bei langen Fahrten mit der kühlsten Phase. Starker Wind zählt kälter. Kleidungstipps nach dem Radklamotten-Guide von pedalieri.de, Wetter von Open-Meteo.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
- "seite-settings": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nEINSTELLUNGEN\n\nALLGEMEIN\n\nSprache, Darstellung, Hilfen\nDeutsch · Design automatisch\n›\nÜbungsablauf und Töne\nTöne an · Ansage an · Übergang 10 Sek.\n›\n\nTRAINING\n\nAlltag und Planstart\nDi, Mi, Do, Fr, Sa, So, 6 Std. pro Woche\n›\nGewicht und FTP\nFTP 240 W · 75 kg · 3,2 W/kg\n›\nAlter und Erholung\nAlter nicht eingetragen · Rhythmus 3:1\n›\nHerzfrequenz und Leistungsmesser\nPuls noch nicht eingetragen · Mit Wattmesser\n›\nWetter und Kleidung\nAus, Kleidungstipp ohne Vorhersage\n›\n\nVERBINDUNGEN UND DATEN\n\nGarmin Connect\nNicht verbunden\n›\nPläne und Sicherung\n1 Plan, noch keine Sicherung\n›\nGefahrenzone\nRelentless · Version 177 · Build 12.11.2026, 21:00\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
+ "seite-settings": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nEINSTELLUNGEN\n\nALLGEMEIN\n\nSprache, Darstellung, Hilfen\nDeutsch · Design automatisch\n›\nÜbungsablauf und Töne\nTöne an · Ansage an · Übergang 10 Sek.\n›\n\nTRAINING\n\nAlltag und Planstart\nDi, Mi, Do, Fr, Sa, So, 6 Std. pro Woche\n›\nGewicht und FTP\nFTP 240 W · 75 kg · 3,2 W/kg\n›\nAlter und Erholung\nAlter nicht eingetragen · Rhythmus 3:1\n›\nHerzfrequenz und Leistungsmesser\nPuls noch nicht eingetragen · Mit Wattmesser\n›\nWetter und Kleidung\nAus, Kleidungstipp ohne Vorhersage\n›\n\nVERBINDUNGEN UND DATEN\n\nGarmin Connect\nNicht verbunden\n›\nPläne und Sicherung\n1 Plan, noch keine Sicherung\n›\nGefahrenzone\nRelentless · Version 178 · Build 13.11.2026, 09:00\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-sform": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nFORMKURVE\n\nDie Formkurve erscheint, sobald mindestens drei Fahrten oder erledigte Einheiten da sind. Lade deine Fahrten hoch oder verbinde Garmin.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-shist": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nVERLAUF UND UMFANG\nVerlauf\n\nFTP über den ganzen Plan, Woche 1 von 21\n\n220\n250\n270\n1\n9\n16\n20\n21\ndein FTP\nerwarteter Korridor\n\nDer Korridor zeigt, wo dein FTP bei normalem Trainingsverlauf liegen sollte. Er rechnet ab dem letzten übernommenen Fitness-Check neu.\n\nAb jetzt speichert die App zum Ende jeder Woche einen Rückblick. Er erscheint dann hier und zu Wochenbeginn auf der Startseite.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-slog": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nANPASSUNGEN\n\nNoch keine Anpassungen. Wenn du Tage sperrst, dich beim Check-in müde meldest oder eine Fahrt schwach bewertet wird, passt die App den Plan an und erklärt es hier.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-spb": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nBESTWERTE\n\nNoch keine Fahrten mit Leistungsdaten. Sobald du Fahrten mit Wattmesser hochlädst, stehen hier deine besten Werte über 5 Sekunden bis 60 Minuten.\n\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-sperf": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Heute\nFTP UND LEISTUNG\n\nDEIN FTP\n\n240 W 3,2 W/kg\n\nNach diesem Wert richten sich alle Wattbereiche im Plan. Am genauesten bestimmt ihn ein Fitness-Check, die Fahrten liefern eine Schätzung.\n\nNoch keine Schätzung aus deinen Fahrten. Dafür braucht die App harte, gleichmäßige Abschnitte, z. B. Intervalle, Anstiege, Rennen oder einen Fitness-Check.\n\nFitness-Checks\n\nANALYSEN AUS DEINEN FAHRTEN\n\nLeistungskurve und Schwelle\nBraucht harte Anstrengungen über etwa 3, 7 und 12 Minuten\n›\nAerobe Effizienz\nBraucht 4 lockere Fahrten ab 60 Min. mit Watt und Puls (bisher 0)\n›\nErmüdungsresistenz\nBraucht eine lange Fahrt mit hartem Abschnitt am Ende\n›\nBelastung aus Empfinden\nBraucht 2 Wochen mit bewerteten Einheiten und Empfinden\n›\nMorgenwerte\nOptional: Ruhepuls und HRV am Morgen\n›\n\nDie Analysen nutzen alle hochgeladenen Fahrten der letzten Wochen. Den Plan ändert die App nur auf deinen Wunsch und nie wegen einer einzelnen Fahrt.\n\nGewicht und FTP\n\nAktuell FTP 240 W · 75 kg · 3,2 W/kg.\n\nGewicht und FTP ändern\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
- "seite-start": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n\nERSTE EINHEIT · DIENSTAG, 08.12.2026\n\nSweet Spot 3×12\n\n1:11 Std.\n211–226 W\nZ4 · TSS ~94\n\nSO FÄHRST DU\n\n3× 12 Min. bei 88–94 %\n\n5 Min. locker dazwischen · 15 Min. ein- und 10 Min. ausfahren\n\nSweet Spot: fordernd, aber kontrolliert\n\n85–95 U/min\n\nDAS BRAUCHST DU\n\n≈ 30 g Kohlenhydrate unterwegs\n\n1 Flasche Sportgetränk\n\nEssen\nDetails\n\nSTARTWOCHE\n\nWochenplan ›\nMo\n–\nDi\n1:11\nMi\n2:00\nDo\n45′\nFr\n–\nSa\n–\nSo\n1:45\n\nWUSSTEST DU SCHON?\n\n✕\n\nLade nach jeder Einheit deine Fahrt hoch (FIT, GPX oder TCX). Die App ordnet sie dem Tag zu, gibt Punkte, lobt, was gut lief, und sagt, was du beim nächsten Mal besser machen kannst.\n\nFahrt hochladen\nNächster Tipp\n171\nTage bis\nFrühjahrsrennen\n\nZiel: gut vorbereitet ins Ziel kommen · aktuell Basis-Phase · 240 W, 3,2 W/kg\n\n›\n\nPLAN STARTET AM\n\n07.12.2026\n\nIn 26 Tagen. Bis dahin ist alles eine Vorschau: Du kannst Tage sperren und Wochen planen, abhaken lässt sich noch nichts.\n\nJetzt starten\nStart verschieben\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
+ "seite-start": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n\nERSTE EINHEIT · DIENSTAG, 08.12.2026\n\nSweet Spot 3×12\n\n1:11 Std.\n211–226 W\nZ4 · TSS ~94\n\nSO FÄHRST DU\n\n3× 12 Min. bei 88–94 %\n\n5 Min. locker dazwischen · 15 Min. ein- und 10 Min. ausfahren\n\nSweet Spot: fordernd, aber kontrolliert\n\n85–95 U/min\n\nDAS BRAUCHST DU\n\n≈ 30 g Kohlenhydrate unterwegs\n\n1 Flasche Sportgetränk\n\nEssen\nDetails\n\nSTARTWOCHE\n\nWochenplan ›\nMo\n–\nDi\n1:11\nMi\n1:45\nDo\n–\nFr\n–\nSa\n–\nSo\n2:15\n\nWUSSTEST DU SCHON?\n\n✕\n\nLade nach jeder Einheit deine Fahrt hoch (FIT, GPX oder TCX). Die App ordnet sie dem Tag zu, gibt Punkte, lobt, was gut lief, und sagt, was du beim nächsten Mal besser machen kannst.\n\nFahrt hochladen\nNächster Tipp\n171\nTage bis\nFrühjahrsrennen\n\nZiel: gut vorbereitet ins Ziel kommen · aktuell Basis-Phase · 240 W, 3,2 W/kg\n\n›\n\nPLAN STARTET AM\n\n07.12.2026\n\nIn 26 Tagen. Bis dahin ist alles eine Vorschau: Du kannst Tage sperren und Wochen planen, abhaken lässt sich noch nichts.\n\nJetzt starten\nStart verschieben\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-state": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\nFORTSCHRITT\n\nDer Plan hat noch nicht begonnen. Ab dem Start siehst du hier, wie deine Woche läuft.\n\nENTWICKLUNG\n\nFormkurve bis zum Event\nFitness, Ermüdung und Form, sobald Fahrten da sind\n›\nVerlauf und Wochenumfang\nWoche 1 von 21, FTP-Verlauf, Wochenrückblicke\n›\n\nLEISTUNG\n\nFTP und Leistung\nFTP 240 W, Effizienz, Ermüdungsresistenz\n›\nBestwerte\nNoch keine Fahrten mit Leistungsdaten\n›\n\nRÜCKBLICKE\n\nWoche, Monat, Jahr\nJahr\n›\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
  "seite-tool-tire": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹ Mehr\nREIFENDRUCK\nRennrad\nGravel\n\nEMPFOHLENER STARTWERT\n\nVorn\n4,00 bar\n58 psi\nHinten\n4,50 bar\n65,5 psi\n\nHinten höher wegen etwa 55 % Gewicht auf dem Hinterrad. Gerechnet mit 83 kg Gesamtgewicht und 29,6 mm effektiver Reifenbreite.\n\nStartwert – nach Gefühl in kleinen Schritten anpassen und vor jeder Fahrt prüfen.\n\nFahrtart\n\nStraße\nGravel\nCyclocross\n\nUntergrund\n\nglatt\nrau\nKopfsteinpflaster\nNass\nFahrer (kg)\nRad (kg)\nGepäck (kg)\nReifenbreite (mm)\nFelge innen (mm)\n\nKarkasse\n\ndünn\nStandard\nverstärkt\n\nLaufrad\n\n700c\n650b\n650c\n\nFelge\n\nmit Haken\nHookless\n\nSchlauch oder Tubeless\n\nSchlauch\nLatexschlauch\nTubeless\nMax. Reifen (bar, optional)\nMax. Felge (bar, optional)\n\nDas Fahrergewicht kommt aus „Gewicht und FTP“, solange du hier nichts einträgst. Die Reifenbreite steht auf der Reifenflanke.\n\nSo rechnet der Rechner\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
- "seite-week": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹\nStartwoche\nWoche 1 von 21, Basis\n›\n\n5:41 Std. geplant von 6 Std. verfügbar, TSS ~300. Vorschau, wird zur Woche hin aktualisiert.\n\nZeit nach Belastungsbereich: 89 % niedrig, 11 % moderat, 0 % hoch\n\nWoche 1 im Voraus planen\nMontag\nRuhetag\nfrei\nDienstag\nSweet Spot 3×12\n1:11 Std.\nTSS ~94\nMittwoch\nGrundlage mit Fahrtechnik\n2 Std.\nTSS ~87\nDonnerstag\nGrundlage, ruhiger Einstieg\n45 Min.\nTSS ~33\nFreitag\nRuhetag\nfrei\nSamstag\nRuhetag\nfrei\nSonntag\nLong Ride\n1:45 Std.\nTSS ~86\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
- "woche-tag-offen": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹\nStartwoche\nWoche 1 von 21, Basis\n›\n\n5:41 Std. geplant von 6 Std. verfügbar, TSS ~300. Vorschau, wird zur Woche hin aktualisiert.\n\nZeit nach Belastungsbereich: 89 % niedrig, 11 % moderat, 0 % hoch\n\nWoche 1 im Voraus planen\nMontag\nRuhetag\nfrei\nDienstag\nSweet Spot 3×12\n1:11 Std.\nTSS ~94\n88–94 %\nFTP\n211–226 W\nLeistung\nZ4\nZone, moderat\n\nTrittfrequenz: 85–95 U/min\n\nWie lief die Einheit?\n\nLade deine aufgezeichnete Fahrt hoch (FIT, GPX oder TCX, z. B. aus Strava, Garmin Connect, Wahoo oder Zwift). Die App vergleicht sie mit der Vorgabe, gibt dir eine Rückmeldung und passt den Plan bei Bedarf an.\n\nFahrt hochladen und bewerten\n\nAblauf: 15 Min. einfahren · 3×12 Min. @ 88–94 % · 5 Min. locker dazwischen · 10 Min. ausfahren\n\nTipp: Schwere Gänge, runder Tritt.\n\nVerpflegung für diesen Tag\n\nDOWNLOADS\n\nGarmin (.fit)\nZwift (.zwo)\nMittwoch\nGrundlage mit Fahrtechnik\n2 Std.\nTSS ~87\nDonnerstag\nGrundlage, ruhiger Einstieg\n45 Min.\nTSS ~33\nFreitag\nRuhetag\nfrei\nSamstag\nRuhetag\nfrei\nSonntag\nLong Ride\n1:45 Std.\nTSS ~86\nHeute\nWoche\nLogbuch\nFortschritt\nMehr"
+ "seite-week": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹\nStartwoche\nWoche 1 von 21, Basis\n›\n\n5:11 Std. geplant von 6 Std. verfügbar, TSS ~280. Vorschau, wird zur Woche hin aktualisiert.\n\nZeit nach Belastungsbereich: 88 % niedrig, 12 % moderat, 0 % hoch\n\nWoche 1 im Voraus planen\nMontag\nRuhetag\nfrei\nDienstag\nSweet Spot 3×12\n1:11 Std.\nTSS ~94\nMittwoch\nGrundlage mit Fahrtechnik\n1:45 Std.\nTSS ~76\nDonnerstag\nRuhetag\nfrei\nFreitag\nRuhetag\nfrei\nSamstag\nRuhetag\nfrei\nSonntag\nLong Ride\n2:15 Std.\nTSS ~110\nHeute\nWoche\nLogbuch\nFortschritt\nMehr",
+ "woche-tag-offen": "RELENTLESS.\nEN\nFrühjahrsrennen ▾ · 1 Plan\n‹\nStartwoche\nWoche 1 von 21, Basis\n›\n\n5:11 Std. geplant von 6 Std. verfügbar, TSS ~280. Vorschau, wird zur Woche hin aktualisiert.\n\nZeit nach Belastungsbereich: 88 % niedrig, 12 % moderat, 0 % hoch\n\nWoche 1 im Voraus planen\nMontag\nRuhetag\nfrei\nDienstag\nSweet Spot 3×12\n1:11 Std.\nTSS ~94\n88–94 %\nFTP\n211–226 W\nLeistung\nZ4\nZone, moderat\n\nTrittfrequenz: 85–95 U/min\n\nWie lief die Einheit?\n\nLade deine aufgezeichnete Fahrt hoch (FIT, GPX oder TCX, z. B. aus Strava, Garmin Connect, Wahoo oder Zwift). Die App vergleicht sie mit der Vorgabe, gibt dir eine Rückmeldung und passt den Plan bei Bedarf an.\n\nFahrt hochladen und bewerten\n\nAblauf: 15 Min. einfahren · 3×12 Min. @ 88–94 % · 5 Min. locker dazwischen · 10 Min. ausfahren\n\nTipp: Schwere Gänge, runder Tritt.\n\nVerpflegung für diesen Tag\n\nDOWNLOADS\n\nGarmin (.fit)\nZwift (.zwo)\nMittwoch\nGrundlage mit Fahrtechnik\n1:45 Std.\nTSS ~76\nDonnerstag\nRuhetag\nfrei\nFreitag\nRuhetag\nfrei\nSamstag\nRuhetag\nfrei\nSonntag\nLong Ride\n2:15 Std.\nTSS ~110\nHeute\nWoche\nLogbuch\nFortschritt\nMehr"
 }
