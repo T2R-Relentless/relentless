@@ -162,7 +162,7 @@ function chOf0(t, kind, val){
   return ch;
 }
 function applyChk(kind, val, mode){
-  if (kind === 'editEv') { edit(); window.scrollTo(0, 0); return; }
+  if (kind === 'editEv') { edit(); scrollTop0(); return; }
   const t = mode === 'dash' ? S.p : S.d, ch = chOf(t, kind, val);
   Object.assign(S.d, ch);
   if (mode === 'dash') { Object.assign(S.p, JSON.parse(JSON.stringify(ch))); if (S.p.perDay) S.p.hours = Math.max(.5, dsum(S.p) / 60); S.blocked = {}; S.plan = keepT(genWeek(S.p, S.wk)); analyze(); note('Plan-Check übernommen', 'Der Plan wurde mit der Empfehlung aus dem Plan-Check neu berechnet.', -2); }
@@ -313,10 +313,10 @@ function finish(){
   if (S.step === 0) track(st0 === 'new' || st0 === 'goal' ? (md0 === 'light' ? 'plan-erstellt-schnell' : 'plan-erstellt-ausfuehrlich') : st0 === 'same' ? 'plan-unveraendert' : 'plan-angepasst');
 }
 function editCopy(){ return {...S.p, tb:S.p.tb ? JSON.parse(JSON.stringify(S.p.tb)) : S.p.tb, avail:[...S.p.avail], commute:[...S.p.commute], commuter: isComm(S.p), dayMin:[...(S.p.dayMin || [60,60,60,60,60,180,240])], subs:[...(S.p.subs || [])]}; }
-function cancelEdit(){ if (S.p) S.d = editCopy(); S.edit = false; S.step = 0; pg = null; save(); render(); window.scrollTo(0, 0); }
+function cancelEdit(){ if (S.p) S.d = editCopy(); S.edit = false; S.step = 0; pg = null; save(); render(); scrollTop0(); }
 /* Einzelne Bereiche gezielt anpassen, ohne die ganze Planung zu durchlaufen */
-function editOnly(step){ edit(); S.only = step; S.step = step; save(); render(); window.scrollTo(0, 0); }
-function onlyApply(){ S.only = null; finish(); if (S.step === 0) { pgFrom = 'more'; pg = 'settings'; goalMsg = ''; render(); window.scrollTo(0, 0); } }
+function editOnly(step){ edit(); S.only = step; S.step = step; save(); render(); scrollTop0(); }
+function onlyApply(){ S.only = null; finish(); if (S.step === 0) { pgFrom = 'more'; pg = 'settings'; goalMsg = ''; render(); scrollTop0(); } }
 function onlyCancel(){ S.only = null; cancelEdit(); pgFrom = 'more'; pg = 'settings'; render(); }
 function edit(){ S.only = null; pg = null; goalMsg = ''; S.d = {...S.p, tb:S.p.tb ? JSON.parse(JSON.stringify(S.p.tb)) : S.p.tb, avail:[...S.p.avail], commute:[...S.p.commute], commuter: isComm(S.p), dayMin:[...(S.p.dayMin || [60,60,60,60,60,180,240])]}; S.edit = true; S.step = 1; save(); render(); }
 function tgl(k, i){

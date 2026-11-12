@@ -276,3 +276,16 @@
   .hpane .cloc:not(.on){background:var(--tint)}
   .hact .hib{flex:1 1 0;min-width:0;padding:6px 4px;text-align:center;line-height:1.15}
   .recb{display:inline-block;padding:2px 8px;font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--teal);color:#fff}
+
+  /* B8: Statusleiste in der installierten App (iPhone, black-translucent). iOS 26 legt über Inhalt, der unter die
+     Statusleiste scrollt, einen eigenen Weichzeichner, der sich per CSS nicht abschalten lässt. Deshalb: eine deckende
+     Fläche in der Kopfzeilenfarbe genau so hoch wie env(safe-area-inset-top), und in der installierten App (html.sa-wrap)
+     scrollt nicht mehr die Seite, sondern #sc, das unter dieser Fläche beginnt. So läuft nie Inhalt unter die Statusleiste.
+     Im Browser bleibt alles wie bisher (#sc ohne eigene Regeln, --sat dort meist 0). */
+  :root{--sat:env(safe-area-inset-top,0px)}
+  .sbar{position:fixed;top:0;left:0;right:0;height:var(--sat);background:var(--navy);z-index:95;pointer-events:none}
+  [data-theme=dark] .sbar{background:#071334}
+  html.sa-wrap{padding-top:0;height:100%;overflow:hidden}
+  html.sa-wrap body{height:100%;overflow:hidden}
+  html.sa-wrap #sc{position:fixed;top:var(--sat);left:0;right:0;bottom:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+

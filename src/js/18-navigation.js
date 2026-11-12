@@ -31,7 +31,11 @@ function stateCard(){
 /* ---------- Navigation: Startseite mit Kacheln, Unterseiten je Thema ---------- */
 let pg = null, foldFlat = false;
 let PGP = {};
-function goPg(k){ if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); window.scrollTo(0, 0); }
+/* B8: In der installierten App scrollt #sc statt der Seite (siehe app.css). scrollTop0 ersetzt window.scrollTo(0, 0). */
+const scEl = () => document.documentElement.classList.contains('sa-wrap') ? document.getElementById('sc') : null;
+function scrollTop0(){ const e = scEl(); if (e) e.scrollTop = 0; else window.scrollTo(0, 0); }
+try { if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) document.documentElement.classList.add('sa-wrap'); } catch (e) { elog(e); }
+function goPg(k){ if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); scrollTop0(); }
 const ICO = {
   week:'<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   state:'<path d="M3 12h4l3-7 4 14 3-7h4"/>',

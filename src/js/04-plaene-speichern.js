@@ -18,12 +18,12 @@ function applySnap(snap){ PLAN_KEYS.forEach(k => delete S[k]); Object.assign(S, 
 function resetView(){ open = null; vw = null; askReset = false; renId = null; delId = null; impMsg = ''; }
 function switchTo(id){
   save(); const e = readLib().plans[id]; if (!e) return;
-  applySnap(e.snap); S.pid = id; S.pname = e.name; S.pnameManual = !!e.manual; S.newFrom = null; S.edit = false; S.step = 0; resetView(); save(); render(); window.scrollTo(0, 0);
+  applySnap(e.snap); S.pid = id; S.pname = e.name; S.pnameManual = !!e.manual; S.newFrom = null; S.edit = false; S.step = 0; resetView(); save(); render(); scrollTop0();
 }
 function newPlan(){
   save(); const src = S.p || S.d || {}, keep = load(true).d; ['weight', 'ftp', 'sex', 'cycMode', 'cycLast', 'cycLen', 'cycSym', 'cycAdapt', 'hrMax', 'lthr', 'noPwr', 'lvl', 'strPlace', 'strLvl'].forEach(k => { if (src[k] != null) keep[k] = src[k]; }); keep.mode = null;
   S.newFrom = S.pid || null; PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.blocked = {}; S.actual = {}; S.note = '';
-  S.pid = null; S.pname = ''; S.pnameManual = false; S.d = keep; S.edit = false; S.step = 1; resetView(); save(); render(); window.scrollTo(0, 0);
+  S.pid = null; S.pname = ''; S.pnameManual = false; S.d = keep; S.edit = false; S.step = 1; resetView(); save(); render(); scrollTop0();
 }
 function cancelNew(){ const id = S.newFrom; S.newFrom = null; if (id && readLib().plans[id]) switchTo(id); else { S.step = 1; save(); render(); } }
 function startRename(id){ renId = id; renVal = readLib().plans[id].name; render(); }

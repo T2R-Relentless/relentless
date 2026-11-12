@@ -7,7 +7,7 @@ const chip = (l, on, fn) => `<button onclick="${fn}" class="rounded-xl px-3.5 py
 
 /* ---------- Schnellplanung (Light): ein Bildschirm, sinnvolle Voreinstellungen ---------- */
 const LVL = {new:['Einsteiger', 2.0, 'fährt gelegentlich, kurze Touren'], hob:['Hobby', 2.7, 'fährt regelmäßig, 2 bis 4 Std. Touren'], amb:['Ambitioniert', 3.3, 'trainiert gezielt, fährt Rennen']};
-function setMode(m){ S.d.mode = m; S.step = 1; save(); render(); window.scrollTo(0, 0); }
+function setMode(m){ S.d.mode = m; S.step = 1; save(); render(); scrollTop0(); }
 function lightSet(k, v){ S.d[k] = v; if (k === 'hours') S.d.perDay = false; if (k === 'lvl') delete S.d.ftpKnown; save(); render(); }
 function lightDay(i){ const a = [...S.d.avail]; a[i] = !a[i]; if (a.filter(Boolean).length) S.d.avail = a; save(); render(); }
 function lightFinish(){
@@ -139,7 +139,7 @@ function lightNav(n){
 }
 
 /* ---------- Planungsart wählen: eigener, gut sichtbarer erster Schritt ---------- */
-function chooseMode(){ S.d.mode = null; S.step = 1; save(); render(); window.scrollTo(0, 0); }
+function chooseMode(){ S.d.mode = null; S.step = 1; save(); render(); scrollTop0(); }
 const modeBar = d => `<div class="mb-5 flex flex-wrap items-center gap-2 p-3" style="background:#e6f7f6;border:1px solid var(--ice)"><span class="flex-1 text-sm"><b>${d.mode === 'light' ? 'Schnellplanung' : 'Ausführliche Planung'}</b> · ${d.mode === 'light' ? '4 kurze Schritte' : 'alle Optionen'}</span><button class="ghost !px-3 !py-1.5 text-sm" onclick="${d.mode === 'light' ? "setMode('full')" : "setMode('light')"}">${d.mode === 'light' ? 'Zur ausführlichen Planung' : 'Zur Schnellplanung'}</button></div>`;
 function modePage(d){
   const card = (m, t, time, sub, pts, rec) => `<button onclick="setMode('${ja(m)}')" class="panel block w-full p-5 text-left" style="border-width:2px;${esc(rec ? 'border-color:var(--ice)' : '')}">

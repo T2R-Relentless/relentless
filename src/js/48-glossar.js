@@ -74,13 +74,13 @@ function glShow(el){
   glTip.innerHTML = `<b>${g[1]}</b><br>${g[2]}`; glTip.style.display = 'block';
   const r = el.getBoundingClientRect(), W = Math.min(300, window.innerWidth - 24); glTip.style.width = W + 'px';
   const x = Math.max(12, Math.min(r.left + r.width / 2 - W / 2, window.innerWidth - W - 12)), h = glTip.offsetHeight; let y = r.bottom + 8; if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
-  glTip.style.left = (x + window.scrollX) + 'px'; glTip.style.top = (y + window.scrollY) + 'px';
+  const sx = scEl() ? 0 : window.scrollX, sy = scEl() ? 0 : window.scrollY; glTip.style.left = (x + sx) + 'px'; glTip.style.top = (y + sy) + 'px';
 }
 const glHide = () => { if (glTip) glTip.style.display = 'none'; };
 document.addEventListener('mouseover', e => { const g = e.target.closest && e.target.closest('.gl'); if (g) glShow(g); });
 document.addEventListener('mouseout', e => { if (e.target.closest && e.target.closest('.gl')) glHide(); });
 document.addEventListener('click', e => { const g = e.target.closest && e.target.closest('.gl'); if (g) { e.stopPropagation(); glShow(g); } else glHide(); }, true);
 document.addEventListener('keydown', e => { const g = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('gl') ? document.activeElement : null; if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); glShow(g); } if (e.key === 'Escape') glHide(); });
-window.addEventListener('scroll', glHide, {passive:true});
+document.addEventListener('scroll', glHide, {passive:true, capture:true}); /* auch beim Scrollen in #sc (B8) */
 function postRender(root){ i18nDom(root); glDom(root); }
 

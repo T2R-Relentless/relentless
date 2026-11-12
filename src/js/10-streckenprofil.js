@@ -150,4 +150,4 @@ function ambTarget(d){
 function evUpd(){ setTimeout(() => ['tsug', 'evc', 'wk'].forEach(id => postRender(document.getElementById(id))), 0); const ts = document.getElementById('ts'), sg = document.getElementById('tsug'); if (ts && document.activeElement !== ts) ts.value = spdOf(S.d) ? f1(spdOf(S.d)) : ''; if (sg) sg.innerHTML = tgtSugHtml(S.d); const a = document.getElementById('wk'), b = document.getElementById('evc'); if (a) a.textContent = wkgHtml(S.d); if (b) b.innerHTML = evHtml(S.d); }
 function setTarget(t){ S.d.targetTime = t; S.d.tgtMan = true; if (S.p && S.step === 0) { S.p.targetTime = t; S.p.tgtMan = true; replanCyc(); } save(); render(); }
 function pick(g){ S.d.goal = g; save(); render(); }
-function nav(n){ if (n > S.step) { const m = rngFirst(S.d); if (m) { formMsg = m; render(); window.scrollTo(0, 0); return; } } formMsg = ''; S.step = n; save(); render(); window.scrollTo(0, 0); }
+function nav(n){ if (n > S.step) { const m = rngFirst(S.d); if (m) { formMsg = m; render(); scrollTop0(); return; } } formMsg = ''; S.step = n; save(); render(); scrollTop0(); }

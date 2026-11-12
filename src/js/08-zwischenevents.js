@@ -99,7 +99,7 @@ function subsUi(d){
       ${subMsg ? `<p class="text-sm" style="color:#c0392b">⚠ ${esc(subMsg)}</p>` : ''}${subInfo ? `<p class="text-sm" style="color:var(--ok)">✓ ${subInfo}</p>` : ''}
       <button class="btn" onclick="subAdd()">Event hinzufügen</button></div></div>`;
 }
-function editSubs(){ edit(); S.d.season = true; S.step = 4; save(); render(); setTimeout(() => { const el = [...document.querySelectorAll('.font-semibold')].find(e => /Weitere Events der Saison/.test(e.textContent)); if (el) el.scrollIntoView({block:'start'}); else window.scrollTo(0, 0); }, 60); }
+function editSubs(){ edit(); S.d.season = true; S.step = 4; save(); render(); setTimeout(() => { const el = [...document.querySelectorAll('.font-semibold')].find(e => /Weitere Events der Saison/.test(e.textContent)); if (el) el.scrollIntoView({block:'start'}); else scrollTop0(); }, 60); }
 function subsCard(p){
   const L = (p.subs || []).filter(s => s.date >= iso(0) && s.date < p.eventDate); if (!L.length && !(p.subs || []).length) return '';
   const rows = L.map(s => { const n = Math.ceil((new Date(s.date + 'T12:00:00') - Date.now()) / 864e5); return `<div class="flex items-center gap-2 text-sm">${prioBadge(s.prio)}<span class="flex-1"><b data-noi18n>${esc(s.name)}</b>, ${fmt(s.date)}${s.dist ? ', ' + f1(s.dist) + ' km' : ''}</span><span style="color:var(--mute)">${n <= 0 ? 'heute' : 'in ' + n + ' Tagen'}</span></div>`; }).join('');

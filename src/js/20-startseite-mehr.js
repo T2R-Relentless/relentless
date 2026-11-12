@@ -3,8 +3,8 @@ let pgFrom = null, wGrp = null, icsMsg = '';
 const TABS = [null, 'week', 'logbook', 'state', 'more'];
 const NAVI = {logbook:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/>', home:'<path d="M3 11l9-7 9 7v10h-6v-6H9v6H3z"/>', week:'<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>', state:'<path d="M3 12h4l3-7 4 14 3-7h4"/>', more:'<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>'};
 const svgI = (d, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">${d}</svg>`;
-function navGo(k){ PGP = {}; vw = null; pgFrom = null; pg = k || null; open = null; render(); window.scrollTo(0, 0); }
-function goBack(){ const par = PGP[pg] || (typeof PG_PAR !== 'undefined' && PG_PAR[pg]) || (typeof IA_PAR !== 'undefined' && IA_PAR[pg]); if (par) { pg = par; open = null; render(); window.scrollTo(0, 0); return; } if (false) { pg = PG_PAR[pg]; open = null; render(); window.scrollTo(0, 0); return; } const k = pgFrom; pgFrom = null; pg = k; open = null; render(); window.scrollTo(0, 0); }
+function navGo(k){ PGP = {}; vw = null; pgFrom = null; pg = k || null; open = null; render(); scrollTop0(); }
+function goBack(){ const par = PGP[pg] || (typeof PG_PAR !== 'undefined' && PG_PAR[pg]) || (typeof IA_PAR !== 'undefined' && IA_PAR[pg]); if (par) { pg = par; open = null; render(); scrollTop0(); return; } if (false) { pg = PG_PAR[pg]; open = null; render(); scrollTop0(); return; } const k = pgFrom; pgFrom = null; pg = k; open = null; render(); scrollTop0(); }
 const tabOf = page => TABS.includes(page) ? page : TABS.includes(pgFrom) ? pgFrom : 'more';
 const TABL = {null:'Heute', week:'Woche', logbook:'Logbuch', state:'Fortschritt', more:'Mehr'};
 function navBar(page){
