@@ -8,3 +8,38 @@
   command = "python3 tools/build.py"
   publish = "public"
   functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Sicherheits-Header (Phase 2, F-08), aus der bisher veröffentlichten Fassung übernommen
+# Einschränkung: Die App nutzt ein großes Inline-Skript und Inline-Event-Handler (onclick="…").
+# Beides erfordert script-src 'unsafe-inline'. Die CSP schützt deshalb vor allem durch die engen Quellen:
+# Skripte nur von dieser Adresse, Verbindungen nur zur eigenen Funktion und zu Open-Meteo, Bilder zusätzlich nur vom
+# GoatCounter-Zählpixel, keine Einbettung in fremde Seiten (Clickjacking), keine Formular-Ziele, keine Plugins.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://teamrelentlessriders.goatcounter.com; font-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(self), camera=(), microphone=(), payment=(), usb=()"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Strict-Transport-Security = "max-age=31536000"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/version.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Content-Type = "application/json; charset=utf-8"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
