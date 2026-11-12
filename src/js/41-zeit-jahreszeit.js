@@ -89,7 +89,7 @@ let tbSeaC = null;
 function tbSeason(){
   const p = S.p; if (!p || !p.start) return '';
   let tot = 0; try { tot = phases(p).slice(-1)[0].to; } catch (e) { elog(e); return ''; }
-  const key = JSON.stringify([p.start, p.hours, p.avail, p.tb, p.ftp, S.wk, tot, (S.plan || []).map(x => x.m)]);
+  const key = JSON.stringify([p.start, p.hours, p.avail, p.tb, p.ftp, rhyOf(p), gapOf(p), S.wk, tot, (S.plan || []).map(x => x.m)]);
   if (!tbSeaC || tbSeaC.k !== key) {
     const pl = {}, av = {}, add = (o, k, v) => { o[k] = (o[k] || 0) + v; };
     for (let w = 1; w <= tot; w++) {

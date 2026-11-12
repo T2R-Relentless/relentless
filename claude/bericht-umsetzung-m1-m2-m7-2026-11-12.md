@@ -57,3 +57,27 @@ Profil D (56 Jahre, 7 Std.): 9 statt 7 Entlastungswochen in 30 Wochen, Fitness a
 
 ## Geänderte Dateien
 `src/js/05-alter-rhythmus.js` (neu), `05-plan-generator.js`, `03-mobilitaet-kraft.js`, `06-fitness-checks.js`, `11-plan-check-ziel.js`, `15-onboarding.js`, `16-dashboard-woche.js`, `26-statistik-update.js`, `44-version-neuigkeiten.js`, `src/i18n/en.json`, `public/index.html`, `public/sw.js`, `public/version.json`, `tests/age.test.js` (neu), `tests/index.html`, `tests/snapshots/*`, `tools/audit/*`.
+
+---
+
+## Nachtrag: Geburtsdatum in den Einstellungen (Version 177)
+
+Build 20261112210000, Service Worker `relentless-v14`.
+
+**Was neu ist**
+- Statt des Geburtsjahrs wird ein vollständiges **Geburtsdatum** gespeichert (`birthDate`). Ein bereits eingetragenes Geburtsjahr gilt weiter; die Seite bittet dann um das genaue Datum.
+- Neue Seite **Einstellungen → Training → Alter und Erholung**. Die Zeile in der Übersicht zeigt Alter, Rhythmus und Abstand (zum Beispiel „60 Jahre · Rhythmus 2:1 · mehr Abstand“).
+- Auf der Seite lassen sich Geburtsdatum, Wochenrhythmus und Abstand ändern. Mit „Vorschlag nach Alter verwenden“ wird eine eigene Wahl wieder gelöscht.
+
+**Wie der Plan angepasst wird**
+- Änderungen sind zuerst ein Entwurf. Vor dem Speichern sagt die Seite, was sich ändern wird. Mit „Verwerfen“ bleibt alles, wie es war.
+- Nach „Speichern“ richten sich alle kommenden Wochen sofort danach: Entlastungswochen, Umfang, Wechsel der Intervalle, leichte Kraftwochen und Fitness-Checks. Die Meldung nennt die nächste Entlastungswoche mit Datum. Ein Eintrag landet im Verlauf.
+- Für die laufende Woche macht die App einen Vorschlag (Annehmen oder Ablehnen), wie beim Zeitbudget. Vergangene, erledigte, verschobene und angepasste Tage bleiben unverändert. Vor dem Annehmen legt die App einen Schnappschuss an.
+- Hast du Rhythmus oder Abstand selbst gewählt, überschreibt ein geändertes Geburtsdatum diese Wahl nicht. Die Seite zeigt dann den Vorschlag nach Alter zum Vergleich.
+- Der Vorschlag richtet sich nach dem Alter **am Planstart**. Ein Geburtstag mitten im Plan (zum Beispiel der 50.) ändert den Rhythmus deshalb nicht ungefragt; die Seite weist dann auf den ruhigeren Rhythmus hin.
+
+**Prüfung**
+- 157 von 157 Tests bestehen (6 neue zur Einstellungsseite), `build --check` grün. Geänderte Vergleichsstände: nur die Einstellungsübersicht (neue Zeile).
+- 35 neue englische Wörterbucheinträge; Seite und Meldungen auf Englisch ohne Lücken geprüft.
+- Bildschirmfotos bei 375 pt, hell und dunkel: `claude/bilder/m7-einstellungen-*.png`.
+- Nicht auf dem iPhone geprüft.
