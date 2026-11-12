@@ -15,7 +15,7 @@ function phases1(p){
     const N = rhyN(p); k = Math.min(6, Math.max(n >= 10 ? 3 : 1, Math.round(n * .2))); b = Math.min(12, Math.max(1, Math.round(n * .4))); u = Math.max(0, Math.min(12, n - b - k)); if (b + u + k > n) b = Math.max(1, n - u - k); pre = n - b - u - k;
     if (n >= 3 * N) {
       const E1 = Math.min(n - k - 1, Math.max(N, Math.round((pre + b) / N) * N)); let E2 = E1 + u;
-      const C = []; for (let m = N; m < n; m += N) if (m > E1 && n - m >= 2 && n - m <= Math.max(k, 6) + 1) C.push(m); if (C.length) E2 = C.reduce((a, m) => Math.abs(m - (E1 + u)) < Math.abs(a - (E1 + u)) ? m : a);
+      const C = []; for (let m = N; m < n; m += N) if (m > E1 && n - m >= Math.min(3, k) && n - m <= 6) C.push(m); if (C.length) E2 = C.reduce((a, m) => Math.abs(m - (E1 + u)) < Math.abs(a - (E1 + u)) ? m : a);
       b = E1 - pre; if (b > 12) { pre = E1 - 12; b = 12; } if (b < 1) { pre = Math.max(0, E1 - 1); b = E1 - pre; }
       u = E2 - E1; k = n - E2;
     }
@@ -26,7 +26,7 @@ function phases1(p){
     peak:['Spitze', ev ? 'Eventspezifisch: lange Ritte, VO2max-Schärfe' : 'VO2max-Reize, maximale Leistung','#f87171'],
     taper:[ev ? 'Tapering' : p.goal === 'ftp' ? 'Test und Entlastung' : 'Abschluss','Umfang sinkt um etwa 40 bis 60 %, Intensität und Fahrhäufigkeit bleiben','#34d399']};
   let w = 1;
-  return [['base',pre,1],['base',b],['build',u],['peak',k],['taper',tp]].filter(x => x[1] > 0).map(([key,c,pr]) => { const o = pr ? {key, name:'Allgemeine Vorbereitung', desc:'Grundlage, Kraft und Technik, dazu eine Sweet-Spot-Einheit pro Woche. Bis zum Event ist noch viel Zeit, die gezielte Vorbereitung beginnt danach.', color:'#a5d8ff', from:w, to:w + c - 1, weeks:c, prep:1} : {key,name:L[key][0],desc:L[key][1],color:L[key][2],from:w,to:w+c-1,weeks:c}; w += c; return o; });
+  return [['base',pre,1],['base',b],['build',u],['peak',k],['taper',tp]].filter(x => x[1] > 0).map(([key,c,pr]) => { const o = pr ? {key, name:'Allgemeine Vorbereitung', desc:'Grundlage, Kraft und Technik, dazu Sweet Spot und bei wenig Wochenzeit eine kurze VO2max-Einheit. Bis zum Event ist noch viel Zeit, die gezielte Vorbereitung beginnt danach.', color:'#a5d8ff', from:w, to:w + c - 1, weeks:c, prep:1} : {key,name:L[key][0],desc:L[key][1],color:L[key][2],from:w,to:w+c-1,weeks:c}; w += c; return o; });
 }
 /* ---------- Saisonplanung: mehrere A-Events = mehrere Formhöhepunkte ----------
    Ein A-Event (das Hauptevent): alle anderen Events sind Bausteine (B/C) auf dem Weg dorthin, Phasen wie bisher.
@@ -303,8 +303,7 @@ function genWeekCore(p, w, base){
   let hard = (rec ? (fF === 'health' || fF === 'restart' ? [] : [OPN]) : (fF === 'restart' && w <= 3 ? [] : H[p.goal][k])).slice(0, iF ? 2 : (hE < 5 && (nDays < 3 || hE < 3)) || fF === 'health' ? 1 : 2);
   /* M4: Bei wenig Zeit (bis 6 Std.) reicht eine Sweet-Spot-Einheit in der Basis nicht als Reiz. Ab Woche 5 kommt eine kurze VO2max-Einheit
      dazu (ab 3 Trainingstagen und 3 Std., nicht unter 2,5 W/kg und nicht beim Ziel „Ausdauer“). */
-  if (!rec && k === 'base' && hard.length === 1 && hard[0] === SST && hE <= 6 && hE >= 3 && nDays >= 3 && w > 4 && wkgP >= 2.5 && fF !== 'endur' && !P.prep) hard = [SST, VOS];
-  if (P.prep && !rec) hard = hard.slice(0, 1);
+  if (!rec && k === 'base' && hard.length === 1 && hard[0] === SST && hE <= 6 && hE >= 3 && nDays >= 3 && w > 4 && wkgP >= 2.5 && fF !== 'endur') hard = [SST, VOS];
   /* M8: VO2max-Block (Option für Fortgeschrittene): im Aufbau die Belastungswoche vor der ersten Entlastungswoche mit drei VO2max-Einheiten
      (Rønnestad et al. 2014). Nur ab 5 Trainingstagen. */
   const blkW = (() => { const B = ph.find(x => x.key === 'build'); if (!p.vo2blk || !B) return 0; for (let q = B.from + 1; q <= B.to; q++) if (recWk(p, q)) return q - 1 > B.from ? q - 1 : 0; return 0; })();
@@ -347,11 +346,13 @@ function genWeekCore(p, w, base){
   }
   const put = (i, s) => { out[i] = cm[i] && s.t !== 'com' ? splitDay(s, i) : {...s}; };
   const isK = j => out[j] && ['long','sst','thr','vo2'].includes(out[j].t);
+  /* M8: In der Woche des VO2max-Blocks ist der Long Ride kurz und locker, damit die drei Einheiten gelingen */
+  if (blkW === w && !rec && nDays >= 5 && !reE) { LONG.m = Math.min(LONG.m, 120); LONG.n = 'Long Ride, locker (VO2max-Woche)'; LONG.st = 'Konstant in Zone 2, keine Intensität. Diese Woche zählen die drei VO2max-Einheiten.'; LONG.hi = 75; delete LONG.fin; }
   if (p.longDay >= 0) put(p.longDay, capS(LONG, p.longDay));
   let nHard = 0;
   hard.forEach(s => {
     const capH = i => cm[i] && cap(i) < 999 ? cap(i) - legOf(p, i) : cap(i), c = [0,1,2,3,4,5,6].filter(i => av[i] && !out[i] && cap(i) >= 45), fit = c.filter(i => capH(i) >= s.m), pool = fit.length ? fit : c, good = pool.filter(i => !isK((i+6)%7) && !isK((i+1)%7));
-    if (!good.length && nHard >= (iF ? 2 : 1)) return; nHard++;
+    if (!good.length && nHard >= (blkW === w ? 3 : iF ? 2 : 1)) return; nHard++;
     const adjH = i => [(i + 6) % 7, (i + 1) % 7].filter(j => out[j] && HARD.includes(out[j].t)).length;
     const pen = i => !cm[i] ? 0 : (s.iv && legOf(p, i) < 45 ? 2 : 1), near2 = i => gapOf(p) ? [(i + 5) % 7, (i + 2) % 7].filter(j => out[j] && HARD.includes(out[j].t)).length : 0, l = (good.length ? good : pool).sort((a,b) => pen(a) - pen(b) || adjH(a) - adjH(b) || near2(a) - near2(b) || a - b); if (l.length) put(l[0], capS(s, l[0]));
   });

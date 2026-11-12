@@ -9,20 +9,26 @@
   "phases": [
    {
     "key": "base",
-    "name": "Basis",
+    "name": "Allgemeine Vorbereitung",
     "from": 1,
-    "to": 18
+    "to": 16
+   },
+   {
+    "key": "base",
+    "name": "Basis",
+    "from": 17,
+    "to": 28
    },
    {
     "key": "build",
     "name": "Aufbau",
-    "from": 19,
-    "to": 36
+    "from": 29,
+    "to": 40
    },
    {
     "key": "peak",
     "name": "Spitze",
-    "from": 37,
+    "from": 41,
     "to": 45
    },
    {
@@ -41,7 +47,7 @@
   ],
   "stats": {
    "tot": 47,
-   "hAvg": 5.798863636363636,
+   "hAvg": 5.73219696969697,
    "maxL": 225
   },
   "planCheck": {
@@ -122,33 +128,33 @@
    "pairs": []
   },
   "strength": {
-   "n": 72,
+   "n": 60,
    "dayBeforeHard": 0,
-   "sameDayHard": 24
+   "sameDayHard": 12
   },
   "events": [
    {
     "w": 47,
     "i": 6,
     "n": "Eventtag: Jedermann-Rennen 76 km",
-    "tsbApp": 16.17616825976871,
-    "tsbReal": 16.90186179365363,
-    "ctlApp": 54.01026943420818,
-    "ctlReal": 49.40757480716708,
-    "peakApp": 61.65005590880985,
-    "peakReal": 55.73617946881275
+    "tsbApp": 16.285949497965763,
+    "tsbReal": 16.39367493517243,
+    "ctlApp": 48.77102412973126,
+    "ctlReal": 48.91731032120576,
+    "peakApp": 54.59523790304687,
+    "peakReal": 54.78127464038572
    }
   ],
   "weeks": [
    {
     "w": 1,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
     "h": 4.433333333333334,
-    "tssApp": 245,
+    "tssApp": 214,
     "tssReal": 214.47368816345772,
     "z": {
      "lo": 230,
@@ -175,9 +181,9 @@
      "Grundlage, neue Strecke 90′",
      "Long Ride 105′ +Kraft"
     ],
-    "ctlApp": 43.667665797971644,
+    "ctlApp": 42.96965921960867,
     "ctlReal": 42.98054268118303,
-    "rampApp": -1.3323342020283562,
+    "rampApp": -2.0303407803913274,
     "rampReal": -2.0194573188169684,
     "tsbMinApp": 0,
     "tsbMinReal": 0
@@ -185,12 +191,12 @@
    {
     "w": 2,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
     "h": 4.8,
-    "tssApp": 248,
+    "tssApp": 219,
     "tssReal": 218.13956182005876,
     "z": {
      "lo": 270,
@@ -217,22 +223,22 @@
      "–",
      "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 42.491427482422985,
+    "ctlApp": 41.26212956568257,
     "ctlReal": 41.252656123721664,
-    "rampApp": -1.1762383155486589,
+    "rampApp": -1.7075296539261018,
     "rampReal": -1.7278865574613675,
-    "tsbMinApp": 0.011782950714284368,
+    "tsbMinApp": 2.541217856716841,
     "tsbMinReal": 2.49719411148979
    },
    {
     "w": 3,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
     "h": 4.933333333333334,
-    "tssApp": 268,
+    "tssApp": 236,
     "tssReal": 235.92493816345774,
     "z": {
      "lo": 260,
@@ -259,22 +265,22 @@
      "–",
      "Long Ride, wellig 120′"
     ],
-    "ctlApp": 41.9023099282428,
+    "ctlApp": 40.16062072660401,
     "ctlReal": 40.15059969366078,
-    "rampApp": -0.5891175541801843,
+    "rampApp": -1.1015088390785621,
     "rampReal": -1.102056430060884,
-    "tsbMinApp": -0.41389664748918875,
+    "tsbMinApp": 2.6684187300310427,
     "tsbMinReal": 2.678074336758108
    },
    {
     "w": 4,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": true,
     "budget": 5,
     "nDays": 4,
     "h": 3.2,
-    "tssApp": 185,
+    "tssApp": 153,
     "tssReal": 151.99751156569107,
     "z": {
      "lo": 183,
@@ -300,22 +306,22 @@
      "–",
      "Long Ride 75′"
     ],
-    "ctlApp": 39.54984266979568,
+    "ctlApp": 37.388645760324934,
     "ctlReal": 37.35786269703309,
-    "rampApp": -2.3524672584471205,
+    "rampApp": -2.7719749662790747,
     "rampReal": -2.7927369966276885,
-    "tsbMinApp": 1.1462339127835293,
+    "tsbMinApp": 3.766890745581648,
     "tsbMinReal": 3.7929198907132786
    },
    {
     "w": 5,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
     "h": 4.416666666666667,
-    "tssApp": 288,
+    "tssApp": 247,
     "tssReal": 247.5247370174522,
     "z": {
      "lo": 229,
@@ -342,26 +348,26 @@
      "Grundlage, neue Strecke 45′",
      "Long Ride 105′"
     ],
-    "ctlApp": 39.88355028846244,
+    "ctlApp": 37.149291190520266,
     "ctlReal": 37.1352638313748,
-    "rampApp": 0.33370761866675736,
+    "rampApp": -0.23935456980466796,
     "rampReal": -0.22259886565829134,
-    "tsbMinApp": 1.6254116733713317,
+    "tsbMinApp": 4.80744365331082,
     "tsbMinReal": 4.806392763803366
    },
    {
     "w": 6,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
     "h": 4.766666666666667,
-    "tssApp": 308,
-    "tssReal": 260.66130366926245,
+    "tssApp": 257,
+    "tssReal": 257.4537945738957,
     "z": {
-     "lo": 230,
-     "mid": 40,
+     "lo": 234,
+     "mid": 36,
      "hi": 16
     },
     "hard": 2,
@@ -377,34 +383,34 @@
     ],
     "ses": [
      "–",
-     "Sweet Spot 2×20 71′ +Kraft",
+     "Sweet Spot 3×12 71′ +Kraft",
      "–",
      "VO2max 4×4 50′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 45′",
      "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 40.606300050606634,
-    "ctlReal": 37.23829560474026,
-    "rampApp": 0.722749762144197,
-    "rampReal": 0.10303177336545843,
-    "tsbMinApp": -2.808109478071671,
-    "tsbMinReal": 0.6767853141418172
+    "ctlApp": 37.173399917700436,
+    "ctlReal": 37.17129835610827,
+    "rampApp": 0.02410872718017032,
+    "rampReal": 0.036034524733466355,
+    "tsbMinApp": 1.0594286723919595,
+    "tsbMinReal": 1.0283083824258625
    },
    {
     "w": 7,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.9,
-    "tssApp": 311,
-    "tssReal": 257.5721618210472,
+    "h": 4.916666666666667,
+    "tssApp": 253,
+    "tssReal": 252.0372422479994,
     "z": {
-     "lo": 252,
-     "mid": 18,
-     "hi": 24
+     "lo": 262,
+     "mid": 12,
+     "hi": 21
     },
     "hard": 2,
     "key": 3,
@@ -419,29 +425,29 @@
     ],
     "ses": [
      "–",
-     "Over-Under leicht 3×9 62′ +Kraft",
+     "Over-Under leicht 2×9 48′ +Kraft",
      "–",
      "VO2max 5×3 52′",
      "– +Kraft",
-     "Grundlage, neue Strecke 60′",
+     "Grundlage, neue Strecke 75′",
      "Long Ride, wellig 120′"
     ],
-    "ctlApp": 41.30779040776966,
-    "ctlReal": 37.28504474577169,
-    "rampApp": 0.7014903571630242,
-    "rampReal": 0.046749141031433794,
-    "tsbMinApp": -4.365275944930659,
-    "tsbMinReal": -1.388846103009591
+    "ctlApp": 37.15821077555722,
+    "ctlReal": 37.13510699239156,
+    "rampApp": -0.015189142143213985,
+    "rampReal": -0.036191363716703506,
+    "tsbMinApp": -1.2036976753842055,
+    "tsbMinReal": -1.2468137883872146
    },
    {
     "w": 8,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": true,
     "budget": 5,
     "nDays": 4,
     "h": 3.25,
-    "tssApp": 190,
+    "tssApp": 153,
     "tssReal": 152.47083172564467,
     "z": {
      "lo": 187,
@@ -467,26 +473,26 @@
      "–",
      "Long Ride 75′"
     ],
-    "ctlApp": 39.15103088790643,
-    "ctlReal": 34.94210933619716,
-    "rampApp": -2.156759519863229,
-    "rampReal": -2.3429354095745296,
-    "tsbMinApp": -6.2408619332684125,
-    "tsbMinReal": -3.1206069175656808
+    "ctlApp": 34.8471606061341,
+    "ctlReal": 34.815189768089745,
+    "rampApp": -2.311050169423119,
+    "rampReal": -2.3199172243018182,
+    "tsbMinApp": -3.426583819595116,
+    "tsbMinReal": -3.3717102211264702
    },
    {
     "w": 9,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.75,
-    "tssApp": 317,
-    "tssReal": 270.5808634789272,
+    "h": 4.6,
+    "tssApp": 257,
+    "tssReal": 257.77847024354276,
     "z": {
      "lo": 224,
-     "mid": 45,
+     "mid": 36,
      "hi": 16
     },
     "hard": 2,
@@ -502,33 +508,33 @@
     ],
     "ses": [
      "–",
-     "Sweet Spot 3×15 Kraftausdauer 80′ +Kraft",
+     "Sweet Spot 3×12 Kraftausdauer 71′ +Kraft",
      "–",
      "VO2max 8×2 55′",
      "– +Kraft",
      "Grundlage, neue Strecke 45′",
      "Long Ride 105′"
     ],
-    "ctlApp": 40.151704541657615,
-    "ctlReal": 35.5719604935867,
-    "rampApp": 1.0006736537511856,
-    "rampReal": 0.6298511573895382,
-    "tsbMinApp": -2.5828438482694267,
-    "tsbMinReal": -0.03753194840172824
+    "ctlApp": 35.20684670798088,
+    "ctlReal": 35.197113803806545,
+    "rampApp": 0.3596861018467763,
+    "rampReal": 0.3819240357167999,
+    "tsbMinApp": 0.8501093709677434,
+    "tsbMinReal": 0.8195790469673625
    },
    {
     "w": 10,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.916666666666667,
-    "tssApp": 320,
-    "tssReal": 270.25618780928016,
+    "h": 4.766666666666667,
+    "tssApp": 257,
+    "tssReal": 257.4537945738957,
     "z": {
      "lo": 234,
-     "mid": 45,
+     "mid": 36,
      "hi": 16
     },
     "hard": 2,
@@ -544,33 +550,33 @@
     ],
     "ses": [
      "–",
-     "Sweet Spot 3×15 Trittwechsel 80′ +Kraft",
+     "Sweet Spot 3×12 Trittwechsel 71′ +Kraft",
      "–",
      "VO2max 4×4 50′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 45′",
      "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 41.0839392308648,
-    "ctlReal": 36.11540224505634,
-    "rampApp": 0.9322346892071849,
-    "rampReal": 0.5434417514696364,
-    "tsbMinApp": -5.710655054971866,
-    "tsbMinReal": -3.414696114539204
+    "ctlApp": 35.52915616161624,
+    "ctlReal": 35.53068977767549,
+    "rampApp": 0.3223094536353628,
+    "rampReal": 0.3335759738689461,
+    "tsbMinApp": -1.708652171611142,
+    "tsbMinReal": -1.7523670961193218
    },
    {
     "w": 11,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.95,
-    "tssApp": 324,
-    "tssReal": 271.8993868267828,
+    "h": 4.8,
+    "tssApp": 259,
+    "tssReal": 259.09699359139836,
     "z": {
      "lo": 237,
-     "mid": 45,
+     "mid": 36,
      "hi": 15
     },
     "hard": 2,
@@ -586,29 +592,29 @@
     ],
     "ses": [
      "–",
-     "Sweet Spot 3×15 80′ +Kraft",
+     "Sweet Spot 3×12 71′ +Kraft",
      "–",
      "VO2max 5×3 52′",
      "– +Kraft",
      "Grundlage, neue Strecke 45′",
      "Long Ride, wellig 120′"
     ],
-    "ctlApp": 41.960684205896996,
-    "ctlReal": 36.61141222736966,
-    "rampApp": 0.8767449750321958,
-    "rampReal": 0.4960099823133248,
-    "tsbMinApp": -7.620495104128899,
-    "tsbMinReal": -5.258394362171657
+    "ctlApp": 35.84579789753268,
+    "ctlReal": 35.84905221456986,
+    "rampApp": 0.3166417359164342,
+    "rampReal": 0.3183624368943683,
+    "tsbMinApp": -3.519074265054961,
+    "tsbMinReal": -3.5590186229378773
    },
    {
     "w": 12,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": true,
     "budget": 5,
     "nDays": 4,
     "h": 3.2,
-    "tssApp": 185,
+    "tssApp": 149,
     "tssReal": 148.18423553557213,
     "z": {
      "lo": 187,
@@ -634,25 +640,25 @@
      "–",
      "Long Ride 75′"
     ],
-    "ctlApp": 39.59925542903367,
-    "ctlReal": 34.28235490437676,
-    "rampApp": -2.3614287768633275,
-    "rampReal": -2.3290573229929024,
-    "tsbMinApp": -6.5667069495397,
-    "tsbMinReal": -4.698214276776511
+    "ctlApp": 33.65267658754964,
+    "ctlReal": 33.63703108575436,
+    "rampApp": -2.1931213099830345,
+    "rampReal": -2.2120211288155005,
+    "tsbMinApp": -4.189868564290251,
+    "tsbMinReal": -4.208269929775263
    },
    {
     "w": 13,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.416666666666667,
-    "tssApp": 288,
-    "tssReal": 247.5247370174522,
+    "h": 4.666666666666667,
+    "tssApp": 258,
+    "tssReal": 258.2503620174522,
     "z": {
-     "lo": 229,
+     "lo": 244,
      "mid": 0,
      "hi": 36
     },
@@ -673,29 +679,29 @@
      "–",
      "VO2max 8×2 55′",
      "– +Kraft",
-     "Grundlage, neue Strecke 45′",
+     "Grundlage, neue Strecke 60′",
      "Long Ride 105′"
     ],
-    "ctlApp": 39.925377286133816,
-    "ctlReal": 34.53190269013255,
-    "rampApp": 0.32612185710014785,
-    "rampReal": 0.2495477857557873,
-    "tsbMinApp": 0.055858969740938846,
-    "tsbMinReal": 1.1218533122958547
+    "ctlApp": 34.23958361101771,
+    "ctlReal": 34.23206622899572,
+    "rampApp": 0.5869070234680649,
+    "rampReal": 0.5950351432413612,
+    "tsbMinApp": 0.8014655486660729,
+    "tsbMinReal": 0.7953169653541963
    },
    {
     "w": 14,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.933333333333334,
-    "tssApp": 321,
-    "tssReal": 274.76071709629736,
+    "h": 4.766666666666667,
+    "tssApp": 257,
+    "tssReal": 257.4537945738957,
     "z": {
-     "lo": 230,
-     "mid": 50,
+     "lo": 234,
+     "mid": 36,
      "hi": 16
     },
     "hard": 2,
@@ -711,33 +717,33 @@
     ],
     "ses": [
      "–",
-     "Sweet Spot 2×25 81′ +Kraft",
+     "Sweet Spot 3×12 Kraftausdauer 71′ +Kraft",
      "–",
      "VO2max 4×4 50′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 45′",
      "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 40.91324497067565,
-    "ctlReal": 35.32910124220711,
-    "rampApp": 0.9878676845418326,
-    "rampReal": 0.7971985520745619,
-    "tsbMinApp": -4.6252960736497215,
-    "tsbMinReal": -3.785639163404454
+    "ctlApp": 34.71038562687581,
+    "ctlReal": 34.71379464194812,
+    "rampApp": 0.470802015858105,
+    "rampReal": 0.48172841295239976,
+    "tsbMinApp": -2.967224477087399,
+    "tsbMinReal": -2.9775762742875145
    },
    {
     "w": 15,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.966666666666667,
-    "tssApp": 325,
-    "tssReal": 276.40391611380005,
+    "h": 4.8,
+    "tssApp": 259,
+    "tssReal": 259.09699359139836,
     "z": {
-     "lo": 233,
-     "mid": 50,
+     "lo": 237,
+     "mid": 36,
      "hi": 15
     },
     "hard": 2,
@@ -753,29 +759,29 @@
     ],
     "ses": [
      "–",
-     "Sweet Spot 2×25 81′ +Kraft",
+     "Sweet Spot 3×12 Trittwechsel 71′ +Kraft",
      "–",
      "VO2max 5×3 52′",
      "– +Kraft",
      "Grundlage, neue Strecke 45′",
      "Long Ride, wellig 120′"
     ],
-    "ctlApp": 41.837082259559566,
-    "ctlReal": 36.0399117187992,
-    "rampApp": 0.9238372888839166,
-    "rampReal": 0.7108104765920942,
-    "tsbMinApp": -7.422830428045025,
-    "tsbMinReal": -6.31242696452744
+    "ctlApp": 35.15272360299598,
+    "ctlReal": 35.157565411024606,
+    "rampApp": 0.44233797612016446,
+    "rampReal": 0.4437707690764867,
+    "tsbMinApp": -4.42348361270605,
+    "tsbMinReal": -4.450143317685551
    },
    {
     "w": 16,
     "ph": "base",
-    "phName": "Basis",
+    "phName": "Allgemeine Vorbereitung",
     "rec": true,
     "budget": 5,
     "nDays": 4,
     "h": 3.2,
-    "tssApp": 185,
+    "tssApp": 153,
     "tssReal": 151.99751156569107,
     "z": {
      "lo": 183,
@@ -801,12 +807,12 @@
      "–",
      "Long Ride 75′"
     ],
-    "ctlApp": 39.494628640298124,
-    "ctlReal": 33.87824044958516,
-    "rampApp": -2.342453619261441,
-    "rampReal": -2.1616712692140467,
-    "tsbMinApp": -6.525385825664863,
-    "tsbMinReal": -5.470564410868484
+    "ctlApp": 33.14955236505846,
+    "ctlReal": 33.13135042502925,
+    "rampApp": -2.003171237937515,
+    "rampReal": -2.0262149859953595,
+    "tsbMinApp": -4.943506082308673,
+    "tsbMinReal": -4.954691957926286
    },
    {
     "w": 17,
@@ -815,17 +821,17 @@
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.283333333333333,
-    "tssApp": 306,
-    "tssReal": 260.8396278954109,
+    "h": 4.6,
+    "tssApp": 257,
+    "tssReal": 257.77847024354276,
     "z": {
-     "lo": 181,
-     "mid": 60,
+     "lo": 224,
+     "mid": 36,
      "hi": 16
     },
     "hard": 2,
     "key": 3,
-    "rides": 3,
+    "rides": 4,
     "long": 105,
     "maxSes": 105,
     "test": false,
@@ -836,19 +842,19 @@
     ],
     "ses": [
      "–",
-     "Sweet Spot 3×20 97′ +Kraft",
+     "Sweet Spot 3×12 71′ +Kraft",
      "–",
      "VO2max 8×2 55′",
      "– +Kraft",
-     "–",
+     "Grundlage, neue Strecke 45′",
      "Long Ride 105′"
     ],
-    "ctlApp": 40.14391536979209,
-    "ctlReal": 34.40078708250521,
-    "rampApp": 0.6492867294939657,
-    "rampReal": 0.5225466329200543,
-    "tsbMinApp": -3.9628077616343447,
-    "tsbMinReal": -2.957958064405368
+    "ctlApp": 33.76985235588665,
+    "ctlReal": 33.77177457225402,
+    "rampApp": 0.6202999908281868,
+    "rampReal": 0.6404241472247705,
+    "tsbMinApp": -0.5917836245639521,
+    "tsbMinReal": -0.6119061147681961
    },
    {
     "w": 18,
@@ -857,13 +863,13 @@
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.85,
-    "tssApp": 314,
-    "tssReal": 261.39301328898796,
+    "h": 4.633333333333334,
+    "tssApp": 240,
+    "tssReal": 239.66841823049674,
     "z": {
-     "lo": 239,
-     "mid": 24,
-     "hi": 28
+     "lo": 244,
+     "mid": 12,
+     "hi": 22
     },
     "hard": 2,
     "key": 3,
@@ -878,34 +884,34 @@
     ],
     "ses": [
      "–",
-     "Over-Under leicht 4×9 76′ +Kraft",
+     "Over-Under leicht 2×9 48′ +Kraft",
      "–",
      "VO2max 4×4 50′",
      "– +Kraft",
-     "Grundlage mit Fahrtechnik 45′",
+     "Grundlage mit Fahrtechnik 60′",
      "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 40.952020086490236,
-    "ctlReal": 34.93889468616352,
-    "rampApp": 0.8081047166981463,
-    "rampReal": 0.538107603658311,
-    "tsbMinApp": -3.3446812141946225,
-    "tsbMinReal": -1.972221591935707
+    "ctlApp": 33.980635241024785,
+    "ctlReal": 33.97505740691257,
+    "rampApp": 0.21078288513813703,
+    "rampReal": 0.2032828346585518,
+    "tsbMinApp": -2.171421980178934,
+    "tsbMinReal": -2.2107814022392134
    },
    {
     "w": 19,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.9,
-    "tssApp": 326,
-    "tssReal": 288.9317420351967,
+    "h": 4.8,
+    "tssApp": 259,
+    "tssReal": 259.09699359139836,
     "z": {
-     "lo": 185,
-     "mid": 90,
-     "hi": 19
+     "lo": 237,
+     "mid": 36,
+     "hi": 15
     },
     "hard": 2,
     "key": 3,
@@ -913,47 +919,47 @@
     "long": 120,
     "maxSes": 120,
     "test": false,
-    "str": "build+build",
+    "str": "base+base",
     "strDays": [
      1,
      4
     ],
     "ses": [
      "–",
-     "VO2max 30/15 47′ +Kraft",
+     "Sweet Spot 3×12 Kraftausdauer 71′ +Kraft",
      "–",
-     "Sweet Spot 3×20 97′",
+     "VO2max 5×3 52′",
      "– +Kraft",
-     "Grundlage, neue Strecke 30′",
-     "Long Ride mit Rampen 120′"
+     "Grundlage, neue Strecke 45′",
+     "Long Ride, wellig 120′"
     ],
-    "ctlApp": 41.909601308154905,
-    "ctlReal": 36.037140138595056,
-    "rampApp": 0.9575812216646682,
-    "rampReal": 1.0982454524315344,
-    "tsbMinApp": -8.56788520525842,
-    "tsbMinReal": -6.421531593211377
+    "ctlApp": 34.53500323764122,
+    "ctlReal": 34.532237842070785,
+    "rampApp": 0.5543679966164348,
+    "rampReal": 0.5571804351582159,
+    "tsbMinApp": -4.55999469544161,
+    "tsbMinReal": -4.558280572826874
    },
    {
     "w": 20,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": true,
     "budget": 5,
     "nDays": 4,
     "h": 3.25,
-    "tssApp": 192,
-    "tssReal": 164.74290802624648,
+    "tssApp": 153,
+    "tssReal": 152.47083172564467,
     "z": {
-     "lo": 164.5,
-     "mid": 22.5,
+     "lo": 187,
+     "mid": 0,
      "hi": 8
     },
     "hard": 1,
     "key": 2,
     "rides": 3,
-    "long": 90,
-    "maxSes": 90,
+    "long": 75,
+    "maxSes": 75,
     "test": false,
     "str": "leicht",
     "strDays": [
@@ -963,164 +969,161 @@
      "–",
      "VO2max Auffrischung 4×2 45′",
      "– +Kraft",
-     "Grundlage Z2 60′",
+     "Grundlage Z2 75′",
      "–",
      "–",
-     "Long Ride mit Rampen 90′"
+     "Long Ride 75′"
     ],
-    "ctlApp": 39.72372920882249,
-    "ctlReal": 34.19191886036061,
-    "rampApp": -2.185872099332414,
-    "rampReal": -1.8452212782344475,
-    "tsbMinApp": -6.612697417404505,
-    "tsbMinReal": -7.409846964572985
+    "ctlApp": 32.6266633646929,
+    "ctlReal": 32.611908600061646,
+    "rampApp": -1.9083398729483179,
+    "rampReal": -1.9203292420091387,
+    "tsbMinApp": -5.287423992062216,
+    "tsbMinReal": -5.288132050786935
    },
    {
     "w": 21,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": false,
-    "budget": 8,
+    "budget": 6,
     "nDays": 4,
-    "h": 7.016666666666667,
-    "tssApp": 399,
-    "tssReal": 370.0522933670205,
+    "h": 5.166666666666667,
+    "tssApp": 279,
+    "tssReal": 279.70161201745225,
     "z": {
-     "lo": 323.75,
-     "mid": 65.25,
-     "hi": 32
+     "lo": 274,
+     "mid": 0,
+     "hi": 36
     },
     "hard": 2,
     "key": 3,
     "rides": 4,
-    "long": 165,
-    "maxSes": 165,
+    "long": 105,
+    "maxSes": 105,
     "test": true,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      4
     ],
     "ses": [
      "–",
-     "Fitness-Check: 20-Min-Test 60′ +Kraft",
+     "Fitness-Check: 20-Min-Test 60′",
      "–",
-     "Over-Under leicht 4×9 76′",
+     "VO2max 8×2 55′",
      "– +Kraft",
-     "Grundlage, neue Strecke 120′",
-     "Long Ride mit Rampen 165′"
+     "Grundlage, neue Strecke 90′",
+     "Long Ride 105′"
     ],
-    "ctlApp": 42.59951563282506,
-    "ctlReal": 37.30285555540595,
-    "rampApp": 2.8757864240025697,
-    "rampReal": 3.110936695045339,
-    "tsbMinApp": -2.393633536390027,
-    "tsbMinReal": -3.318282346726221
+    "ctlApp": 33.85355153656746,
+    "ctlReal": 33.85715549500971,
+    "rampApp": 1.2268881718745561,
+    "rampReal": 1.2452468949480604,
+    "tsbMinApp": -0.5465001572235764,
+    "tsbMinReal": -0.5948916415423255
    },
    {
     "w": 22,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": false,
-    "budget": 8,
+    "budget": 7,
     "nDays": 4,
-    "h": 7.4,
-    "tssApp": 440,
-    "tssReal": 404.3693762355979,
+    "h": 6.683333333333334,
+    "tssApp": 314,
+    "tssReal": 314.2118222588245,
     "z": {
-     "lo": 320,
-     "mid": 105,
-     "hi": 19
+     "lo": 361,
+     "mid": 40,
+     "hi": 0
     },
-    "hard": 2,
-    "key": 3,
+    "hard": 1,
+    "key": 2,
     "rides": 4,
-    "long": 180,
-    "maxSes": 180,
+    "long": 120,
+    "maxSes": 120,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
-     4
+     2
     ],
     "ses": [
      "–",
-     "VO2max 30/15 47′ +Kraft",
-     "–",
-     "Sweet Spot 3×20 97′",
+     "Sweet Spot 2×20 71′",
      "– +Kraft",
-     "Grundlage mit Fahrtechnik 120′",
-     "Long Ride mit Rampen 180′"
+     "Grundlage Z2 120′",
+     "–",
+     "Grundlage mit Fahrtechnik 90′",
+     "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 45.95042110222591,
-    "ctlReal": 40.71861759503481,
-    "rampApp": 3.3509054694008498,
-    "rampReal": 3.4157620396288593,
-    "tsbMinApp": -12.445507846405086,
-    "tsbMinReal": -14.456654742462334
+    "ctlApp": 35.663410235402594,
+    "ctlReal": 35.67091011538642,
+    "rampApp": 1.8098586988351357,
+    "rampReal": 1.813754620376713,
+    "tsbMinApp": -6.693153075060998,
+    "tsbMinReal": -6.718284439723895
    },
    {
     "w": 23,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 8,
-    "tssApp": 487,
-    "tssReal": 434.9457938843113,
+    "h": 7.866666666666666,
+    "tssApp": 355,
+    "tssReal": 355.055508385893,
     "z": {
-     "lo": 349.25,
-     "mid": 108.75,
-     "hi": 21.75
+     "lo": 445,
+     "mid": 18,
+     "hi": 9
     },
-    "hard": 2,
-    "key": 3,
+    "hard": 1,
+    "key": 2,
     "rides": 4,
-    "long": 195,
-    "maxSes": 195,
+    "long": 150,
+    "maxSes": 150,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
-     4
+     2
     ],
     "ses": [
      "–",
-     "VO2max 30/15 68′ +Kraft",
-     "–",
-     "Sweet Spot 3×20 Trittwechsel 97′",
+     "Over-Under leicht 3×9 82′",
      "– +Kraft",
+     "Grundlage, ruhiger Einstieg 120′",
+     "–",
      "Grundlage, neue Strecke 120′",
-     "Long Ride mit Rampen 195′"
+     "Long Ride, wellig 150′"
     ],
-    "ctlApp": 49.80030799505669,
-    "ctlReal": 44.282390646413305,
-    "rampApp": 3.8498868928307814,
-    "rampReal": 3.5637730513784973,
-    "tsbMinApp": -20.09176012164361,
-    "tsbMinReal": -21.775744875609398
+    "ctlApp": 38.15318597800381,
+    "ctlReal": 38.16076496953739,
+    "rampApp": 2.4897757426012177,
+    "rampReal": 2.4898548541509697,
+    "tsbMinApp": -10.039090920985025,
+    "tsbMinReal": -10.065597864423125
    },
    {
     "w": 24,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": true,
     "budget": 8,
     "nDays": 4,
     "h": 5.2,
-    "tssApp": 276,
-    "tssReal": 248.30665788627428,
+    "tssApp": 235,
+    "tssReal": 233.98923553557213,
     "z": {
-     "lo": 280.75,
-     "mid": 26.25,
+     "lo": 307,
+     "mid": 0,
      "hi": 5
     },
     "hard": 1,
     "key": 2,
     "rides": 4,
-    "long": 105,
-    "maxSes": 105,
+    "long": 120,
+    "maxSes": 120,
     "test": false,
     "str": "leicht",
     "strDays": [
@@ -1130,164 +1133,161 @@
      "–",
      "Spritzig 5×1 42′",
      "– +Kraft",
-     "Grundlage Z2 105′",
+     "Grundlage Z2 75′",
      "–",
-     "Grundlage Z2 60′",
-     "Long Ride mit Rampen 105′"
+     "Grundlage Z2 75′",
+     "Long Ride 120′"
     ],
-    "ctlApp": 48.31638914049552,
-    "ctlReal": 43.07286621894952,
-    "rampApp": -1.4839188545611748,
-    "rampReal": -1.2095244274637835,
-    "tsbMinApp": -24.165875163182896,
-    "tsbMinReal": -25.021561566464086
+    "ctlApp": 37.5993799752405,
+    "ctlReal": 37.583013073400785,
+    "rampApp": -0.5538060027633094,
+    "rampReal": -0.5777518961366042,
+    "tsbMinApp": -15.239171818200596,
+    "tsbMinReal": -15.251135819849345
    },
    {
     "w": 25,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 6.75,
-    "tssApp": 413,
-    "tssReal": 373.0391170054196,
+    "h": 7,
+    "tssApp": 331,
+    "tssReal": 330.8580760290098,
     "z": {
-     "lo": 289.25,
-     "mid": 93.75,
-     "hi": 21.75
+     "lo": 375,
+     "mid": 45,
+     "hi": 0
     },
-    "hard": 2,
-    "key": 3,
+    "hard": 1,
+    "key": 2,
     "rides": 4,
-    "long": 135,
-    "maxSes": 135,
+    "long": 120,
+    "maxSes": 120,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
-     4
+     2
     ],
     "ses": [
      "–",
-     "VO2max 30/15 53′ +Kraft",
-     "–",
-     "Sweet Spot 3×20 97′",
+     "Sweet Spot 3×15 Kraftausdauer 90′",
      "– +Kraft",
-     "Grundlage, neue Strecke 120′",
-     "Long Ride mit Rampen 135′"
+     "Grundlage, ruhiger Einstieg 105′",
+     "–",
+     "Grundlage, neue Strecke 105′",
+     "Long Ride 120′"
     ],
-    "ctlApp": 50.12797871067722,
-    "ctlReal": 44.84723900805789,
-    "rampApp": 1.8115895701817024,
-    "rampReal": 1.7743727891083694,
-    "tsbMinApp": -7.927029484442606,
-    "tsbMinReal": -8.452478849254291
+    "ctlApp": 39.20102753097963,
+    "ctlReal": 39.18394038307367,
+    "rampApp": 1.6016475557391274,
+    "rampReal": 1.6009273096728833,
+    "tsbMinApp": -8.134218387502052,
+    "tsbMinReal": -8.06412747542175
    },
    {
     "w": 26,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 7.4,
-    "tssApp": 434,
-    "tssReal": 392.82418726904496,
+    "h": 7.333333333333333,
+    "tssApp": 346,
+    "tssReal": 345.2579563988422,
     "z": {
-     "lo": 337.25,
-     "mid": 72.75,
-     "hi": 33.75
+     "lo": 395,
+     "mid": 45,
+     "hi": 0
     },
-    "hard": 2,
-    "key": 3,
+    "hard": 1,
+    "key": 2,
     "rides": 4,
-    "long": 195,
-    "maxSes": 195,
+    "long": 120,
+    "maxSes": 120,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
-     4
+     2
     ],
     "ses": [
      "–",
-     "VO2max 30/15 53′ +Kraft",
-     "–",
-     "Over-Under leicht 4×9 76′",
+     "Sweet Spot 3×15 Trittwechsel 80′",
      "– +Kraft",
+     "Grundlage Z2 120′",
+     "–",
      "Grundlage mit Fahrtechnik 120′",
-     "Long Ride mit Rampen 195′"
+     "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 52.20096609771388,
-    "ctlReal": 46.86548842127457,
-    "rampApp": 2.0729873870366617,
-    "rampReal": 2.0182494132166795,
-    "tsbMinApp": -11.58311251992891,
-    "tsbMinReal": -12.915734697207562
+    "ctlApp": 40.90427129354059,
+    "ctlReal": 40.873187237697586,
+    "rampApp": 1.7032437625609589,
+    "rampReal": 1.6892468546239172,
+    "tsbMinApp": -10.033352329582542,
+    "tsbMinReal": -9.997354796813518
    },
    {
     "w": 27,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 7.866666666666666,
-    "tssApp": 474,
-    "tssReal": 436.2625249218696,
+    "h": 7.833333333333333,
+    "tssApp": 367,
+    "tssReal": 366.70920639884224,
     "z": {
-     "lo": 334.25,
-     "mid": 108.75,
-     "hi": 28.5
+     "lo": 425,
+     "mid": 45,
+     "hi": 0
     },
-    "hard": 2,
-    "key": 3,
+    "hard": 1,
+    "key": 2,
     "rides": 4,
-    "long": 195,
-    "maxSes": 195,
+    "long": 150,
+    "maxSes": 150,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
-     4
+     2
     ],
     "ses": [
      "–",
-     "VO2max 30/15 60′ +Kraft",
-     "–",
-     "Sweet Spot 3×20 97′",
+     "Sweet Spot 3×15 80′",
      "– +Kraft",
+     "Grundlage, ruhiger Einstieg 120′",
+     "–",
      "Grundlage, neue Strecke 120′",
-     "Long Ride mit Rampen 195′"
+     "Long Ride, wellig 150′"
     ],
-    "ctlApp": 54.81974097341058,
-    "ctlReal": 49.513107850827865,
-    "rampApp": 2.618774875696701,
-    "rampReal": 2.647619429553295,
-    "tsbMinApp": -16.114491552488353,
-    "tsbMinReal": -17.27831214953725
+    "ctlApp": 42.84013059188526,
+    "ctlReal": 42.807815560666754,
+    "rampApp": 1.935859298344674,
+    "rampReal": 1.9346283229691679,
+    "tsbMinApp": -11.773853727954716,
+    "tsbMinReal": -11.709802165643978
    },
    {
     "w": 28,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": true,
     "budget": 8,
     "nDays": 4,
     "h": 5.2,
-    "tssApp": 276,
-    "tssReal": 252.1199339163932,
+    "tssApp": 239,
+    "tssReal": 237.80251156569108,
     "z": {
-     "lo": 276.75,
-     "mid": 26.25,
+     "lo": 303,
+     "mid": 0,
      "hi": 9
     },
     "hard": 1,
     "key": 2,
     "rides": 4,
-    "long": 105,
-    "maxSes": 105,
+    "long": 120,
+    "maxSes": 120,
     "test": false,
     "str": "leicht",
     "strDays": [
@@ -1297,17 +1297,17 @@
      "–",
      "VO2max Auffrischung 3×3 42′",
      "– +Kraft",
-     "Grundlage Z2 105′",
+     "Grundlage Z2 75′",
      "–",
-     "Grundlage Z2 60′",
-     "Long Ride mit Rampen 105′"
+     "Grundlage Z2 75′",
+     "Long Ride 120′"
     ],
-    "ctlApp": 52.56524742598535,
-    "ctlReal": 47.58022302203634,
-    "rampApp": -2.254493547425234,
-    "rampReal": -1.9328848287915221,
-    "tsbMinApp": -19.135539265736448,
-    "tsbMinReal": -20.483448528502734
+    "ctlApp": 41.65034343829124,
+    "ctlReal": 41.596306754912895,
+    "rampApp": -1.1897871535940254,
+    "rampReal": -1.2115088057538586,
+    "tsbMinApp": -13.900441580197167,
+    "tsbMinReal": -13.882222665619253
    },
    {
     "w": 29,
@@ -1316,40 +1316,39 @@
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 6.866666666666666,
-    "tssApp": 402,
-    "tssReal": 375.80916520359574,
+    "h": 7.1,
+    "tssApp": 380,
+    "tssReal": 383.4199971743299,
     "z": {
-     "lo": 298.25,
-     "mid": 93.75,
+     "lo": 314.75,
+     "mid": 91.25,
      "hi": 20
     },
     "hard": 2,
     "key": 3,
     "rides": 4,
-    "long": 135,
-    "maxSes": 135,
+    "long": 165,
+    "maxSes": 165,
     "test": true,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      4
     ],
     "ses": [
      "–",
-     "Fitness-Check: 20-Min-Test 60′ +Kraft",
+     "Fitness-Check: 20-Min-Test 60′",
      "–",
-     "Sweet Spot 3×20 Trittwechsel 97′",
+     "Sweet Spot 2×25 81′",
      "– +Kraft",
      "Grundlage, neue Strecke 120′",
-     "Long Ride mit Rampen 135′"
+     "Long Ride mit hartem Finale 165′"
     ],
-    "ctlApp": 53.494795720974075,
-    "ctlReal": 48.72049389869194,
-    "rampApp": 0.9295482949887273,
-    "rampReal": 1.140270876655599,
-    "tsbMinApp": -3.208242873080806,
-    "tsbMinReal": -4.448423555755184
+    "ctlApp": 43.82853906376607,
+    "ctlReal": 43.863372014356386,
+    "rampApp": 2.178195625474835,
+    "rampReal": 2.2670652594434912,
+    "tsbMinApp": -4.519007068909232,
+    "tsbMinReal": -4.436468917625049
    },
    {
     "w": 30,
@@ -1358,40 +1357,39 @@
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 7.366666666666666,
-    "tssApp": 450,
-    "tssReal": 410.72058282166904,
+    "h": 7.383333333333334,
+    "tssApp": 396,
+    "tssReal": 399.20923715623167,
     "z": {
-     "lo": 311.75,
-     "mid": 101.25,
-     "hi": 28.5
+     "lo": 325.25,
+     "mid": 98.75,
+     "hi": 19
     },
     "hard": 2,
     "key": 3,
     "rides": 4,
-    "long": 165,
-    "maxSes": 165,
+    "long": 195,
+    "maxSes": 195,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      4
     ],
     "ses": [
      "–",
-     "VO2max 30/15 60′ +Kraft",
+     "VO2max 30/15 47′",
      "–",
-     "Sweet Spot 3×20 97′",
+     "Sweet Spot 2×25 81′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 120′",
-     "Long Ride mit Rampen 165′"
+     "Long Ride mit Rampen 195′"
     ],
-    "ctlApp": 55.35026458427629,
-    "ctlReal": 50.482377269789886,
-    "rampApp": 1.8554688633022138,
-    "rampReal": 1.7618833710979445,
-    "tsbMinApp": -7.59698873995243,
-    "tsbMinReal": -9.408154840126969
+    "ctlApp": 46.07520174644492,
+    "ctlReal": 46.179649353818654,
+    "rampApp": 2.2466626826788456,
+    "rampReal": 2.3162773394622675,
+    "tsbMinApp": -13.532694678680912,
+    "tsbMinReal": -13.904713417941096
    },
    {
     "w": 31,
@@ -1400,13 +1398,13 @@
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 7.95,
-    "tssApp": 489,
-    "tssReal": 428.18509570122285,
+    "h": 7.966666666666667,
+    "tssApp": 406,
+    "tssReal": 413.6867415067013,
     "z": {
-     "lo": 360.25,
+     "lo": 374.25,
      "mid": 72.75,
-     "hi": 44
+     "hi": 31
     },
     "hard": 2,
     "key": 3,
@@ -1414,26 +1412,25 @@
     "long": 195,
     "maxSes": 195,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      4
     ],
     "ses": [
      "–",
-     "VO2max 30/15 86′ +Kraft",
+     "VO2max 30/15 67′",
      "–",
-     "Over-Under leicht 4×9 76′",
+     "Over-Under leicht 4×9 96′",
      "– +Kraft",
      "Grundlage, neue Strecke 120′",
-     "Long Ride mit Rampen 195′"
+     "Long Ride mit hartem Finale 195′"
     ],
-    "ctlApp": 57.77035505197171,
-    "ctlReal": 52.37413538819181,
-    "rampApp": 2.420090467695424,
-    "rampReal": 1.891758118401924,
-    "tsbMinApp": -14.0460165198213,
-    "tsbMinReal": -13.901131438187825
+    "ctlApp": 48.17365217580436,
+    "ctlReal": 48.44297046970733,
+    "rampApp": 2.0984504293594384,
+    "rampReal": 2.2633211158886795,
+    "tsbMinApp": -18.21278221393584,
+    "tsbMinReal": -18.67024022253637
    },
    {
     "w": 32,
@@ -1443,7 +1440,7 @@
     "budget": 8,
     "nDays": 4,
     "h": 5.25,
-    "tssApp": 281,
+    "tssApp": 251,
     "tssReal": 252.5932540763468,
     "z": {
      "lo": 280.75,
@@ -1469,12 +1466,12 @@
      "Grundlage Z2 60′",
      "Long Ride mit Rampen 105′"
     ],
-    "ctlApp": 55.16732644797428,
-    "ctlReal": 50.0119170810458,
-    "rampApp": -2.60302860399743,
-    "rampReal": -2.3622183071460086,
-    "tsbMinApp": -16.467404026696492,
-    "tsbMinReal": -16.509652359918185
+    "ctlApp": 46.41943963845097,
+    "ctlReal": 46.68425782001759,
+    "rampApp": -1.7542125373533892,
+    "rampReal": -1.7587126496897412,
+    "tsbMinApp": -18.996014612478284,
+    "tsbMinReal": -19.960601393771086
    },
    {
     "w": 33,
@@ -1483,13 +1480,13 @@
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 6.966666666666667,
-    "tssApp": 435,
-    "tssReal": 393.4965849364539,
+    "h": 6.75,
+    "tssApp": 372,
+    "tssReal": 373.0391170054196,
     "z": {
-     "lo": 292.25,
+     "lo": 289.25,
      "mid": 93.75,
-     "hi": 32
+     "hi": 21.75
     },
     "hard": 2,
     "key": 3,
@@ -1497,26 +1494,25 @@
     "long": 135,
     "maxSes": 135,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      4
     ],
     "ses": [
      "–",
-     "VO2max 30/15 66′ +Kraft",
+     "VO2max 30/15 53′",
      "–",
      "Sweet Spot 3×20 97′",
      "– +Kraft",
      "Grundlage, neue Strecke 120′",
      "Long Ride mit Rampen 135′"
     ],
-    "ctlApp": 56.38669969987002,
-    "ctlReal": 51.14832667883853,
-    "rampApp": 1.219373251895739,
-    "rampReal": 1.1364095977927278,
-    "tsbMinApp": -3.646174476808767,
-    "tsbMinReal": -2.185292002384415
+    "ctlApp": 47.653351133079184,
+    "ctlReal": 47.904215999785464,
+    "rampApp": 1.2339114946282166,
+    "rampReal": 1.2199581797678718,
+    "tsbMinApp": -4.40453754114634,
+    "tsbMinReal": -4.789208217697151
    },
    {
     "w": 34,
@@ -1525,40 +1521,39 @@
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 7.466666666666667,
-    "tssApp": 460,
-    "tssReal": 419.03852703665456,
+    "h": 7.5,
+    "tssApp": 406,
+    "tssReal": 411.3520301557205,
     "z": {
-     "lo": 314.75,
-     "mid": 101.25,
-     "hi": 32
+     "lo": 323,
+     "mid": 105,
+     "hi": 21.75
     },
     "hard": 2,
     "key": 3,
     "rides": 4,
-    "long": 165,
-    "maxSes": 165,
+    "long": 180,
+    "maxSes": 180,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      4
     ],
     "ses": [
      "–",
-     "VO2max 30/15 66′ +Kraft",
+     "VO2max 30/15 53′",
      "–",
      "Sweet Spot 3×20 Trittwechsel 97′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 120′",
-     "Long Ride mit Rampen 165′"
+     "Long Ride mit hartem Finale 180′"
     ],
-    "ctlApp": 58.00708470711412,
-    "ctlReal": 52.711235452604164,
-    "rampApp": 1.6203850072440957,
-    "rampReal": 1.5629087737656349,
-    "tsbMinApp": -7.047584869270594,
-    "tsbMinReal": -7.993740870497135
+    "ctlApp": 49.497797317238174,
+    "ctlReal": 49.83832652995547,
+    "rampApp": 1.8444461841589899,
+    "rampReal": 1.9341105301700026,
+    "tsbMinApp": -9.655932874134521,
+    "tsbMinReal": -9.83967247673516
    },
    {
     "w": 35,
@@ -1567,40 +1562,39 @@
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 7.983333333333333,
-    "tssApp": 499,
-    "tssReal": 450.1733901084949,
+    "h": 8,
+    "tssApp": 432,
+    "tssReal": 434.9457938843113,
     "z": {
-     "lo": 336,
-     "mid": 105,
-     "hi": 38
+     "lo": 349.25,
+     "mid": 108.75,
+     "hi": 21.75
     },
     "hard": 2,
     "key": 3,
     "rides": 4,
-    "long": 180,
-    "maxSes": 180,
+    "long": 195,
+    "maxSes": 195,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      4
     ],
     "ses": [
      "–",
-     "VO2max 30/15 82′ +Kraft",
+     "VO2max 30/15 68′",
      "–",
      "Sweet Spot 3×20 97′",
      "– +Kraft",
      "Grundlage, neue Strecke 120′",
-     "Long Ride mit Rampen 180′"
+     "Long Ride mit Rampen 195′"
     ],
-    "ctlApp": 60.225016650528765,
-    "ctlReal": 54.71826667436166,
-    "rampApp": 2.217931943414648,
-    "rampReal": 2.0070312217574937,
-    "tsbMinApp": -11.983152022763704,
-    "tsbMinReal": -12.58715975946972
+    "ctlApp": 51.64441657280104,
+    "ctlReal": 52.00205759614529,
+    "rampApp": 2.146619255562868,
+    "rampReal": 2.1637310661898255,
+    "tsbMinApp": -14.723449150038213,
+    "tsbMinReal": -15.312616914518884
    },
    {
     "w": 36,
@@ -1610,7 +1604,7 @@
     "budget": 8,
     "nDays": 4,
     "h": 5.2,
-    "tssApp": 276,
+    "tssApp": 247,
     "tssReal": 248.30665788627428,
     "z": {
      "lo": 280.75,
@@ -1636,27 +1630,27 @@
      "Grundlage Z2 60′",
      "Long Ride mit Rampen 105′"
     ],
-    "ctlApp": 57.14071450466164,
-    "ctlReal": 51.90664455983186,
-    "rampApp": -3.0843021458671274,
-    "rampReal": -2.811622114529797,
-    "tsbMinApp": -15.004637922405827,
-    "tsbMinReal": -15.741766467644894
+    "ctlApp": 49.27382777008406,
+    "ctlReal": 49.607423214139715,
+    "rampApp": -2.3705888027169806,
+    "rampReal": -2.3946343820055773,
+    "tsbMinApp": -17.901240524478318,
+    "tsbMinReal": -18.279196140811408
    },
    {
     "w": 37,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 6.833333333333333,
-    "tssApp": 411,
-    "tssReal": 376.9595114858738,
+    "h": 7.016666666666667,
+    "tssApp": 375,
+    "tssReal": 370.0522933670205,
     "z": {
-     "lo": 308.75,
+     "lo": 323.75,
      "mid": 65.25,
-     "hi": 36
+     "hi": 32
     },
     "hard": 2,
     "key": 3,
@@ -1672,38 +1666,38 @@
      "–",
      "Fitness-Check: 20-Min-Test 60′",
      "–",
-     "Over-Under 4×10 80′",
+     "Over-Under leicht 4×9 76′",
      "– +Kraft",
-     "Grundlage, neue Strecke 105′",
-     "Eventsimulation 165′"
+     "Grundlage, neue Strecke 120′",
+     "Long Ride mit hartem Finale 165′"
     ],
-    "ctlApp": 57.59379908546313,
-    "ctlReal": 52.437899764079525,
-    "rampApp": 0.4530845808014945,
-    "rampReal": 0.5312552042476639,
-    "tsbMinApp": 1.2347924775916326,
-    "tsbMinReal": -0.04399891452894167
+    "ctlApp": 50.18512335864566,
+    "ctlReal": 50.35179827085166,
+    "rampApp": 0.9112955885616003,
+    "rampReal": 0.7443750567119451,
+    "tsbMinApp": -2.163552141095707,
+    "tsbMinReal": -2.277450992598382
    },
    {
     "w": 38,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 7.416666666666667,
-    "tssApp": 443,
-    "tssReal": 400.95628513433405,
+    "h": 7.366666666666666,
+    "tssApp": 409,
+    "tssReal": 410.72058282166904,
     "z": {
-     "lo": 358.5,
-     "mid": 70.5,
-     "hi": 15.5
+     "lo": 311.75,
+     "mid": 101.25,
+     "hi": 28.5
     },
     "hard": 2,
     "key": 3,
     "rides": 4,
-    "long": 210,
-    "maxSes": 210,
+    "long": 165,
+    "maxSes": 165,
     "test": false,
     "str": "erh",
     "strDays": [
@@ -1711,40 +1705,40 @@
     ],
     "ses": [
      "–",
-     "Over-Under mit Antritten 3×8 61′",
+     "VO2max 30/15 60′",
      "–",
-     "Rampen 8×1 Min. 54′",
+     "Sweet Spot 3×20 97′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 120′",
-     "Eventsimulation 210′"
+     "Long Ride mit Rampen 165′"
     ],
-    "ctlApp": 58.73277706427227,
-    "ctlReal": 53.47721351463655,
-    "rampApp": 1.1389779788091374,
-    "rampReal": 1.039313750557028,
-    "tsbMinApp": -5.19646860943719,
-    "tsbMinReal": -6.63938080734588
+    "ctlApp": 51.67979292311277,
+    "ctlReal": 51.86324660855724,
+    "rampApp": 1.4946695644671095,
+    "rampReal": 1.5114483377055805,
+    "tsbMinApp": -9.05171473720764,
+    "tsbMinReal": -8.4098941199194
    },
    {
     "w": 39,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": false,
     "budget": 8,
     "nDays": 4,
     "h": 7.866666666666666,
-    "tssApp": 508,
-    "tssReal": 450.93843127936725,
+    "tssApp": 438,
+    "tssReal": 436.2625249218696,
     "z": {
-     "lo": 344,
-     "mid": 45,
-     "hi": 83
+     "lo": 334.25,
+     "mid": 108.75,
+     "hi": 28.5
     },
     "hard": 2,
     "key": 3,
     "rides": 4,
-    "long": 180,
-    "maxSes": 180,
+    "long": 195,
+    "maxSes": 195,
     "test": false,
     "str": "erh",
     "strDays": [
@@ -1752,40 +1746,40 @@
     ],
     "ses": [
      "–",
-     "VO2max 30/15 72′",
+     "VO2max 30/15 60′",
      "–",
-     "Schwelle 3×15 100′",
+     "Sweet Spot 3×20 Trittwechsel 97′",
      "– +Kraft",
      "Grundlage, neue Strecke 120′",
-     "Eventsimulation 180′"
+     "Long Ride mit hartem Finale 195′"
     ],
-    "ctlApp": 61.05377709350726,
-    "ctlReal": 55.39128718861927,
-    "rampApp": 2.3210000292349875,
-    "rampReal": 1.9140736739827204,
-    "tsbMinApp": -12.304198893566351,
-    "tsbMinReal": -12.183679707924746
+    "ctlApp": 53.627324481269326,
+    "ctlReal": 53.74361882178509,
+    "rampApp": 1.9475315581565553,
+    "rampReal": 1.8803722132278509,
+    "tsbMinApp": -12.834487929431745,
+    "tsbMinReal": -12.753145844337759
    },
    {
     "w": 40,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": true,
     "budget": 8,
     "nDays": 4,
-    "h": 5.45,
-    "tssApp": 288,
-    "tssReal": 264.8909049664935,
+    "h": 5.2,
+    "tssApp": 251,
+    "tssReal": 252.1199339163932,
     "z": {
-     "lo": 288,
-     "mid": 30,
+     "lo": 276.75,
+     "mid": 26.25,
      "hi": 9
     },
     "hard": 1,
     "key": 2,
     "rides": 4,
-    "long": 120,
-    "maxSes": 120,
+    "long": 105,
+    "maxSes": 105,
     "test": false,
     "str": "leicht",
     "strDays": [
@@ -1795,17 +1789,17 @@
      "–",
      "VO2max Auffrischung 3×3 42′",
      "– +Kraft",
-     "Grundlage Z2 120′",
+     "Grundlage Z2 105′",
      "–",
-     "Grundlage Z2 45′",
-     "Eventsimulation 120′"
+     "Grundlage Z2 60′",
+     "Long Ride mit Rampen 105′"
     ],
-    "ctlApp": 58.11283248922223,
-    "ctlReal": 52.84501461169803,
-    "rampApp": -2.940944604285029,
-    "rampReal": -2.5462725769212398,
-    "tsbMinApp": -15.469673794332543,
-    "tsbMinReal": -15.435048622421988
+    "ctlApp": 51.03587357856913,
+    "ctlReal": 51.1612732459009,
+    "rampApp": -2.5914509027001955,
+    "rampReal": -2.5823455758841902,
+    "tsbMinApp": -16.688959970665778,
+    "tsbMinReal": -16.426794395028423
    },
    {
     "w": 41,
@@ -1815,7 +1809,7 @@
     "budget": 8,
     "nDays": 4,
     "h": 6.916666666666667,
-    "tssApp": 418,
+    "tssApp": 374,
     "tssReal": 375.4143430341334,
     "z": {
      "lo": 336,
@@ -1841,12 +1835,12 @@
      "Grundlage, neue Strecke 120′",
      "Eventsimulation 180′"
     ],
-    "ctlApp": 58.5839215214682,
-    "ctlReal": 53.22086997583346,
-    "rampApp": 0.47108903224597043,
-    "rampReal": 0.3758553641354254,
-    "tsbMinApp": 1.0007039332126482,
-    "tsbMinReal": -0.8813818502503707
+    "ctlApp": 51.65430134253462,
+    "ctlReal": 51.79561368024383,
+    "rampApp": 0.6184277639654923,
+    "rampReal": 0.6343404343429313,
+    "tsbMinApp": -0.9456795487128318,
+    "tsbMinReal": -0.9313316881076759
    },
    {
     "w": 42,
@@ -1855,19 +1849,19 @@
     "rec": false,
     "budget": 8,
     "nDays": 4,
-    "h": 7.283333333333333,
-    "tssApp": 465,
-    "tssReal": 416.0062572079429,
+    "h": 7.433333333333334,
+    "tssApp": 417,
+    "tssReal": 418.1435272688324,
     "z": {
-     "lo": 317.75,
-     "mid": 65.25,
-     "hi": 54
+     "lo": 329,
+     "mid": 69,
+     "hi": 48
     },
     "hard": 2,
     "key": 3,
     "rides": 4,
-    "long": 165,
-    "maxSes": 165,
+    "long": 180,
+    "maxSes": 180,
     "test": false,
     "str": "erh",
     "strDays": [
@@ -1875,19 +1869,19 @@
     ],
     "ses": [
      "–",
-     "VO2max 30/15 72′",
+     "VO2max 30/15 66′",
      "–",
      "Over-Under 4×10 80′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 120′",
-     "Eventsimulation 165′"
+     "Eventsimulation 180′"
     ],
-    "ctlApp": 59.96633739505526,
-    "ctlReal": 54.38834688122325,
-    "rampApp": 1.382415873587064,
-    "rampReal": 1.1674769053897904,
-    "tsbMinApp": -5.983089801676833,
-    "tsbMinReal": -7.07134601392233
+    "ctlApp": 53.11161193550338,
+    "ctlReal": 53.26026011886529,
+    "rampApp": 1.45731059296876,
+    "rampReal": 1.4646464386214575,
+    "tsbMinApp": -7.758891728361725,
+    "tsbMinReal": -7.895563995222815
    },
    {
     "w": 43,
@@ -1897,7 +1891,7 @@
     "budget": 8,
     "nDays": 4,
     "h": 8,
-    "tssApp": 485,
+    "tssApp": 426,
     "tssReal": 428.44739305056237,
     "z": {
      "lo": 389.75,
@@ -1923,12 +1917,12 @@
      "Grundlage, neue Strecke 120′",
      "Eventsimulation 225′"
     ],
-    "ctlApp": 61.65005590880985,
-    "ctlReal": 55.73617946881275,
-    "rampApp": 1.6837185137545845,
-    "rampReal": 1.347832587589501,
-    "tsbMinApp": -10.278524623759054,
-    "tsbMinReal": -10.841024202833772
+    "ctlApp": 54.59523790304687,
+    "ctlReal": 54.78127464038572,
+    "rampApp": 1.4836259675434889,
+    "rampReal": 1.5210145215204278,
+    "tsbMinApp": -12.592111939192598,
+    "tsbMinReal": -12.755114133805918
    },
    {
     "w": 44,
@@ -1938,7 +1932,7 @@
     "budget": 8,
     "nDays": 4,
     "h": 5.5,
-    "tssApp": 293,
+    "tssApp": 264,
     "tssReal": 265.3642251264471,
     "z": {
      "lo": 292,
@@ -1964,12 +1958,12 @@
      "Grundlage Z2 45′",
      "Eventsimulation 120′"
     ],
-    "ctlApp": 58.72200973659728,
-    "ctlReal": 53.14684615815974,
-    "rampApp": -2.928046172212568,
-    "rampReal": -2.5893333106530108,
-    "tsbMinApp": -14.611721020736212,
-    "tsbMinReal": -14.847333721707443
+    "ctlApp": 52.149310329994975,
+    "ctlReal": 52.33853667188645,
+    "rampApp": -2.445927573051897,
+    "rampReal": -2.442737968499266,
+    "tsbMinApp": -15.769109591510592,
+    "tsbMinReal": -16.091392956563254
    },
    {
     "w": 45,
@@ -1979,7 +1973,7 @@
     "budget": 8,
     "nDays": 4,
     "h": 7.116666666666666,
-    "tssApp": 474,
+    "tssApp": 414,
     "tssReal": 416.71621022926695,
     "z": {
      "lo": 302.75,
@@ -2005,12 +1999,12 @@
      "Grundlage, neue Strecke 90′",
      "Eventsimulation 165′"
     ],
-    "ctlApp": 60.256878887218534,
-    "ctlReal": 54.318321134312015,
-    "rampApp": 1.5348691506212546,
-    "rampReal": 1.1714749761522754,
-    "tsbMinApp": -5.184338684490335,
-    "tsbMinReal": -2.230873908602824
+    "ctlApp": 53.41013148827626,
+    "ctlReal": 53.634101926125965,
+    "rampApp": 1.2608211582812814,
+    "rampReal": 1.2955652542395129,
+    "tsbMinApp": -3.011005634388752,
+    "tsbMinReal": -3.02582498962672
    },
    {
     "w": 46,
@@ -2020,7 +2014,7 @@
     "budget": 8,
     "nDays": 4,
     "h": 4.033333333333333,
-    "tssApp": 262,
+    "tssApp": 208,
     "tssReal": 206.8030488625991,
     "z": {
      "lo": 213,
@@ -2044,12 +2038,12 @@
      "Grundlage Z2 75′",
      "Long Ride 75′"
     ],
-    "ctlApp": 56.83113112705472,
-    "ctlReal": 50.60846456006425,
-    "rampApp": -3.4257477601638158,
-    "rampReal": -3.709856574247766,
-    "tsbMinApp": -7.485761368758148,
-    "tsbMinReal": -7.92045796110596
+    "ctlApp": 49.86665633886271,
+    "ctlReal": 50.029285504515634,
+    "rampApp": -3.5434751494135455,
+    "rampReal": -3.6048164216103302,
+    "tsbMinApp": -8.376887747337811,
+    "tsbMinReal": -8.64380996278517
    },
    {
     "w": 47,
@@ -2059,7 +2053,7 @@
     "budget": 8,
     "nDays": 4,
     "h": 4.083333333333333,
-    "tssApp": 265,
+    "tssApp": 288,
     "tssReal": 288.38013782799123,
     "z": {
      "lo": 127,
@@ -2083,12 +2077,12 @@
      "Aktivierung vor dem Event 30′",
      "Eventtag: Jedermann-Rennen 76 km 120′"
     ],
-    "ctlApp": 54.01026943420818,
-    "ctlReal": 49.40757480716708,
-    "rampApp": -2.8208616928465347,
-    "rampReal": -1.2008897528971687,
-    "tsbMinApp": 6.318596603630631,
-    "tsbMinReal": 6.715768080976275
+    "ctlApp": 48.77102412973126,
+    "ctlReal": 48.91731032120576,
+    "rampApp": -1.0956322091314519,
+    "rampReal": -1.1119751833098732,
+    "tsbMinApp": 6.014007978499855,
+    "tsbMinReal": 6.122192875225913
    }
   ]
  },
@@ -2104,18 +2098,18 @@
     "key": "base",
     "name": "Basis",
     "from": 1,
-    "to": 9
+    "to": 8
    },
    {
     "key": "build",
     "name": "Aufbau",
-    "from": 10,
-    "to": 18
+    "from": 9,
+    "to": 20
    },
    {
     "key": "peak",
     "name": "Spitze",
-    "from": 19,
+    "from": 21,
     "to": 23
    },
    {
@@ -2132,14 +2126,14 @@
   ],
   "stats": {
    "tot": 25,
-   "hAvg": 4.384848484848485,
-   "maxL": 165
+   "hAvg": 4.3977272727272725,
+   "maxL": 150
   },
   "planCheck": {
    "verdict": null,
    "notes": [
     "Mehr Umfang würde helfen: Du hast 5 Std. pro Woche verfügbar. Für ein Event dieser Dauer sind 7 bis 10 Std. üblich.",
-    "Beim Long Ride steckt noch Potenzial: Der längste Ride im Plan dauert 2:45 Std., das Event etwa 5:10 Stunden. Empfohlen sind mindestens 3:30 Std. am Sonntag."
+    "Beim Long Ride steckt noch Potenzial: Der längste Ride im Plan dauert 2:30 Std., das Event etwa 5:10 Stunden. Empfohlen sind mindestens 3:30 Std. am Sonntag."
    ]
   },
   "evCheck": null,
@@ -2217,12 +2211,12 @@
     "w": 25,
     "i": 6,
     "n": "Eventtag: Gran Fondo 120",
-    "tsbApp": 6.605453229707102,
-    "tsbReal": 7.730353579646177,
-    "ctlApp": 44.67098755609959,
-    "ctlReal": 41.51096806949252,
-    "peakApp": 44.67098755609959,
-    "peakReal": 41.51096806949252
+    "tsbApp": 7.742666178993435,
+    "tsbReal": 7.726326550796216,
+    "ctlApp": 41.50331757619747,
+    "ctlReal": 41.49768106386402,
+    "peakApp": 41.50331757619747,
+    "peakReal": 41.49768106386402
    }
   ],
   "weeks": [
@@ -2234,7 +2228,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.333333333333333,
-    "tssApp": 238,
+    "tssApp": 206,
     "tssReal": 205.85845357569386,
     "z": {
      "lo": 230,
@@ -2260,11 +2254,11 @@
      "Grundlage, neue Strecke 75′",
      "Long Ride 120′"
     ],
-    "ctlApp": 22.35998969125447,
+    "ctlApp": 21.63952319453519,
     "ctlReal": 21.635708836078713,
-    "rampApp": 2.3599896912544693,
+    "rampApp": 1.6395231945351902,
     "rampReal": 1.635708836078713,
-    "tsbMinApp": -3.74191260691747,
+    "tsbMinApp": -2.1898313986219407,
     "tsbMinReal": -2.1820834336020027
    },
    {
@@ -2275,7 +2269,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.8,
-    "tssApp": 248,
+    "tssApp": 219,
     "tssReal": 218.13956182005876,
     "z": {
      "lo": 270,
@@ -2301,11 +2295,11 @@
      "–",
      "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 24.4548690581985,
+    "ctlApp": 23.206559231026937,
     "ctlReal": 23.184644353014207,
-    "rampApp": 2.0948793669440313,
+    "rampApp": 1.5670360364917464,
     "rampReal": 1.5489355169354937,
-    "tsbMinApp": -13.348027599603157,
+    "tsbMinApp": -10.770210377074708,
     "tsbMinReal": -10.697735028352309
    },
    {
@@ -2316,7 +2310,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.833333333333333,
-    "tssApp": 261,
+    "tssApp": 227,
     "tssReal": 227.30970357569387,
     "z": {
      "lo": 260,
@@ -2342,11 +2336,11 @@
      "–",
      "Long Ride, wellig 135′"
     ],
-    "ctlApp": 26.50896189363642,
+    "ctlApp": 24.70676351845826,
     "ctlReal": 24.69380284327733,
-    "rampApp": 2.0540928354379204,
+    "rampApp": 1.5002042874313233,
     "rampReal": 1.5091584902631219,
-    "tsbMinApp": -14.091313723158855,
+    "tsbMinApp": -10.119394363151013,
     "tsbMinReal": -10.12280608960381
    },
    {
@@ -2357,7 +2351,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 3.2,
-    "tssApp": 187,
+    "tssApp": 152,
     "tssReal": 151.99751156569107,
     "z": {
      "lo": 183,
@@ -2383,11 +2377,11 @@
      "–",
      "Long Ride 90′"
     ],
-    "ctlApp": 26.582931265520525,
+    "ctlApp": 24.301551482937626,
     "ctlReal": 24.29136334975381,
-    "rampApp": 0.07396937188410391,
+    "rampApp": -0.4052120355206341,
     "rampReal": -0.40243949352352004,
-    "tsbMinApp": -13.075128488873151,
+    "tsbMinApp": -10.302555169760652,
     "tsbMinReal": -10.280048995281714
    },
    {
@@ -2398,7 +2392,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.25,
-    "tssApp": 229,
+    "tssApp": 205,
     "tssReal": 204.21995493736716,
     "z": {
      "lo": 235,
@@ -2424,11 +2418,11 @@
      "–",
      "Long Ride 120′"
     ],
-    "ctlApp": 27.599029567183845,
+    "ctlApp": 25.13489200804266,
     "ctlReal": 25.109080882954544,
-    "rampApp": 1.0160983016633196,
+    "rampApp": 0.833340525105033,
     "rampReal": 0.8177175332007351,
-    "tsbMinApp": -7.633440838314101,
+    "tsbMinApp": -5.039059468514598,
     "tsbMinReal": -5.031970188600081
    },
    {
@@ -2439,7 +2433,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.683333333333334,
-    "tssApp": 257,
+    "tssApp": 225,
     "tssReal": 225.19931316345773,
     "z": {
      "lo": 245,
@@ -2465,11 +2459,11 @@
      "–",
      "Long Ride, negativer Split 120′"
     ],
-    "ctlApp": 29.055197548093375,
+    "ctlApp": 26.26823915599188,
     "ctlReal": 26.250399124021403,
-    "rampApp": 1.4561679809095303,
+    "rampApp": 1.1333471479492196,
     "rampReal": 1.141318241066859,
-    "tsbMinApp": -10.108300198513646,
+    "tsbMinApp": -7.316576535741518,
     "tsbMinReal": -7.340622792827446
    },
    {
@@ -2480,7 +2474,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.8,
-    "tssApp": 249,
+    "tssApp": 219,
     "tssReal": 218.13956182005876,
     "z": {
      "lo": 270,
@@ -2506,11 +2500,11 @@
      "–",
      "Long Ride, wellig 135′"
     ],
-    "ctlApp": 30.16361020842936,
+    "ctlApp": 27.14252444383443,
     "ctlReal": 27.108292059705015,
-    "rampApp": 1.1084126603359863,
+    "rampApp": 0.8742852878425502,
     "rampReal": 0.857892935683612,
-    "tsbMinApp": -8.541341477160799,
+    "tsbMinApp": -6.908403533987716,
     "tsbMinReal": -6.908262692129586
    },
    {
@@ -2521,7 +2515,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 3.25,
-    "tssApp": 192,
+    "tssApp": 152,
     "tssReal": 152.47083172564464,
     "z": {
      "lo": 187,
@@ -2547,53 +2541,53 @@
      "–",
      "Long Ride 90′"
     ],
-    "ctlApp": 29.780962402177003,
+    "ctlApp": 26.3633785924712,
     "ctlReal": 26.34507088062738,
-    "rampApp": -0.3826478062523577,
+    "rampApp": -0.7791458513632286,
     "rampReal": -0.763221179077636,
-    "tsbMinApp": -9.007240959852211,
+    "tsbMinApp": -7.54232846973964,
     "tsbMinReal": -7.4836874503149815
    },
    {
     "w": 9,
-    "ph": "base",
-    "phName": "Basis",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.433333333333334,
-    "tssApp": 246,
-    "tssReal": 217.6811972588245,
+    "h": 4.7,
+    "tssApp": 267,
+    "tssReal": 268.87490274695796,
     "z": {
-     "lo": 226,
-     "mid": 40,
-     "hi": 0
+     "lo": 200,
+     "mid": 70,
+     "hi": 12
     },
-    "hard": 1,
-    "key": 2,
-    "rides": 3,
+    "hard": 2,
+    "key": 3,
+    "rides": 4,
     "long": 120,
     "maxSes": 120,
     "test": false,
-    "str": "base",
+    "str": "build",
     "strDays": [
-     2
+     4
     ],
     "ses": [
      "–",
+     "VO2max 4×3 46′",
+     "–",
      "Sweet Spot 2×20 71′",
      "– +Kraft",
-     "Grundlage, ruhiger Einstieg 75′",
-     "–",
-     "–",
-     "Long Ride 120′"
+     "Grundlage, neue Strecke 45′",
+     "Long Ride, wellig 120′"
     ],
-    "ctlApp": 30.661194112753446,
-    "ctlReal": 27.12868016389765,
-    "rampApp": 0.8802317105764423,
-    "rampReal": 0.7836092832702697,
-    "tsbMinApp": -6.577845444861776,
-    "tsbMinReal": -4.466644918776289
+    "ctlApp": 28.306070549311617,
+    "ctlReal": 28.333441255001514,
+    "rampApp": 1.9426919568404166,
+    "rampReal": 1.988370374374135,
+    "tsbMinApp": -4.704640633125905,
+    "tsbMinReal": -4.780792824394396
    },
    {
     "w": 10,
@@ -2603,7 +2597,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.8,
-    "tssApp": 301,
+    "tssApp": 266,
     "tssReal": 264.14256188124006,
     "z": {
      "lo": 219,
@@ -2627,14 +2621,14 @@
      "Over-Under leicht 3×9 62′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 60′",
-     "Long Ride, wellig 120′"
+     "Long Ride mit hartem Finale 120′"
     ],
-    "ctlApp": 32.67547016785727,
-    "ctlReal": 28.904543143788615,
-    "rampApp": 2.0142760551038243,
-    "rampReal": 1.7758629798909666,
-    "tsbMinApp": -7.378272472244316,
-    "tsbMinReal": -4.350023153911181
+    "ctlApp": 29.94523572550907,
+    "ctlReal": 29.92435139026731,
+    "rampApp": 1.639165176197455,
+    "rampReal": 1.5909101352657977,
+    "tsbMinApp": -9.524781024191679,
+    "tsbMinReal": -9.719969460091061
    },
    {
     "w": 11,
@@ -2644,7 +2638,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.95,
-    "tssApp": 314,
+    "tssApp": 279,
     "tssReal": 281.64587379705824,
     "z": {
      "lo": 211.25,
@@ -2670,12 +2664,12 @@
      "Grundlage, neue Strecke 45′",
      "Long Ride, wellig 135′"
     ],
-    "ctlApp": 34.673011789481784,
-    "ctlReal": 30.800467159753815,
-    "rampApp": 1.9975416216245137,
-    "rampReal": 1.8959240159651998,
-    "tsbMinApp": -11.119436478097846,
-    "tsbMinReal": -10.333163164973989
+    "ctlApp": 31.62038691377034,
+    "ctlReal": 31.66371620329077,
+    "rampApp": 1.6751511882612675,
+    "rampReal": 1.7393648130234602,
+    "tsbMinApp": -11.891753838640568,
+    "tsbMinReal": -11.739538656561187
    },
    {
     "w": 12,
@@ -2685,7 +2679,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 3.2,
-    "tssApp": 187,
+    "tssApp": 159,
     "tssReal": 160.45631183617397,
     "z": {
      "lo": 164.5,
@@ -2711,12 +2705,12 @@
      "–",
      "Long Ride, wellig 90′"
     ],
-    "ctlApp": 33.493650303448746,
-    "ctlReal": 29.669634068841948,
-    "rampApp": -1.179361486033038,
-    "rampReal": -1.1308330909118673,
-    "tsbMinApp": -12.940727964066859,
-    "tsbMinReal": -13.101985005869615
+    "ctlApp": 30.329068284845242,
+    "ctlReal": 30.400358608225286,
+    "rampApp": -1.2913186289250973,
+    "rampReal": -1.2633575950654858,
+    "tsbMinApp": -12.91988471730793,
+    "tsbMinReal": -13.131279080071582
    },
    {
     "w": 13,
@@ -2726,7 +2720,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.333333333333333,
-    "tssApp": 281,
+    "tssApp": 257,
     "tssReal": 254.7975547370118,
     "z": {
      "lo": 165,
@@ -2750,14 +2744,14 @@
      "Sweet Spot 3×15 Trittwechsel 80′",
      "– +Kraft",
      "–",
-     "Long Ride, wellig 120′"
+     "Long Ride mit hartem Finale 120′"
     ],
-    "ctlApp": 34.58795645366383,
-    "ctlReal": 30.79619872146046,
-    "rampApp": 1.0943061502150826,
-    "rampReal": 1.1265646526185122,
-    "tsbMinApp": -7.251983572986049,
-    "tsbMinReal": -6.168829029609061
+    "ctlApp": 31.40539991971673,
+    "ctlReal": 31.41474368997757,
+    "rampApp": 1.0763316348714866,
+    "rampReal": 1.014385081752284,
+    "tsbMinApp": -5.620761129918204,
+    "tsbMinReal": -5.689910321318337
    },
    {
     "w": 14,
@@ -2767,7 +2761,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.95,
-    "tssApp": 324,
+    "tssApp": 287,
     "tssReal": 288.26215522758525,
     "z": {
      "lo": 207,
@@ -2793,12 +2787,12 @@
      "Grundlage mit Fahrtechnik 45′",
      "Long Ride, wellig 120′"
     ],
-    "ctlApp": 36.481309015839564,
-    "ctlReal": 32.5159677134385,
-    "rampApp": 1.8933525621757354,
-    "rampReal": 1.7197689919780395,
-    "tsbMinApp": -9.713043578372734,
-    "tsbMinReal": -7.924457419089503
+    "ctlApp": 33.00198908217073,
+    "ctlReal": 33.03955472531128,
+    "rampApp": 1.596589162454002,
+    "rampReal": 1.6248110353337069,
+    "tsbMinApp": -7.541814157029414,
+    "tsbMinReal": -7.430317032221147
    },
    {
     "w": 15,
@@ -2808,7 +2802,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.9,
-    "tssApp": 312,
+    "tssApp": 285,
     "tssReal": 275.98027627194995,
     "z": {
      "lo": 218.25,
@@ -2832,14 +2826,14 @@
      "Over-Under leicht 3×9 62′",
      "– +Kraft",
      "Grundlage, neue Strecke 45′",
-     "Long Ride, wellig 135′"
+     "Long Ride mit hartem Finale 135′"
     ],
-    "ctlApp": 37.840585034813785,
-    "ctlReal": 33.723383974093636,
-    "rampApp": 1.3592760189742208,
-    "rampReal": 1.2074162606551369,
-    "tsbMinApp": -10.0815475546923,
-    "tsbMinReal": -10.511747802229223
+    "ctlApp": 34.346965416662115,
+    "ctlReal": 34.16659081103403,
+    "rampApp": 1.3449763344913848,
+    "rampReal": 1.1270360857227502,
+    "tsbMinApp": -9.962713372988766,
+    "tsbMinReal": -10.03259789558058
    },
    {
     "w": 16,
@@ -2849,7 +2843,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 3.2,
-    "tssApp": 187,
+    "tssApp": 163,
     "tssReal": 164.2695878662929,
     "z": {
      "lo": 160.5,
@@ -2875,12 +2869,12 @@
      "–",
      "Long Ride, wellig 90′"
     ],
-    "ctlApp": 36.17494316787474,
-    "ctlReal": 32.22348001703508,
-    "rampApp": -1.6656418669390476,
-    "rampReal": -1.4999039570585566,
-    "tsbMinApp": -10.521387187921647,
-    "tsbMinReal": -10.870962429272048
+    "ctlApp": 32.720617660848326,
+    "ctlReal": 32.59864650485171,
+    "rampApp": -1.6263477558137893,
+    "rampReal": -1.5679443061823193,
+    "tsbMinApp": -11.423385811261277,
+    "tsbMinReal": -10.444103089768788
    },
    {
     "w": 17,
@@ -2889,13 +2883,13 @@
     "rec": false,
     "budget": 5,
     "nDays": 4,
-    "h": 4.216666666666667,
-    "tssApp": 292,
-    "tssReal": 260.58980951460245,
+    "h": 4.233333333333333,
+    "tssApp": 260,
+    "tssReal": 261.05913312064126,
     "z": {
      "lo": 158,
      "mid": 80,
-     "hi": 15
+     "hi": 16
     },
     "hard": 2,
     "key": 3,
@@ -2909,19 +2903,19 @@
     ],
     "ses": [
      "–",
-     "VO2max 5×3 52′",
+     "VO2max 4×4 53′",
      "–",
      "Sweet Spot 2×25 81′",
      "– +Kraft",
      "–",
      "Long Ride, wellig 120′"
     ],
-    "ctlApp": 37.08840445387131,
-    "ctlReal": 33.08355790833952,
-    "rampApp": 0.9134612859965756,
-    "rampReal": 0.8600778913044422,
-    "tsbMinApp": -5.855347220139173,
-    "tsbMinReal": -4.724660678133596
+    "ctlApp": 33.48861841885566,
+    "ctlReal": 33.410932539768474,
+    "rampApp": 0.7680007580073323,
+    "rampReal": 0.8122860349167667,
+    "tsbMinApp": -4.442806721743068,
+    "tsbMinReal": -4.423393229017691
    },
    {
     "w": 18,
@@ -2931,7 +2925,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.983333333333333,
-    "tssApp": 326,
+    "tssApp": 301,
     "tssReal": 290.7180556696138,
     "z": {
      "lo": 203,
@@ -2955,37 +2949,37 @@
      "Sweet Spot 2×25 81′",
      "– +Kraft",
      "Grundlage mit Fahrtechnik 45′",
-     "Long Ride, wellig 120′"
+     "Long Ride mit hartem Finale 120′"
     ],
-    "ctlApp": 38.640686514338185,
-    "ctlReal": 34.50806220718886,
-    "rampApp": 1.5522820604668723,
-    "rampReal": 1.4245042988493353,
-    "tsbMinApp": -8.101120631373988,
-    "tsbMinReal": -6.55207297845854
+    "ctlApp": 35.09358532721542,
+    "ctlReal": 34.78517884988628,
+    "rampApp": 1.6049669083597635,
+    "rampReal": 1.3742463101178046,
+    "tsbMinApp": -6.123141059866491,
+    "tsbMinReal": -6.272959653722026
    },
    {
     "w": 19,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": false,
     "budget": 5,
     "nDays": 4,
     "h": 4.983333333333333,
-    "tssApp": 347,
-    "tssReal": 303.259819196467,
+    "tssApp": 293,
+    "tssReal": 295.28135417074157,
     "z": {
-     "lo": 205.75,
-     "mid": 41.25,
-     "hi": 52
+     "lo": 199.25,
+     "mid": 83.75,
+     "hi": 16
     },
     "hard": 2,
     "key": 3,
-    "rides": 3,
-    "long": 165,
-    "maxSes": 165,
+    "rides": 4,
+    "long": 135,
+    "maxSes": 135,
     "test": false,
-    "str": "erh",
+    "str": "build",
     "strDays": [
      4
     ],
@@ -2993,38 +2987,38 @@
      "–",
      "VO2max 4×4 53′",
      "–",
-     "Schwelle 2×18 81′",
+     "Sweet Spot 2×25 81′",
      "– +Kraft",
-     "–",
-     "Eventsimulation 165′"
+     "Grundlage, neue Strecke 30′",
+     "Long Ride, wellig 135′"
     ],
-    "ctlApp": 40.43945408031091,
-    "ctlReal": 36.01382312609636,
-    "rampApp": 1.7987675659727245,
-    "rampReal": 1.5057609189075052,
-    "tsbMinApp": -11.843461798606597,
-    "tsbMinReal": -9.019442291037286
+    "ctlApp": 36.26210131055891,
+    "ctlReal": 36.05510833527167,
+    "rampApp": 1.1685159833434895,
+    "rampReal": 1.26992948538539,
+    "tsbMinApp": -9.810290341113948,
+    "tsbMinReal": -8.754391231674127
    },
    {
     "w": 20,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": true,
     "budget": 5,
     "nDays": 4,
     "h": 3.25,
-    "tssApp": 194,
-    "tssReal": 166.7882540763468,
+    "tssApp": 163,
+    "tssReal": 164.74290802624648,
     "z": {
-     "lo": 160.75,
-     "mid": 26.25,
+     "lo": 164.5,
+     "mid": 22.5,
      "hi": 8
     },
     "hard": 1,
     "key": 2,
     "rides": 3,
-    "long": 105,
-    "maxSes": 105,
+    "long": 90,
+    "maxSes": 90,
     "test": false,
     "str": "leicht",
     "strDays": [
@@ -3034,17 +3028,17 @@
      "–",
      "VO2max Auffrischung 4×2 45′",
      "– +Kraft",
-     "Grundlage Z2 45′",
+     "Grundlage Z2 60′",
      "–",
      "–",
-     "Eventsimulation 105′"
+     "Long Ride, wellig 90′"
     ],
-    "ctlApp": 38.54417481597439,
-    "ctlReal": 34.23770169008989,
-    "rampApp": -1.8952792643365228,
-    "rampReal": -1.7761214360064699,
-    "tsbMinApp": -11.319313007315529,
-    "tsbMinReal": -11.382331601631762
+    "ctlApp": 34.34174519571401,
+    "ctlReal": 34.207128610476595,
+    "rampApp": -1.9203561148448998,
+    "rampReal": -1.8479797247950742,
+    "tsbMinApp": -10.067958043243785,
+    "tsbMinReal": -10.083624054404112
    },
    {
     "w": 21,
@@ -3054,7 +3048,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.583333333333333,
-    "tssApp": 310,
+    "tssApp": 275,
     "tssReal": 276.3381943856732,
     "z": {
      "lo": 181.25,
@@ -3080,12 +3074,12 @@
      "–",
      "Eventsimulation 135′"
     ],
-    "ctlApp": 39.51788064086621,
-    "ctlReal": 35.15557520371724,
-    "rampApp": 0.9737058248918231,
-    "rampReal": 0.9178735136273488,
-    "tsbMinApp": -6.007085304644207,
-    "tsbMinReal": -4.295219480493245
+    "ctlApp": 35.210969444233264,
+    "ctlReal": 35.12969565055096,
+    "rampApp": 0.8692242485192523,
+    "rampReal": 0.9225670400743624,
+    "tsbMinApp": -3.4779873408568136,
+    "tsbMinReal": -3.62697634330636
    },
    {
     "w": 22,
@@ -3095,7 +3089,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.933333333333334,
-    "tssApp": 355,
+    "tssApp": 301,
     "tssReal": 302.43575310171957,
     "z": {
      "lo": 198.5,
@@ -3121,12 +3115,12 @@
      "–",
      "Eventsimulation 150′"
     ],
-    "ctlApp": 41.32188591825814,
-    "ctlReal": 36.51356538235844,
-    "rampApp": 1.80400527739193,
-    "rampReal": 1.3579901786412023,
-    "tsbMinApp": -11.415365043979428,
-    "tsbMinReal": -7.799695875719806
+    "ctlApp": 36.52619651263241,
+    "ctlReal": 36.49165881355485,
+    "rampApp": 1.315227068399146,
+    "rampReal": 1.3619631630038924,
+    "tsbMinApp": -7.3718141236718395,
+    "tsbMinReal": -7.567166055233535
    },
    {
     "w": 23,
@@ -3136,7 +3130,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 4.933333333333334,
-    "tssApp": 355,
+    "tssApp": 308,
     "tssReal": 309.9901758831017,
     "z": {
      "lo": 198.5,
@@ -3162,12 +3156,12 @@
      "–",
      "Eventsimulation 150′"
     ],
-    "ctlApp": 42.84894341717664,
-    "ctlReal": 37.82546002351226,
-    "rampApp": 1.5270574989185022,
-    "rampReal": 1.3118946411538133,
-    "tsbMinApp": -13.268191573321943,
-    "tsbMinReal": -9.962502735938642
+    "ctlApp": 37.78980041379216,
+    "ctlReal": 37.806916513364946,
+    "rampApp": 1.2636039011597475,
+    "rampReal": 1.3152576998100969,
+    "tsbMinApp": -9.65582278861583,
+    "tsbMinReal": -9.88822061926755
    },
    {
     "w": 24,
@@ -3177,7 +3171,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 3.533333333333333,
-    "tssApp": 241,
+    "tssApp": 182,
     "tssReal": 181.53852283248017,
     "z": {
      "lo": 187,
@@ -3201,12 +3195,12 @@
      "Grundlage Z2 45′",
      "Long Ride 75′"
     ],
-    "ctlApp": 41.613162515395054,
-    "ctlReal": 36.07507204120685,
-    "rampApp": -1.2357809017815882,
-    "rampReal": -1.750387982305405,
-    "tsbMinApp": -10.007221998084688,
-    "tsbMinReal": -10.0285519430658
+    "ctlApp": 36.05533694573249,
+    "ctlReal": 36.05937529875183,
+    "rampApp": -1.7344634680596656,
+    "rampReal": -1.7475412146131148,
+    "tsbMinApp": -9.640023404982507,
+    "tsbMinReal": -9.985730796340867
    },
    {
     "w": 25,
@@ -3216,7 +3210,7 @@
     "budget": 5,
     "nDays": 4,
     "h": 7.2,
-    "tssApp": 415,
+    "tssApp": 476,
     "tssReal": 475.57564454734575,
     "z": {
      "lo": 170.5,
@@ -3240,12 +3234,12 @@
      "Aktivierung vor dem Event 30′",
      "Eventtag: Gran Fondo 120 310′"
     ],
-    "ctlApp": 44.67098755609959,
-    "ctlReal": 41.51096806949252,
-    "rampApp": 3.057825040704536,
-    "rampReal": 5.4358960282856685,
-    "tsbMinApp": -0.9995312224411208,
-    "tsbMinReal": 0.19822959467258983
+    "ctlApp": 41.50331757619747,
+    "ctlReal": 41.49768106386402,
+    "rampApp": 5.447980630464976,
+    "rampReal": 5.43830576511219,
+    "tsbMinApp": 0.28389421447342045,
+    "tsbMinReal": 0.20510764789541014
    }
   ]
  },
@@ -3267,12 +3261,12 @@
     "key": "build",
     "name": "Aufbau",
     "from": 13,
-    "to": 23
+    "to": 24
    },
    {
     "key": "peak",
     "name": "Spitze",
-    "from": 24,
+    "from": 25,
     "to": 29
    },
    {
@@ -3433,32 +3427,32 @@
    "pairs": []
   },
   "strength": {
-   "n": 61,
+   "n": 50,
    "dayBeforeHard": 0,
-   "sameDayHard": 17
+   "sameDayHard": 6
   },
   "events": [
    {
     "w": 31,
     "i": 6,
     "n": "A-Event: Klassiker A",
-    "tsbApp": 19.46769490541103,
-    "tsbReal": 20.487409084335788,
-    "ctlApp": 75.44965500372211,
-    "ctlReal": 69.69429495774664,
-    "peakApp": 83.38334369826086,
-    "peakReal": 77.7592909721585
+    "tsbApp": 20.252406522862756,
+    "tsbReal": 20.45127233056686,
+    "ctlApp": 69.42831989982538,
+    "ctlReal": 69.65789162129622,
+    "peakApp": 77.35133490792916,
+    "peakReal": 77.68667850568181
    },
    {
     "w": 42,
     "i": 6,
     "n": "Eventtag: Hauptrennen 150 km",
-    "tsbApp": 19.848179300768052,
-    "tsbReal": 21.307628593530147,
-    "ctlApp": 72.91922417133942,
-    "ctlReal": 69.34356211322218,
-    "peakApp": 83.38334369826086,
-    "peakReal": 77.7592909721585
+    "tsbApp": 21.093103820877417,
+    "tsbReal": 21.301668218421554,
+    "ctlApp": 69.06232114467262,
+    "ctlReal": 69.33774195703403,
+    "peakApp": 77.35133490792916,
+    "peakReal": 77.68667850568181
    }
   ],
   "weeks": [
@@ -3470,7 +3464,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.766666666666667,
-    "tssApp": 402,
+    "tssApp": 347,
     "tssReal": 346.92373952270725,
     "z": {
      "lo": 426,
@@ -3497,11 +3491,11 @@
      "Long Ride 210′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 72.55946810216196,
+    "ctlApp": 71.32409914246394,
     "ctlReal": 71.32208973986762,
-    "rampApp": -2.440531897838042,
+    "rampApp": -3.675900857536064,
     "rampReal": -3.6779102601323785,
-    "tsbMinApp": -3.0157906539186285,
+    "tsbMinApp": 0,
     "tsbMinReal": 0
    },
    {
@@ -3512,7 +3506,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.2,
-    "tssApp": 538,
+    "tssApp": 486,
     "tssReal": 485.1517034638361,
     "z": {
      "lo": 645,
@@ -3539,11 +3533,11 @@
      "Long Ride, negativer Split 195′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 73.31735607834366,
+    "ctlApp": 71.130108874659,
     "ctlReal": 71.11033448984503,
-    "rampApp": 0.7578879761817063,
+    "rampApp": -0.193990267804935,
     "rampReal": -0.2117552500225912,
-    "tsbMinApp": -9.60754838835635,
+    "tsbMinApp": -4.530816687412127,
     "tsbMinReal": -4.503321389571582
    },
    {
@@ -3554,7 +3548,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.766666666666667,
-    "tssApp": 576,
+    "tssApp": 519,
     "tssReal": 518.5337395227073,
     "z": {
      "lo": 666,
@@ -3581,11 +3575,11 @@
      "Long Ride, wellig 210′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 74.77975654974969,
+    "ctlApp": 71.67814946820266,
     "ctlReal": 71.65074452689878,
-    "rampApp": 1.4624004714060277,
+    "rampApp": 0.5480405935436607,
     "rampReal": 0.5404100370537464,
-    "tsbMinApp": -14.430411483316647,
+    "tsbMinApp": -9.292411024155399,
     "tsbMinReal": -9.262978588517669
    },
    {
@@ -3596,7 +3590,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.7,
-    "tssApp": 375,
+    "tssApp": 332,
     "tssReal": 331.63188656569105,
     "z": {
      "lo": 453,
@@ -3622,11 +3616,11 @@
      "Long Ride 105′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 71.55650428399417,
+    "ctlApp": 67.99629320223906,
     "ctlReal": 67.96488191724836,
-    "rampApp": -3.2232522657555194,
+    "rampApp": -3.681856265963603,
     "rampReal": -3.685862609650414,
-    "tsbMinApp": -6.6979310178960105,
+    "tsbMinApp": -2.143081313582144,
     "tsbMinReal": -2.092584146087617
    },
    {
@@ -3637,7 +3631,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.25,
-    "tssApp": 483,
+    "tssApp": 449,
     "tssReal": 448.2080799373672,
     "z": {
      "lo": 595,
@@ -3664,11 +3658,11 @@
      "Long Ride 150′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 71.24232320002862,
+    "ctlApp": 67.4735524167937,
     "ctlReal": 67.42969828958132,
-    "rampApp": -0.31418108396555056,
+    "rampApp": -0.5227407854453645,
     "rampReal": -0.5351836276670383,
-    "tsbMinApp": -3.16923993372707,
+    "tsbMinApp": -0.9687887112097826,
     "tsbMinReal": -0.9386022555020475
    },
    {
@@ -3679,7 +3673,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.25,
-    "tssApp": 550,
+    "tssApp": 501,
     "tssReal": 499.76682602900985,
     "z": {
      "lo": 630,
@@ -3706,11 +3700,11 @@
      "Long Ride, negativer Split 180′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 72.42802321878328,
+    "ctlApp": 68.16313475876399,
     "ctlReal": 68.09838594701998,
-    "rampApp": 1.185700018754659,
+    "rampApp": 0.6895823419702936,
     "rampReal": 0.6686876574386531,
-    "tsbMinApp": -10.285304773259611,
+    "tsbMinApp": -7.634105076196917,
     "tsbMinReal": -7.549052597698051
    },
    {
@@ -3721,7 +3715,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.616666666666667,
-    "tssApp": 564,
+    "tssApp": 503,
     "tssReal": 502.513008385893,
     "z": {
      "lo": 670,
@@ -3748,11 +3742,11 @@
      "Long Ride, wellig 210′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 73.77630103131035,
+    "ctlApp": 68.83245809357169,
     "ctlReal": 68.76655009756306,
-    "rampApp": 1.3482778125270727,
+    "rampApp": 0.6693233348077001,
     "rampReal": 0.6681641505430775,
-    "tsbMinApp": -14.470210140249804,
+    "tsbMinApp": -11.02769413933133,
     "tsbMinReal": -10.998016074799537
    },
    {
@@ -3763,7 +3757,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.75,
-    "tssApp": 380,
+    "tssApp": 332,
     "tssReal": 332.1052067256446,
     "z": {
      "lo": 457,
@@ -3789,11 +3783,11 @@
      "Long Ride 105′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 70.8115356531766,
+    "ctlApp": 65.58746745893508,
     "ctlReal": 65.53335057600644,
-    "rampApp": -2.964765378133748,
+    "rampApp": -3.2449906346366078,
     "rampReal": -3.233199521556614,
-    "tsbMinApp": -6.845053897121716,
+    "tsbMinApp": -3.9667445727936865,
     "tsbMinReal": -3.920355845162078
    },
    {
@@ -3804,7 +3798,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.6,
-    "tssApp": 513,
+    "tssApp": 476,
     "tssReal": 475.76873568585944,
     "z": {
      "lo": 586,
@@ -3831,11 +3825,11 @@
      "Long Ride 150′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 71.23834963211667,
+    "ctlApp": 65.99849133396351,
     "ctlReal": 65.94712810032846,
-    "rampApp": 0.4268139789400607,
+    "rampApp": 0.41102387502843385,
     "rampReal": 0.41377752432201476,
-    "tsbMinApp": -5.433193516414022,
+    "tsbMinApp": -4.349599189870176,
     "tsbMinReal": -4.376971353220597
    },
    {
@@ -3846,7 +3840,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.266666666666667,
-    "tssApp": 551,
+    "tssApp": 506,
     "tssReal": 504.41397272898655,
     "z": {
      "lo": 626,
@@ -3873,11 +3867,11 @@
      "Long Ride, negativer Split 180′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 72.44554729161959,
+    "ctlApp": 67.01896063633285,
     "ctlReal": 66.94048523565986,
-    "rampApp": 1.2071976595029241,
+    "rampApp": 1.0204693023693352,
     "rampReal": 0.9933571353314079,
-    "tsbMinApp": -11.173899878873925,
+    "tsbMinApp": -9.869741526836165,
     "tsbMinReal": -9.790565744733271
    },
    {
@@ -3888,7 +3882,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.933333333333334,
-    "tssApp": 589,
+    "tssApp": 534,
     "tssReal": 532.9115141833767,
     "z": {
      "lo": 666,
@@ -3915,11 +3909,11 @@
      "Long Ride, wellig 210′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 74.31332547512186,
+    "ctlApp": 68.51145199798925,
     "ctlReal": 68.42136090969079,
-    "rampApp": 1.867778183502267,
+    "rampApp": 1.4924913616564055,
     "rampReal": 1.4808756740309263,
-    "tsbMinApp": -16.133155481167762,
+    "tsbMinApp": -14.078289718282633,
     "tsbMinReal": -14.02514974846882
    },
    {
@@ -3930,7 +3924,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.7,
-    "tssApp": 375,
+    "tssApp": 328,
     "tssReal": 327.81861053557213,
     "z": {
      "lo": 457,
@@ -3956,11 +3950,11 @@
      "Long Ride 105′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 71.16167890340061,
+    "ctlApp": 65.23219116362046,
     "ctlReal": 65.15161742114167,
-    "rampApp": -3.151646571721244,
+    "rampApp": -3.279260834368799,
     "rampReal": -3.2697434885491248,
-    "tsbMinApp": -8.2263518052536,
+    "tsbMinApp": -6.6472664118053615,
     "tsbMinReal": -6.5832532536607715
    },
    {
@@ -3971,7 +3965,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.366666666666667,
-    "tssApp": 549,
+    "tssApp": 513,
     "tssReal": 518.6770783538967,
     "z": {
      "lo": 497,
@@ -3995,14 +3989,14 @@
      "Grundlage mit Fahrtechnik 120′",
      "Sweet Spot 3×20 Trittwechsel 97′",
      "Grundlage mit Sprints 120′",
-     "Long Ride, wellig 180′",
+     "Long Ride mit hartem Finale 180′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 72.38063883622206,
+    "ctlApp": 66.57853191197627,
     "ctlReal": 66.64118017930824,
-    "rampApp": 1.2189599328214484,
+    "rampApp": 1.3463407483558143,
     "rampReal": 1.4895627581665707,
-    "tsbMinApp": -9.598912238078483,
+    "tsbMinApp": -9.709359061316349,
     "tsbMinReal": -10.408869772827302
    },
    {
@@ -4013,7 +4007,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.25,
-    "tssApp": 609,
+    "tssApp": 566,
     "tssReal": 569.0000591998827,
     "z": {
      "lo": 539,
@@ -4040,11 +4034,11 @@
      "Long Ride, wellig 240′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 74.76799188186924,
+    "ctlApp": 68.93793264369201,
     "ctlReal": 69.0598129076635,
-    "rampApp": 2.387353045647174,
+    "rampApp": 2.3594007317157377,
     "rampReal": 2.418632728355263,
-    "tsbMinApp": -18.97723161703297,
+    "tsbMinApp": -19.374159695115083,
     "tsbMinReal": -19.946788782112165
    },
    {
@@ -4055,7 +4049,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.983333333333333,
-    "tssApp": 659,
+    "tssApp": 572,
     "tssReal": 587.3385971297453,
     "z": {
      "lo": 607,
@@ -4079,14 +4073,14 @@
      "Grundlage mit Fahrtechnik 120′",
      "Over-Under leicht 4×9 91′",
      "Grundlage mit Sprints 120′",
-     "Long Ride, wellig 270′",
+     "Long Ride mit hartem Finale 270′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 77.87516474042089,
+    "ctlApp": 71.05992612235582,
     "ctlReal": 71.51471741328027,
-    "rampApp": 3.1071728585516496,
+    "rampApp": 2.1219934786638106,
     "rampReal": 2.454904505616767,
-    "tsbMinApp": -25.095325778446153,
+    "tsbMinApp": -22.153824745486077,
     "tsbMinReal": -23.98438868385651
    },
    {
@@ -4097,7 +4091,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.7,
-    "tssApp": 377,
+    "tssApp": 349,
     "tssReal": 350.0400010165938,
     "z": {
      "lo": 419.25,
@@ -4123,11 +4117,11 @@
      "Long Ride, wellig 135′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 74.2172704059004,
+    "ctlApp": 67.85761851609746,
     "ctlReal": 68.2674035769844,
-    "rampApp": -3.657894334520492,
+    "rampApp": -3.2023076062583584,
     "rampReal": -3.2473138362958593,
-    "tsbMinApp": -15.595698010522327,
+    "tsbMinApp": -13.361742600673608,
     "tsbMinReal": -14.869516142550708
    },
    {
@@ -4138,7 +4132,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.383333333333333,
-    "tssApp": 574,
+    "tssApp": 531,
     "tssReal": 532.9088433483556,
     "z": {
      "lo": 498,
@@ -4151,25 +4145,24 @@
     "long": 180,
     "maxSes": 180,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 5×4 61′ +Kraft",
+     "VO2max 5×4 61′",
      "Grundlage mit Fahrtechnik 120′",
      "Sweet Spot 3×20 97′",
      "Grundlage mit Sprints 120′",
      "Long Ride, wellig 180′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 75.48933183822909,
+    "ctlApp": 69.1852338695406,
     "ctlReal": 69.57590399568399,
-    "rampApp": 1.272061432328698,
+    "rampApp": 1.3276153534431359,
     "rampReal": 1.3085004186995803,
-    "tsbMinApp": -10.064429618196172,
+    "tsbMinApp": -10.972766164025899,
     "tsbMinReal": -11.222919110049077
    },
    {
@@ -4180,7 +4173,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.133333333333333,
-    "tssApp": 611,
+    "tssApp": 556,
     "tssReal": 568.1699032254613,
     "z": {
      "lo": 531.75,
@@ -4193,25 +4186,24 @@
     "long": 225,
     "maxSes": 225,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 5×4 am Berg 61′ +Kraft",
+     "VO2max 5×4 am Berg 61′",
      "Grundlage, neue Strecke 120′",
      "Sweet Spot 3×20 Trittwechsel 97′",
      "Grundlage mit Trittfrequenz 120′",
-     "Long Ride, wellig 225′",
+     "Long Ride mit hartem Finale 225′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 77.41617367092789,
+    "ctlApp": 70.88966561847069,
     "ctlReal": 71.5000086238304,
-    "rampApp": 1.9268418326987984,
+    "rampApp": 1.7044317489300909,
     "rampReal": 1.9241046281464094,
-    "tsbMinApp": -17.06268095185939,
+    "tsbMinApp": -16.795670334594362,
     "tsbMinReal": -18.050476106687
    },
    {
@@ -4222,7 +4214,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.966666666666667,
-    "tssApp": 655,
+    "tssApp": 611,
     "tssReal": 615.4808700619118,
     "z": {
      "lo": 566,
@@ -4235,25 +4227,24 @@
     "long": 270,
     "maxSes": 270,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 4×8 66′ +Kraft",
+     "VO2max 4×8 66′",
      "Grundlage mit Fahrtechnik 120′",
      "Sweet Spot 3×20 97′",
      "Grundlage mit Sprints 120′",
      "Long Ride, wellig 270′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 80.0414014181889,
+    "ctlApp": 73.57100091894706,
     "ctlReal": 74.1895755606993,
-    "rampApp": 2.6252277472610075,
+    "rampApp": 2.681335300476377,
     "rampReal": 2.6895669368689,
-    "tsbMinApp": -23.06844312173709,
+    "tsbMinApp": -23.460355948985935,
     "tsbMinReal": -24.10596340056435
    },
    {
@@ -4264,7 +4255,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.75,
-    "tssApp": 382,
+    "tssApp": 349,
     "tssReal": 350.5133211765474,
     "z": {
      "lo": 423.25,
@@ -4290,11 +4281,11 @@
      "Long Ride, wellig 135′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 76.15538829270072,
+    "ctlApp": 69.98319744124537,
     "ctlReal": 70.54150864967143,
-    "rampApp": -3.8860131254881765,
+    "rampApp": -3.587803477701698,
     "rampReal": -3.6480669110278683,
-    "tsbMinApp": -13.595511794226766,
+    "tsbMinApp": -14.21251646535923,
     "tsbMinReal": -14.674695278310637
    },
    {
@@ -4305,7 +4296,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.266666666666667,
-    "tssApp": 533,
+    "tssApp": 502,
     "tssReal": 500.1492354672211,
     "z": {
      "lo": 511.25,
@@ -4318,25 +4309,24 @@
     "long": 195,
     "maxSes": 195,
     "test": true,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "Fitness-Check: 20-Min-Test 60′ +Kraft",
+     "Fitness-Check: 20-Min-Test 60′",
      "Grundlage mit Fahrtechnik 120′",
      "Over-Under leicht 4×9 76′",
      "Grundlage mit Sprints 120′",
-     "Long Ride, wellig 195′",
+     "Long Ride mit hartem Finale 195′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 76.2700419243398,
+    "ctlApp": 70.38057009555507,
     "ctlReal": 70.81139187795388,
-    "rampApp": 0.11465363163907227,
+    "rampApp": 0.3973726543097058,
     "rampReal": 0.2698832282824526,
-    "tsbMinApp": -6.346094035159837,
+    "tsbMinApp": -8.249771101932595,
     "tsbMinReal": -7.8570571356833625
    },
    {
@@ -4347,7 +4337,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.016666666666667,
-    "tssApp": 608,
+    "tssApp": 566,
     "tssReal": 566.0760113911159,
     "z": {
      "lo": 438.25,
@@ -4360,25 +4350,24 @@
     "long": 105,
     "maxSes": 120,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      4
     ],
     "ses": [
      "–",
-     "VO2max 6×4 am Berg 69′ +Kraft",
+     "VO2max 6×4 am Berg 69′",
      "Grundlage, neue Strecke 120′",
      "Sweet Spot 3×20 97′",
      "Grundlage mit Trittfrequenz 120′ +Kraft",
      "Grundlage statt Long Ride (das Zwischenevent ersetzt ihn) 90′",
      "Zwischenevent (C): Frühjahrsrennen C 105′"
     ],
-    "ctlApp": 78.03799281057724,
+    "ctlApp": 72.17041338809375,
     "ctlReal": 72.53719868778097,
-    "rampApp": 1.7679508862374433,
+    "rampApp": 1.7898432925386771,
     "rampReal": 1.7258068098270911,
-    "tsbMinApp": -4.964122663557916,
+    "tsbMinApp": -4.6202760993435845,
     "tsbMinReal": -4.224581989339256
    },
    {
@@ -4389,7 +4378,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.966666666666667,
-    "tssApp": 655,
+    "tssApp": 610,
     "tssReal": 615.4808700619118,
     "z": {
      "lo": 566,
@@ -4402,47 +4391,46 @@
     "long": 270,
     "maxSes": 270,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 4×8 66′ +Kraft",
+     "VO2max 4×8 66′",
      "Grundlage mit Fahrtechnik 120′",
      "Sweet Spot 3×20 Trittwechsel 97′",
      "Grundlage mit Sprints 120′",
-     "Long Ride, wellig 270′",
+     "Long Ride mit hartem Finale 270′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 80.56775995608928,
+    "ctlApp": 74.63215576830865,
     "ctlReal": 75.0675379950716,
-    "rampApp": 2.5297671455120394,
+    "rampApp": 2.4617423802149005,
     "rampReal": 2.5303393072906317,
-    "tsbMinApp": -22.484957179471152,
+    "tsbMinApp": -23.14396712680265,
     "tsbMinReal": -23.440007693763206
    },
    {
     "w": 24,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": true,
     "budget": 12,
     "nDays": 6,
     "h": 7.7,
-    "tssApp": 380,
-    "tssReal": 350.3174170866755,
+    "tssApp": 345,
+    "tssReal": 346.2267249864749,
     "z": {
-     "lo": 415.75,
-     "mid": 41.25,
+     "lo": 423.25,
+     "mid": 33.75,
      "hi": 5
     },
     "hard": 1,
     "key": 2,
     "rides": 5,
-    "long": 165,
-    "maxSes": 165,
+    "long": 135,
+    "maxSes": 135,
     "test": false,
     "str": "leicht",
     "strDays": [
@@ -4452,16 +4440,16 @@
      "–",
      "Spritzig 5×1 42′",
      "Grundlage Z2 120′ +Kraft",
-     "Grundlage Z2 90′",
+     "Grundlage Z2 120′",
      "–",
-     "Eventsimulation 165′",
+     "Long Ride, wellig 135′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 76.58893193375991,
-    "ctlReal": 71.31205195182277,
-    "rampApp": -3.978828022329367,
-    "rampReal": -3.755486043248837,
-    "tsbMinApp": -13.030625152007232,
+    "ctlApp": 70.7978951266834,
+    "ctlReal": 71.19515098980703,
+    "rampApp": -3.8342606416252494,
+    "rampReal": -3.872387005264571,
+    "tsbMinApp": -13.81914783048795,
     "tsbMinReal": -13.998855341162084
    },
    {
@@ -4472,7 +4460,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.566666666666666,
-    "tssApp": 617,
+    "tssApp": 557,
     "tssReal": 559.958720932882,
     "z": {
      "lo": 508.75,
@@ -4498,12 +4486,12 @@
      "Eventsimulation 225′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 78.44774116565391,
-    "ctlReal": 72.75700509425936,
-    "rampApp": 1.858809231894,
-    "rampReal": 1.4449531424365887,
-    "tsbMinApp": -12.164908965252238,
-    "tsbMinReal": -11.91035570684862
+    "ctlApp": 72.2541042965993,
+    "ctlReal": 72.65805056629091,
+    "rampApp": 1.456209169915894,
+    "rampReal": 1.4628995764838777,
+    "tsbMinApp": -11.383585772397012,
+    "tsbMinReal": -11.550281124608404
    },
    {
     "w": 26,
@@ -4513,7 +4501,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 9.816666666666666,
-    "tssApp": 625,
+    "tssApp": 596,
     "tssReal": 595.0417864409544,
     "z": {
      "lo": 405,
@@ -4539,12 +4527,12 @@
      "Aktivierung vor Rundfahrt B 40′",
      "Zwischenevent (B): Rundfahrt B 160′"
     ],
-    "ctlApp": 80.31437779897645,
-    "ctlReal": 74.90961662422457,
-    "rampApp": 1.8666366333225426,
-    "rampReal": 2.1526115299652133,
-    "tsbMinApp": -5.98447821786327,
-    "tsbMinReal": -4.263376288510642
+    "ctlApp": 74.50485062506435,
+    "ctlReal": 74.82585342470409,
+    "rampApp": 2.2507463284650555,
+    "rampReal": 2.1678028584131823,
+    "tsbMinApp": -3.8996211091111235,
+    "tsbMinReal": -3.9623417003797954
    },
    {
     "w": 27,
@@ -4554,7 +4542,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 12.516666666666667,
-    "tssApp": 630,
+    "tssApp": 581,
     "tssReal": 583.1157923660213,
     "z": {
      "lo": 646,
@@ -4580,12 +4568,12 @@
      "Eventsimulation 255′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 81.96262546674288,
-    "ctlReal": 76.3709018837366,
-    "rampApp": 1.6482476677664266,
-    "rampReal": 1.4612852595120245,
-    "tsbMinApp": -21.384533151328654,
-    "tsbMinReal": -21.948973566659348
+    "ctlApp": 75.97842641595551,
+    "ctlReal": 76.29999786612413,
+    "rampApp": 1.4735757908911609,
+    "rampReal": 1.4741444414200373,
+    "tsbMinApp": -21.900802410220706,
+    "tsbMinReal": -21.959140514182934
    },
    {
     "w": 28,
@@ -4595,7 +4583,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 8,
-    "tssApp": 387,
+    "tssApp": 372,
     "tssReal": 374.1762614884705,
     "z": {
      "lo": 418.75,
@@ -4621,12 +4609,12 @@
      "Eventsimulation 165′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 77.91587347540317,
-    "ctlReal": 72.91368027014718,
-    "rampApp": -4.046751991339704,
-    "rampReal": -3.457221613589411,
-    "tsbMinApp": -11.920139883660767,
-    "tsbMinReal": -12.56002844709343
+    "ctlApp": 72.531220522895,
+    "ctlReal": 72.85366131501692,
+    "rampApp": -3.447205893060513,
+    "rampReal": -3.4463365511072084,
+    "tsbMinApp": -12.590377832865414,
+    "tsbMinReal": -12.57679982438701
    },
    {
     "w": 29,
@@ -4636,7 +4624,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.566666666666666,
-    "tssApp": 617,
+    "tssApp": 557,
     "tssReal": 559.958720932882,
     "z": {
      "lo": 508.75,
@@ -4662,12 +4650,12 @@
      "Eventsimulation 225′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 79.5709729306531,
-    "ctlReal": 74.11275419578826,
-    "rampApp": 1.6550994552499247,
-    "rampReal": 1.1990739256410734,
-    "tsbMinApp": -11.252600681066298,
-    "tsbMinReal": -11.160628512779553
+    "ctlApp": 73.72133256778119,
+    "ctlReal": 74.06194924712347,
+    "rampApp": 1.1901120448861917,
+    "rampReal": 1.2082879321065434,
+    "tsbMinApp": -10.977767137101608,
+    "tsbMinReal": -11.204206536553713
    },
    {
     "w": 30,
@@ -4677,7 +4665,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.533333333333333,
-    "tssApp": 408,
+    "tssApp": 340,
     "tssReal": 339.72164783248013,
     "z": {
      "lo": 427,
@@ -4701,12 +4689,12 @@
      "Long Ride 105′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 76.35198133139528,
-    "ctlReal": 70.24701395835073,
-    "rampApp": -3.2189915992578193,
-    "rampReal": -3.865740237437521,
-    "tsbMinApp": -3.405417409705464,
-    "tsbMinReal": -3.461292564768712
+    "ctlApp": 69.92202672240838,
+    "ctlReal": 70.20400849777198,
+    "rampApp": -3.799305845372814,
+    "rampReal": -3.857940749351485,
+    "tsbMinApp": -3.3747636990161,
+    "tsbMinReal": -3.5047714572235975
    },
    {
     "w": 31,
@@ -4716,7 +4704,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.2,
-    "tssApp": 479,
+    "tssApp": 450,
     "tssReal": 449.5702554683624,
     "z": {
      "lo": 256.75,
@@ -4740,12 +4728,12 @@
      "Aktivierung vor Klassiker A 40′",
      "A-Event: Klassiker A 195′"
     ],
-    "ctlApp": 75.44965500372211,
-    "ctlReal": 69.69429495774664,
-    "rampApp": -0.9023263276731655,
-    "rampReal": -0.5527190006040996,
-    "tsbMinApp": 8.284766688257037,
-    "tsbMinReal": 9.97384642883658
+    "ctlApp": 69.42831989982538,
+    "ctlReal": 69.65789162129622,
+    "rampApp": -0.49370682258299325,
+    "rampReal": -0.5461168764757645,
+    "tsbMinApp": 9.79291733342638,
+    "tsbMinReal": 9.933536073722323
    },
    {
     "w": 32,
@@ -4755,7 +4743,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 5.5,
-    "tssApp": 232,
+    "tssApp": 216,
     "tssReal": 215.25250000000003,
     "z": {
      "lo": 330,
@@ -4781,12 +4769,12 @@
      "Locker nach Klassiker A 60′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 69.00026806062122,
-    "ctlReal": 63.75475349816297,
-    "rampApp": -6.44938694310089,
-    "rampReal": -5.9395414595836655,
-    "tsbMinApp": -1.0309347011865526,
-    "tsbMinReal": -2.80218496564531
+    "ctlApp": 63.546179297348395,
+    "ctlReal": 63.72393873913263,
+    "rampApp": -5.882140602476987,
+    "rampReal": -5.933952882163588,
+    "tsbMinApp": -3.0467074715630673,
+    "tsbMinReal": -2.8375968282035444
    },
    {
     "w": 33,
@@ -4796,7 +4784,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 10.516666666666667,
-    "tssApp": 590,
+    "tssApp": 546,
     "tssReal": 549.4181426793801,
     "z": {
      "lo": 494.5,
@@ -4809,26 +4797,25 @@
     "long": 210,
     "maxSes": 210,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 6×4 69′ +Kraft",
+     "VO2max 6×4 69′",
      "Grundlage mit Fahrtechnik 120′",
      "Sweet Spot 3×20 97′",
      "Grundlage mit Sprints 90′",
      "Long Ride, wellig 210′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 71.42559026779313,
-    "ctlReal": 66.12100156029989,
-    "rampApp": 2.4253222071719023,
-    "rampReal": 2.3662480621369184,
-    "tsbMinApp": -7.998300748682723,
-    "tsbMinReal": -9.180805796138046
+    "ctlApp": 65.86714731099079,
+    "ctlReal": 66.09491742992378,
+    "rampApp": 2.3209680136423927,
+    "rampReal": 2.370978690791155,
+    "tsbMinApp": -9.017625602085303,
+    "tsbMinReal": -9.207363642761564
    },
    {
     "w": 34,
@@ -4838,7 +4825,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.016666666666667,
-    "tssApp": 612,
+    "tssApp": 558,
     "tssReal": 567.2885093914037,
     "z": {
      "lo": 524.5,
@@ -4851,26 +4838,25 @@
     "long": 210,
     "maxSes": 210,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 6×4 am Berg 69′ +Kraft",
+     "VO2max 6×4 am Berg 69′",
      "Grundlage, neue Strecke 120′",
      "Sweet Spot 3×20 Trittwechsel 97′",
      "Grundlage mit Trittfrequenz 120′",
-     "Long Ride, wellig 210′",
+     "Long Ride mit hartem Finale 210′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 73.9721330459835,
-    "ctlReal": 68.53043225177997,
-    "rampApp": 2.5465427781903713,
-    "rampReal": 2.4094306914800825,
-    "tsbMinApp": -17.678460458499643,
-    "tsbMinReal": -18.232459157216567
+    "ctlApp": 68.10187017234217,
+    "ctlReal": 68.50835251210692,
+    "rampApp": 2.2347228613513863,
+    "rampReal": 2.413435082183142,
+    "tsbMinApp": -17.252211076465088,
+    "tsbMinReal": -18.25501397043128
    },
    {
     "w": 35,
@@ -4880,7 +4866,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.966666666666667,
-    "tssApp": 655,
+    "tssApp": 611,
     "tssReal": 615.4808700619118,
     "z": {
      "lo": 566,
@@ -4893,26 +4879,25 @@
     "long": 270,
     "maxSes": 270,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 4×8 66′ +Kraft",
+     "VO2max 4×8 66′",
      "Grundlage mit Fahrtechnik 120′",
      "Sweet Spot 3×20 97′",
      "Grundlage mit Sprints 120′",
      "Long Ride, wellig 270′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 77.12608396939262,
-    "ctlReal": 71.67588343109165,
-    "rampApp": 3.153950923409127,
-    "rampReal": 3.145451179311678,
-    "tsbMinApp": -24.983018243758067,
-    "tsbMinReal": -25.62840251194727
+    "ctlApp": 71.21118302106602,
+    "ctlReal": 71.65719333496806,
+    "rampApp": 3.109312848723846,
+    "rampReal": 3.148840822861132,
+    "tsbMinApp": -24.994702120363073,
+    "tsbMinReal": -25.647522002164195
    },
    {
     "w": 36,
@@ -4922,7 +4907,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.7,
-    "tssApp": 378,
+    "tssApp": 347,
     "tssReal": 348.27207103657514,
     "z": {
      "lo": 419.5,
@@ -4948,12 +4933,12 @@
      "Long Ride, wellig 150′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 73.61791429948278,
-    "ctlReal": 68.38262786526403,
-    "rampApp": -3.5081696699098472,
-    "rampReal": -3.2932555658276215,
-    "tsbMinApp": -15.582413777640014,
-    "tsbMinReal": -16.27658701364267
+    "ctlApp": 67.95980602333724,
+    "ctlReal": 68.36680704045897,
+    "rampApp": -3.2513769977287836,
+    "rampReal": -3.2903862945090907,
+    "tsbMinApp": -15.807460174269167,
+    "tsbMinReal": -16.295258950288485
    },
    {
     "w": 37,
@@ -4963,7 +4948,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.083333333333334,
-    "tssApp": 645,
+    "tssApp": 618,
     "tssReal": 618.638641355112,
     "z": {
      "lo": 500,
@@ -4976,26 +4961,25 @@
     "long": 210,
     "maxSes": 210,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 6×4 69′ +Kraft",
+     "VO2max 6×4 69′",
      "Grundlage mit Fahrtechnik 120′",
      "Over-Under leicht 4×9 76′",
      "Grundlage mit Sprints 120′",
-     "Long Ride, wellig 210′",
+     "Long Ride mit hartem Finale 210′",
      "Zwischenevent (C): Kriterium C 70′ +Kraft"
     ],
-    "ctlApp": 76.64974495689579,
-    "ctlReal": 71.69434952893916,
-    "rampApp": 3.0318306574130105,
-    "rampReal": 3.3117216636751294,
-    "tsbMinApp": -11.913974803892629,
-    "tsbMinReal": -12.531375702096554
+    "ctlApp": 71.32234330434083,
+    "ctlReal": 71.680957489869,
+    "rampApp": 3.362537281003597,
+    "rampReal": 3.314150449410036,
+    "tsbMinApp": -12.609551439555545,
+    "tsbMinReal": -12.545087590453718
    },
    {
     "w": 38,
@@ -5005,7 +4989,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.016666666666667,
-    "tssApp": 612,
+    "tssApp": 565,
     "tssReal": 567.2885093914037,
     "z": {
      "lo": 524.5,
@@ -5018,26 +5002,25 @@
     "long": 210,
     "maxSes": 210,
     "test": false,
-    "str": "build+build",
+    "str": "erh",
     "strDays": [
-     1,
      6
     ],
     "ses": [
      "–",
-     "VO2max 6×4 am Berg 69′ +Kraft",
+     "VO2max 6×4 am Berg 69′",
      "Grundlage, neue Strecke 120′",
      "Sweet Spot 3×20 97′",
      "Grundlage mit Trittfrequenz 120′",
      "Long Ride, wellig 210′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 78.39428451831051,
-    "ctlReal": 73.24816945368934,
-    "rampApp": 1.7445395614147259,
-    "rampReal": 1.5538199247501865,
-    "tsbMinApp": -19.463804019074388,
-    "tsbMinReal": -20.499329423634137
+    "ctlApp": 72.88041700914084,
+    "ctlReal": 73.23683333735745,
+    "rampApp": 1.5580737048000088,
+    "rampReal": 1.5558758474884513,
+    "tsbMinApp": -20.429696302075286,
+    "tsbMinReal": -20.51093764339025
    },
    {
     "w": 39,
@@ -5047,7 +5030,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 11.833333333333334,
-    "tssApp": 655,
+    "tssApp": 606,
     "tssReal": 610.2542691305621,
     "z": {
      "lo": 584,
@@ -5073,12 +5056,12 @@
      "Eventsimulation 300′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 80.9017338609309,
-    "ctlReal": 75.58388408539005,
-    "rampApp": 2.50744934262039,
-    "rampReal": 2.3357146317007107,
-    "tsbMinApp": -24.412788482331734,
-    "tsbMinReal": -24.58491078141897
+    "ctlApp": 75.17577820635435,
+    "ctlReal": 75.57428827008387,
+    "rampApp": 2.2953611972135093,
+    "rampReal": 2.3374549327264162,
+    "tsbMinApp": -24.277941576431587,
+    "tsbMinReal": -24.594737426457556
    },
    {
     "w": 40,
@@ -5088,7 +5071,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.7,
-    "tssApp": 383,
+    "tssApp": 356,
     "tssReal": 358.22138521699503,
     "z": {
      "lo": 404.25,
@@ -5114,12 +5097,12 @@
      "Eventsimulation 195′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 76.96299523107562,
-    "ctlReal": 71.94568072449078,
-    "rampApp": -3.93873862985528,
-    "rampReal": -3.6382033608992685,
-    "tsbMinApp": -14.664336117099069,
-    "tsbMinReal": -14.93339469294807
+    "ctlApp": 71.54837619491919,
+    "ctlReal": 71.93755804219867,
+    "rampApp": -3.6274020114351657,
+    "rampReal": -3.636730227885195,
+    "tsbMinApp": -14.741152040932676,
+    "tsbMinReal": -14.942990175651829
    },
    {
     "w": 41,
@@ -5129,7 +5112,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 7.583333333333333,
-    "tssApp": 413,
+    "tssApp": 344,
     "tssReal": 344.0082440225527,
     "z": {
      "lo": 427,
@@ -5153,12 +5136,12 @@
      "Long Ride 105′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 74.24881399706268,
-    "ctlReal": 68.5021626841032,
-    "rampApp": -2.7141812340129405,
-    "rampReal": -3.4435180403875876,
-    "tsbMinApp": 4.99637702459853,
-    "tsbMinReal": 3.9042876757429497
+    "ctlApp": 68.16620936562167,
+    "ctlReal": 68.49528698198583,
+    "rampApp": -3.3821668292975176,
+    "rampReal": -3.442271060212846,
+    "tsbMinApp": 4.003394728069921,
+    "tsbMinReal": 3.8961651158084294
    },
    {
     "w": 42,
@@ -5168,7 +5151,7 @@
     "budget": 12,
     "nDays": 6,
     "h": 8.033333333333333,
-    "tssApp": 447,
+    "tssApp": 497,
     "tssReal": 496.8474760914138,
     "z": {
      "lo": 265.75,
@@ -5192,12 +5175,12 @@
      "Aktivierung vor dem Event 30′",
      "Eventtag: Hauptrennen 150 km 255′"
     ],
-    "ctlApp": 72.91922417133942,
-    "ctlReal": 69.34356211322218,
-    "rampApp": -1.3295898257232608,
-    "rampReal": 0.8413994291189795,
-    "tsbMinApp": 10.08313254419015,
-    "tsbMinReal": 11.456510085680698
+    "ctlApp": 69.06232114467262,
+    "ctlReal": 69.33774195703403,
+    "rampApp": 0.8961117790509547,
+    "rampReal": 0.8424549750481987,
+    "tsbMinApp": 11.29008349628883,
+    "tsbMinReal": 11.449634428576182
    }
   ]
  },
@@ -5213,18 +5196,18 @@
     "key": "base",
     "name": "Basis",
     "from": 1,
-    "to": 11
+    "to": 12
    },
    {
     "key": "build",
     "name": "Aufbau",
-    "from": 12,
-    "to": 22
+    "from": 13,
+    "to": 24
    },
    {
     "key": "peak",
     "name": "Spitze",
-    "from": 23,
+    "from": 25,
     "to": 28
    },
    {
@@ -5242,7 +5225,7 @@
   ],
   "stats": {
    "tot": 30,
-   "hAvg": 5.971604938271605,
+   "hAvg": 5.959876543209877,
    "maxL": 225
   },
   "planCheck": {
@@ -5324,12 +5307,12 @@
     "w": 30,
     "i": 6,
     "n": "Eventtag: Radmarathon 150",
-    "tsbApp": 12.208500386805696,
-    "tsbReal": 13.277408335769199,
-    "ctlApp": 52.37481761877133,
-    "ctlReal": 48.649054281603725,
-    "peakApp": 54.22104480317677,
-    "peakReal": 48.649054281603725
+    "tsbApp": 12.813873150517168,
+    "tsbReal": 12.975877798971418,
+    "ctlApp": 48.168633614620816,
+    "ctlReal": 48.34659125747409,
+    "peakApp": 48.168633614620816,
+    "peakReal": 48.34659125747409
    }
   ],
   "weeks": [
@@ -5341,7 +5324,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.433333333333334,
-    "tssApp": 326,
+    "tssApp": 287,
     "tssReal": 286.85181316345773,
     "z": {
      "lo": 350,
@@ -5368,11 +5351,11 @@
      "Long Ride 150′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 41.21430638254209,
+    "ctlApp": 40.336917577021225,
     "ctlReal": 40.33343669988409,
-    "rampApp": 1.214306382542091,
+    "rampApp": 0.33691757702122516,
     "rampReal": 0.3334366998840892,
-    "tsbMinApp": -11.006072630594467,
+    "tsbMinApp": -7.7952628043266685,
     "tsbMinReal": -7.808471032810964
    },
    {
@@ -5383,7 +5366,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.8,
-    "tssApp": 326,
+    "tssApp": 292,
     "tssReal": 290.51768682005877,
     "z": {
      "lo": 390,
@@ -5410,11 +5393,11 @@
      "Long Ride, negativer Split 135′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 42.14777632354621,
+    "ctlApp": 40.65618962288455,
     "ctlReal": 40.6201470510234,
-    "rampApp": 0.9334699410041196,
+    "rampApp": 0.3192720458633218,
     "rampReal": 0.28671035113931254,
-    "tsbMinApp": -11.27654669132697,
+    "tsbMinApp": -7.9719850696924155,
     "tsbMinReal": -7.861688479445675
    },
    {
@@ -5425,7 +5408,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 4.45,
-    "tssApp": 231,
+    "tssApp": 188,
     "tssReal": 188.38548553557212,
     "z": {
      "lo": 262,
@@ -5451,11 +5434,11 @@
      "Long Ride 90′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 40.78167470815041,
+    "ctlApp": 38.590540510127695,
     "ctlReal": 38.56852152026538,
-    "rampApp": -1.3661016153957988,
+    "rampApp": -2.0656491127568515,
     "rampReal": -2.051625530758024,
-    "tsbMinApp": -7.626348493077252,
+    "tsbMinApp": -4.480166605703559,
     "tsbMinReal": -4.360539529625541
    },
    {
@@ -5466,7 +5449,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.5,
-    "tssApp": 318,
+    "tssApp": 288,
     "tssReal": 287.32370493736715,
     "z": {
      "lo": 370,
@@ -5493,11 +5476,11 @@
      "Long Ride mit Verpflegungstraining 120′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 41.56814351951104,
+    "ctlApp": 39.04858641145222,
     "ctlReal": 39.014829280509524,
-    "rampApp": 0.7864688113606277,
+    "rampApp": 0.4580459013245246,
     "rampReal": 0.44630776024414587,
-    "tsbMinApp": -6.303602481633185,
+    "tsbMinApp": -3.8428750535194496,
     "tsbMinReal": -3.820266661105883
    },
    {
@@ -5508,7 +5491,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.933333333333334,
-    "tssApp": 347,
+    "tssApp": 312,
     "tssReal": 311.5105722588245,
     "z": {
      "lo": 376,
@@ -5535,11 +5518,11 @@
      "Long Ride 135′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 42.8646614101082,
+    "ctlApp": 39.96057507702406,
     "ctlReal": 39.920212388985114,
-    "rampApp": 1.2965178905971584,
+    "rampApp": 0.9119886655718403,
     "rampReal": 0.9053831084755899,
-    "tsbMinApp": -9.95323005794328,
+    "tsbMinApp": -7.637065495142643,
     "tsbMinReal": -7.59650369754214
    },
    {
@@ -5550,7 +5533,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 4.45,
-    "tssApp": 231,
+    "tssApp": 188,
     "tssReal": 188.38548553557212,
     "z": {
      "lo": 262,
@@ -5576,11 +5559,11 @@
      "Long Ride 90′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 41.388504832771744,
+    "ctlApp": 38.00171550948872,
     "ctlReal": 37.97603962023249,
-    "rampApp": -1.4761565773364538,
+    "rampApp": -1.9588595675353417,
     "rampReal": -1.9441727687526225,
-    "tsbMinApp": -6.398735328047593,
+    "tsbMinApp": -4.2679041615459425,
     "tsbMinReal": -4.20921350202687
    },
    {
@@ -5591,7 +5574,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.683333333333334,
-    "tssApp": 335,
+    "tssApp": 301,
     "tssReal": 300.7849472588245,
     "z": {
      "lo": 361,
@@ -5618,11 +5601,11 @@
      "Long Ride, wellig 120′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 42.43690376287483,
+    "ctlApp": 38.82169594018577,
     "ctlReal": 38.79447756759161,
-    "rampApp": 1.0483989301030832,
+    "rampApp": 0.8199804306970506,
     "rampReal": 0.8184379473591221,
-    "tsbMinApp": -6.612175249669349,
+    "tsbMinApp": -4.91079053447352,
     "tsbMinReal": -4.924999223010154
    },
    {
@@ -5633,7 +5616,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.783333333333333,
-    "tssApp": 335,
+    "tssApp": 297,
     "tssReal": 296.05260639310654,
     "z": {
      "lo": 380,
@@ -5660,11 +5643,11 @@
      "Long Ride mit Verpflegungstraining 135′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 43.355205795273996,
+    "ctlApp": 39.461008279022835,
     "ctlReal": 39.41646988532031,
-    "rampApp": 0.9183020323991684,
+    "rampApp": 0.6393123388370654,
     "rampReal": 0.6219923177286972,
-    "tsbMinApp": -9.158551847922567,
+    "tsbMinApp": -7.4973932389261435,
     "tsbMinReal": -7.438472139714612
    },
    {
@@ -5675,7 +5658,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 4.45,
-    "tssApp": 231,
+    "tssApp": 188,
     "tssReal": 188.38548553557212,
     "z": {
      "lo": 262,
@@ -5701,11 +5684,11 @@
      "Long Ride 90′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 41.80374169006231,
+    "ctlApp": 37.57884134461856,
     "ctlReal": 37.54963079682958,
-    "rampApp": -1.5514641052116858,
+    "rampApp": -1.8821669344042746,
     "rampReal": -1.8668390884907282,
-    "tsbMinApp": -5.6547903589356565,
+    "tsbMinApp": -4.202893986621518,
     "tsbMinReal": -4.128756712413036
    },
    {
@@ -5716,7 +5699,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.5,
-    "tssApp": 318,
+    "tssApp": 288,
     "tssReal": 287.32370493736715,
     "z": {
      "lo": 370,
@@ -5743,11 +5726,11 @@
      "Long Ride, negativer Split 120′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 42.433304541313575,
+    "ctlApp": 38.19220155676165,
     "ctlReal": 38.15235690346054,
-    "rampApp": 0.629562851251265,
+    "rampApp": 0.6133602121430926,
     "rampReal": 0.6027261066309606,
-    "tsbMinApp": -5.298300929803432,
+    "tsbMinApp": -4.49001806678249,
     "tsbMinReal": -4.479419304850779
    },
    {
@@ -5758,7 +5741,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.833333333333333,
-    "tssApp": 348,
+    "tssApp": 311,
     "tssReal": 310.37983139884216,
     "z": {
      "lo": 365,
@@ -5785,33 +5768,33 @@
      "Long Ride, wellig 135′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 43.606686204528074,
+    "ctlApp": 39.20356749751896,
     "ctlReal": 39.15560047587097,
-    "rampApp": 1.1733816632144993,
+    "rampApp": 1.0113659407573081,
     "rampReal": 1.003243572410426,
-    "tsbMinApp": -8.951137050683002,
+    "tsbMinApp": -7.9790904947559795,
     "tsbMinReal": -7.945433733770258
    },
    {
     "w": 12,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "base",
+    "phName": "Basis",
     "rec": true,
     "budget": 7,
     "nDays": 5,
     "h": 4.45,
-    "tssApp": 235,
-    "tssReal": 204.74825393637457,
+    "tssApp": 188,
+    "tssReal": 188.38548553557212,
     "z": {
-     "lo": 232,
-     "mid": 30,
+     "lo": 262,
+     "mid": 0,
      "hi": 5
     },
     "hard": 1,
     "key": 2,
     "rides": 4,
-    "long": 120,
-    "maxSes": 120,
+    "long": 90,
+    "maxSes": 90,
     "test": false,
     "str": "leicht",
     "strDays": [
@@ -5821,16 +5804,16 @@
      "–",
      "Spritzig 5×1 42′",
      "–",
-     "Grundlage Z2 60′",
+     "Grundlage Z2 90′",
      "–",
-     "Long Ride, wellig 120′",
+     "Long Ride 90′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 42.13095048275956,
-    "ctlReal": 37.72765823302922,
-    "rampApp": -1.4757357217685154,
-    "rampReal": -1.4279422428417519,
-    "tsbMinApp": -5.446762283474051,
+    "ctlApp": 37.36092242783397,
+    "ctlReal": 37.32880960914771,
+    "rampApp": -1.8426450696849912,
+    "rampReal": -1.8267908667232575,
+    "tsbMinApp": -4.649360422973203,
     "tsbMinReal": -4.597509055481218
    },
    {
@@ -5841,7 +5824,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.7,
-    "tssApp": 396,
+    "tssApp": 356,
     "tssReal": 358.0960394279865,
     "z": {
      "lo": 297,
@@ -5868,12 +5851,12 @@
      "Long Ride, wellig 180′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 44.46113931795772,
-    "ctlReal": 39.924164317369,
-    "rampApp": 2.3301888351981646,
-    "rampReal": 2.196506084339781,
-    "tsbMinApp": -12.855342588358056,
-    "tsbMinReal": -13.039106722989686
+    "ctlApp": 39.56579504352638,
+    "ctlReal": 39.58654624625553,
+    "rampApp": 2.204872615692409,
+    "rampReal": 2.2577366371078185,
+    "tsbMinApp": -12.04102728967419,
+    "tsbMinReal": -12.322447370470478
    },
    {
     "w": 14,
@@ -5883,7 +5866,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.966666666666667,
-    "tssApp": 409,
+    "tssApp": 367,
     "tssReal": 375.371539765104,
     "z": {
      "lo": 304.25,
@@ -5907,15 +5890,15 @@
      "–",
      "Sweet Spot 2×25 81′",
      "Grundlage mit Trittfrequenz 45′",
-     "Long Ride, wellig 195′",
+     "Long Ride mit hartem Finale 195′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 46.731204701149615,
-    "ctlReal": 42.17555394712483,
-    "rampApp": 2.2700653831918913,
-    "rampReal": 2.2513896297558347,
-    "tsbMinApp": -17.491201978865057,
-    "tsbMinReal": -18.01108463143658
+    "ctlApp": 41.680627888462375,
+    "ctlReal": 41.88976641993445,
+    "rampApp": 2.1148328449359965,
+    "rampReal": 2.3032201736789233,
+    "tsbMinApp": -16.90491428466465,
+    "tsbMinReal": -17.91291859219063
    },
    {
     "w": 15,
@@ -5925,7 +5908,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 4.45,
-    "tssApp": 235,
+    "tssApp": 204,
     "tssReal": 204.74825393637457,
     "z": {
      "lo": 232,
@@ -5951,12 +5934,12 @@
      "Long Ride, wellig 120′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 44.77579828923239,
-    "ctlReal": 40.28399365646558,
-    "rampApp": -1.9554064119172239,
-    "rampReal": -1.8915602906592497,
-    "tsbMinApp": -12.49927713969604,
-    "tsbMinReal": -12.984256473521981
+    "ctlApp": 39.84774078413883,
+    "ctlReal": 40.04207973749727,
+    "rampApp": -1.8328871043235466,
+    "rampReal": -1.8476866824371854,
+    "tsbMinApp": -12.108948231500314,
+    "tsbMinReal": -12.931233716610379
    },
    {
     "w": 16,
@@ -5966,7 +5949,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.85,
-    "tssApp": 387,
+    "tssApp": 359,
     "tssReal": 361.31284322443025,
     "z": {
      "lo": 296,
@@ -5993,12 +5976,12 @@
      "Long Ride, wellig 180′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 46.51298473351734,
-    "ctlReal": 42.15983574407051,
-    "rampApp": 1.7371864442849514,
-    "rampReal": 1.87584208760493,
-    "tsbMinApp": -11.691149643493468,
-    "tsbMinReal": -12.88417663229616
+    "ctlApp": 41.73757905711379,
+    "ctlReal": 41.95506003266718,
+    "rampApp": 1.8898382729749628,
+    "rampReal": 1.912980295169909,
+    "tsbMinApp": -12.732334695085576,
+    "tsbMinReal": -13.040992063004794
    },
    {
     "w": 17,
@@ -6008,7 +5991,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.9,
-    "tssApp": 403,
+    "tssApp": 355,
     "tssReal": 362.4731595638334,
     "z": {
      "lo": 313.25,
@@ -6032,15 +6015,15 @@
      "–",
      "Over-Under leicht 4×9 76′",
      "Grundlage mit Sprints 45′",
-     "Long Ride, wellig 195′",
+     "Long Ride mit hartem Finale 195′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 48.335597615386654,
-    "ctlReal": 43.784974586177945,
-    "rampApp": 1.8226128818693113,
-    "rampReal": 1.6251388421074324,
-    "tsbMinApp": -15.567796598348949,
-    "tsbMinReal": -15.846164479276467
+    "ctlApp": 43.25510861307507,
+    "ctlReal": 43.61163568877354,
+    "rampApp": 1.517529555961282,
+    "rampReal": 1.6565756561063623,
+    "tsbMinApp": -15.139698950723634,
+    "tsbMinReal": -16.004221255846858
    },
    {
     "w": 18,
@@ -6050,7 +6033,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 4.45,
-    "tssApp": 235,
+    "tssApp": 204,
     "tssReal": 204.74825393637457,
     "z": {
      "lo": 232,
@@ -6076,12 +6059,12 @@
      "Long Ride, wellig 120′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 46.133887570678034,
-    "ctlReal": 41.64633881508582,
-    "rampApp": -2.2017100447086193,
-    "rampReal": -2.138635771092126,
-    "tsbMinApp": -10.65185132697436,
-    "tsbMinReal": -10.926902558744764
+    "ctlApp": 41.18050994371601,
+    "ctlReal": 41.49961060622031,
+    "rampApp": -2.0745986693590623,
+    "rampReal": -2.112025082553231,
+    "tsbMinApp": -10.402011053007442,
+    "tsbMinReal": -11.083373085370837
    },
    {
     "w": 19,
@@ -6091,7 +6074,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.25,
-    "tssApp": 386,
+    "tssApp": 347,
     "tssReal": 348.82412745050897,
     "z": {
      "lo": 254,
@@ -6118,12 +6101,12 @@
      "Long Ride, wellig 180′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 47.6120516651528,
-    "ctlReal": 43.020679896589414,
-    "rampApp": 1.4781640944747636,
-    "rampReal": 1.3743410815035944,
-    "tsbMinApp": -9.647182629507157,
-    "tsbMinReal": -10.145314229666099
+    "ctlApp": 42.583939503855554,
+    "ctlReal": 42.896477149258835,
+    "rampApp": 1.4034295601395428,
+    "rampReal": 1.3968665430385272,
+    "tsbMinApp": -10.103123904141405,
+    "tsbMinReal": -10.269876214127947
    },
    {
     "w": 20,
@@ -6133,7 +6116,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 7,
-    "tssApp": 420,
+    "tssApp": 381,
     "tssReal": 380.5283960495818,
     "z": {
      "lo": 295.25,
@@ -6157,15 +6140,15 @@
      "–",
      "Sweet Spot 3×20 Trittwechsel 97′",
      "Grundlage mit Trittfrequenz 30′",
-     "Long Ride, wellig 195′",
+     "Long Ride mit hartem Finale 195′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 49.63253919218835,
-    "ctlReal": 44.90609119232151,
-    "rampApp": 2.0204875270355487,
-    "rampReal": 1.8854112957320979,
-    "tsbMinApp": -15.433401803216377,
-    "tsbMinReal": -15.718824377308053
+    "ctlApp": 44.54796748913456,
+    "ctlReal": 44.80095583652499,
+    "rampApp": 1.964027985279003,
+    "rampReal": 1.904478687266156,
+    "tsbMinApp": -15.971664751502956,
+    "tsbMinReal": -15.825524199340585
    },
    {
     "w": 21,
@@ -6175,7 +6158,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 4.45,
-    "tssApp": 235,
+    "tssApp": 204,
     "tssReal": 204.74825393637457,
     "z": {
      "lo": 232,
@@ -6201,12 +6184,12 @@
      "Long Ride, wellig 120′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 47.23172491369149,
-    "ctlReal": 42.59534353365775,
-    "rampApp": -2.40081427849686,
-    "rampReal": -2.3107476586637645,
-    "tsbMinApp": -10.389785892522383,
-    "tsbMinReal": -10.690686305123698
+    "ctlApp": 42.27489135516298,
+    "ctlReal": 42.50634837633611,
+    "rampApp": -2.2730761339715784,
+    "rampReal": -2.294607460188878,
+    "tsbMinApp": -10.978120482114441,
+    "tsbMinReal": -10.79498183419102
    },
    {
     "w": 22,
@@ -6216,7 +6199,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.366666666666666,
-    "tssApp": 375,
+    "tssApp": 345,
     "tssReal": 347.0670783538967,
     "z": {
      "lo": 257,
@@ -6243,33 +6226,33 @@
      "Long Ride, wellig 180′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 48.3115870328958,
-    "ctlReal": 43.78729446425698,
-    "rampApp": 1.0798621192043143,
-    "rampReal": 1.1919509305992335,
-    "tsbMinApp": -8.265413547228718,
-    "tsbMinReal": -9.366288082844996
+    "ctlApp": 43.46853811779261,
+    "ctlReal": 43.711961689980456,
+    "rampApp": 1.1936467626296334,
+    "rampReal": 1.205613313644342,
+    "tsbMinApp": -9.338637433659386,
+    "tsbMinReal": -9.443304905804538
    },
    {
     "w": 23,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": false,
     "budget": 7,
     "nDays": 5,
-    "h": 6.85,
-    "tssApp": 432,
-    "tssReal": 385.9457856807339,
+    "h": 6.783333333333333,
+    "tssApp": 365,
+    "tssReal": 364.22225046167995,
     "z": {
-     "lo": 294.75,
-     "mid": 80.25,
-     "hi": 36
+     "lo": 302.25,
+     "mid": 72.75,
+     "hi": 32
     },
     "hard": 2,
     "key": 3,
-    "rides": 4,
-    "long": 225,
-    "maxSes": 225,
+    "rides": 5,
+    "long": 195,
+    "maxSes": 195,
     "test": false,
     "str": "erh",
     "strDays": [
@@ -6279,38 +6262,38 @@
      "–",
      "VO2max 5×4 61′",
      "–",
-     "Over-Under 4×10 80′",
-     "–",
-     "Eventsimulation 225′",
+     "Over-Under leicht 4×9 76′",
+     "Grundlage mit Sprints 30′",
+     "Long Ride mit hartem Finale 195′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 50.48839461177161,
-    "ctlReal": 45.67438446577756,
-    "rampApp": 2.1768075788758097,
-    "rampReal": 1.8870900015205763,
-    "tsbMinApp": -15.65366382591914,
-    "tsbMinReal": -15.618934187295679
+    "ctlApp": 44.93098198989519,
+    "ctlReal": 45.11876747784558,
+    "rampApp": 1.4624438721025754,
+    "rampReal": 1.4068057878651246,
+    "tsbMinApp": -13.657911056885851,
+    "tsbMinReal": -13.499222436727685
    },
    {
     "w": 24,
-    "ph": "peak",
-    "phName": "Spitze",
+    "ph": "build",
+    "phName": "Aufbau",
     "rec": true,
     "budget": 7,
     "nDays": 5,
-    "h": 4.7,
-    "tssApp": 248,
-    "tssReal": 219.56457103657516,
+    "h": 4.45,
+    "tssApp": 204,
+    "tssReal": 204.74825393637457,
     "z": {
-     "lo": 239.5,
-     "mid": 37.5,
+     "lo": 232,
+     "mid": 30,
      "hi": 5
     },
     "hard": 1,
     "key": 2,
     "rides": 4,
-    "long": 150,
-    "maxSes": 150,
+    "long": 120,
+    "maxSes": 120,
     "test": false,
     "str": "leicht",
     "strDays": [
@@ -6320,17 +6303,17 @@
      "–",
      "Spritzig 5×1 42′",
      "–",
-     "Grundlage Z2 45′",
+     "Grundlage Z2 60′",
      "–",
-     "Eventsimulation 150′",
+     "Long Ride, wellig 120′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 48.266614744067304,
-    "ctlReal": 43.59754986494382,
-    "rampApp": -2.2217798677043064,
-    "rampReal": -2.0768346008337346,
-    "tsbMinApp": -10.484669688641652,
-    "tsbMinReal": -10.517864714966471
+    "ctlApp": 42.59910613042496,
+    "ctlReal": 42.775370122671475,
+    "rampApp": -2.3318758594702302,
+    "rampReal": -2.3433973551741047,
+    "tsbMinApp": -8.929391107454414,
+    "tsbMinReal": -8.742692825385149
    },
    {
     "w": 25,
@@ -6340,7 +6323,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.933333333333334,
-    "tssApp": 451,
+    "tssApp": 385,
     "tssReal": 387.1031215844266,
     "z": {
      "lo": 298.5,
@@ -6366,12 +6349,12 @@
      "Eventsimulation 210′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 50.853726050973194,
-    "ctlReal": 45.5285866363167,
-    "rampApp": 2.5871113069058893,
-    "rampReal": 1.9310367713728809,
-    "tsbMinApp": -14.389433935686583,
-    "tsbMinReal": -13.104349798941897
+    "ctlApp": 44.634737522790154,
+    "ctlReal": 44.832626509907875,
+    "rampApp": 2.0356313923651967,
+    "rampReal": 2.0572563872364,
+    "tsbMinApp": -12.439436566843412,
+    "tsbMinReal": -12.597063040346939
    },
    {
     "w": 26,
@@ -6381,7 +6364,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.516666666666667,
-    "tssApp": 448,
+    "tssApp": 395,
     "tssReal": 398.8149160798255,
     "z": {
      "lo": 257.75,
@@ -6407,12 +6390,12 @@
      "Eventsimulation 225′",
      "– +Kraft"
     ],
-    "ctlApp": 52.94531507100487,
-    "ctlReal": 47.390225014394886,
-    "rampApp": 2.0915890200316767,
-    "rampReal": 1.861638378078183,
-    "tsbMinApp": -19.49658568257351,
-    "tsbMinReal": -18.369122306754946
+    "ctlApp": 46.54670431287206,
+    "ctlReal": 46.80110748613724,
+    "rampApp": 1.9119667900819053,
+    "rampReal": 1.9684809762293654,
+    "tsbMinApp": -18.175795432302344,
+    "tsbMinReal": -18.523615879070945
    },
    {
     "w": 27,
@@ -6422,7 +6405,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 4.7,
-    "tssApp": 248,
+    "tssApp": 218,
     "tssReal": 219.56457103657516,
     "z": {
      "lo": 239.5,
@@ -6448,12 +6431,12 @@
      "Eventsimulation 150′",
      "Rekom-Fahrt 45′ +Kraft"
     ],
-    "ctlApp": 50.34635301231811,
-    "ctlReal": 45.04997753217468,
-    "rampApp": -2.598962058686759,
-    "rampReal": -2.3402474822202066,
-    "tsbMinApp": -10.95886961904229,
-    "tsbMinReal": -10.60496915070123
+    "ctlApp": 44.300184139691446,
+    "ctlReal": 44.55130031069185,
+    "rampApp": -2.2465201731806133,
+    "rampReal": -2.2498071754453903,
+    "tsbMinApp": -10.532050458723283,
+    "tsbMinReal": -10.805015510571018
    },
    {
     "w": 28,
@@ -6463,7 +6446,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 6.316666666666666,
-    "tssApp": 441,
+    "tssApp": 386,
     "tssReal": 389.0046248827817,
     "z": {
      "lo": 257.5,
@@ -6489,12 +6472,12 @@
      "Eventsimulation 210′",
      "– +Kraft"
     ],
-    "ctlApp": 52.344574411537906,
-    "ctlReal": 46.75352309129804,
-    "rampApp": 1.9982213992197941,
-    "rampReal": 1.7035455591233628,
-    "tsbMinApp": -13.74336766163939,
-    "tsbMinReal": -13.360901704242742
+    "ctlApp": 46.05047708262265,
+    "ctlReal": 46.331401936693595,
+    "rampApp": 1.7502929429312033,
+    "rampReal": 1.7801016260017448,
+    "tsbMinApp": -13.48156054882832,
+    "tsbMinReal": -13.732452936357518
    },
    {
     "w": 29,
@@ -6504,7 +6487,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 4.583333333333333,
-    "tssApp": 280,
+    "tssApp": 216,
     "tssReal": 215.3007440225527,
     "z": {
      "lo": 247,
@@ -6528,12 +6511,12 @@
      "Long Ride 75′",
      "Rekom-Fahrt 45′"
     ],
-    "ctlApp": 50.49179903511541,
-    "ctlReal": 44.35674654289588,
-    "rampApp": -1.8527753764224926,
-    "rampReal": -2.3967765484021655,
-    "tsbMinApp": -6.038955876652352,
-    "tsbMinReal": -6.334913299248598
+    "ctlApp": 43.778021946361264,
+    "ctlReal": 43.99942869983349,
+    "rampApp": -2.272455136261385,
+    "rampReal": -2.331973236860108,
+    "tsbMinApp": -6.518415784568518,
+    "tsbMinReal": -6.704379397080075
    },
    {
     "w": 30,
@@ -6543,7 +6526,7 @@
     "budget": 7,
     "nDays": 5,
     "h": 7.366666666666666,
-    "tssApp": 423,
+    "tssApp": 481,
     "tssReal": 480.57942111898626,
     "z": {
      "lo": 177,
@@ -6567,12 +6550,12 @@
      "Aktivierung vor dem Event 30′",
      "Eventtag: Radmarathon 150 320′"
     ],
-    "ctlApp": 52.37481761877133,
-    "ctlReal": 48.649054281603725,
-    "rampApp": 1.8830185836559181,
-    "rampReal": 4.292307738707848,
-    "tsbMinApp": 2.945597785925351,
-    "tsbMinReal": 4.150586163532836
+    "ctlApp": 48.168633614620816,
+    "ctlReal": 48.34659125747409,
+    "rampApp": 4.390611668259552,
+    "rampReal": 4.347162557640601,
+    "tsbMinApp": 3.6741621434033007,
+    "tsbMinReal": 3.8126390333309317
    }
   ]
  },
@@ -6594,12 +6577,12 @@
     "key": "build",
     "name": "Aufbau",
     "from": 5,
-    "to": 9
+    "to": 8
    },
    {
     "key": "peak",
     "name": "Spitze",
-    "from": 10,
+    "from": 9,
     "to": 11
    },
    {
@@ -6698,11 +6681,11 @@
     "w": 13,
     "i": 6,
     "n": "Eventtag: Frühjahrsklassiker 100",
-    "tsbApp": 9.984797242761143,
+    "tsbApp": 8.692087443984288,
     "tsbReal": 8.676776355392434,
-    "ctlApp": 29.789142321061863,
+    "ctlApp": 27.976572455641207,
     "ctlReal": 28.0035954396864,
-    "peakApp": 32.145384383946855,
+    "peakApp": 27.976572455641207,
     "peakReal": 28.0035954396864
    }
   ],
@@ -6715,7 +6698,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.5166666666666666,
-    "tssApp": 218,
+    "tssApp": 175,
     "tssReal": 174.53215233856608,
     "z": {
      "lo": 175,
@@ -6739,11 +6722,11 @@
      "Sweet Spot 3×12 91′",
      "Long Ride 120′"
     ],
-    "ctlApp": 23.685340473925656,
+    "ctlApp": 22.690784027370814,
     "ctlReal": 22.679927404419175,
-    "rampApp": 1.6853404739256561,
+    "rampApp": 0.6907840273708139,
     "rampReal": 0.6799274044191748,
-    "tsbMinApp": -3.416143238636298,
+    "tsbMinApp": -0.01873584467238487,
     "tsbMinReal": 0
    },
    {
@@ -6754,7 +6737,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.3833333333333333,
-    "tssApp": 200,
+    "tssApp": 157,
     "tssReal": 156.16856181725956,
     "z": {
      "lo": 185,
@@ -6778,11 +6761,11 @@
      "Over-Under leicht 2×9 68′",
      "Long Ride, negativer Split 135′"
     ],
-    "ctlApp": 24.705048190932295,
+    "ctlApp": 22.86806430646764,
     "ctlReal": 22.839512466942537,
-    "rampApp": 1.0197077170066393,
+    "rampApp": 0.1772802790968271,
     "rampReal": 0.15958506252336235,
-    "tsbMinApp": -11.302045857315761,
+    "tsbMinApp": -7.121718293951016,
     "tsbMinReal": -7.075129321694639
    },
    {
@@ -6793,7 +6776,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.933333333333333,
-    "tssApp": 236,
+    "tssApp": 196,
     "tssReal": 196.02956709972818,
     "z": {
      "lo": 196,
@@ -6817,11 +6800,11 @@
      "Sweet Spot 2×20 86′",
      "Long Ride, wellig 150′"
     ],
-    "ctlApp": 26.40194546193182,
+    "ctlApp": 23.91967917912841,
     "ctlReal": 23.896331720212114,
-    "rampApp": 1.696897270999525,
+    "rampApp": 1.0516148726607675,
     "rampReal": 1.0568192532695768,
-    "tsbMinApp": -13.19557756887479,
+    "tsbMinApp": -7.936222512148685,
     "tsbMinReal": -7.839374801463258
    },
    {
@@ -6832,7 +6815,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 2.533333333333333,
-    "tssApp": 176,
+    "tssApp": 122,
     "tssReal": 122.67535225490948,
     "z": {
      "lo": 143,
@@ -6856,11 +6839,11 @@
      "VO2max Auffrischung 3×3 62′",
      "Long Ride 90′"
     ],
-    "ctlApp": 26.432728586803165,
+    "ctlApp": 23.085917790123617,
     "ctlReal": 23.08186645923396,
-    "rampApp": 0.030783124871344825,
+    "rampApp": -0.8337613890047919,
     "rampReal": -0.8144652609781531,
-    "tsbMinApp": -16.937480954049935,
+    "tsbMinApp": -11.927303362185278,
     "tsbMinReal": -11.912472098621794
    },
    {
@@ -6871,7 +6854,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3,
-    "tssApp": 175,
+    "tssApp": 169,
     "tssReal": 166.9545983381696,
     "z": {
      "lo": 130,
@@ -6893,13 +6876,13 @@
      "–",
      "–",
      "Fitness-Check: 20-Min-Test 60′",
-     "Long Ride, wellig 120′"
+     "Long Ride mit hartem Finale 120′"
     ],
-    "ctlApp": 26.449650745847773,
+    "ctlApp": 23.48210966805328,
     "ctlReal": 23.430673446281343,
-    "rampApp": 0.01692215904460781,
+    "rampApp": 0.39619187792966315,
     "rampReal": 0.3488069870473822,
-    "tsbMinApp": -11.115131189550048,
+    "tsbMinApp": -5.314499717989641,
     "tsbMinReal": -5.388710920076733
    },
    {
@@ -6910,7 +6893,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.45,
-    "tssApp": 230,
+    "tssApp": 194,
     "tssReal": 195.95366863065334,
     "z": {
      "lo": 158.25,
@@ -6934,11 +6917,11 @@
      "VO2max 5×3 72′",
      "Long Ride, wellig 135′"
     ],
-    "ctlApp": 27.734228272604767,
+    "ctlApp": 24.396829381500908,
     "ctlReal": 24.39924782297508,
-    "rampApp": 1.284577526756994,
+    "rampApp": 0.9147197134476279,
     "rampReal": 0.9685743766937378,
-    "tsbMinApp": -9.295247464309899,
+    "tsbMinApp": -8.311557913716403,
     "tsbMinReal": -8.120294036515094
    },
    {
@@ -6949,7 +6932,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.716666666666667,
-    "tssApp": 244,
+    "tssApp": 216,
     "tssReal": 209.10175175265803,
     "z": {
      "lo": 169.5,
@@ -6971,13 +6954,13 @@
      "–",
      "–",
      "VO2max 4×4 73′",
-     "Long Ride, wellig 150′"
+     "Long Ride mit hartem Finale 150′"
     ],
-    "ctlApp": 29.149888897020364,
+    "ctlApp": 25.688745795982157,
     "ctlReal": 25.52827178938317,
-    "rampApp": 1.4156606244155974,
+    "rampApp": 1.2919164144812498,
     "rampReal": 1.1290239664080879,
-    "tsbMinApp": -13.907088734145631,
+    "tsbMinApp": -11.689653750167153,
     "tsbMinReal": -11.857762835852174
    },
    {
@@ -6988,7 +6971,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 2.5833333333333335,
-    "tssApp": 181,
+    "tssApp": 133,
     "tssReal": 135.11481786513568,
     "z": {
      "lo": 124.5,
@@ -7012,22 +6995,22 @@
      "VO2max Auffrischung 4×2 65′",
      "Long Ride, wellig 90′"
     ],
-    "ctlApp": 28.873686144732588,
+    "ctlApp": 24.842211798229705,
     "ctlReal": 24.755860885030078,
-    "rampApp": -0.2762027522877766,
+    "rampApp": -0.8465339977524522,
     "rampReal": -0.7724109043530909,
-    "tsbMinApp": -16.488865777880964,
+    "tsbMinApp": -14.905662126730604,
     "tsbMinReal": -14.203612853472158
    },
    {
     "w": 9,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "peak",
+    "phName": "Spitze",
     "rec": false,
     "budget": 4,
     "nDays": 2,
     "h": 3.216666666666667,
-    "tssApp": 220,
+    "tssApp": 182,
     "tssReal": 183.55980965245743,
     "z": {
      "lo": 147,
@@ -7049,13 +7032,13 @@
      "–",
      "–",
      "VO2max 4×4 73′",
-     "Long Ride, wellig 120′"
+     "Eventsimulation 120′"
     ],
-    "ctlApp": 29.549739641713145,
+    "ctlApp": 25.265791218506966,
     "ctlReal": 25.229179412026227,
-    "rampApp": 0.6760534969805576,
+    "rampApp": 0.42357942027726025,
     "rampReal": 0.47331852699614885,
-    "tsbMinApp": -10.097052259956143,
+    "tsbMinApp": -6.769029008943768,
     "tsbMinReal": -6.810938674935702
    },
    {
@@ -7066,7 +7049,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.6,
-    "tssApp": 245,
+    "tssApp": 204,
     "tssReal": 205.74765546586517,
     "z": {
      "lo": 162.25,
@@ -7090,11 +7073,11 @@
      "VO2max 5×4 am Berg 81′",
      "Eventsimulation 135′"
     ],
-    "ctlApp": 30.70301784577262,
+    "ctlApp": 26.136430535172174,
     "ctlReal": 26.146664476060398,
-    "rampApp": 1.1532782040594753,
+    "rampApp": 0.8706393166652084,
     "rampReal": 0.917485064034171,
-    "tsbMinApp": -11.911633663461686,
+    "tsbMinApp": -9.156115650270113,
     "tsbMinReal": -9.37707601596589
    },
    {
@@ -7105,7 +7088,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.933333333333333,
-    "tssApp": 265,
+    "tssApp": 230,
     "tssReal": 231.72627168238412,
     "z": {
      "lo": 166.5,
@@ -7129,11 +7112,11 @@
      "VO2max 4×8 86′",
      "Eventsimulation 150′"
     ],
-    "ctlApp": 32.145384383946855,
+    "ctlApp": 27.477950392865324,
     "ctlReal": 27.527220329903205,
-    "rampApp": 1.4423665381742339,
+    "rampApp": 1.3415198576931502,
     "rampReal": 1.3805558538428073,
-    "tsbMinApp": -14.772281924526595,
+    "tsbMinApp": -12.070933863413948,
     "tsbMinReal": -12.36455582721268
    },
    {
@@ -7144,7 +7127,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 1.95,
-    "tssApp": 131,
+    "tssApp": 95,
     "tssReal": 94.55611053557212,
     "z": {
      "lo": 112,
@@ -7168,11 +7151,11 @@
      "Spritzig 5×1 42′",
      "Long Ride 75′"
     ],
-    "ctlApp": 30.253938762121965,
+    "ctlApp": 25.472075770359663,
     "ctlReal": 25.50337776711524,
-    "rampApp": -1.8914456218248894,
+    "rampApp": -2.0058746225056616,
     "rampReal": -2.0238425627879657,
-    "tsbMinApp": -17.327226467642568,
+    "tsbMinApp": -15.352801196386466,
     "tsbMinReal": -15.644825022852789
    },
    {
@@ -7183,7 +7166,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.8333333333333335,
-    "tssApp": 178,
+    "tssApp": 273,
     "tssReal": 273.02531475679245,
     "z": {
      "lo": 80,
@@ -7207,11 +7190,11 @@
      "Aktivierung vor dem Event 30′",
      "Eventtag: Frühjahrsklassiker 100 200′"
     ],
-    "ctlApp": 29.789142321061863,
+    "ctlApp": 27.976572455641207,
     "ctlReal": 28.0035954396864,
-    "rampApp": -0.464796441060102,
+    "rampApp": 2.504496685281545,
     "rampReal": 2.5002176725711607,
-    "tsbMinApp": -4.144508253734603,
+    "tsbMinApp": -2.204495476408063,
     "tsbMinReal": -2.240933144730967
    }
   ]
@@ -7234,12 +7217,12 @@
     "key": "build",
     "name": "Aufbau",
     "from": 5,
-    "to": 9
+    "to": 8
    },
    {
     "key": "peak",
     "name": "Spitze",
-    "from": 10,
+    "from": 9,
     "to": 11
    },
    {
@@ -7337,11 +7320,11 @@
     "w": 13,
     "i": 6,
     "n": "Eventtag: Frühjahrsklassiker 80",
-    "tsbApp": 9.984797242761143,
+    "tsbApp": 8.596836262713039,
     "tsbReal": 8.676776355392434,
-    "ctlApp": 28.824481473803836,
+    "ctlApp": 26.65659392847366,
     "ctlReal": 26.78916085103858,
-    "peakApp": 32.145384383946855,
+    "peakApp": 27.343265094874774,
     "peakReal": 27.527220329903205
    }
   ],
@@ -7354,7 +7337,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.5166666666666666,
-    "tssApp": 218,
+    "tssApp": 175,
     "tssReal": 174.53215233856608,
     "z": {
      "lo": 175,
@@ -7378,11 +7361,11 @@
      "Sweet Spot 3×12 91′",
      "Long Ride 120′"
     ],
-    "ctlApp": 23.685340473925656,
+    "ctlApp": 22.690784027370814,
     "ctlReal": 22.679927404419175,
-    "rampApp": 1.6853404739256561,
+    "rampApp": 0.6907840273708139,
     "rampReal": 0.6799274044191748,
-    "tsbMinApp": -3.416143238636298,
+    "tsbMinApp": -0.01873584467238487,
     "tsbMinReal": 0
    },
    {
@@ -7393,7 +7376,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.3833333333333333,
-    "tssApp": 200,
+    "tssApp": 157,
     "tssReal": 156.16856181725956,
     "z": {
      "lo": 185,
@@ -7417,11 +7400,11 @@
      "Over-Under leicht 2×9 68′",
      "Long Ride, negativer Split 135′"
     ],
-    "ctlApp": 24.705048190932295,
+    "ctlApp": 22.86806430646764,
     "ctlReal": 22.839512466942537,
-    "rampApp": 1.0197077170066393,
+    "rampApp": 0.1772802790968271,
     "rampReal": 0.15958506252336235,
-    "tsbMinApp": -11.302045857315761,
+    "tsbMinApp": -7.121718293951016,
     "tsbMinReal": -7.075129321694639
    },
    {
@@ -7432,7 +7415,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.933333333333333,
-    "tssApp": 236,
+    "tssApp": 196,
     "tssReal": 196.02956709972818,
     "z": {
      "lo": 196,
@@ -7456,11 +7439,11 @@
      "Sweet Spot 2×20 86′",
      "Long Ride, wellig 150′"
     ],
-    "ctlApp": 26.40194546193182,
+    "ctlApp": 23.91967917912841,
     "ctlReal": 23.896331720212114,
-    "rampApp": 1.696897270999525,
+    "rampApp": 1.0516148726607675,
     "rampReal": 1.0568192532695768,
-    "tsbMinApp": -13.19557756887479,
+    "tsbMinApp": -7.936222512148685,
     "tsbMinReal": -7.839374801463258
    },
    {
@@ -7471,7 +7454,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 2.533333333333333,
-    "tssApp": 176,
+    "tssApp": 122,
     "tssReal": 122.67535225490948,
     "z": {
      "lo": 143,
@@ -7495,11 +7478,11 @@
      "VO2max Auffrischung 3×3 62′",
      "Long Ride 90′"
     ],
-    "ctlApp": 26.432728586803165,
+    "ctlApp": 23.085917790123617,
     "ctlReal": 23.08186645923396,
-    "rampApp": 0.030783124871344825,
+    "rampApp": -0.8337613890047919,
     "rampReal": -0.8144652609781531,
-    "tsbMinApp": -16.937480954049935,
+    "tsbMinApp": -11.927303362185278,
     "tsbMinReal": -11.912472098621794
    },
    {
@@ -7510,7 +7493,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3,
-    "tssApp": 175,
+    "tssApp": 166,
     "tssReal": 166.9545983381696,
     "z": {
      "lo": 130,
@@ -7534,11 +7517,11 @@
      "Fitness-Check: 20-Min-Test 60′",
      "Long Ride, wellig 120′"
     ],
-    "ctlApp": 26.449650745847773,
+    "ctlApp": 23.411524728010008,
     "ctlReal": 23.430673446281343,
-    "rampApp": 0.01692215904460781,
+    "rampApp": 0.3256069378863913,
     "rampReal": 0.3488069870473822,
-    "tsbMinApp": -11.115131189550048,
+    "tsbMinApp": -5.314499717989641,
     "tsbMinReal": -5.388710920076733
    },
    {
@@ -7549,7 +7532,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.45,
-    "tssApp": 230,
+    "tssApp": 194,
     "tssReal": 195.95366863065334,
     "z": {
      "lo": 158.25,
@@ -7573,11 +7556,11 @@
      "VO2max 5×3 72′",
      "Long Ride, wellig 135′"
     ],
-    "ctlApp": 27.734228272604767,
+    "ctlApp": 24.33708051970178,
     "ctlReal": 24.39924782297508,
-    "rampApp": 1.284577526756994,
+    "rampApp": 0.9255557916917709,
     "rampReal": 0.9685743766937378,
-    "tsbMinApp": -9.295247464309899,
+    "tsbMinApp": -7.982776553010218,
     "tsbMinReal": -8.120294036515094
    },
    {
@@ -7588,7 +7571,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.716666666666667,
-    "tssApp": 244,
+    "tssApp": 207,
     "tssReal": 209.10175175265803,
     "z": {
      "lo": 169.5,
@@ -7612,11 +7595,11 @@
      "VO2max 4×4 73′",
      "Long Ride, wellig 150′"
     ],
-    "ctlApp": 29.149888897020364,
+    "ctlApp": 25.426414656256366,
     "ctlReal": 25.52827178938317,
-    "rampApp": 1.4156606244155974,
+    "rampApp": 1.0893341365545872,
     "rampReal": 1.1290239664080879,
-    "tsbMinApp": -13.907088734145631,
+    "tsbMinApp": -11.602483960423868,
     "tsbMinReal": -11.857762835852174
    },
    {
@@ -7627,7 +7610,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 2.5833333333333335,
-    "tssApp": 181,
+    "tssApp": 133,
     "tssReal": 135.11481786513568,
     "z": {
      "lo": 124.5,
@@ -7651,22 +7634,22 @@
      "VO2max Auffrischung 4×2 65′",
      "Long Ride, wellig 90′"
     ],
-    "ctlApp": 28.873686144732588,
+    "ctlApp": 24.6201532825821,
     "ctlReal": 24.755860885030078,
-    "rampApp": -0.2762027522877766,
+    "rampApp": -0.8062613736742676,
     "rampReal": -0.7724109043530909,
-    "tsbMinApp": -16.488865777880964,
+    "tsbMinApp": -13.915846012780943,
     "tsbMinReal": -14.203612853472158
    },
    {
     "w": 9,
-    "ph": "build",
-    "phName": "Aufbau",
+    "ph": "peak",
+    "phName": "Spitze",
     "rec": false,
     "budget": 4,
     "nDays": 2,
     "h": 3.216666666666667,
-    "tssApp": 220,
+    "tssApp": 182,
     "tssReal": 183.55980965245743,
     "z": {
      "lo": 147,
@@ -7688,13 +7671,13 @@
      "–",
      "–",
      "VO2max 4×4 73′",
-     "Long Ride, wellig 120′"
+     "Eventsimulation 120′"
     ],
-    "ctlApp": 29.549739641713145,
+    "ctlApp": 25.077822743154933,
     "ctlReal": 25.229179412026227,
-    "rampApp": 0.6760534969805576,
+    "rampApp": 0.4576694605728342,
     "rampReal": 0.47331852699614885,
-    "tsbMinApp": -10.097052259956143,
+    "tsbMinApp": -6.530448292644888,
     "tsbMinReal": -6.810938674935702
    },
    {
@@ -7705,7 +7688,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.6,
-    "tssApp": 245,
+    "tssApp": 204,
     "tssReal": 205.74765546586517,
     "z": {
      "lo": 162.25,
@@ -7729,11 +7712,11 @@
      "VO2max 5×4 am Berg 81′",
      "Eventsimulation 135′"
     ],
-    "ctlApp": 30.70301784577262,
+    "ctlApp": 25.97731865593112,
     "ctlReal": 26.146664476060398,
-    "rampApp": 1.1532782040594753,
+    "rampApp": 0.8994959127761888,
     "rampReal": 0.917485064034171,
-    "tsbMinApp": -11.911633663461686,
+    "tsbMinApp": -9.174624422392029,
     "tsbMinReal": -9.37707601596589
    },
    {
@@ -7744,7 +7727,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3.933333333333333,
-    "tssApp": 265,
+    "tssApp": 230,
     "tssReal": 231.72627168238412,
     "z": {
      "lo": 166.5,
@@ -7768,11 +7751,11 @@
      "VO2max 4×8 86′",
      "Eventsimulation 150′"
     ],
-    "ctlApp": 32.145384383946855,
+    "ctlApp": 27.343265094874774,
     "ctlReal": 27.527220329903205,
-    "rampApp": 1.4423665381742339,
+    "rampApp": 1.3659464389436522,
     "rampReal": 1.3805558538428073,
-    "tsbMinApp": -14.772281924526595,
+    "tsbMinApp": -12.167705001729637,
     "tsbMinReal": -12.36455582721268
    },
    {
@@ -7783,7 +7766,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 1.95,
-    "tssApp": 131,
+    "tssApp": 95,
     "tssReal": 94.55611053557212,
     "z": {
      "lo": 112,
@@ -7807,11 +7790,11 @@
      "Spritzig 5×1 42′",
      "Long Ride 75′"
     ],
-    "ctlApp": 30.253938762121965,
+    "ctlApp": 25.358067126999213,
     "ctlReal": 25.50337776711524,
-    "rampApp": -1.8914456218248894,
+    "rampApp": -1.9851979678755605,
     "rampReal": -2.0238425627879657,
-    "tsbMinApp": -17.327226467642568,
+    "tsbMinApp": -15.464552617443182,
     "tsbMinReal": -15.644825022852789
    },
    {
@@ -7822,7 +7805,7 @@
     "budget": 4,
     "nDays": 2,
     "h": 3,
-    "tssApp": 137,
+    "tssApp": 221,
     "tssReal": 221.40943516958836,
     "z": {
      "lo": 67.5,
@@ -7846,11 +7829,11 @@
      "Aktivierung vor dem Event 30′",
      "Eventtag: Frühjahrsklassiker 80 150′"
     ],
-    "ctlApp": 28.824481473803836,
+    "ctlApp": 26.65659392847366,
     "ctlReal": 26.78916085103858,
-    "rampApp": -1.4294572883181296,
+    "rampApp": 1.2985268014744484,
     "rampReal": 1.2857830839233415,
-    "tsbMinApp": -4.144508253734603,
+    "tsbMinApp": -2.310067217938201,
     "tsbMinReal": -2.240933144730967
    }
   ]

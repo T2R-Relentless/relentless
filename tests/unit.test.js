@@ -49,7 +49,12 @@ test('Gespeicherte Aktionen nur aus der erlaubten Liste (exeAct)', async () => {
 
 test('TSS je Einheitentyp', async () => {
   const a = await boot(), tss = a.$('tss');
-  eq(tss({m:60, t:'thr'}), 92); eq(tss({m:90, t:'base'}), 65); eq(tss({m:0, t:'rest'}), 0); eq(tss({m:240, t:'long'}), 196); eq(tss({m:60, t:'vo2'}), 100);
+  /* M5: Belastung aus dem Aufbau der Einheit (Ein-/Ausfahren 60 %, Pausen 50 %, Belastung Mitte des Zielbereichs, NP als 4.-Potenz-Mittel) */
+  eq(tss({m:60, t:'thr', lo:95, hi:105}), 100); eq(tss({m:90, t:'base', lo:56, hi:75}), 64); eq(tss({m:0, t:'rest'}), 0); eq(tss({m:240, t:'long', lo:56, hi:75}), 172);
+  eq(tss({m:85, t:'thr', lo:95, hi:105, iv:{reps:2, work:20, rest:10, lo:95, hi:105, wu:20, cd:15}}), 103, 'Schwelle 2×20 mit Ein- und Ausfahren');
+  eq(tss({m:60, t:'vo2', lo:115, hi:125, iv:{sets:3, reps:13, work:.5, rest:.25, sr:3, lo:115, hi:125, wu:15, cd:10}}), 75, '30/15: kurze Wechsel als Mittel der Serie');
+  ok(tss({m:66, t:'vo2', lo:150, hi:200, iv:{reps:8, work:.5, rest:4.5, lo:150, hi:200, wu:20, cd:10}}) < tss({m:66, t:'thr', lo:95, hi:105}), 'Antritte zählen weniger als die gleiche Zeit an der Schwelle');
+  eq(tss({m:120, t:'race', lo:60, hi:100}), 173, 'Rennen 2 Std.: IF 1 − 0,1·ln 2');
 });
 
 test('Zonen-Grenzen', async () => {

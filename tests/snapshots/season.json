@@ -2,8 +2,8 @@
  "prognose": [
   {
    "form": {
-    "ctl": 70,
-    "tsb": 13
+    "ctl": 64,
+    "tsb": 15
    },
    "ftp": 295,
    "kind": "race",
@@ -18,8 +18,8 @@
   },
   {
    "form": {
-    "ctl": 66,
-    "tsb": 7
+    "ctl": 61,
+    "tsb": 6
    },
    "ftp": 296,
    "kind": "tt",
@@ -34,8 +34,8 @@
   },
   {
    "form": {
-    "ctl": 67,
-    "tsb": -1
+    "ctl": 63,
+    "tsb": 0
    },
    "ftp": 296,
    "kind": "race",
@@ -50,8 +50,8 @@
   },
   {
    "form": {
-    "ctl": 67,
-    "tsb": 9
+    "ctl": 64,
+    "tsb": 12
    },
    "ftp": 296,
    "kind": "race",

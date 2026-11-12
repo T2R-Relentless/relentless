@@ -19,7 +19,9 @@ const vacDay = (p, w, i) => !!(p && p.start) && vacOn(p, addD(p.start, (w - 1) *
 function reentOf(p, w){
   if (!p || !p.start) return null; const out = [];
   (p.reent || []).forEach(r => { const k = w - r.w; if (k >= 0 && k < r.f.length) out.push({f:r.f[k], lvl:r.lvl, src:'gap'}); });
-  vacL(p).forEach(v => { const L = ddiff(v.from, v.to) + 1; if (L < 7) return; const e = RE_LV(L), w0 = Math.floor(ddiff(p.start, addD(v.to, 1)) / 7) + 1, k = w - w0; if (k >= 0 && k < e.f.length) out.push({f:e.f[k], lvl:e.lvl, src:'vac'}); });
+  /* Endet der Urlaub spät in der Woche (weniger als 4 Trainingstage übrig), zählt der Rest dieser Woche schon als leicht, und der
+     Wiedereinstieg beginnt in der Woche danach. */
+  vacL(p).forEach(v => { const L = ddiff(v.from, v.to) + 1; if (L < 7) return; const e = RE_LV(L), d0 = ddiff(p.start, addD(v.to, 1)), w0 = Math.floor(d0 / 7) + 1, f = 7 - d0 % 7 < 4 ? [e.f[0], ...e.f] : e.f, k = w - w0; if (k >= 0 && k < f.length) out.push({f:f[k], lvl:e.lvl, src:'vac'}); });
   if (!out.length) return null; return out.reduce((a, b) => b.f < a.f || (b.f === a.f && b.lvl > a.lvl) ? b : a);
 }
 /* letzter Tag mit Training: Fahrten, bewertete Einheiten, erledigte Einheiten dieser und der Vorwoche, ältere Wochen aus dem Rückblick */

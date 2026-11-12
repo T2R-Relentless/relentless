@@ -26,7 +26,7 @@ de:[[/\bFTP\b/, 'FTP (Functional Threshold Power)', 'Die Leistung in Watt, die d
  [/\bHFmax\b/, 'HFmax', 'Deine maximale Herzfrequenz.'],
  [/\b[Ll]ange[nr]? Ride\b|\bLong Ride\b/, 'Long Ride', 'Die längste Einheit der Woche, meist am Wochenende. Baut Ausdauer und Ermüdungsresistenz auf.'],
  [/\bFitness-Check\b/, 'Fitness-Check', '20-Minuten-Test, mit dem die App prüft, ob du auf Kurs bist.'],
- [/\b[BC]-Rennen\b/, 'B- und C-Rennen', 'B-Rennen: wichtiges Zwischenevent mit Mini-Tapering davor. C-Rennen: Rennen als hartes Training, nur der Tag davor ist locker.'],
+ [/\b[BC]-Rennen\b/, 'B- und C-Rennen', 'B-Rennen: wichtiges Zwischenevent mit Mini-Tapering davor. C-Rennen: Rennen als hartes Training, ohne Tapering davor.'],
  [/\bKohlenhydrat-Laden\b|\bKohlenhydrate laden\b/, 'Kohlenhydrat-Laden', 'In den 1 bis 2 Tagen vor einem langen Event 10 bis 12 g Kohlenhydrate pro kg essen, damit die Speicher voll sind.']],
 en:[[/\bFTP\b/, 'FTP (Functional Threshold Power)', 'The power in watts you can hold for about one hour. All training zones and power targets are based on it.'],
  [/\bTSS\b/, 'TSS (Training Stress Score)', 'Measures the load of a session from duration and intensity. One hour exactly at your FTP equals 100 TSS, an easy hour about 40 to 50.'],

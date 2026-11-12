@@ -1,6 +1,6 @@
 /* F20: Katalog „Tipp zu heute“ – Umfang, Sprachen, Tags, Quellen, keine schnellen Wiederholungen */
 R.file = 'tips';
-const TAGK = {d:['rest', 'rec', 'base', 'int', 'long', 'str', 'ev7', 'race', 'post'], ph:['base', 'build', 'peak', 'taper'], s:['w', 's'], wx:['hot', 'cold', 'wet'], lv:['new', 'amb']};
+const TAGK = {d:['rest', 'rec', 'base', 'int', 'long', 'str', 'ev7', 'ev21', 'race', 'post'], ph:['base', 'build', 'peak', 'taper'], s:['w', 's'], wx:['hot', 'cold', 'wet'], lv:['new', 'amb']};
 
 test('Mindestens 150 Tipps, jeder mit Deutsch, Englisch, Kategorie und gültigen Tags', async () => {
   const a = await boot(), T = a.$('TIPS'), cats = a.$('TIP_CAT'), bad = [];
