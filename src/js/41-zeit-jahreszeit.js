@@ -28,12 +28,20 @@ function tbDays(b, longDay){
 }
 /* Monat einer Planwoche (Wochenmitte) */
 function tbMonOf(p, w){ const d = new Date(p.start + 'T12:00:00'); d.setDate(d.getDate() + (w - 1) * 7 + 3); return d.getMonth(); }
+/* M10 (Audit 12.11.2026): Steigt das Budget von einem Monat zum nächsten deutlich (zum Beispiel Winter → Sommer), wächst die Wochenzeit
+   stufenweise: je Woche höchstens 1 Std. oder 15 % mehr (das Größere). Sinkt das Budget, gilt es sofort. */
+const _tbH = new Map();
+function tbHours(p, w){
+  const key = JSON.stringify([p.start, p.tb]); let L = _tbH.get(key); if (!L) { L = []; if (_tbH.size > 20) _tbH.clear(); _tbH.set(key, L); }
+  for (let k = L.length + 1; k <= w; k++) { const t = tbOf(p.tb, tbMonOf(p, k)).h, prev = k > 1 ? L[k - 2] : t; L.push(t <= prev ? t : Math.min(t, Math.round((prev + Math.max(1, prev * .15)) * 2) / 2)); }
+  return L[w - 1];
+}
 /* Plan für die Wochenplanung an das Budget anpassen */
 function tbApply(p, w){
   if (!p || !p.tb || !p.tb.on || !tbOk(p.tb) || !p.start) return p;
   const b = tbOf(p.tb, tbMonOf(p, w)), av = tbDays(b, p.longDay);
   if (!av.some(Boolean)) return p;
-  return {...p, hours:b.h, avail:av, commute:(p.commute || []).map((c, i) => c && av[i]), longDay:av[p.longDay] ? p.longDay : [6, 5, 0, 4, 3, 2, 1].find(i => av[i])};
+  return {...p, hours:tbHours(p, w), avail:av, commute:(p.commute || []).map((c, i) => c && av[i]), longDay:av[p.longDay] ? p.longDay : [6, 5, 0, 4, 3, 2, 1].find(i => av[i])};
 }
 /* ---- Einstellungen → Alltag und Planstart: Bearbeiten (Entwurf), Speichern, Vorschlag für die laufende Woche ---- */
 let tbD = null, tbMsg = '', tbProp = null;

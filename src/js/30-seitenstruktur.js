@@ -230,13 +230,14 @@ const SET_PAGES = {
   'set-hr':() => iaNoHead(iaSetParts().hr || ''),
   'set-wf':() => wfPage() + cmpUi(),
   'set-age':() => agPage(),
+  'set-health':() => hlthPage(),
   'tool-tire':() => tpPage(),
   'set-sq':() => sqCfgUi(false) + '<p class="mt-3 text-sm" style="color:var(--mute)">Gilt für alle Übungseinheiten, die du als Sequenz ablaufen lässt.</p>',
   'set-wx':() => iaNoHead(iaSetParts().wx || ''),
   'set-gm':() => `<section class="panel p-4">${gmCard('man')}</section>`,
   'set-priv':() => iaNoHead(iaSetParts().priv || ''),
 };
-const SET_T = {'set-lang':'Sprache, Darstellung, Hilfen', 'set-ali':'Alltag und Planstart', 'set-hr':'Herzfrequenz und Leistungsmesser', 'set-wf':'Gewicht und FTP', 'set-age':'Alter und Erholung', 'set-sq':'Übungsablauf und Töne', 'set-wx':'Wetter und Kleidung', 'set-gm':'Garmin Connect', 'set-priv':'Datenschutz'};
+const SET_T = {'set-lang':'Sprache, Darstellung, Hilfen', 'set-ali':'Alltag und Planstart', 'set-hr':'Herzfrequenz und Leistungsmesser', 'set-wf':'Gewicht und FTP', 'set-age':'Alter und Erholung', 'set-health':'Gesundheitshinweis', 'set-sq':'Übungsablauf und Töne', 'set-wx':'Wetter und Kleidung', 'set-gm':'Garmin Connect', 'set-priv':'Datenschutz'};
 function setPage(){
   const p = S.p, x = iaSetParts(), th = !S.theme ? 'Design automatisch' : S.theme === 'dark' ? 'Dunkel' : 'Hell';
   const alltag = (() => { try { return `${p.avail.map((v, i) => v ? SD[i] : null).filter(Boolean).join(', ')}, ${hStd(p.hours)} Std. pro Woche${isComm(p) ? ', Pendeln' : ''}`; } catch (e) { elog(e); return 'Trainingstage, Zeit, Pendeln'; } })();
@@ -244,7 +245,7 @@ function setPage(){
   const wx = S.wx ? `${esc(S.wx.name || 'Ort gespeichert')}` : 'Aus, Kleidungstipp ohne Vorhersage';
   const gm = S.gm && S.gm.mode ? `Verbunden${S.gm.last ? ', zuletzt ' + fmt(lstr(new Date(S.gm.last))) : ''}` : 'Nicht verbunden';
   const n = Object.keys(readLib().plans).length;
-  return iaGrp('Allgemein', iaRow('set-lang', 'lang', 'Sprache, Darstellung, Hilfen', `${lang() === 'en' ? 'English' : 'Deutsch'} · ${th}`) + iaRow('set-sq', 'sq', 'Übungsablauf und Töne', (() => { const c = sqCfg(); return [c.snd ? 'Töne an' : 'Töne aus', c.voice ? 'Ansage an' : '', `Übergang ${c.tr} Sek.`].filter(Boolean).join(' · '); })()))
+  return iaGrp('Allgemein', iaRow('set-lang', 'lang', 'Sprache, Darstellung, Hilfen', `${lang() === 'en' ? 'English' : 'Deutsch'} · ${th}`) + iaRow('set-sq', 'sq', 'Übungsablauf und Töne', (() => { const c = sqCfg(); return [c.snd ? 'Töne an' : 'Töne aus', c.voice ? 'Ansage an' : '', `Übergang ${c.tr} Sek.`].filter(Boolean).join(' · '); })()) + iaRow('set-health', 'hr', 'Gesundheitshinweis', S.hlthOk ? 'Gelesen' : 'Bitte einmal lesen', !S.hlthOk))
     + iaGrp('Training', iaRow('set-ali', 'ali', 'Alltag und Planstart', tbSub() || alltag) + iaRow('set-wf', 'wf', 'Gewicht und FTP', esc(wfSub())) + iaRow('set-age', 'age', 'Alter und Erholung', agSub()) + iaRow('set-hr', 'hr', 'Herzfrequenz und Leistungsmesser', hr, !hrMaxOf() && !lthrOf()) + iaRow('set-wx', 'wx', 'Wetter und Kleidung', wx))
     + iaGrp('Verbindungen und Daten', iaRow('set-gm', 'gm', 'Garmin Connect', gm) + iaRow('plans', 'data', 'Pläne und Sicherung', `${n} ${n === 1 ? 'Plan' : 'Pläne'}${S.bkAt ? ', letzte Sicherung ' + fmt(lstr(new Date(S.bkAt))) : ', noch keine Sicherung'}`, !S.bkAt) + (x.priv ? iaRow('set-priv', 'priv', 'Datenschutz', (typeof trOff === 'function' && trOff()) ? 'Anonyme Statistik aus' : 'Anonyme Statistik an') : ''))
     + `<div class="mt-6">${x.dz || ''}</div>` + verLine();
@@ -272,7 +273,7 @@ function ridesGm(){
   if (S.gm && S.gm.mode) return `<section class="panel p-4"><p class="hd text-xl font-semibold">Garmin Connect</p>${gmCard('man')}</section>`;
   return `<div class="mlist">${iaRow('set-gm', 'gm', 'Garmin Connect verbinden', 'Fahrten automatisch holen statt Dateien hochladen')}</div>`;
 }
-const IA_PAR = {'tool-tire':'more', 'set-lang':'settings', 'set-ali':'settings', 'set-hr':'settings', 'set-wx':'settings', 'set-wf':'settings', 'set-age':'settings', 'set-sq':'settings', 'set-gm':'settings', 'set-priv':'settings', 'exp-ics':'export', 'exp-zwo':'export', 'exp-fit':'export'};
+const IA_PAR = {'tool-tire':'more', 'set-lang':'settings', 'set-ali':'settings', 'set-hr':'settings', 'set-wx':'settings', 'set-wf':'settings', 'set-age':'settings', 'set-health':'settings', 'set-sq':'settings', 'set-gm':'settings', 'set-priv':'settings', 'exp-ics':'export', 'exp-zwo':'export', 'exp-fit':'export'};
 
 /* ---------- Event: Übersicht mit Unterseiten ----------
    Oben das Ziel (Name, Datum, Zielzeit, Stand). Darunter je Thema eine Zeile mit dem Kern: Anforderungsprofil, Pacing-Plan,
