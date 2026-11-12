@@ -6376,5 +6376,7 @@
 "Für Vergleiche wie „du trittst etwa {0} % mehr als ein untrainierter Erwachsener“ in „Wusstest du schon?“.": "For comparisons such as “you put out about {0}% more than an untrained adult” in “Did you know?”.",
 "Freiwillig.": "Optional.",
 "Ohne Angabe vergleicht die App mit Erwachsenen allgemein.": "Without a choice, the app compares with adults in general.",
-"Ohne Angabe vergleicht die App mit Erwachsenen allgemein, solange du hier nichts wählst gilt deine Angabe aus der Planung.": "Without a choice, the app compares with adults in general; until you choose here, the information from your planning applies."
+"Ohne Angabe vergleicht die App mit Erwachsenen allgemein, solange du hier nichts wählst gilt deine Angabe aus der Planung.": "Without a choice, the app compares with adults in general; until you choose here, the information from your planning applies.",
+"Für Vergleiche wie {0} in {1}.": "For comparisons such as {0} in {1}.",
+"du trittst etwa {0} % mehr als ein untrainierter Erwachsener": "you put out about {0}% more than an untrained adult"
 }
