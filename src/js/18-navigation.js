@@ -31,7 +31,7 @@ function stateCard(){
 /* ---------- Navigation: Startseite mit Kacheln, Unterseiten je Thema ---------- */
 let pg = null, foldFlat = false;
 let PGP = {};
-function goPg(k){ if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); window.scrollTo(0, 0); }
+function goPg(k){ if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); window.scrollTo(0, 0); }
 const ICO = {
   week:'<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   state:'<path d="M3 12h4l3-7 4 14 3-7h4"/>',

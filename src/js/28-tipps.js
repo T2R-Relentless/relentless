@@ -9,7 +9,7 @@ const dykAlone = () => { try { return matchMedia('(display-mode: standalone)').m
 /* [id, Text, Knopf, Aktion, Bedingung] */
 const DYK = [
   ['up', 'Lade nach jeder Einheit deine Fahrt hoch (FIT, GPX oder TCX). Die App ordnet sie dem Tag zu, gibt Punkte, lobt, was gut lief, und sagt, was du beim nächsten Mal besser machen kannst.', 'Fahrt hochladen', "goPg('rides')", () => !Object.keys((S.p && S.p.exe) || {}).length],
-  ['trace', 'In jeder Fahrtbewertung siehst du den Verlauf deiner Fahrt mit dem Zielbereich der Intervalle und darunter, wie viel Zeit du in welcher Zone warst.', 'Fahrten ansehen', "goPg('rides')", () => true],
+  ['trace', 'In jeder Fahrtbewertung siehst du den Verlauf deiner Fahrt mit dem Zielbereich der Intervalle und darunter, wie viel Zeit du in welcher Zone warst.', 'Fahrten ansehen', "dykRides()", () => true],
   ['garmin', 'Mit einem persönlichen API-Schlüssel von Garmin holt die App deine Fahrten selbst ab und bewertet sie. Kein Exportieren mehr.', 'Einrichten', "dykGarmin()", () => !(S.gm && S.gm.mode) && typeof gmWebOk !== 'undefined' && (gmWebOk === true || !!(window.claude && window.claude.use))],
   ['rpe', 'Nach jeder bewerteten Fahrt fragt die App, wie anstrengend es war und wie du dich fühlst. Dein Empfinden fließt in die Anpassung ein: Fühlt sich eine leichte Einheit hart an, nimmt die App Tempo raus.', '', '', () => true],
   ['feel', 'Schlecht geschlafen oder Beine schwer? Tippe heute bei deiner Einheit auf „Befinden“. Die App passt die Einheit an deinen Zustand an.', 'Befinden öffnen', "heroTab='feel';goPg(null)", () => hasStarted(S.p)],
