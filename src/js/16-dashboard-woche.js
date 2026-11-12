@@ -59,20 +59,33 @@ function cutDay(i){
   S.plan[i] = {...x, m, cut:true, st: x.st + (h ? ' Kürzung: nur Einfahren und Ausfahren verkürzen, die Intervalle bleiben.' : ' Auf die gekürzte Dauer angepasst.')};
   note(`${DAYS[i]} gekürzt`, `„${x.n}“ wurde von ${mm(x.m)} auf ${mm(m)} gekürzt. Nachholen ist nicht nötig, lieber frisch weitertrainieren als Umfang stapeln.`, -1); save(); render();
 }
-function resetWeek(){ S.blocked = {}; S.plan = genWeek(S.p, S.wk); S.log = []; S.note = ''; save(); render(); }
+/* Zurücksetzen betrifft nur heute und die kommenden Tage: Vergangene und erledigte Tage bleiben, wie sie sind */
+const keepDay = (i, t = todayIdx()) => i < t || !!(S.done && S.done[i]);
+function resetWeek(){
+  const t = todayIdx(), old = S.plan || [], fresh = genWeek(S.p, S.wk), bl = {};
+  /* Wurde eine Einheit schon auf einen vergangenen Tag vorgezogen, bleibt ihr ursprünglicher Tag frei */
+  const pulled = new Set(old.map((x, i) => keepDay(i, t) && x && x.moved && x.from >= t ? x.from : -1));
+  S.plan = fresh.map((x, i) => keepDay(i, t) ? old[i] || x : pulled.has(i) && !keepDay(i, t) ? {...REST} : x);
+  Object.keys(S.blocked || {}).forEach(k => { if (keepDay(+k, t)) bl[k] = S.blocked[k]; }); S.blocked = bl;
+  S.log = (S.log || []).filter(l => !l.user || (l.d >= 0 && keepDay(l.d, t)));
+  save(); render();
+}
 const ctl = (x, i, cur) => ctl0(x, i, cur) + feelCtl(x, i, cur);
 const ctl0 = (x, i, cur) => {
   if (!cur) return woCtl(x, i);
   if (i < todayIdx()) return '';
   const b = (fn, l) => `<button onclick="${fn}" class="ghost !py-2 text-sm">${l}</button>`;
   if (x.blocked) return b(`toggleBlock(${ja(i)})`, 'Tag wieder freigeben');
+  if (x.comAdd && x.orig && !S.done[i]) return b(`toggleCom(${ja(i)})`, 'Doch nicht pendeln') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
   if (x.t === 'com' || (x.parts && !S.done[i])) return b(`toggleCom(${ja(i)})`, 'Heute nicht pendeln') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
   if (x.noCom && x.orig && !S.done[i]) return b(`toggleCom(${ja(i)})`, 'Doch pendeln') + b(`cutDay(${ja(i)})`, 'Kürzen (−30 %)') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
   if (!x.m) return x.feel === 'sick' ? '' : b(`toggleBlock(${ja(i)})`, 'Tag sperren');
   if (S.done[i]) return '';
   const fr = [0,1,2,3,4,5,6].filter(j => j >= todayIdx() && j !== i && freeDay(j));
-  return (x.cut || x.parts ? '' : b(`cutDay(${ja(i)})`, 'Kürzen (−30 %)')) + (mvTargets(i).length ? b(`mvAskGo(${ja(i)})`, 'Verschieben') : '') + (vaStim(x) ? b(`vaOpen(${ja(i)})`, 'Andere Variante') : '') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
+  return (comAble(x) ? b(`toggleCom(${ja(i)})`, 'Pendeln') : '') + (x.cut || x.parts ? '' : b(`cutDay(${ja(i)})`, 'Kürzen (−30 %)')) + (mvTargets(i).length ? b(`mvAskGo(${ja(i)})`, 'Verschieben') : '') + (vaStim(x) ? b(`vaOpen(${ja(i)})`, 'Andere Variante') : '') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
 };
+/* Trainingstag, der sich in einen Pendeltag umwandeln lässt (nicht Event, nicht schon geteilt) */
+const comAble = x => !!x && x.m > 0 && !x.parts && !x.noCom && !x.blocked && x.t !== 'com' && x.t !== 'race' && !/^Eventtag|^Deine Zieltour|^Aktivierung/.test(x.n || '') && isComm(S.p) && legOf(S.p, 0) > 0;
 const ovw = w => { S.ov = S.ov || {}; return S.ov[w] = S.ov[w] || {off:{}, com:{}}; };
 function cleanOv(w){ const o = S.ov[w]; if (!Object.keys(o.off).length && !Object.keys(o.com).length) delete S.ov[w]; }
 function toggleOff(w, i){ const o = ovw(w); if (o.off[i]) delete o.off[i]; else o.off[i] = true; cleanOv(w); save(); render(); }
@@ -80,7 +93,9 @@ function toggleComF(w, i){ const o = ovw(w), b = S.p.commute[i], nv = !(o.com[i]
 function clearOv(w){ if (S.ov) delete S.ov[w]; save(); render(); }
 function toggleCom(i){
   const x = S.plan[i];
-  if (x.noCom && x.orig) { S.plan[i] = x.orig; note(`${DAYS[i]}: doch pendeln`, `Du fährst am ${DAYS[i]} wieder mit dem Rad zur Arbeit, wie ursprünglich geplant.`, -3); }
+  if (x.comAdd && x.orig) { S.plan[i] = x.orig; note(`${DAYS[i]}: doch nicht pendeln`, `„${x.orig.n}“ fährst du am ${DAYS[i]} wieder am Stück, wie ursprünglich geplant.`, -3); }
+  else if (comAble(x)) { const y = splitComDay(S.p, x, i); S.plan[i] = {...y, comAdd:true, orig:x}; note(`${DAYS[i]}: Pendeltag`, `Du pendelst am ${DAYS[i]} mit dem Rad. „${x.n}“ fährst du deshalb auf Hin- und Rückweg verteilt (${mm(y.parts[0].m)} und ${mm(y.parts[1].m)}).`, -3); }
+  else if (x.noCom && x.orig) { S.plan[i] = x.orig; note(`${DAYS[i]}: doch pendeln`, `Du fährst am ${DAYS[i]} wieder mit dem Rad zur Arbeit, wie ursprünglich geplant.`, -3); }
   else if (x.t === 'com') { S.plan[i] = {...D('base', 'Grundlage Z2', x.m, 56, 72, '90 U/min', `Statt Hin- und Rückweg eine Fahrt am Stück: ${mm(x.m)} konstant in Zone 2, Gespräch muss möglich sein.`, 'Gleicher Umfang wie das Pendeln, nur in einer Fahrt. Wenn die Zeit heute nicht reicht, nimm „Kürzen“ oder „Tag nicht möglich“.'), noCom:true, orig:x}; note(`${DAYS[i]}: kein Pendeln`, `Du pendelst am ${DAYS[i]} nicht. Die ${mm(x.m)} fährst du stattdessen am Stück als lockere Grundlage, der Wochenumfang bleibt gleich.`, -3); }
   else if (x.parts) { let u = unsplit(x); const ex = x.m - u.m; if (ex >= 10) u = u.iv ? {...u, m:x.m, iv:{...u.iv, cd:u.iv.cd + ex}, st:ivTxt(u.iv) + ` · danach ${ex} Min. locker in Zone 2 (statt des Rückwegs)`} : {...u, m:x.m, st:u.st + ` Insgesamt ${mm(x.m)}, so bleibt der Umfang des Pendelns erhalten.`}; S.plan[i] = {...u, noCom:true, orig:x}; note(`${DAYS[i]}: kein Pendeln`, `Du pendelst am ${DAYS[i]} nicht. „${u.n}“ fährst du deshalb am Stück statt auf Hin- und Rückweg verteilt, gleich lang wie geplant (${mm(u.m)}).`, -3); }
   else if (x.t === 'rest' && !x.blocked) { S.plan[i] = comSes(S.p, i); note(`${DAYS[i]}: zusätzlich pendeln`, `Du pendelst am ${DAYS[i]} außerplanmäßig mit dem Rad. Die lockere Einheit zählt zum Wochenumfang.`, -3); }
@@ -92,7 +107,7 @@ const weekPanel = (w, cur) => {
   const o = (S.ov && S.ov[w]) || {off:{}, com:{}}, t = todayIdx(), p = S.p, has = !cur && S.ov && S.ov[w];
   const offRow = SD.map((x, i) => cur ? (i < t ? dis(x) : chip(x, S.blocked[i], `toggleBlock(${ja(i)})`)) : chip(x + (o.off[i] ? '*' : ''), o.off[i], `toggleOff(${ja(w)},${ja(i)})`)).join('');
   const comRow = SD.map((x, i) => {
-    if (cur) { const y = S.plan[i]; return i < t || S.blocked[i] || !(y.t === 'com' || y.t === 'rest' || y.parts || y.noCom) ? dis(x) : chip(x, y.t === 'com' || !!y.parts, `toggleCom(${ja(i)})`); }
+    if (cur) { const y = S.plan[i]; return i < t || S.blocked[i] || S.done[i] || !(y.t === 'com' || y.t === 'rest' || y.parts || y.noCom || comAble(y)) ? dis(x) : chip(x, y.t === 'com' || !!y.parts, `toggleCom(${ja(i)})`); }
     if (o.off[i]) return dis(x);
     return chip(x + (o.com[i] !== undefined ? '*' : ''), o.com[i] === undefined ? p.commute[i] : o.com[i], `toggleComF(${ja(w)},${ja(i)})`);
   }).join('');

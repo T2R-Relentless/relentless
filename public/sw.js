@@ -9,7 +9,7 @@
    F16: Sprachdateien (/audio/voice/*.mp3) sind nicht Teil der Installation. Sie landen beim ersten Gebrauch in einem
    eigenen Cache (cache-first) und gehen danach auch offline. Das Manifest kommt zuerst aus dem Netz. Beim Aktivieren
    bleibt nur der aktuelle Voice-Cache; daraus werden Dateien entfernt, die das aktuelle Manifest nicht mehr nennt. */
-const V = 'relentless-v22', VOICE = 'relentless-voice-v1', VDIR = '/audio/voice/';
+const V = 'relentless-v23', VOICE = 'relentless-voice-v1', VDIR = '/audio/voice/';
 const ICONS = ['/icons/icon-192.png?v=3', '/icons/icon-512.png?v=3', '/icons/icon-maskable-512.png?v=3', '/icons/apple-touch-icon.png?v=3'];
 const SHELL = ['/', '/manifest.webmanifest', ...ICONS];
 const NEVER = p => p.startsWith('/api/') || p === '/version.json' || p === '/sw.js';

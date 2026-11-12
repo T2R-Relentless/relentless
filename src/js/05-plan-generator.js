@@ -189,6 +189,29 @@ function evProfCard(p, compact){
 /* Woche w erzeugen. Reihenfolge: Zeitbudget des Monats anwenden (Punkt 7, tbApply), Woche bauen (genWeekCore), dann
    gespeicherte Änderungen kommender Wochen einspielen (B4, woApply; nur für den aktiven Plan, nicht für Statistik-Läufe mit base). */
 function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base); return !base && p && S.p && p === S.p ? sickCarry(woApply(P, w), p, w) : P; }
+/* Einheit auf Hin- und Rückweg verteilen (auch für nachträglich gewählte Pendeltage) */
+function splitComDay(p, x, i){
+  const L = legOf(p, i), cp = capOf(p, i), y = {...x, unsplit: x};
+  if (x.iv) {
+    /* Hart zuerst, dann locker: Intervalle am Stück auf dem Hinweg, Rückweg Z1–Z2 (Hansen et al. 2005) */
+    const v = x.iv; let reps = v.reps; const tm = n => v.wu + ivCore({...v, reps:n}) + v.cd;
+    while (cp < 999 && Math.max(L, tm(reps)) + L > cp && reps > 2) reps--;
+    let v2 = v; if (cp < 999 && Math.max(L, tm(reps)) + L > cp) { v2 = {...v, wu:10, cd:5}; while (v2.work > 8 && Math.max(L, v2.wu + ivCore({...v2, reps}) + v2.cd) + L > cp) v2 = {...v2, work:v2.work - 2}; }
+    const full = Math.ceil(v2.wu + ivCore({...v2, reps}) + v2.cd), hm = Math.max(L, full), ext = full > L, pad = Math.max(0, L - full);
+    y.n = x.n.replace(/(\d+)×(\d+)/, (z, a, b) => reps + '×' + (v2.work !== v.work ? v2.work : b)).replace(/^(\d+)×(?!\d)/, reps + '×');
+    y.parts = [{lbl:'Hinweg', m:hm, iv:{...v2, reps, pad}, st: ivTxt({...v2, reps}) + (pad > 0 ? ' · danach ' + pad + ' Min. locker (Z1–Z2)' : '') + (ext ? '. Wähle dafür einen längeren Weg zur Arbeit (' + hm + ' Min.).' : '')},
+      {lbl:'Rückweg', m:L, lo:45, hi:55, st:'Locker nach Hause (Z1–Z2), Beine ausrollen lassen. Keine Intensität.'}];
+    y.tip = x.tip + ' Intervalle am Stück auf dem Hinweg, der Rückweg ist locker. So bleibt die Qualität der Intervalle erhalten.';
+    y.m = hm + L; if (cp >= 999 || y.m <= cp) return y;
+    x = {...D('base', 'Grundlage Z2', x.m, 56, 72, '90 U/min', '', 'Für Intervalle reicht die Zeit auf dem Arbeitsweg an diesem Tag nicht, darum locker.')}; Object.keys(y).forEach(k => delete y[k]); Object.assign(y, x, {unsplit:x});
+  }
+  {
+    const tot = Math.max(2 * L, Math.min(x.m, cp)), a = Math.max(L, Math.round(tot / 2 / 5) * 5), t = x.t === 'rec' ? 'Sehr locker im kleinen Gang, Puls unter 60 % HFmax.' : 'Konstant in Zone 2, Gespräch muss möglich sein.' + (x.t === 'long' ? ' Auch in diesem Teil essen und trinken (30–60 g Kohlenhydrate pro Std.).' : '');
+    y.parts = ['Hinweg', 'Rückweg'].map(lbl => ({lbl, m:a, st:t}));
+  }
+  y.m = y.parts[0].m + y.parts[1].m; y.tip = y.tip || (x.tip + ' An Pendeltagen fährst du die Einheit in zwei Teilen: Hinweg und Rückweg.');
+  return y;
+}
 function genWeekCore(p, w, base){
   const o = (!base && S.ov && S.ov[w]) || {off:{}, com:{}};
   const cm0 = isComm(p), p0 = p;
@@ -322,28 +345,7 @@ function genWeekCore(p, w, base){
   const baseVar = (m, i) => { const n = rec || k === 'taper' || m < 45 ? 0 : ((w - 1) * 3 + i) % BV.length, v = BV[n]; return D('base', v[0], m, 56, 75, BVC[n], v[1], v[2]); };
   const cap = i => capOf(p, i), capS = (x, i) => x.m <= cap(i) ? x : x.iv ? fitIv(x, cap(i)) : {...x, m: Math.max(30, cap(i)), st: x.st + ' Auf deine verfügbare Zeit gekürzt.'};
   const out = Array(7).fill(null), av = p.avail.map((a,i) => a || i === p.longDay), cm = p.commute.map((c,i) => c && av[i]);
-  function splitDay(x, i){
-    const L = legOf(p, i), cp = cap(i), y = {...x, unsplit: x};
-    if (x.iv) {
-      /* Hart zuerst, dann locker: Intervalle am Stück auf dem Hinweg, Rückweg Z1–Z2 (Hansen et al. 2005) */
-      const v = x.iv; let reps = v.reps; const tm = n => v.wu + ivCore({...v, reps:n}) + v.cd;
-      while (cp < 999 && Math.max(L, tm(reps)) + L > cp && reps > 2) reps--;
-      let v2 = v; if (cp < 999 && Math.max(L, tm(reps)) + L > cp) { v2 = {...v, wu:10, cd:5}; while (v2.work > 8 && Math.max(L, v2.wu + ivCore({...v2, reps}) + v2.cd) + L > cp) v2 = {...v2, work:v2.work - 2}; }
-      const full = Math.ceil(v2.wu + ivCore({...v2, reps}) + v2.cd), hm = Math.max(L, full), ext = full > L, pad = Math.max(0, L - full);
-      y.n = x.n.replace(/(\d+)×(\d+)/, (z, a, b) => reps + '×' + (v2.work !== v.work ? v2.work : b)).replace(/^(\d+)×(?!\d)/, reps + '×');
-      y.parts = [{lbl:'Hinweg', m:hm, iv:{...v2, reps, pad}, st: ivText({...v2, reps}) + (pad > 0 ? ' · danach ' + pad + ' Min. locker (Z1–Z2)' : '') + (ext ? '. Wähle dafür einen längeren Weg zur Arbeit (' + hm + ' Min.).' : '')},
-        {lbl:'Rückweg', m:L, lo:45, hi:55, st:'Locker nach Hause (Z1–Z2), Beine ausrollen lassen. Keine Intensität.'}];
-      y.tip = x.tip + ' Intervalle am Stück auf dem Hinweg, der Rückweg ist locker. So bleibt die Qualität der Intervalle erhalten.';
-      y.m = hm + L; if (cp >= 999 || y.m <= cp) return y;
-      x = {...D('base', 'Grundlage Z2', x.m, 56, 72, '90 U/min', '', 'Für Intervalle reicht die Zeit auf dem Arbeitsweg an diesem Tag nicht, darum locker.')}; Object.keys(y).forEach(k => delete y[k]); Object.assign(y, x, {unsplit:x});
-    }
-    {
-      const tot = Math.max(2 * L, Math.min(x.m, cp)), a = Math.max(L, Math.round(tot / 2 / 5) * 5), t = x.t === 'rec' ? 'Sehr locker im kleinen Gang, Puls unter 60 % HFmax.' : 'Konstant in Zone 2, Gespräch muss möglich sein.' + (x.t === 'long' ? ' Auch in diesem Teil essen und trinken (30–60 g Kohlenhydrate pro Std.).' : '');
-      y.parts = ['Hinweg', 'Rückweg'].map(lbl => ({lbl, m:a, st:t}));
-    }
-    y.m = y.parts[0].m + y.parts[1].m; y.tip = y.tip || (x.tip + ' An Pendeltagen fährst du die Einheit in zwei Teilen: Hinweg und Rückweg.');
-    return y;
-  }
+  const splitDay = (x, i) => splitComDay(p, x, i);
   const put = (i, s) => { out[i] = cm[i] && s.t !== 'com' ? splitDay(s, i) : {...s}; };
   const isK = j => out[j] && ['long','sst','thr','vo2'].includes(out[j].t);
   /* M8: In der Woche des VO2max-Blocks ist der Long Ride kurz und locker, damit die drei Einheiten gelingen */

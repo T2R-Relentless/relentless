@@ -6717,5 +6717,14 @@
 "Distanz oder Höhenmeter fehlen": "Distance or elevation missing",
 "{0} · Zielzeit offen · Form {1} ·": "{0} · target time open · form {1} ·",
 "{0} · Zielzeit offen · Form -{1} ·": "{0} · target time open · form -{1} ·",
-"{0} · Zielzeit offen ·": "{0} · target time open ·"
+"{0} · Zielzeit offen ·": "{0} · target time open ·",
+"{0}: Pendeltag": "{0}: commute day",
+"{0}: doch nicht pendeln": "{0}: not commuting after all",
+"Doch nicht pendeln": "Don't commute after all",
+"Du pendelst am {0} mit dem Rad.": "You're commuting by bike on {0}.",
+"{0} fährst du am {1} wieder am Stück, wie ursprünglich geplant.": "You ride {0} in one go again on {1}, as originally planned.",
+"{0} fährst du deshalb auf Hin- und Rückweg verteilt ({1} Min. und {2} Min.).": "So you ride {0} split across the way there and back ({1} min and {2} min).",
+"{0} fährst du deshalb auf Hin- und Rückweg verteilt ({1} Min. und {2} Std.).": "So you ride {0} split across the way there and back ({1} min and {2} h).",
+"{0} fährst du deshalb auf Hin- und Rückweg verteilt ({1} Std. und {2} Min.).": "So you ride {0} split across the way there and back ({1} h and {2} min).",
+"{0} fährst du deshalb auf Hin- und Rückweg verteilt ({1} Std. und {2} Std.).": "So you ride {0} split across the way there and back ({1} h and {2} h)."
 }
