@@ -35,16 +35,6 @@ let PGP = {};
 const scEl = () => document.documentElement.classList.contains('sa-wrap') ? document.getElementById('sc') : null;
 function scrollTop0(){ const e = scEl(); if (e) e.scrollTop = 0; else window.scrollTo(0, 0); }
 try { if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) document.documentElement.classList.add('sa-wrap'); } catch (e) { elog(e); }
-/* Untere Leiste in der installierten App auf dem iPhone (iOS 26): Der Layout-Viewport ist dort um die Höhe der Statusleiste zu kurz
-   (z. B. 793 statt 852 pt), deshalb endete die Leiste etwa 59 pt über dem unteren Rand. Die Differenz zur Bildschirmhöhe wird gemessen
-   (--vgap) und die Leiste sowie der Scrollbereich um genau diesen Betrag nach unten verlängert. Nur bei navigator.standalone (gibt es
-   nur auf iOS), höchstens 80 px; ohne Abweichung ist --vgap 0 und nichts ändert sich. */
-function vgapFix(){
-  try { const de = document.documentElement; if (navigator.standalone !== true) { de.style.removeProperty('--vgap'); return; }
-    const a = Math.max(screen.width, screen.height), b = Math.min(screen.width, screen.height), full = innerWidth > innerHeight ? b : a, g = Math.round(full - innerHeight);
-    de.style.setProperty('--vgap', (g > 0 && g <= 80 ? g : 0) + 'px'); } catch (e) { elog(e); }
-}
-vgapFix(); try { addEventListener('resize', vgapFix); addEventListener('orientationchange', () => setTimeout(vgapFix, 300)); } catch (e) { elog(e); }
 function goPg(k){ if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); scrollTop0(); }
 const ICO = {
   'tool-tire':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21"/>',

@@ -84,7 +84,8 @@ function sickNextSet(i, lv){
 }
 /* ---- Urlaub eintragen (Einstellungen → Alltag und Planstart) ---- */
 let vacF = {from:'', to:''}, vacMsg = '';
-function vacSet(k, v){ vacF[k] = v; if (k === 'from' && (!vacF.to || vacF.to < v)) vacF.to = v; render(); }
+/* ohne Neuzeichnen: Das Datumsrad von iOS meldet jede Drehung, ein neu gezeichnetes Feld würde unter dem offenen Rad verschwinden */
+function vacSet(k, v){ vacF[k] = v; if (k === 'from' && (!vacF.to || vacF.to < v)) { vacF.to = v; try { const el = document.getElementById('vacTo'); if (el) { el.min = v; el.value = v; } } catch (e) { elog(e); } } }
 function vacApply(txt){ if (S.plan && hasStarted(S.p)) reweekFrom(todayIdx()); note('Urlaub', txt, -2); save(); render(); }
 function vacAdd(){
   const p = S.p; if (!p) return; const {from, to} = vacF;
@@ -100,7 +101,7 @@ function vacCard(){
   const p = S.p; if (!p) return ''; const L = vacL(p).filter(v => v.to >= iso(-1));
   const rows = L.map(v => { const n = ddiff(v.from, v.to) + 1; return `<div class="flex items-center gap-2 py-2 text-sm" style="border-top:1px solid var(--line)"><span class="flex-1">${fmt(v.from)} – ${fmt(v.to)} <span style="color:var(--mute)">(${n} ${n === 1 ? 'Tag' : 'Tage'})</span></span><button class="ghost !w-auto !px-3 text-sm" style="min-height:44px" onclick="vacDel('${ja(v.id)}')" aria-label="Urlaub löschen">Löschen</button></div>`; }).join('');
   return `<section class="panel p-4" id="fx-vac"><p class="font-semibold">Urlaub und Pausen</p><p class="mt-1 text-sm" style="color:var(--mute)">Trag Urlaub oder andere Zeiten ohne Training ein. An diesen Tagen plant die App keine Einheiten. Nach einer Woche oder mehr folgt ein sanfter Wiedereinstieg mit weniger Umfang.</p>
-    ${rows ? `<div class="mt-2">${rows}</div>` : ''}<div class="mt-3 grid grid-cols-2 gap-3">${field('Von', `<input type="date" class="inp" style="min-height:44px" min="${esc(iso(0))}" value="${esc(vacF.from)}" onchange="vacSet('from',this.value)">`)}${field('Bis', `<input type="date" class="inp" style="min-height:44px" min="${esc(vacF.from || iso(0))}" value="${esc(vacF.to)}" onchange="vacSet('to',this.value)">`)}</div>
+    ${rows ? `<div class="mt-2">${rows}</div>` : ''}<div class="mt-3 grid grid-cols-2 gap-3">${field('Von', `<input type="date" class="inp" style="min-height:44px" min="${esc(iso(0))}" value="${esc(vacF.from)}" onchange="vacSet('from',this.value)">`)}${field('Bis', `<input id="vacTo" type="date" class="inp" style="min-height:44px" min="${esc(vacF.from || iso(0))}" value="${esc(vacF.to)}" onchange="vacSet('to',this.value)">`)}</div>
     ${vacMsg ? `<p class="mt-2 text-sm" style="color:#c0392b">⚠ <span>${esc(vacMsg)}</span></p>` : ''}<button class="btn mt-3 !w-auto !px-4" style="min-height:44px" onclick="vacAdd()">Urlaub eintragen</button></section>`;
 }
 /* ---- M8: VO2max-Block als Option für Fortgeschrittene (ab 3,5 W/kg und 8 Std. pro Woche, oder wenn schon gewählt) ---- */

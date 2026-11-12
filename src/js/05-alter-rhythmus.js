@@ -47,6 +47,15 @@ const agFields = o => { const x = {}; ['birthDate', 'birthYear', 'rhythm', 'gap2
 function agTgt(){ if (agPl() || !S.p) return S.d; if (!agD) agD = {...agFields(S.p), startDate:S.p.startDate, start:S.p.start}; return agD; }
 const agDone = () => { agMsg = ''; if (agPl() || !S.p) save(); render(); };
 function setBirth(v){ const d = agTgt(); if (!d) return; if (bdOk(v)) { d.birthDate = String(v); delete d.birthYear; } else { delete d.birthDate; delete d.birthYear; if (v) agMsg = 'Bitte ein gültiges Geburtsdatum eingeben.'; } const m = agMsg; agDone(); agMsg = m; if (m) render(); }
+/* Eingabe über drei Zahlenfelder (Tag, Monat, Jahr). Das Datumsrad von iOS meldet schon beim Öffnen und bei jedem Dreh eine Änderung;
+   weil die App danach neu zeichnet, verschwand das Feld unter dem offenen Rad und die App reagierte nicht mehr. Übernommen wird erst,
+   wenn alle drei Felder gefüllt sind; vorher wird nichts neu gezeichnet. */
+function bdCommit(){
+  const g = id => String((document.getElementById(id) || {}).value || '').trim(), D = g('bdD'), M = g('bdM'), Y = g('bdY');
+  if (!D && !M && !Y) { const d = agTgt(); if (d && (d.birthDate || d.birthYear)) setBirth(''); return; }
+  if (!D || !M || Y.length < 4) return;
+  setBirth(/^\d{1,2}$/.test(D) && /^\d{1,2}$/.test(M) && /^\d{4}$/.test(Y) ? `${Y}-${M.padStart(2, '0')}-${D.padStart(2, '0')}` : 'x');
+}
 function setRhy(v){ const d = agTgt(); if (!d) return; d.rhythm = v === '2:1' ? '2:1' : '3:1'; agDone(); }
 function setGap(v){ const d = agTgt(); if (!d) return; d.gap2 = !!v; agDone(); }
 /* Eigene Wahl löschen: wieder dem Vorschlag nach Alter folgen */
@@ -98,7 +107,7 @@ function ageUi(d, light, set){
     : (own && (r !== sR || g !== sG) ? 'Du hast den Rhythmus selbst gewählt. Ohne eigene Wahl würde die App bei deinem Alter 3 Wochen Belastung und 1 Woche Entlastung mit normalem Abstand planen.' : '');
   const turn = set && hasBirth(d) && ar < AGE_M && a >= AGE_M && !own ? '<p class="mt-2 text-xs" style="color:var(--mute)">Du bist inzwischen 50 oder älter. Der Plan bleibt beim Rhythmus vom Planstart, damit sich nichts ungefragt ändert. Möchtest du den ruhigeren Rhythmus, wähle ihn oben aus.</p>' : '';
   return `<div><p class="mb-2 ${esc(light ? 'text-sm' : 'font-semibold')}" style="${esc(light ? 'color:var(--mute)' : '')}">Alter und Erholung (optional)</p>
-    <div class="grid grid-cols-2 items-end gap-3">${field('Geburtsdatum', `<input type="date" class="inp" style="min-height:44px" min="1920-01-01" max="${esc(mx)}" value="${esc(bdOk(d.birthDate) ? d.birthDate : '')}" onchange="setBirth(this.value)">`)}${a ? `<p class="pb-3 text-sm">Alter: <b>${a} Jahre</b></p>` : ''}</div>
+    <div class="grid grid-cols-2 items-end gap-3">${field('Geburtsdatum', `<span class="flex gap-2"><input id="bdD" type="text" inputmode="numeric" maxlength="2" autocomplete="bday-day" class="inp" style="min-height:44px;width:3.4rem;text-align:center" placeholder="TT" aria-label="Tag" value="${esc(bdOk(d.birthDate) ? +d.birthDate.slice(8) : '')}" onchange="bdCommit()"><input id="bdM" type="text" inputmode="numeric" maxlength="2" autocomplete="bday-month" class="inp" style="min-height:44px;width:3.4rem;text-align:center" placeholder="MM" aria-label="Monat" value="${esc(bdOk(d.birthDate) ? +d.birthDate.slice(5, 7) : '')}" onchange="bdCommit()"><input id="bdY" type="text" inputmode="numeric" maxlength="4" autocomplete="bday-year" class="inp" style="min-height:44px;width:4.6rem;text-align:center" placeholder="JJJJ" aria-label="Jahr" value="${esc(bdOk(d.birthDate) ? d.birthDate.slice(0, 4) : '')}" onchange="bdCommit()"></span>`)}${a ? `<p class="pb-3 text-sm">Alter: <b>${a} Jahre</b></p>` : ''}</div>
     ${!bdOk(d.birthDate) && d.birthYear ? `<p class="mt-1 text-xs" style="color:var(--mute)">Bisher ist nur das Geburtsjahr ${esc(d.birthYear)} gespeichert. Mit dem vollständigen Datum stimmt das Alter genau.</p>` : ''}
     <p class="mt-3 mb-2 text-sm" style="color:var(--mute)">Wochenrhythmus</p><div class="flex flex-wrap gap-2">${chip('3 Wochen Belastung, 1 Woche Entlastung', r === '3:1', "setRhy('3:1')")}${chip('2 Wochen Belastung, 1 Woche Entlastung', r === '2:1', "setRhy('2:1')")}</div>
     <p class="mt-3 mb-2 text-sm" style="color:var(--mute)">Abstand zwischen harten Einheiten</p><div class="flex flex-wrap gap-2">${chip('Normal', !g, 'setGap(false)')}${chip('Mehr Abstand', g, 'setGap(true)')}</div>

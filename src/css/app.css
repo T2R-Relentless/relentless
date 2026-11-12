@@ -285,11 +285,13 @@
   :root{--sat:env(safe-area-inset-top,0px)}
   .sbar{position:fixed;top:0;left:0;right:0;height:var(--sat);background:var(--navy);z-index:95;pointer-events:none}
   [data-theme=dark] .sbar{background:#071334}
-  html.sa-wrap{padding-top:0;height:100%;overflow:hidden}
+  /* iOS 26, installierte App mit durchscheinender Statusleiste: Ist die Seite kürzer als der Bildschirm, bekommt sie einen Anzeigebereich,
+     der um die Höhe der Statusleiste zu kurz ist (WebKit-Fehler 301108). Feste Elemente enden dann zu hoch, und was darunter ragt, wird
+     abgeschnitten. Abhilfe (wie frappe-ui #1284): Die Seite selbst mindestens bildschirmhoch machen, dann gibt iOS den vollen Bereich.
+     Die Obergrenze 100lvh verhindert, dass die Seite scrollt, sobald der Bereich stimmt. Dafür darf html nicht overflow:hidden haben. */
+  html.sa-wrap{padding-top:0;height:100%;min-height:min(100lvh, calc(100% + env(safe-area-inset-top,0px)));overscroll-behavior:none}
   html.sa-wrap body{height:100%;overflow:hidden}
-  html.sa-wrap #sc{position:fixed;top:var(--sat);left:0;right:0;bottom:calc(-1 * var(--vgap, 0px));overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
-  /* iOS 26: Leiste bis zum unteren Bildschirmrand (siehe vgapFix in 18-navigation.js) */
-  html.sa-wrap .bnav{bottom:calc(-1 * var(--vgap, 0px))}
+  html.sa-wrap #sc{position:fixed;top:var(--sat);left:0;right:0;bottom:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
   /* F18: Verlaufsgrafik im Logbuch */
   .lbc-bar{fill:var(--ice);opacity:.55}
   .lbc-on{fill:var(--teal)}

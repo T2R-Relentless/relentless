@@ -26,7 +26,7 @@ test('Nirgends Unschärfe oder Verlauf am oberen Rand', async () => {
 test('Installierte App: Inhalt scrollt in #sc unter einer klaren Kante', async () => {
   const a = await wrapped(), d = a.w.document, sc = d.getElementById('sc');
   eq(sc.getBoundingClientRect().top, 47, 'Scrollbereich beginnt unter der Statusleiste'); eq(css(a, sc, 'overflow-y'), 'auto');
-  eq(css(a, d.documentElement, 'overflow-y'), 'hidden', 'Seite selbst scrollt nicht'); eq(css(a, d.documentElement, 'padding-top'), '0px');
+  eq(css(a, d.body, 'overflow-y'), 'hidden', 'Seite selbst scrollt nicht (body)'); ok(css(a, d.documentElement, 'overflow-y') !== 'hidden', 'html ohne overflow:hidden (iOS 26: sonst zu kurzer Anzeigebereich)'); ok(/min-height:min\(100lvh/.test(a.w.document.documentElement.outerHTML.replace(/\s+/g, '').replace(/min\(100lvh,/, 'min(100lvh,')) || /100lvh/.test([...d.querySelectorAll('style')].map(x => x.textContent).join('')), 'Mindesthöhe für den vollen Anzeigebereich'); eq(css(a, d.documentElement, 'padding-top'), '0px');
   a.page('week'); sc.scrollTop = 400; ok(sc.scrollTop > 0, 'lässt sich scrollen'); a.w.goPg('logbook'); eq(sc.scrollTop, 0, 'Seitenwechsel springt nach oben');
   a.noErrors();
 });

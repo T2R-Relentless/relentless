@@ -94,7 +94,7 @@ const recOf = (a, from, to) => { const p = a.$('S.p'), out = []; for (let w = fr
 test('Einstellungen: Zeile mit Alter und Rhythmus, Seite zeigt das gespeicherte Geburtsdatum', async () => {
   const a = await boot(); makePlan(a, agPlan({birthDate:'1970-05-20'}));
   const t = a.page('settings').replace(/\s+/g, ' '); ok(/Alter und Erholung 56 Jahre · Rhythmus 2:1 · mehr Abstand/.test(t), 'Zeile: ' + t.slice(0, 400));
-  a.page('set-age'); const inp = a.w.document.querySelector('#fx-age input[type=date]'); eq(inp.value, '1970-05-20'); ok(/Alter: 56 Jahre/.test(a.text().replace(/\s+/g, ' ')));
+  a.page('set-age'); const q = id => a.w.document.getElementById(id); eq([q('bdD').value, q('bdM').value, q('bdY').value], ['20', '5', '1970']); eq(a.w.document.querySelectorAll('#fx-age input[type=date]').length, 0, 'kein Datumsrad'); ok(/Alter: 56 Jahre/.test(a.text().replace(/\s+/g, ' ')));
   ok(!/Speichern/.test(a.text()), 'ohne Änderung kein Speichern-Knopf');
   const b = await boot(); makePlan(b, agPlan({})); ok(/Alter nicht eingetragen · Rhythmus 3:1/.test(b.page('settings').replace(/\s+/g, ' ')), 'ohne Angabe'); b.noErrors(); a.noErrors();
 });
@@ -143,4 +143,13 @@ test('Einstellungen Alter und Erholung auf Englisch ohne Lücken, Neuigkeit füh
   a.page('settings'); ok(/Age and recovery/.test(a.text()));
   eq([...a.w.__iMiss.keys()].filter(k => /Alter|Geburt|Rhythmus|Abstand|Entlastung|Speichern|Vorschlag|Woche|Jahre/.test(k)), []);
   a.$('wnShow = {from:176}'); const k = a.$("wnItems(176, APP_VERSION, null, 99).items.findIndex(x => x.go === 'set:set-age')"); ok(k >= 0); a.w.wnJump(k); eq(a.$('pg'), 'set-age'); a.noErrors();
+});
+
+test('Geburtsdatum über drei Felder: unvollständige Eingabe zeichnet nicht neu, vollständige wird übernommen', async () => {
+  const a = await boot(); makePlan(a, agPlan({})); a.page('set-age'); const q = id => a.w.document.getElementById(id);
+  const el = q('bdD'); q('bdD').value = '1'; a.w.bdCommit(); q('bdM').value = '8'; a.w.bdCommit(); ok(q('bdD') === el, 'Feld bleibt dasselbe Element (kein Neuzeichnen)'); eq(a.$('(agD || {}).birthDate'), undefined, 'noch nichts übernommen');
+  q('bdY').value = '19'; a.w.bdCommit(); ok(q('bdD') === el); q('bdY').value = '1966'; a.w.bdCommit(); eq(a.$('agD.birthDate'), '1966-08-01'); ok(/Alter: 60 Jahre/.test(a.text().replace(/\s+/g, ' ')));
+  eq([q('bdD').value, q('bdM').value, q('bdY').value], ['1', '8', '1966']);
+  q('bdD').value = '31'; q('bdM').value = '2'; a.w.bdCommit(); ok(/Bitte ein gültiges Geburtsdatum/.test(a.text()), 'ungültiges Datum mit Hinweis'); a.noErrors();
+  a.w.agCancel(); a.page('set-ali'); const v = a.w.document.getElementById('vacTo'); a.w.vacSet('from', '2026-12-01'); ok(a.w.document.getElementById('vacTo') === v && v.value === '2026-12-01', 'Urlaub: Feld bleibt, Ende folgt dem Beginn');
 });

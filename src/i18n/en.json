@@ -6642,5 +6642,9 @@
 "Konstant in Zone {0}, keine Intensität.": "Steady in zone {0}, no intensity.",
 "Diese Woche zählen die drei VO{0}max-Einheiten.": "This week the three VO{0}max sessions count.",
 "ca. {0} Std.: {1} g Kohlenhydrate pro Stunde, {2} bis {3} Std. vorher Kohlenhydrate laden ({4} bis {5} g pro kg und Tag).": "approx. {0} h: {1} g carbohydrate per hour, carb-load {2} to {3} h beforehand ({4} to {5} g per kg per day).",
-"Grundlage, Kraft und Technik, dazu Sweet Spot und bei wenig Wochenzeit eine kurze VO{0}max-Einheit.": "Endurance, strength and technique, plus sweet spot and, with little weekly time, a short VO{0}max session."
+"Grundlage, Kraft und Technik, dazu Sweet Spot und bei wenig Wochenzeit eine kurze VO{0}max-Einheit.": "Endurance, strength and technique, plus sweet spot and, with little weekly time, a short VO{0}max session.",
+"TT": "DD",
+"MM": "MM",
+"JJJJ": "YYYY",
+"Tag": "Day"
 }
