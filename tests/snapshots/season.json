@@ -1,0 +1,68 @@
+{
+ "prognose": [
+  {
+   "form": {
+    "ctl": 69,
+    "tsb": 12
+   },
+   "ftp": 295,
+   "kind": "race",
+   "n": "Frühjahrsklassiker",
+   "pace": [
+    230,
+    254,
+    283
+   ],
+   "t": 245,
+   "tAmb": 240
+  },
+  {
+   "form": {
+    "ctl": 65,
+    "tsb": 5
+   },
+   "ftp": 296,
+   "kind": "tt",
+   "n": "Bergzeitfahren",
+   "pace": [
+    269,
+    293,
+    296
+   ],
+   "t": 65,
+   "tAmb": null
+  },
+  {
+   "form": {
+    "ctl": 65,
+    "tsb": 1
+   },
+   "ftp": 296,
+   "kind": "race",
+   "n": "Kriterium",
+   "pace": [
+    269,
+    293,
+    296
+   ],
+   "t": 65,
+   "tAmb": null
+  },
+  {
+   "form": {
+    "ctl": 66,
+    "tsb": 16
+   },
+   "ftp": 296,
+   "kind": "race",
+   "n": "Hauptrennen",
+   "pace": [
+    225,
+    249,
+    278
+   ],
+   "t": 305,
+   "tAmb": 300
+  }
+ ]
+}

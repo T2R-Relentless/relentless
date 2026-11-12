@@ -292,6 +292,7 @@ function evPage(){
   const ch = (() => { try { return chkHead(p); } catch (e) { elog(e); return ['Zielzeit und Strecke prüfen', '']; } })();
   return `<section class="panel p-5">${goalCard(false)}</section>${evCycNote(p)}`
     + `<p class="eyebrow mb-2 mt-5">Vorbereitung auf das Event</p><div class="mlist">`
+    + (efList(p).length > 1 ? evRow('ev-saison', 'goal', 'Saisonübersicht', 'Zielzeit, Form und Pacing für jedes Event') : '')
     + evRow('check', 'goal', 'Plan-Check', (p.targetTime ? 'Zielzeit: ' : '') + ch[0], ch[1])
     + evRow('ev-prof', 'prof', 'Anforderungsprofil', epSub(p) || prof)
     + (pace ? evRow('ev-pace', 'pace', 'Pacing-Plan', pace) : '')
@@ -312,11 +313,12 @@ const EV_PAGES = {
   'ev-prof':() => epPage(),
   'ev-pace':() => efPacePage() || `<section class="panel p-4"><p class="text-sm">${paceTxt(p0(), evProfile(p0()))}</p><p class="mt-2 text-xs" style="color:var(--mute)">Steht auch am Eventtag und bei den Eventsimulationen im Plan. Grundlage: haltbarer Anteil der FTP über die erwartete Fahrzeit (IF ≈ 1 − 0,10 · ln Std.).</p></section>`,
   'ev-fuel':() => evFuelPage(),
+  'ev-saison':() => evSeasonPage() || `<section class="panel p-4"><p class="text-sm">Keine Events im Plan.</p></section>`,
   'ev-subs':() => iaNoHead(subsCard(p0())) || `<section class="panel p-4"><p class="text-sm" style="color:var(--mute)">Noch keine weiteren Events. Trag alle Rennen deiner Saison ein, beliebig viele: als A-Event mit eigenem Formhöhepunkt oder als B- und C-Rennen auf dem Weg zum Hauptevent.</p><button class="ghost mt-3 !py-2 text-sm" onclick="editSubs()">Events hinzufügen</button></section>`
 };
 const p0 = () => S.p;
-const EV_T = {'ev-goal':'Zielzeit-Check', 'ev-prof':'Anforderungsprofil', 'ev-pace':'Pacing-Plan', 'ev-fuel':'Ernährungsstrategie', 'ev-subs':'Saison und Events'};
-Object.assign(IA_PAR, {'ev-goal':'event', 'ev-prof':'event', 'ev-pace':'event', 'ev-fuel':'event', 'ev-subs':'event'});
+const EV_T = {'ev-goal':'Zielzeit-Check', 'ev-prof':'Anforderungsprofil', 'ev-pace':'Pacing-Plan', 'ev-fuel':'Ernährungsstrategie', 'ev-subs':'Saison und Events', 'ev-saison':'Saisonübersicht'};
+Object.assign(IA_PAR, {'ev-goal':'event', 'ev-prof':'event', 'ev-pace':'event', 'ev-fuel':'event', 'ev-subs':'event', 'ev-saison':'event'});
 
 /* ---------- Zusatzfahrten: Fahrten ohne geplante Einheit erkennen, auswerten, rückmelden und den Plan anpassen ----------
    Eine Fahrt gilt als Zusatzfahrt, wenn an dem Tag keine Einheit geplant war oder die geplante Einheit schon bewertet ist.

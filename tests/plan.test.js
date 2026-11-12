@@ -5,7 +5,7 @@
 R.file = 'plan';
 
 const PAGES = ['week', 'logbook', 'more', 'overview', 'state', 'check', 'event', 'ev-goal', 'ev-prof', 'ev-subs', 'ev-pace', 'ev-fuel',
-  'rides', 'ms', 'sform', 'spb', 'sperf', 'pcp', 'pdu', 'pef', 'pmor', 'psw', 'shist', 'slog', 'rc', 'rc-w', 'rc-m', 'rc-y',
+  'ev-saison', 'rides', 'ms', 'sform', 'spb', 'sperf', 'pcp', 'pdu', 'pef', 'pmor', 'psw', 'shist', 'slog', 'rc', 'rc-w', 'rc-m', 'rc-y',
   'settings', 'set-ali', 'set-hr', 'set-wf', 'set-wx', 'set-sq', 'set-gm', 'set-lang', 'plans', 'export', 'ex', 'science', 'cycle'];
 
 const SCEN = [

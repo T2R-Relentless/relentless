@@ -169,6 +169,10 @@ function vzRaceHint(tsb, ctl, peak){
   if (tsb > 30) return 'Die Form am Renntag ist sehr hoch. Das spricht für eine lange Entlastung, bei der schon Fitness verloren geht.';
   return '';
 }
+/* F17: Markierung je Event der Saison (außer dem Hauptevent, das die Renntag-Linie hat): Linie und Prioritätsbuchstabe */
+function vzEvMarks(p, vis, X, T){ let L = []; try { L = efList(p).filter(x => !x.main); } catch (e) { elog(e); }
+  return L.map(x => { const i = vis.findIndex(r => r.day === x.date); if (i < 0) return ''; const xx = X(i).toFixed(1);
+    return `<g class="vz-ev" data-day="${esc(x.date)}"><line x1="${xx}" x2="${xx}" y1="${T + 10}" y2="${T + 26}" stroke="${x.prio === 'A' ? '#e0464e' : x.prio === 'B' ? 'var(--ink)' : 'var(--teal)'}" stroke-width="2"/><text x="${xx}" y="${T + 8}" text-anchor="middle" class="tx" font-weight="700">${esc(x.prio)}</text></g>`; }).join(''); }
 /* Monatsbeschriftungen: am Monatsersten; der angeschnittene erste Monat nur, wenn genug Platz bis zum nächsten bleibt */
 function vzTicks(vis, X, gap = 26){
   const t = []; for (let i = 0; i < vis.length; i++) { const d = dOnly(vis[i].day); if (d.getDate() === 1 || i === 0) t.push(i); }
@@ -191,6 +195,7 @@ function vzForm(){
     ${ti > 0 ? `<polyline points="${line('atl', tI, n - 1)}" class="vz-atl vz-dash"/><polyline points="${line('ctl', tI, n - 1)}" class="vz-ctl vz-dash"/>` : ''}
     <line x1="${X(tI)}" x2="${X(tI)}" y1="${T}" y2="${H - Bm}" class="now"/><text x="${X(tI) + 3}" y="${T + 8}" class="tx">heute</text>
     ${isEv ? `<line x1="${X(ei).toFixed(1)}" x2="${X(ei).toFixed(1)}" y1="${T}" y2="${H - Bm}" class="goal" data-day="${esc(vis[ei].day)}"/>` : ''}
+    ${isEv ? vzEvMarks(p, vis, X, T) : ''}
     ${mt.map(i => `<text x="${X(i)}" y="${H - 5}" class="tx">${MON[new Date(vis[i].day + 'T12:00:00').getMonth()]}</text>`).join('')}</svg>
     <svg viewBox="0 0 ${W} ${H2}" class="pchart" role="img" aria-label="Form">
     <line x1="${L}" x2="${W - R}" y1="${Yt(0)}" y2="${Yt(0)}" class="gl0"/><text x="${L - 4}" y="${Yt(0) + 3}" text-anchor="end" class="tx">0</text>

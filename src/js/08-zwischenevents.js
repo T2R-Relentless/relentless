@@ -17,6 +17,7 @@ function applySubs(res, p, w){
     ev.forEach(s => { const off = a - s.a; if (off >= -3 && off <= (s.prio === 'A' ? 6 : 2) && (!best || off === 0 || Math.abs(off) < Math.abs(best.off))) best = {s, off}; });
     if (!best) return x; const {s, off} = best, B = s.prio === 'B' || s.prio === 'A', AE = s.prio === 'A', hard = ['sst', 'thr', 'vo2', 'long'].includes(x.t), nm = s.name;
     if (off === 0) return subSession(s);
+    if (off === -1 && s.prio === 'C') return x; /* F17: C-Rennen ohne Tapering */
     if (off === -1) return B ? {...D('rec', 'Aktivierung vor ' + nm, 40, 50, 65, '90 U/min', '30 Min. locker, dazu 3×1 Min. @ 105–110 % mit 3 Min. Pause, danach Material und Verpflegung prüfen.', 'Früh ins Bett, nichts Neues essen.'), subPre:1} : hard ? easy('Locker vor ' + nm, Math.min(60, x.m || 60)) : x;
     if (B && off === -2) return hard ? easy('Mini-Tapering vor ' + nm, Math.min(60, x.m || 60)) : x;
     if (B && off === -3) return x.t === 'long' ? {...x, n:'Long Ride, gekürzt (Mini-Tapering)', m:Math.min(x.m, 90)} : x;
