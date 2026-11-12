@@ -101,3 +101,10 @@ function vacCard(){
     ${rows ? `<div class="mt-2">${rows}</div>` : ''}<div class="mt-3 grid grid-cols-2 gap-3">${field('Von', `<input type="date" class="inp" style="min-height:44px" min="${esc(iso(0))}" value="${esc(vacF.from)}" onchange="vacSet('from',this.value)">`)}${field('Bis', `<input type="date" class="inp" style="min-height:44px" min="${esc(vacF.from || iso(0))}" value="${esc(vacF.to)}" onchange="vacSet('to',this.value)">`)}</div>
     ${vacMsg ? `<p class="mt-2 text-sm" style="color:#c0392b">⚠ <span>${esc(vacMsg)}</span></p>` : ''}<button class="btn mt-3 !w-auto !px-4" style="min-height:44px" onclick="vacAdd()">Urlaub eintragen</button></section>`;
 }
+/* ---- M8: VO2max-Block als Option für Fortgeschrittene (ab 3,5 W/kg und 8 Std. pro Woche, oder wenn schon gewählt) ---- */
+function setVo2Blk(v){ S.d.vo2blk = !!v; save(); render(); }
+function vo2BlkUi(d){
+  const wkg = (d.ftp || 0) / kgOf(d); if (!(d.vo2blk || (wkg >= 3.5 && (d.hours || 0) >= 8))) return '';
+  return `<div class="mt-4"><p class="mb-2 text-sm" style="color:var(--mute)">VO2max-Block im Aufbau (für Fortgeschrittene)</p><div class="flex flex-wrap gap-2">${chip('Nein', !d.vo2blk, 'setVo2Blk(false)')}${chip('Ja, einen Block einplanen', !!d.vo2blk, 'setVo2Blk(true)')}</div>
+    <p class="mt-1 text-xs" style="color:var(--mute)">Eine Woche mit drei VO2max-Einheiten statt zwei gemischten, direkt vor einer Entlastungswoche. Bei trainierten Radfahrern brachte so ein Block in Studien etwas mehr als die gleiche Zahl verteilter Einheiten (Rønnestad et al. 2014). Die Studienlage ist klein. Nur sinnvoll ab 5 Trainingstagen.</p></div>`;
+}

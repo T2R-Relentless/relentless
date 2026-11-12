@@ -7,13 +7,26 @@ function phases1(p){
   const t = Math.min(52, Math.max(2, Math.floor((new Date(endOf(p) + 'T12:00:00') - new Date(p.start + 'T12:00:00')) / 6048e5) + 1)), fit = p.goal === 'fitness', tp = p.goal === 'event' && t >= 8 ? 2 : 1, n = t - tp;
   let b = Math.max(1, Math.round(n * (fit ? .5 : .4))), k = fit || n < 3 ? 0 : Math.max(1, Math.round(n * .2)), u = n - b - k;
   if (u < 0) { u = 0; b = n - k; }
+  /* M8 (Audit 12.11.2026): Basis und Aufbau höchstens 12 Wochen, Spitze 3 bis 6 Wochen (bei kurzen Plänen weniger). Überzählige Wochen
+     am Anfang als „Allgemeine Vorbereitung“. Basis und Aufbau enden möglichst mit einer Entlastungswoche (Phasengrenze auf ein Vielfaches
+     der Blocklänge 4 bzw. 3 bei Rhythmus 2:1). */
+  let pre = 0;
+  if (!fit && n >= 3) {
+    const N = rhyN(p); k = Math.min(6, Math.max(n >= 10 ? 3 : 1, Math.round(n * .2))); b = Math.min(12, Math.max(1, Math.round(n * .4))); u = Math.max(0, Math.min(12, n - b - k)); if (b + u + k > n) b = Math.max(1, n - u - k); pre = n - b - u - k;
+    if (n >= 3 * N) {
+      const E1 = Math.min(n - k - 1, Math.max(N, Math.round((pre + b) / N) * N)); let E2 = E1 + u;
+      const C = []; for (let m = N; m < n; m += N) if (m > E1 && n - m >= 2 && n - m <= Math.max(k, 6) + 1) C.push(m); if (C.length) E2 = C.reduce((a, m) => Math.abs(m - (E1 + u)) < Math.abs(a - (E1 + u)) ? m : a);
+      b = E1 - pre; if (b > 12) { pre = E1 - 12; b = 12; } if (b < 1) { pre = Math.max(0, E1 - 1); b = E1 - pre; }
+      u = E2 - E1; k = n - E2;
+    }
+  }
   const ev = p.goal === 'event', L = {
     base:['Basis','Aerobe Grundlage: viel Zone 2, wenig Intensität','#62c7ff'],
     build:['Aufbau','Je eine Intervalleinheit über der Schwelle und eine Sweet-Spot- oder Schwelleneinheit, Umfang steigt','#fbbf24'],
     peak:['Spitze', ev ? 'Eventspezifisch: lange Ritte, VO2max-Schärfe' : 'VO2max-Reize, maximale Leistung','#f87171'],
     taper:[ev ? 'Tapering' : p.goal === 'ftp' ? 'Test und Entlastung' : 'Abschluss','Umfang sinkt um etwa 40 bis 60 %, Intensität und Fahrhäufigkeit bleiben','#34d399']};
   let w = 1;
-  return [['base',b],['build',u],['peak',k],['taper',tp]].filter(x => x[1] > 0).map(([key,c]) => { const o = {key,name:L[key][0],desc:L[key][1],color:L[key][2],from:w,to:w+c-1,weeks:c}; w += c; return o; });
+  return [['base',pre,1],['base',b],['build',u],['peak',k],['taper',tp]].filter(x => x[1] > 0).map(([key,c,pr]) => { const o = pr ? {key, name:'Allgemeine Vorbereitung', desc:'Grundlage, Kraft und Technik, dazu eine Sweet-Spot-Einheit pro Woche. Bis zum Event ist noch viel Zeit, die gezielte Vorbereitung beginnt danach.', color:'#a5d8ff', from:w, to:w + c - 1, weeks:c, prep:1} : {key,name:L[key][0],desc:L[key][1],color:L[key][2],from:w,to:w+c-1,weeks:c}; w += c; return o; });
 }
 /* ---------- Saisonplanung: mehrere A-Events = mehrere Formhöhepunkte ----------
    Ein A-Event (das Hauptevent): alle anderen Events sind Bausteine (B/C) auf dem Weg dorthin, Phasen wie bisher.
@@ -223,7 +236,7 @@ function genWeekCore(p, w, base){
      werden auf etwa ein Drittel der Wochenzeit begrenzt (fitIv). Grundlage: progressive Belastungssteigerung; für Intervalle zählt
      die angesammelte Zeit im Zielbereich (Seiler et al. 2013). */
   const LAD = {sst:[[3, 10], [3, 12], [2, 20], [3, 15], [2, 25], [3, 20]], thr:[[3, 8], [3, 10], [2, 15], [2, 18], [2, 20], [3, 15]], vo2:[[4, 3], [5, 3], [4, 4], [5, 4], [6, 4]], v30:[[2, 10], [2, 13], [3, 10], [3, 13], [4, 11], [4, 13]]};
-  const tot = ph[ph.length - 1].to, tpS = (ph.find(x => x.key === 'taper') || {from:tot + 1}).from, nb0 = (ph.find(x => x.key !== 'base' && x.key !== 'taper') || ph[0]).from;
+  const tot = ph[ph.length - 1].to, tpS = (ph.find(x => x.key === 'taper') || {from:tot + 1}).from, nb0 = (ph.find(x => x.key !== 'base' && x.key !== 'taper') || ph[0]).from, sb0 = (ph.find(x => !x.prep) || ph[0]).from;
   const isLoadW = q => { const F = ph.find(x => q >= x.from && q <= x.to); return !!F && F.key !== 'taper' && !F.rec && !recWk(p, q) && !(p.recW || []).includes(q); };
   const cntLoad = (a, b) => { let n = 0; for (let q = a; q <= b; q++) if (isLoadW(q)) n++; return n; };
   const wkgP = (p0.ftp || 200) / kgOf(p0), lvS = wkgP < 2.5 ? 0 : wkgP >= 4 ? 2 : 1;
@@ -231,7 +244,7 @@ function genWeekCore(p, w, base){
   const ivCap = x => fitIv(x, Math.max(60, Math.round(hE * 60 * .33)));
   const ladder = (b, salt) => {
     const lw = loadWk(p, w) - 1 + salt, osets = s => 2 + (s >= 2 ? 1 : 0) + (s >= 4 ? 1 : 0);
-    if (b === SST) { const s = stage(6, 1), [r, m] = LAD.sst[s], f = lw % 4, v = {reps:r, work:m, rest:m >= 20 ? 6 : 5};
+    if (b === SST) { const s = stage(6, sb0), [r, m] = LAD.sst[s], f = lw % 4, v = {reps:r, work:m, rest:m >= 20 ? 6 : 5};
       if (f === 1) return ivCap(mkV(OUL, `Over-Under leicht ${osets(s)}×9`, {sets:osets(s)}));
       if (f === 2 && m <= 15) return ivCap(mkV(SST, `Sweet Spot ${r}×${m} Kraftausdauer`, v, VAR.SST[2].tip, VAR.SST[2].cad));
       if (f === 3 && r === 3) return ivCap(mkV(SST, `Sweet Spot ${r}×${m} Trittwechsel`, v, VAR.SST[4].tip, VAR.SST[4].cad));
@@ -276,11 +289,16 @@ function genWeekCore(p, w, base){
   let hard = (rec ? (fF === 'health' || fF === 'restart' ? [] : [OPN]) : (fF === 'restart' && w <= 3 ? [] : H[p.goal][k])).slice(0, iF ? 2 : (hE < 5 && (nDays < 3 || hE < 3)) || fF === 'health' ? 1 : 2);
   /* M4: Bei wenig Zeit (bis 6 Std.) reicht eine Sweet-Spot-Einheit in der Basis nicht als Reiz. Ab Woche 5 kommt eine kurze VO2max-Einheit
      dazu (ab 3 Trainingstagen und 3 Std., nicht unter 2,5 W/kg und nicht beim Ziel „Ausdauer“). */
-  if (!rec && k === 'base' && hard.length === 1 && hard[0] === SST && hE <= 6 && hE >= 3 && nDays >= 3 && w > 4 && wkgP >= 2.5 && fF !== 'endur') hard = [SST, VOS];
+  if (!rec && k === 'base' && hard.length === 1 && hard[0] === SST && hE <= 6 && hE >= 3 && nDays >= 3 && w > 4 && wkgP >= 2.5 && fF !== 'endur' && !P.prep) hard = [SST, VOS];
+  if (P.prep && !rec) hard = hard.slice(0, 1);
+  /* M8: VO2max-Block (Option für Fortgeschrittene): im Aufbau die Belastungswoche vor der ersten Entlastungswoche mit drei VO2max-Einheiten
+     (Rønnestad et al. 2014). Nur ab 5 Trainingstagen. */
+  const blkW = (() => { const B = ph.find(x => x.key === 'build'); if (!p.vo2blk || !B) return 0; for (let q = B.from + 1; q <= B.to; q++) if (recWk(p, q)) return q - 1 > B.from ? q - 1 : 0; return 0; })();
+  if (blkW === w && !rec && nDays >= 5 && !reE) hard = [VO2, V30, VOS];
   hard = reentHard(hard, reE, SST);
   hard = hard.map((x, n) => rec || k === 'taper' ? (x === OPN ? vPick(x, Math.floor(w / rhyN(p))) : x) : vPick(x, n * 2));
   /* Intensität statt Umfang: mindestens 2 harte Einheiten, im Aufbau und in der Spitze eine dritte, kurze (bei gleicher Wochenzeit) */
-  if (iF && !rec && k !== 'taper') { const ex = ev && (ty === 'punch' || ty === 'flach') ? RMP : VOS; if (hard.length < 2) hard = [...hard, hard.some(x => x.t === 'vo2') ? SST : ex]; if ((k === 'build' || k === 'peak') && p.avail.filter(Boolean).length >= 4) hard = [...hard, ex]; }
+  if (iF && !rec && k !== 'taper' && blkW !== w) { const ex = ev && (ty === 'punch' || ty === 'flach') ? RMP : VOS; if (hard.length < 2) hard = [...hard, hard.some(x => x.t === 'vo2') ? SST : ex]; if ((k === 'build' || k === 'peak') && p.avail.filter(Boolean).length >= 4) hard = [...hard, ex]; }
   const BV = [['Grundlage Z2', 'Gleichmäßig in Zone 2, Gespräch muss möglich sein.', 'Lieber zu leicht als zu hart.'],
     ['Grundlage mit Trittfrequenz', 'Zone 2, darin 5×2 Min. mit 105–115 U/min bei gleicher Leistung, dazwischen 3 Min. normal treten. Oberkörper ruhig, nicht hüpfen.', 'Hohe Trittfrequenz schult einen runden, ökonomischen Tritt.'],
     ['Grundlage mit Fahrtechnik', 'Zone 2. Dazu Technik üben: sauber in Kurven einlenken, vorausschauend schalten, freihändig trinken und essen, kurze Stücke im Stehen fahren.', 'Technik spart im Rennen Kraft und Nerven.'],
