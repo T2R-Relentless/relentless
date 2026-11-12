@@ -49,6 +49,11 @@ const SQ_SETREST = {tech:90, base:150, build:120, erh:120, leicht:90};
 function sqEst(d){ if (d.sec) return d.sec * (d.side ? 2 : 1); const n = +String(d.reps).split(/[–-]/).pop() || 10; return n * 3 * (d.side ? 2 : 1); }
 /* Einheit des Tages i: mob (Mobilität/Stabilität) oder str (Kraft) */
 function sqSession(kind, i){
+  /* F23: frei gestartete Routine (Mehr → Übungen) */
+  if (kind === 'rt') { const s = rtSel; if (!s) return null;
+    const it = s.ex.filter(([id]) => EXI[id] && EXP[id]).map(([id, n, r]) => ({id, n:n || EXI[id].t, d:sqDose(r), dt:r}));
+    const N = it.length && it.every(x => x.d.sets === it[0].d.sets) ? it[0].d.sets : 1;
+    return {kind, i:-1, key:'rt|' + s.rt + '|' + iso(0), n:'Routine: ' + s.n, items:it, rounds:N, rr:60, setRest:0, circ:N > 1}; }
   if (kind === 'mob') { const s = mobMap[i]; if (!s) return null;
     const it = s.ex.filter(([id]) => EXI[id] && EXP[id]).map(([id, n, r]) => ({id, n:n || EXI[id].t, d:sqDose(r), dt:r}));
     const N = it.length && it.every(x => x.d.sets === it[0].d.sets) ? it[0].d.sets : 1;
@@ -90,8 +95,8 @@ function sqSpk(t, en){
     .replace(/(\d+)\s*[–-]\s*(\d+)/g, en ? '$1 to $2' : '$1 bis $2').replace(/[()]/g, '').replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ').trim();
 }
 /* Hinweis und Merksatz einer Übung, jeweils [de, en] */
-function sqHint(id){ const s = SQ_SAY[id]; if (s) return [s[0], s[1]]; const c = (EXI[id] && EXI[id].cap) || []; const t = c.join(' → '); return [sqSpk(t, false), sqSpk(sqEn(c[0] || '') + (c[1] ? ' → ' + sqEn(c[1]) : ''), true)]; }
-function sqCue(id){ const s = SQ_SAY[id]; if (s) return [s[2], s[3]]; const h = sqHint(id); return [h[0].split(/[.,]/)[0], h[1].split(/[.,]/)[0]]; }
+function sqHint(id){ const s = SQ_SAY[id] || (EXI[id] && EXI[id].say); if (s) return [s[0], s[1]]; const c = (EXI[id] && EXI[id].cap) || []; const t = c.join(' → '); return [sqSpk(t, false), sqSpk(sqEn(c[0] || '') + (c[1] ? ' → ' + sqEn(c[1]) : ''), true)]; }
+function sqCue(id){ const s = SQ_SAY[id] || (EXI[id] && EXI[id].say); if (s) return [s[2], s[3]]; const h = sqHint(id); return [h[0].split(/[.,]/)[0], h[1].split(/[.,]/)[0]]; }
 /* Dosis sprechbar: „10 Wiederholungen pro Seite“, „45 Sekunden“ */
 function sqDoseSay(d){ const side = d.side ? [' pro Seite', ' per side'] : ['', ''];
   if (d.sec) return [`${d.sec} Sekunden${side[0]}`, `${d.sec} seconds${side[1]}`];
@@ -326,8 +331,8 @@ function sqEnd(part){
 /* Einheit als (teilweise) erledigt markieren und ins Logbuch schreiben */
 function sqSaveDone(part, act, nEx, nTot){
   const se = sq.se, key = se.key;
-  if (se.kind === 'mob') { S.mobDone = S.mobDone || {}; S.mobDone[key] = part ? 'part' : true; } else { S.strDone = S.strDone || {}; S.strDone[key] = part ? 'part' : true; }
-  try { S.lb = S.lb && typeof S.lb === 'object' ? S.lb : {}; S.lb['sq|' + key] = {k:'s', day:dstr(se.i), n:se.n, sk:se.kind, sec:Math.round(act / 1000), nEx, nTot, part:!!part, at:Date.now(), pid:S.pid || null}; } catch (e) { elog(e); }
+  if (se.kind === 'mob') { S.mobDone = S.mobDone || {}; S.mobDone[key] = part ? 'part' : true; } else if (se.kind === 'str') { S.strDone = S.strDone || {}; S.strDone[key] = part ? 'part' : true; }
+  try { S.lb = S.lb && typeof S.lb === 'object' ? S.lb : {}; S.lb['sq|' + key] = {k:'s', day:se.i >= 0 ? dstr(se.i) : iso(0), n:se.n, sk:se.kind, sec:Math.round(act / 1000), nEx, nTot, part:!!part, at:Date.now(), pid:S.pid || null}; } catch (e) { elog(e); }
   save();
 }
 document.addEventListener('visibilitychange', () => {

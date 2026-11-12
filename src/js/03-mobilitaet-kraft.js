@@ -58,7 +58,7 @@ function mobOf(p, w, plan, sm){
   const sc = j => { const x = plan[j]; let s = 0; if (x.t === 'rest') s += 3; else if (['rec', 'base', 'com'].includes(x.t)) s += 2; else if (x.t === 'long') s += 1; if (sm && sm[j]) s -= 3; if (/^Eventtag/.test(x.n || '')) s -= 9; return s; };
   const c = [0, 1, 2, 3, 4, 5, 6].filter(j => j >= so && plan[j] && !plan[j].blocked && sc(j) > -5).sort((a, b) => sc(b) - sc(a) || a - b), pick = [];
   for (const j of c) { if (pick.length >= n) break; if (pick.every(q => Math.abs(q - j) >= 2) || c.length - pick.length <= n - pick.length) pick.push(j); }
-  pick.sort((a, b) => a - b); const out = {}; pick.forEach((j, k) => { out[j] = MOB[k % 2 === 0 ? 'mob' : 'stab']; }); return out;
+  pick.sort((a, b) => a - b); const out = {}; pick.forEach((j, k) => { out[j] = k % 2 === 0 ? (mobPlanRt(plan, j, w, k) || MOB.mob) : MOB.stab; }); return out; /* F23: Mobilität als Routine je Tagesart, Variante rotiert */
 }
 const mobKey = i => `${S.p.start}|${strWeek}|${i}`;
 function togMob(i){ S.mobDone = S.mobDone || {}; S.mobDone[mobKey(i)] = !S.mobDone[mobKey(i)]; save(); render(); }
@@ -74,8 +74,8 @@ function mobBlock(i, cur, pane){
 function setMob(n){ S.d.mobN = n; save(); render(); }
 function mobUi(d){
   const n = d.mobN | 0;
-  return `<div><p class="mb-2 font-semibold">Mobilität und Stabilität (je etwa 15 Min.)?</p><div class="flex flex-wrap gap-2">${chip('Nein', !n, 'setMob(0)')}${chip('2× pro Woche', n === 2, 'setMob(2)')}${chip('3× pro Woche', n === 3, 'setMob(3)')}${chip('4× pro Woche', n === 4, 'setMob(4)')}</div>
-    ${n ? '<p class="mt-2 text-sm" style="color:var(--mute)">Abwechselnd eine Mobilitätsroutine (Hüftbeuger, Brustwirbelsäule, Beinrückseite, Gesäß) und eine Stabilitätsroutine (Rumpf und Hüfte). Die App legt sie bevorzugt auf Ruhetage und lockere Tage, nicht auf Krafttage. Auch in Tapering- und Eventwoche, nur nicht am Eventtag.</p>' : ''}</div>`;
+  return `<div><p class="mb-2 font-semibold">Mobilität und Stabilität (10 bis 20 Min.)?</p><div class="flex flex-wrap gap-2">${chip('Nein', !n, 'setMob(0)')}${chip('2× pro Woche', n === 2, 'setMob(2)')}${chip('3× pro Woche', n === 3, 'setMob(3)')}${chip('4× pro Woche', n === 4, 'setMob(4)')}</div>
+    ${n ? '<p class="mt-2 text-sm" style="color:var(--mute)">Abwechselnd eine Mobilitätsroutine und eine Stabilitätsroutine (Rumpf und Hüfte). Mobilität: an Ruhetagen 20 Min. mit längerem Halten, nach der Fahrt 10 Min., die Übungen wechseln von Woche zu Woche. Die App legt sie bevorzugt auf Ruhetage und lockere Tage, nicht auf Krafttage. Auch in Tapering- und Eventwoche, nur nicht am Eventtag.</p>' : ''}</div>`;
 }
 
 /* ---------- Zusätzliches Krafttraining ---------- */

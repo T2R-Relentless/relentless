@@ -139,6 +139,7 @@ function exModal(){
     <p class="mt-3 font-semibold">Häufige Fehler</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm">${e.f.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
     ${e.v ? `<p class="mt-3 font-semibold">Variante</p><p class="mt-1 text-sm">${esc(e.v)}</p>` : ''}
     <p class="mt-3 font-semibold">Warum für Radfahrer</p><p class="mt-1 text-sm">${esc(e.r)}</p>
+    ${e.k ? `<p class="mt-3 font-semibold">Hinweis</p><p class="mt-1 text-sm">${esc(e.k)}</p>` : ''}
     <p class="mt-3 text-xs" style="color:var(--mute)">Die Animation zeigt den Bewegungsablauf als vereinfachte Strichfigur. Technik vor Gewicht. Bei Schmerzen abbrechen. Lass dir die Übung bei Unsicherheit einmal von einer Trainerin oder einem Trainer zeigen.</p></div></div>`;
 }
 

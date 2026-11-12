@@ -70,6 +70,8 @@ function sqCatalog(){
   try { if (!S.p) S.p = {start:'catalog'};
     const ses = [];
     mobMap = {0:MOB.mob, 1:MOB.stab}; ses.push(sqSession('mob', 0), sqSession('mob', 1));
+    /* F23: alle Varianten aller Routinen */
+    Object.keys(MOB_RT).forEach(k => MOB_RT[k].v.forEach((_, v) => { mobMap = {0:mobRt(k, v)}; ses.push(sqSession('mob', 0)); }));
     ['tech', 'base', 'build', 'erh', 'leicht'].forEach(k => [false, true].forEach(home => { strMap = {0:strSession({strPlace:home ? 'home' : 'gym'}, k)}; ses.push(sqSession('str', 0)); }));
     ses.filter(Boolean).forEach(se => [true, false].forEach(hints => [5, 10, 15, 20].forEach(tr => sqSays(se, {...SQ_DEF, voice:true, hints, tr}).forEach(add))));
     sqFixed().forEach(add);

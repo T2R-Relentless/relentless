@@ -262,7 +262,7 @@ let exGrp = 0;
 function exPage(){
   const tabs = EXGROUPS.map(([g], k) => chip(g, exGrp === k, `exGrp=${ja(k)};render()`)).join('');
   const lib = exLibrary(), parts = lib.split(/(?=<section class="panel p-4"><h2 class="hd text-xl font-semibold">)/).filter(Boolean);
-  return `<p class="text-sm" style="color:var(--mute)">Alle Übungen aus Kraft-, Stabilitäts- und Mobilitätstraining. Tippe auf eine Übung für Erklärung und Grafik.</p><div class="mt-3 flex flex-wrap gap-2">${tabs}</div>${iaNoHead(parts[exGrp] || parts[0] || '')}`;
+  return rtCards() + `<p class="mt-4 text-sm" style="color:var(--mute)">Alle Übungen aus Kraft-, Stabilitäts- und Mobilitätstraining. Tippe auf eine Übung für Erklärung und Grafik.</p><div class="mt-3 flex flex-wrap gap-2">${tabs}</div>${iaNoHead(parts[exGrp] || parts[0] || '')}`;
 }
 /* ---------- Fahrten bewerten: Garmin kompakt, Anpassungen nur noch unter Fortschritt ---------- */
 function ridesGm(){
