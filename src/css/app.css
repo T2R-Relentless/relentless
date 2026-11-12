@@ -287,7 +287,9 @@
   [data-theme=dark] .sbar{background:#071334}
   html.sa-wrap{padding-top:0;height:100%;overflow:hidden}
   html.sa-wrap body{height:100%;overflow:hidden}
-  html.sa-wrap #sc{position:fixed;top:var(--sat);left:0;right:0;bottom:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+  html.sa-wrap #sc{position:fixed;top:var(--sat);left:0;right:0;bottom:calc(-1 * var(--vgap, 0px));overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+  /* iOS 26: Leiste bis zum unteren Bildschirmrand (siehe vgapFix in 18-navigation.js) */
+  html.sa-wrap .bnav{bottom:calc(-1 * var(--vgap, 0px))}
   /* F18: Verlaufsgrafik im Logbuch */
   .lbc-bar{fill:var(--ice);opacity:.55}
   .lbc-on{fill:var(--teal)}

@@ -32,6 +32,19 @@ OUT = os.path.join(ROOT, 'public', 'index.html')
 INC = re.compile(r'\{\{include ([^}\s]+)\}\}')
 
 
+
+def srcFiles(spec):
+    """Quelldateien zu einem Muster, nach Name sortiert. Dateien mit Leerzeichen im Namen werden übersprungen: Das sind
+    Kopien, die z. B. iCloud Drive bei Synchronisationskonflikten anlegt („08-belastung 2.js“). Die echten Quelldateien
+    haben nie Leerzeichen im Namen."""
+    out = []
+    for f in sorted(glob.glob(os.path.join(SRC, spec))):
+        if ' ' in os.path.basename(f):
+            print('übersprungen (Leerzeichen im Namen, vermutlich Synchronisationskopie):', os.path.relpath(f, ROOT), file=sys.stderr)
+            continue
+        out.append(f)
+    return out
+
 def read(path):
     with open(path, encoding='utf-8', newline='') as f:
         s = f.read()
@@ -55,7 +68,7 @@ def include(spec):
     if spec.endswith('.json.gz.b64'):
         return i18n_blob(os.path.join(SRC, spec[:-len('.gz.b64')]))
     if '*' in spec:
-        files = sorted(glob.glob(os.path.join(SRC, spec)))
+        files = srcFiles(spec)
         if not files:
             raise SystemExit(f'Keine Dateien für {spec}')
         return '\n'.join(read(f) for f in files)
@@ -82,7 +95,7 @@ def main():
         return
     with open(OUT, 'w', encoding='utf-8', newline='') as f:
         f.write(html)
-    js = sorted(glob.glob(os.path.join(SRC, 'js', '*.js')))
+    js = srcFiles(os.path.join('js', '*.js'))
     print(f'public/index.html gebaut: {len(html.encode("utf-8")):,} Bytes aus {len(js)} JS-Dateien.'.replace(',', '.'))
 
 
