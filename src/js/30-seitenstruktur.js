@@ -226,7 +226,7 @@ function iaSetParts(){
 }
 const SET_PAGES = {
   'set-lang':() => { const x = iaSetParts(); return iaNoHead(x.lang || '') + iaNoHead(x.theme || '') + elogUi(); },
-  'set-ali':() => { const x = iaSetParts(); return iaNoHead(x.ali || '') + tbCard() + (x.shift || ''); },
+  'set-ali':() => { const x = iaSetParts(); return iaNoHead(x.ali || '') + tbCard() + vacCard() + (x.shift || ''); },
   'set-hr':() => iaNoHead(iaSetParts().hr || ''),
   'set-wf':() => wfPage() + cmpUi(),
   'set-age':() => agPage(),

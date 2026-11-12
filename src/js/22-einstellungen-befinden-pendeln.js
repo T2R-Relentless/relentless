@@ -138,6 +138,7 @@ function feelDay(i, lv){
   /* Nach Krankheit oder großer Müdigkeit langsam wieder einsteigen */
   const ease = (j, m, st) => { const o = S.plan[j]; S.plan[j] = {...D('base', 'Grundlage Z2', m, 50, 65, '90 U/min', st, 'Die harte Einheit holst du nicht nach, der Plan läuft danach normal weiter.'), adapted:true, orig:o, fu:i}; return o; };
   const free = j => j < 7 && S.plan[j] && S.plan[j].m > 0 && !S.done[j] && S.plan[j].t !== 'race' && !S.plan[j].feel;
+  if (lv === 'sick' || lv === 'heavy' || lv === 'neck') sickNextSet(i, lv);
   if (lv === 'sick') {
     if (free(i + 1)) { const o = ease(i + 1, Math.min(45, S.plan[i + 1].m), 'Nur wenn du seit 24 Stunden fieberfrei bist, sonst ebenfalls Ruhetag. Locker in Zone 2, höchstens 45 Min.'); note(`${DAYS[i + 1]}: sanfter Wiedereinstieg`, `„${o.n}“ wurde zu höchstens 45 Min. lockerer Grundlage, damit du nach dem kranken Tag nicht zu früh belastest.`, i + 1); }
     if (free(i + 2) && isHardS(S.plan[i + 2])) { const o = ease(i + 2, Math.min(60, S.plan[i + 2].m), 'Zweiter Tag nach der Krankheit: noch locker in Zone 2.'); note(`${DAYS[i + 2]}: locker statt hart`, `„${o.n}“ wurde zu lockerer Grundlage. Zwei lockere Tage nach einer Krankheit senken das Risiko für einen Rückfall.`, i + 2); }

@@ -169,15 +169,15 @@ function evProfCard(p, compact){
 
 /* Woche w erzeugen. Reihenfolge: Zeitbudget des Monats anwenden (Punkt 7, tbApply), Woche bauen (genWeekCore), dann
    gespeicherte Änderungen kommender Wochen einspielen (B4, woApply; nur für den aktiven Plan, nicht für Statistik-Läufe mit base). */
-function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base); return !base && p && S.p && p === S.p ? woApply(P, w) : P; }
+function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base); return !base && p && S.p && p === S.p ? sickCarry(woApply(P, w), p, w) : P; }
 function genWeekCore(p, w, base){
   const o = (!base && S.ov && S.ov[w]) || {off:{}, com:{}};
   const cm0 = isComm(p), p0 = p;
   const so = w === 1 ? startOff(p0) : 0;
-  p = {...p, avail: p.avail.map((a, i) => i >= so && (o.off[i] ? false : o.com[i] === true ? true : a) && capOf(p0, i) >= 30), commute: p.commute.map((c, i) => i >= so && cm0 && (o.off[i] ? false : o.com[i] === undefined ? c : o.com[i]))};
+  p = {...p, avail: p.avail.map((a, i) => i >= so && !vacDay(p0, w, i) && (o.off[i] ? false : o.com[i] === true ? true : a) && capOf(p0, i) >= 30), commute: p.commute.map((c, i) => i >= so && cm0 && !vacDay(p0, w, i) && (o.off[i] ? false : o.com[i] === undefined ? c : o.com[i]))};
   if (!p.avail[p.longDay]) { const alt = [1,-1,2,-2,3,-3].map(d => (p.longDay + d + 7) % 7).find(j => p.avail[j]); p.longDay = alt === undefined ? -1 : alt; }
   const ph = phases(p), P = ph.find(x => w >= x.from && w <= x.to) || ph[ph.length-1], k = P.key, rec = (recWk(p, w) || (p.recW || []).includes(w) || !!P.rec) && k !== 'taper', ev = p.goal === 'event';
-  const ramp = k === 'taper' ? (P.weeks === 2 ? [.65, .4][w - P.from] : .5) : rec ? .65 : rampOf(p, w), sH = p.startH > 0 ? p.startH : (p.goal === 'fitness' && p.ffocus === 'restart' ? p.hours * .6 : 0), hE = sH > 0 && sH < p.hours ? Math.min(p.hours, sH * Math.pow(1.08, w - 1)) : p.hours, lcap = p.longMin > 0 ? Math.max(60, Math.round(p.longMin * Math.pow(1.12, w) / 15) * 15) : 9999, f = Math.min(1.4, Math.max(.6, hE / 8)) * ramp;
+  const reE = reentOf(p0, w), ramp = Math.min(reE ? reE.f : 9, k === 'taper' ? (P.weeks === 2 ? [.65, .4][w - P.from] : .5) : rec ? .65 : rampOf(p, w)), sH = p.startH > 0 ? p.startH : (p.goal === 'fitness' && p.ffocus === 'restart' ? p.hours * .6 : 0), hE = sH > 0 && sH < p.hours ? Math.min(p.hours, sH * Math.pow(1.08, w - 1)) : p.hours, lcap = p.longMin > 0 ? Math.max(60, Math.round(p.longMin * Math.pow(1.12, w) / 15) * 15) : 9999, f = Math.min(1.4, Math.max(.6, hE / 8)) * ramp;
   const r15 = m => Math.max(45, Math.round(m * f / 15) * 15);
   const prof = ev ? (() => { const sp = P.ev && !P.ev.main ? segP(p0, P.ev) : p0; return evProfile(sp) || evProfile(p0); })() : null, ty = prof ? prof.ty : 'huegel', race = !!(prof && prof.race), lbP = prof ? prof.lbP : 270;
   const lb = {event:{base:Math.max(120, Math.round(lbP * .55 / 15) * 15),build:Math.round(lbP * .8 / 15) * 15,peak:lbP,taper:120}, ftp:{base:120,build:150,peak:180,taper:90}, fitness:p.ffocus === 'endur' && p.ftour ? {base:Math.max(90, Math.round(p.ftour * .55 / 15) * 15), build:Math.round(p.ftour * .8 / 15) * 15, peak:p.ftour, taper:90} : {base:120,build:150,peak:150,taper:90}}[p.goal][k], sim = ev && k === 'peak';
@@ -277,6 +277,7 @@ function genWeekCore(p, w, base){
   /* M4: Bei wenig Zeit (bis 6 Std.) reicht eine Sweet-Spot-Einheit in der Basis nicht als Reiz. Ab Woche 5 kommt eine kurze VO2max-Einheit
      dazu (ab 3 Trainingstagen und 3 Std., nicht unter 2,5 W/kg und nicht beim Ziel „Ausdauer“). */
   if (!rec && k === 'base' && hard.length === 1 && hard[0] === SST && hE <= 6 && hE >= 3 && nDays >= 3 && w > 4 && wkgP >= 2.5 && fF !== 'endur') hard = [SST, VOS];
+  hard = reentHard(hard, reE, SST);
   hard = hard.map((x, n) => rec || k === 'taper' ? (x === OPN ? vPick(x, Math.floor(w / rhyN(p))) : x) : vPick(x, n * 2));
   /* Intensität statt Umfang: mindestens 2 harte Einheiten, im Aufbau und in der Spitze eine dritte, kurze (bei gleicher Wochenzeit) */
   if (iF && !rec && k !== 'taper') { const ex = ev && (ty === 'punch' || ty === 'flach') ? RMP : VOS; if (hard.length < 2) hard = [...hard, hard.some(x => x.t === 'vo2') ? SST : ex]; if ((k === 'build' || k === 'peak') && p.avail.filter(Boolean).length >= 4) hard = [...hard, ex]; }
@@ -353,6 +354,9 @@ function genWeekCore(p, w, base){
   }
   if (lev.pace && prof) res = res.map(x => /^Eventtag/.test(x.n || '') ? {...x, st:paceTxt(p0, prof) + ' ' + x.st} : x);
   if (p.goal === 'fitness' && p.ffocus === 'endur' && p.ftour && k === 'taper' && w === P.to) { const j = p.longDay >= 0 ? p.longDay : 6; res[j] = D('long', 'Deine Zieltour: ' + hm2(p.ftour) + ' Std.', p.ftour, 56, 75, '85–95 U/min', 'Ruhig in Zone 2 starten, gleichmäßig fahren, ab der ersten Stunde 30–60 g Kohlenhydrate pro Std. und regelmäßig trinken. Pausen sind erlaubt.', 'Das ist dein Ziel. Genieße die Tour.'); if (j > 0 && res[j - 1].m && ['sst','thr','vo2'].includes(res[j - 1].t)) res[j - 1] = {...REC}; }
+  /* M6: Urlaubstage kennzeichnen */
+  res = res.map((x, j) => vacDay(p0, w, j) && !x.m ? {...REST, n:'Urlaub', st:'Keine Einheit geplant. Bewegung nach Lust und Laune, zum Beispiel Wandern oder Schwimmen.', tip:'Erholung gehört zum Training.', vac:1} : x);
+  if (reE) res = res.map(x => x.m && (x.t === 'base' || x.t === 'long' || HARD.includes(x.t)) && !/^Eventtag|^Aktivierung/.test(x.n || '') ? {...x, tip:(x.tip || '') + (reE.src === 'vac' ? ' Wiedereinstieg nach dem Urlaub: weniger Umfang, damit du gut reinkommst.' : ' Wiedereinstieg nach der Pause: weniger Umfang, damit du gut reinkommst.')} : x);
   return applyCyc(placeTest(applySubs(fitBudget(res, p), p, w), p, w), p, w);
 }
 /* Wochenbudget: Die Summe der Einheiten darf die verfügbare Wochenzeit nicht überschreiten.

@@ -312,7 +312,7 @@ function evCycNote(p){
     <ul class="list-disc space-y-1 pl-5"><li>Hygieneartikel und bei Bedarf Schmerzmittel einplanen, die du kennst und die ärztlich abgestimmt sind.</li><li>Bei Periode am Renntag: dunkle Hose, Wechselzeitpunkt an einer Verpflegungsstelle einplanen.</li><li>In der Lutealphase ist die Körpertemperatur leicht erhöht: etwas mehr trinken, bei Hitze mehr Salz.</li><li>Wenn du hormonell verhütest und den Zeitpunkt beeinflussen möchtest, sprich rechtzeitig mit deiner Frauenärztin oder deinem Frauenarzt.</li></ul></div></section>`;
 }
 /* Bearbeiten: Hat sich etwas geändert? 'new' = neuer Plan, 'same' = nichts geändert, 'adj' = angepasst, 'goal' = anderes Ziel oder Event */
-const SIGK = ['goal','evId','eventName','eventDate','endDate','targetTime','ftp','ftpTarget','weight','perDay','avail','commuter','commute','commuteMin','longDay','strN','strDays','strLvl','mobN','dist','hm','draft','fmt','ffocus','ftour','subs','sex','cycMode','cycLast','cycLen','cycSym','cycAdapt','lev','intF','longPri','startH','longMin','birthDate','birthYear','rhythm','gap2'];
+const SIGK = ['goal','evId','eventName','eventDate','endDate','targetTime','ftp','ftpTarget','weight','perDay','avail','commuter','commute','commuteMin','longDay','strN','strDays','strLvl','mobN','dist','hm','draft','fmt','ffocus','ftour','subs','sex','cycMode','cycLast','cycLen','cycSym','cycAdapt','lev','intF','longPri','startH','longMin','vac','birthDate','birthYear','rhythm','gap2'];
 function planSig(d){
   const o = {};
   SIGK.forEach(k => { let v = d[k];
