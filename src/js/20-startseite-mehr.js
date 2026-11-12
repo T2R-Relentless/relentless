@@ -96,14 +96,15 @@ function sickTip(p){
 }
 function tipCard(){
   const p = S.p; if (!hasStarted(p) || !S.plan) return '';
-  const x = S.plan[todayIdx()] || {}, kg = kgOf(p), t = x.t;
-  const sick = x.feel === 'sick', rodeSick = sick && (() => { try { return allActs().some(a => a.day === iso(0)); } catch (e) { elog(e); return false; } })(), T = sick ? [(rodeSick ? 'Heute ist eine Fahrt eingegangen, obwohl du dich krank eingetragen hast. Bist du wieder fit, tippe oben auf „Befinden“ und nimm „Krank“ zurück. Mit Fieber bitte nicht fahren. ' : '') + sickTip(p), 'w-erh'] : !x.m ? ['Ruhetag: Heute wächst deine Form. 7 bis 9 Stunden Schlaf und etwa ' + Math.round(kg * .3) + ' g Eiweiß pro Mahlzeit helfen der Erholung am meisten.', 'w-erh']
-    : t === 'long' ? [`Long Ride: Iss ab Minute 20 regelmäßig, ${x.m > 150 ? '60 bis 90' : '30 bis 60'} g Kohlenhydrate pro Stunde. Wer erst bei Hunger isst, ist zu spät dran.`, 'w-waehrend']
-    : HARD.includes(t) || t === 'test' ? ['Harte Einheit: 2 bis 3 Stunden vorher eine kohlenhydratreiche Mahlzeit, danach innerhalb einer Stunde Kohlenhydrate und etwa ' + Math.round(kg * .3) + ' g Eiweiß.', 'w-vor']
-    : t === 'race' ? ['Renntag: Fahr die ersten 20 Minuten bewusst ruhig und iss früh. Die Kraft brauchst du hinten raus.', 'w-race']
-    : t === 'rec' ? ['Rekom heißt wirklich locker: kleiner Gang, Puls niedrig. Zu schnell gefahren bringt nur Ermüdung.', 'w-erh']
-    : ['Grundlage im Gesprächstempo: Wenn du ganze Sätze sprechen kannst, passt die Intensität. Zu schnell sammelt Ermüdung statt Ausdauer.', 'w-train'];
-  return `<section class="tipc"><span class="tic">${svgI('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>', 20)}</span><div class="min-w-0 flex-1"><p class="eyebrow">${sick ? 'Gute Besserung' : 'Tipp zu heute'}</p><p class="mt-1 text-sm">${T[0]}</p>${sick ? '' : `<button class="mt-1 text-sm font-semibold" style="color:var(--teal)" onclick="wOpen('${ja(T[1])}')">Mehr dazu ›</button>`}</div></section>`;
+  const x = S.plan[todayIdx()] || {}, sick = x.feel === 'sick';
+  const ico = `<span class="tic">${svgI('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>', 20)}</span>`;
+  if (sick) { const rodeSick = (() => { try { return allActs().some(a => a.day === iso(0)); } catch (e) { elog(e); return false; } })();
+    return `<section class="tipc">${ico}<div class="min-w-0 flex-1"><p class="eyebrow">Gute Besserung</p><p class="mt-1 text-sm">${(rodeSick ? 'Heute ist eine Fahrt eingegangen, obwohl du dich krank eingetragen hast. Bist du wieder fit, tippe oben auf „Befinden“ und nimm „Krank“ zurück. Mit Fieber bitte nicht fahren. ' : '') + sickTip(p)}</p></div></section>`; }
+  /* F20: Tipp aus dem Katalog (passend zum Tag, ohne schnelle Wiederholung) */
+  let t = null; try { t = tipToday(false); } catch (e) { elog(e); } if (!t) return '';
+  const en = lang() === 'en', b = (l, f) => `<button class="text-sm font-semibold" style="color:var(--teal);background:none;border:0;padding:0;min-height:44px" onclick="${f}">${l}</button>`;
+  return `<section class="tipc">${ico}<div class="min-w-0 flex-1"><p class="eyebrow">Tipp zu heute · <span>${TIP_CAT[t[1]]}</span></p><p class="mt-1 text-sm" data-noi18n>${esc(tipText(t, en))}</p>
+    <div class="mt-1 flex flex-wrap gap-x-4">${t[6] ? b('Mehr dazu ›', `wOpen('${ja(t[6])}')`) : ''}${b('Nächster Tipp', 'tipNext()')}${b('Nicht mehr zeigen', 'tipHide()')}</div></div></section>`;
 }
 
 /* ---------- Wissen in drei Gruppen ---------- */

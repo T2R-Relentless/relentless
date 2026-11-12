@@ -128,6 +128,9 @@ async function runAll({update = false, only = null} = {}){
     R.snaps = {};
   }
   try { if (indexedDB.databases) for (const d of await indexedDB.databases()) if (/^relentless-test-/.test(d.name)) indexedDB.deleteDatabase(d.name); } catch (e) {}
+  /* Jede eingebundene Testdatei muss Tests angemeldet haben, sonst wurde sie nicht geladen (z. B. Verbindungsabbruch) */
+  const files = [...document.querySelectorAll('script[src$=".test.js"]')].map(x => x.getAttribute('src').replace('.test.js', '')), have = new Set(R.tests.map(t => t.file));
+  files.filter(f => !have.has(f)).forEach(f => R.results.push({file:f, name:'Testdatei geladen', ok:false, msg:`${f}.test.js wurde nicht geladen. Seite neu laden.`}));
   const bad = R.results.filter(r => !r.ok).length, n = R.results.length;
   sum.textContent = `${n - bad} von ${n} bestanden${bad ? `, ${bad} fehlgeschlagen` : ''}${update ? ' · Vergleichsstände neu geschrieben' : ''} · ${(Math.round(performance.now() - t0) / 1000).toFixed(1)} s`;
   sum.className = bad ? 'bad' : 'ok';
