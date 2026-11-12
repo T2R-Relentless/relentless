@@ -16,3 +16,6 @@ node_modules/
 
 # Testseite: Vergleichsstand des vorherigen Builds
 tests/tmp-*.html
+
+# Lokale Werkzeuge (Piper, Stimmen)
+.tools/

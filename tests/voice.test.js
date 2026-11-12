@@ -20,3 +20,9 @@ test('Alle Dateien aus dem Manifest sind vorhanden und abspielbar', async () => 
   }
   eq(bad, []);
 });
+
+test('Satzkatalog (Grundlage für tools/tts/generate.py)', async () => {
+  /* Ändert sich ein gesprochener Satz, schlägt dieser Test an. Dann: Vergleichsstände neu schreiben und
+     .tools/venv/bin/python tools/tts/generate.py ausführen (erzeugt fehlende Dateien, siehe LIESMICH). */
+  const a = await boot(); await a.w.i18nLoad(); await snap('voice-katalog', 'katalog', a.w.sqCatalog());
+});

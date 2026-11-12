@@ -7029,19 +7029,34 @@ function sqNextSay(s, full, pause){ const x = s.nx; if (!x) return ['', ''];
   const de = `${s.t === 'pre' ? 'Erste Übung' : pause ? 'Pause – als Nächstes' : 'Als Nächstes'}: ${sqNm(x.n)}, ${ds[0]}${set[0]}.`, en = `${s.t === 'pre' ? 'First exercise' : pause ? 'Rest – next' : 'Next'}: ${sqNm(sqEn(x.n))}, ${ds[1]}${set[1]}.`;
   return full ? [de + ' ' + h[0], en + ' ' + h[1]] : [de, en]; }
 const SQ_TONES = ['tick', 'go', 'pause', 'ding', 'half', 'done'];
+/* B10: Start eines Satzes mit Wiederholungen: „Los. Bulgarian Split Squat, Satz 1 von 3, 10 Wiederholungen, linkes Bein.“
+   (Satz nur bei mehreren Sätzen, Seite nur bei „pro Seite/Bein“; danach tippt man „Fertig“ bzw. „Fertig, Seite wechseln“). */
+function sqRepSay(s){
+  const d = s.d, leg = /pro Bein/.test(s.dt || ''), r = String(d.reps || '').replace(/[–-]/, ' bis '), re = String(d.reps || '').replace(/[–-]/, ' to ');
+  const set = s.sets > 1 ? [`, Satz ${s.set} von ${s.sets}`, `, set ${s.set} of ${s.sets}`] : ['', ''], side = d.side ? (leg ? [', linkes Bein', ', left leg'] : [', linke Seite', ', left side']) : ['', ''];
+  return [`Los. ${sqNm(s.n)}${set[0]}, ${r} Wiederholungen${side[0]}.`, `Go. ${sqNm(sqEn(s.n))}${set[1]}, ${re} repetitions${side[1]}.`];
+}
+/* Dauer sprechbar: 90 → „1 Minute 30“, 120 → „2 Minuten“, 45 → „45 Sekunden“ */
+function sqDurSay(sec){ const m = Math.floor(sec / 60), r = Math.round(sec % 60);
+  return m ? [(m === 1 ? '1 Minute' : m + ' Minuten') + (r ? ' ' + r : ''), (m === 1 ? '1 minute' : m + ' minutes') + (r ? ' ' + r : '')] : [r + ' Sekunden', r + ' seconds']; }
+/* B10: Satzpause: „Satzpause, 1 Minute 30. Als Nächstes: Satz 2 von 3.“ */
+function sqSetRestSay(s){ const x = s.nx, d = sqDurSay(Math.round(s.dur / 1000));
+  return [`Satzpause, ${d[0]}. Als Nächstes: Satz ${x.set} von ${x.sets}.`, `Set rest, ${d[1]}. Next: set ${x.set} of ${x.sets}.`]; }
+const SQ_10 = ['Noch 10 Sekunden', '10 seconds left'];
 function sqSched(s, last, cfg, raw){
   cfg = cfg || sqCfg();
   const o = [], D = s.dur, n = (x, k, say, alt) => o.push({at:x, k, ...(say ? {say} : {}), ...(alt ? {alt} : {})}), H = cfg.voice && cfg.hints;
   if (s.t === 'pre' || s.t === 'tr' || s.t === 'rr') {
-    if (s.nx) { if (H && s.full) n(800, 'say', sqNextSay(s, true), sqNextSay(s, false)); else n(800, 'say', sqNextSay(s, false, s.t !== 'pre')); }
+    if (s.nx) { if (s.t === 'tr' && s.set) n(800, 'say', sqSetRestSay(s)); else if (H && s.full) n(800, 'say', sqNextSay(s, true), sqNextSay(s, false)); else n(800, 'say', sqNextSay(s, false, s.t !== 'pre')); }
+    if (s.t !== 'pre' && D >= 25000) n(D - 10000, 'say', SQ_10);
     [3000, 2000, 1000].forEach(x => { if (D - x >= 0) n(D - x, 'tick'); }); n(D, 'go');
   } else if (s.t === 'ex') {
-    const nm = [sqNm(s.n), sqNm(sqEn(s.n))], h = sqHint(s.id);
-    n(800, 'say', H && s.hintGo ? [nm[0] + '. ' + h[0], nm[1] + '. ' + h[1]] : nm, H && s.hintGo ? nm : null);
+    const nm = D ? [sqNm(s.n), sqNm(sqEn(s.n))] : sqRepSay(s), h = sqHint(s.id), sep = D ? '. ' : ' ';
+    n(800, 'say', H && s.hintGo ? [nm[0] + sep + h[0], nm[1] + sep + h[1]] : nm, H && s.hintGo ? nm : null);
     if (D) {
       if (s.d.side) { n(D / 2, 'ding'); n(D / 2 + 700, 'say', SQ_SIDE); if (H && D / 2 >= 45000) { const c = sqCue(s.id); n(D / 4, 'say', c); n(D * 3 / 4, 'say', c); } }
       else { if (D >= 60000) n(D / 2, 'half'); if (H && D >= 45000) n(D / 2 + 700, 'say', sqCue(s.id)); }
-      if (D >= 25000) n(D - 10000, 'say', ['Noch 10 Sekunden', '10 seconds left']);
+      if (D >= 25000) n(D - 10000, 'say', SQ_10);
       [3000, 2000, 1000].forEach(x => { if (D - x > 1500) n(D - x, 'tick'); });
       /* Ende der letzten Übung: Melodie und „Geschafft“ kommen aus sqEnd */
       if (!last) n(D, 'pause');
@@ -7058,12 +7073,13 @@ function sqSched(s, last, cfg, raw){
    wählt (das hängt von der Sprechdauer ab). Grundlage für Katalog, Vorladen und Test. */
 const SQ_SIDE = ['Seitenwechsel, jetzt rechts', 'Switch sides, now right'], SQ_DONE = ['Geschafft', 'Done'];
 const sqTestSay = h => h ? ['Beispiel: Katze-Kuh. ' + SQ_SAY.catcow[0], 'Example: cat-cow. ' + SQ_SAY.catcow[1]] : ['Beispiel: Katze-Kuh.', 'Example: cat-cow.'];
-const sqFixed = () => [SQ_SIDE, SQ_DONE, sqTestSay(true), sqTestSay(false)];
+const sqFixed = () => [SQ_SIDE, SQ_DONE, SQ_10, sqTestSay(true), sqTestSay(false)];
 function sqSays(se, cfg){
   const st = sqSteps(se, cfg), o = [];
   st.forEach((s, k) => { if (s.t === 'end') return;
-    if (s.t !== 'ex') { if (s.nx) { if (cfg.hints) o.push(sqNextSay(s, true)); o.push(sqNextSay(s, false), sqNextSay(s, false, s.t !== 'pre')); } return; }
+    if (s.t !== 'ex') { if (s.nx) { if (cfg.hints) o.push(sqNextSay(s, true)); o.push(sqNextSay(s, false), sqNextSay(s, false, s.t !== 'pre')); sqSched(s, false, cfg, true).forEach(x => { if (x.say) o.push(x.say); }); } return; }
     const nm = [sqNm(s.n), sqNm(sqEn(s.n))], h = sqHint(s.id); o.push(nm); if (cfg.hints) o.push([nm[0] + '. ' + h[0], nm[1] + '. ' + h[1]]);
+    if (!s.dur) { const r = sqRepSay(s); o.push(r); if (cfg.hints) o.push([r[0] + ' ' + h[0], r[1] + ' ' + h[1]]); }
     sqSched(s, false, cfg, true).forEach(x => { if (x.say) o.push(x.say); if (x.alt) o.push(x.alt); });
     if (s.d.side) o.push(SQ_SIDE); });
   sqFixed().forEach(x => o.push(x));
@@ -7132,8 +7148,15 @@ function sqOpen(kind, i){
   render(); }
 function sqClose(){ sqStop(); sq = null; render(); }
 function sqStop(){ clearInterval(sqTm); sqTm = 0; sqUnwake(); }
+/* B10: iOS gibt Ton und Systemstimme nur frei, wenn sie zuerst direkt aus einem Antippen kommen. Die Sequenz startet aber
+   oft erst nach dem Vorladen (bis 1,5 s später, aus einem Timer). Deshalb hier im Antippen: ein stiller Ton über den
+   AudioContext und eine stumme Ansage. Sonst bliebe die Systemstimme (Rückfall, solange Sprachdateien laden) stumm. */
+function sqUnlock(){
+  try { const c = sqAudio(); if (c) { const b = c.createBuffer(1, 1, c.sampleRate), src = c.createBufferSource(); src.buffer = b; src.connect(c.destination); src.start(0); } } catch (e) { elog(e); }
+  try { if (sqCfg().voice && sqCanSpeak()) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } } catch (e) { elog(e); }
+}
 function sqStart(){
-  if (!sq || !sq.se || sq.view !== 'start' || sq.wait) return; try { sqAudio(); } catch (e) { elog(e); } try { sqWake(); } catch (e) { elog(e); }
+  if (!sq || !sq.se || sq.view !== 'start' || sq.wait) return; try { sqUnlock(); } catch (e) { elog(e); } try { sqWake(); } catch (e) { elog(e); }
   /* F16: höchstens 1,5 s auf die Sprachdateien warten; danach startet die Sequenz trotzdem (Rest: Systemstimme) */
   if (sq.vcP && !sq.vcDone) { const o = sq; o.wait = true; render(); let f = false; const go = () => { if (f) return; f = true; o.wait = false; if (sq === o && o.view === 'start') sqGo(); };
     o.vcP.then(go, go); setTimeout(go, 1500); return; }
