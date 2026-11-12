@@ -10,9 +10,19 @@ function paRide(x){ return !!x && x.m > 0 && x.t !== 'rest'; }
 function paCheck(P, B, o){
   o = o || {}; const out = [], pair = (L, k) => paHard(L[k]) && paHard(L[k + 1]); let easy = null;
   for (let k = 0; k < 6; k++) if (pair(P, k) && !pair(B, k)) { const d = o.day != null && k + 1 === o.day ? k : k + 1; if (d >= todayIdx() && !S.done[d]) easy = easy == null ? d : easy; out.push(`${DAYS[k]} und ${DAYS[k + 1]} wären dann zwei harte Tage hintereinander. Das ermüdet mehr, als es bringt.`); }
+  /* M13 (Audit 12.11.2026): auch über die Wochengrenze prüfen (Sonntag der Vorwoche, Montag der nächsten Woche) und bei weniger als
+     8 Std. pro Woche vor einer dritten harten Einheit warnen. o.w: Woche des geänderten Plans (Standard: laufende Woche). */
+  try { const wk = o.w != null ? o.w : S.wk, p = S.p;
+    if (p && p.start && wk) {
+      const tot = phases(p).slice(-1)[0].to, prevSun = wk === S.wk && S.prevPlan && S.prevPlan.w === S.wk - 1 ? (S.prevPlan.plan || [])[6] : wk > 1 ? genWeek(p, wk - 1)[6] : null, nextMon = wk < tot ? genWeek(p, wk + 1)[0] : null;
+      if (paHard(P[0]) && paHard(prevSun) && !paHard(B[0])) out.push(`Sonntag der Vorwoche und ${DAYS[0]} wären dann zwei harte Tage hintereinander.`);
+      if (paHard(P[6]) && paHard(nextMon) && !paHard(B[6])) out.push(`${DAYS[6]} und ${DAYS[0]} der nächsten Woche wären dann zwei harte Tage hintereinander.`);
+      const hc = L => L.filter(x => x && x.m > 0 && (HARD.includes(x.t) || x.t === 'race' || x.t === 'test')).length, hrs = (o.budget > 0 ? o.budget / 60 : 0) || tbWkH(p, wk) || p.hours || 0;
+      if (hc(P) >= 3 && hc(P) > hc(B) && hrs < 8) out.push(`Die Woche hätte dann ${hc(P)} harte Einheiten. Bei weniger als 8 Std. pro Woche reichen meist zwei, eine dritte kostet mehr Erholung, als sie bringt.`);
+    } } catch (e) { elog(e); }
   const rest = L => L.filter(x => !paRide(x)).length;
   if (rest(P) < rest(B) && rest(P) === 0) out.push('Damit fällt der letzte Ruhetag der Woche weg.');
-  if (o.day != null) { try { if (S.wx) { const w = wxDay(dstr(o.day), o.day, P[o.day]); if (w && w.wet) out.push(`Für ${DAYS[o.day]} ist Regen angesagt (etwa ${Math.round(w.eff)} °C). Plane Regenkleidung ein oder fahr auf der Rolle.`); else if (w && w.eff < 3) out.push(`Am ${DAYS[o.day]} wird es kalt (etwa ${Math.round(w.eff)} °C). Warm anziehen oder auf der Rolle fahren.`); } } catch (e) { elog(e); } }
+  if (o.day != null) { try { if (S.wx) { const w = wxDay(dstr(o.day), o.day, P[o.day]); if (w && w.wet) out.push(`Für ${DAYS[o.day]} ist Regen angesagt (etwa ${Math.round(w.eff)} °C). Plane Regenkleidung ein oder fahr auf der Rolle.`); else if (w && w.src === 'api' && w.tmax >= 28) out.push(`Am ${DAYS[o.day]} wird es heiß (bis ${Math.round(w.tmax)} °C). Früh oder spät fahren und mehr trinken.`); else if (w && w.eff < 3) out.push(`Am ${DAYS[o.day]} wird es kalt (etwa ${Math.round(w.eff)} °C). Warm anziehen oder auf der Rolle fahren.`); } } catch (e) { elog(e); } }
   if (o.budget > 0) { const m = P.reduce((a, x) => a + (paRide(x) ? x.m : 0), 0); if (m > o.budget * 1.1) out.push(`Die Woche hätte dann ${mm(m)} Training, verfügbar sind ${mm(o.budget)}.`); }
   return {warns:out, easy};
 }

@@ -366,7 +366,7 @@ function onboarding(){
       ${seasonModeUi(d)}
       ${sec(seasonOn(d) ? 'Saisonhöhepunkt: dein letztes A-Event' : 'Event', evPick(d) + field('Name des Events', `<input class="inp" placeholder="z. B. Mein Radmarathon" value="${esc(d.eventName)}" oninput="draft('eventName',this.value)">`) + date)}
       ${sec('Strecke', `<div class="grid grid-cols-2 gap-3">${field('Distanz (km)', `<input type="number" inputmode="decimal" class="inp" value="${esc(d.dist)}" oninput="draft('dist',this.value)">`)}${field('Höhenmeter (hm)', `<input type="number" inputmode="numeric" class="inp" value="${esc(d.hm)}" oninput="draft('hm',this.value)">`)}</div>${coursePick(d)}`)}
-      ${sec('Art des Events', fmtChips(d))}${vo2BlkUi(d)}
+      ${sec('Art des Events', fmtChips(d) + evTyChips(d))}${vo2BlkUi(d)}
       ${evProfCard(d, true)}${seasonOn(d) ? subsUi(d) : ''}</div>${nextB(4)}`;
   if (ev && s === 5) body = `${head('Deine Zielzeit', `${d.eventName ? '<span data-noi18n>' + esc(d.eventName) + '</span>' : 'Dein Event'}${/km/.test(d.eventName || '') || !(d.dist > 0) ? '' : ', ' + f1(d.dist) + ' km'}${d.hm ? ', ' + Number(d.hm).toLocaleString('de-DE') + ' hm' : ''}.${d.dist > 0 ? '' : ' Trag in Schritt 4 Distanz und Höhenmeter ein, dann schlägt die App eine realistische Zielzeit vor.'} Mit deinem Stand und deiner Zeit schlägt die App ein realistisches Ziel vor.`)}<div class="mt-4 space-y-4">
       ${sec('Ziel', `<div class="grid grid-cols-2 gap-3">${field('Zielzeit (Std:Min)', `<input id="tt" class="inp" value="${esc(d.targetTime)}" oninput="setTT(this.value)">`)}${field('oder Ø km/h', `<input id="ts" type="text" inputmode="decimal" class="inp" value="${esc(spdOf(d) ? f1(spdOf(d)) : '')}" oninput="setSpeed(this.value)">`)}</div>

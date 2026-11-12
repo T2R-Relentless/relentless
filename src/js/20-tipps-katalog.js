@@ -28,6 +28,7 @@ const TIP_SRC = {
   bini11:'Bini R et al. (2011): Effects of bicycle saddle height on knee injury risk and cycling performance. Sports Med 41(6):463–476',
   olivier17:'Olivier J, Creighton P (2017): Bicycle injuries and helmet use: a systematic review and meta-analysis. Int J Epidemiol 46(1):278–292',
   stvo:'Straßenverkehrs-Ordnung (StVO) § 5 Abs. 4: Überholabstand zu Radfahrenden innerorts mindestens 1,5 m, außerorts 2 m',
+  racinais15:'Racinais S et al. (2015): Consensus recommendations on training and competing in the heat. Br J Sports Med 49(18):1164–1173',
   periard15:'Périard JD et al. (2015): Adaptations and mechanisms of human heat acclimation. Scand J Med Sci Sports 25(S1):20–38',
   marcora09:'Marcora SM et al. (2009): Mental fatigue impairs physical performance in humans. J Appl Physiol 106:857–864',
   blanch14:'Blanchfield AW et al. (2014): Talking yourself out of exhaustion: the effects of self-talk on endurance performance. Med Sci Sports Exerc 46(5):998–1007',
@@ -189,6 +190,7 @@ const TIPS = [
   ['w02', 'wet', 'wx:cold', 'Hände und Füße kühlen zuerst aus. Überschuhe und warme Handschuhe machen bei Kälte den größten Unterschied.', 'Hands and feet cool first. Overshoes and warm gloves make the biggest difference in the cold.', 'coldex', ''],
   ['w03', 'wet', 'wx:cold', 'Bei Kälte vor harten Intervallen länger einfahren. Kalte Muskeln leisten weniger.', 'In the cold, warm up longer before hard intervals. Cold muscles perform worse.', 'warmup', ''],
   ['w04', 'wet', 'wx:hot', 'Hitze: Fahr früh am Morgen und plane die Intensität etwas niedriger. Der Puls liegt bei gleicher Leistung höher.', 'Heat: ride early in the morning and plan slightly lower intensity. Heart rate is higher at the same power.', '', ''],
+  ['w06', 'wet', 'd:ev21 s:s', 'Rennen im Sommer? Gewöhn dich in den zwei Wochen davor an die Wärme: an 8 bis 10 Tagen 60 bis 90 Minuten locker in der Hitze fahren. Danach schwitzt du früher und der Puls bleibt niedriger.', 'Racing in summer? Get used to the heat in the two weeks before: ride easy in the heat for 60 to 90 minutes on 8 to 10 days. Afterwards you sweat earlier and your heart rate stays lower.', 'racinais15', 'w-race'],
   ['w05', 'wet', 'wx:hot', 'An Hitze gewöhnt sich der Körper in etwa 10 bis 14 Tagen mit regelmäßigem Training in der Wärme.', 'The body adapts to heat in about 10 to 14 days of regular training in warm conditions.', 'periard15', ''],
   ['w06', 'wet', 'wx:wet', 'Regen: Eine leichte Regenjacke und Schutzbleche machen die Fahrt deutlich angenehmer.', 'Rain: a light rain jacket and mudguards make the ride much more pleasant.', '', ''],
   ['w07', 'wet', 's:w', 'Winter: Ein Buff oder eine dünne Mütze unter dem Helm halten viel Wärme. Über den Kopf geht viel Wärme verloren.', 'Winter: a buff or thin cap under the helmet keeps a lot of warmth in.', '', ''],
@@ -224,7 +226,7 @@ function tipCtx(day){
   if (!x.m) d.push('rest'); else if (x.t === 'rec' || x.t === 'com') d.push('rec'); else if (x.t === 'base') d.push('base'); else if (HARD.includes(x.t) || x.t === 'test') d.push('int'); else if (x.t === 'long') d.push('long'); else if (x.t === 'race') d.push('race');
   try { if (strMap && strMap[i]) d.push('str'); } catch (e) { elog(e); }
   try { const ev = efList(p).map(q => q.date); const dd = ev.map(e => Math.round((dOnly(e) - dOnly(day)) / 864e5));
-    if (dd.some(n => n === 0)) d.push('race'); if (dd.some(n => n >= 1 && n <= 7)) d.push('ev7'); if (dd.some(n => n === -1)) d.push('post'); } catch (e) { elog(e); }
+    if (dd.some(n => n === 0)) d.push('race'); if (dd.some(n => n >= 1 && n <= 7)) d.push('ev7'); if (dd.some(n => n >= 10 && n <= 21)) d.push('ev21'); if (dd.some(n => n === -1)) d.push('post'); } catch (e) { elog(e); }
   let ph = null; try { const P = phases(p).find(q => S.wk >= q.from && S.wk <= q.to); ph = P ? P.key : null; } catch (e) { elog(e); }
   const mo = dOnly(day).getMonth(), s = [10, 11, 0, 1].includes(mo) ? 'w' : [5, 6, 7].includes(mo) ? 's' : '';
   const wx = []; try { const w = wxDay(day, i, x); if (w && w.src === 'api') { if (w.tmax >= 25) wx.push('hot'); if (w.tmin <= 5) wx.push('cold'); if (w.wet) wx.push('wet'); } } catch (e) { elog(e); }

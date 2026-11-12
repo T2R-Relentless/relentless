@@ -82,7 +82,9 @@ function seasonOver(p){
   const t = d <= 14 ? (ev ? 'Saison geschafft!' : 'Plan geschafft!') : 'Zeit für das nächste Ziel';
   const x = d <= 14 ? `Jetzt kommt die Übergangsphase (noch etwa ${15 - d} Tage): fahr nach Lust und Laune, 2 bis 3 lockere Ausfahrten pro Woche, gern auch etwas anderes wie Laufen, Wandern oder Schwimmen. Keine Intervalle, kein Plan. So erholen sich Körper und Kopf, und du startest motiviert in die nächste Saison.`
     : 'Die Übergangsphase ist vorbei. Plane jetzt deine nächste Saison: Trag dein nächstes Hauptevent ein und dazu alle Rennen, die du fahren willst. Mit A-Events bekommst du mehrere Formhöhepunkte.';
-  return `<section class="hero"><p class="eyebrow" style="color:var(--ice)">${ev ? esc(p.eventName || 'Dein Event') : 'Dein Plan'}</p><p class="hd mt-1 text-3xl font-semibold">${t}</p><p class="mt-2 text-sm" style="opacity:.85">${x}</p><div class="hact"><button class="hbtn" onclick="newPlan()">Nächste Saison planen</button></div></section>`;
+  /* M15: Übergangsphase als konkreter Vorschlag für zwei Wochen */
+  const tr = d <= 14 ? `<div class="mt-3 text-sm" style="opacity:.9"><p><b>Woche 1:</b> 2 lockere Ausfahrten, 45 bis 90 Min., Zone 1 bis 2. Dazu etwas anderes, das dir Spaß macht.</p><p class="mt-1"><b>Woche 2:</b> 2 bis 3 Ausfahrten nach Lust, gern mit Freunden oder auf neuen Strecken, keine Intervalle. Leichtes Krafttraining ist erlaubt.</p></div>` : '';
+  return `<section class="hero"><p class="eyebrow" style="color:var(--ice)">${ev ? esc(p.eventName || 'Dein Event') : 'Dein Plan'}</p><p class="hd mt-1 text-3xl font-semibold">${t}</p><p class="mt-2 text-sm" style="opacity:.85">${x}</p>${tr}<div class="hact"><button class="hbtn" onclick="newPlan()">Nächste Saison planen</button></div></section>`;
 }
 const curWeek = p => { const t = phases(p).slice(-1)[0].to, dd = Math.round((new Date(lstr(new Date()) + 'T12:00:00') - new Date(p.start + 'T12:00:00')) / 864e5); return Math.min(t, Math.max(1, Math.floor(dd / 7) + 1)); };
 const comSes = (p, i) => ({...D('com','Pendeln mit dem Rad', 2 * legOf(p, i), 45, 65, '85–95 U/min', 'Hin- und Rückweg locker fahren. Kleine Gänge, keine Sprints an Ampeln.', 'Pendeln ist günstiger Grundlagenumfang und kostet keine Extrazeit.'), parts:[{lbl:'Hinweg', m:legOf(p, i), st:'Locker zur Arbeit: kleine Gänge, keine Sprints an Ampeln.'}, {lbl:'Rückweg', m:legOf(p, i), st:'Locker nach Hause, die Beine ausrollen lassen.'}]});
@@ -123,7 +125,7 @@ const EVTY = {
 const _evpC = new Map();
 function evProfile(p){
   if (!p || p.goal !== 'event' || !(p.dist > 0)) return null;
-  const e = EVS.find(x => x.id === p.evId), key = [p.dist, p.hm, p.targetTime, p.ftp, p.weight, p.evId, p.fmt, p.draft, p.course ? p.course.seg.length + ':' + p.course.hm + ':' + (p.course.laps || 1) : 0].join('|');
+  const e = EVS.find(x => x.id === p.evId), key = [p.dist, p.hm, p.targetTime, p.ftp, p.weight, p.evId, p.fmt, p.draft, p.evTy, p.course ? p.course.seg.length + ':' + p.course.hm + ':' + (p.course.laps || 1) : 0].join('|');
   if (_evpC.has(key)) return _evpC.get(key);
   const hm = p.hm || 0, hk = hm / p.dist, tm = /^(\d+):(\d{1,2})$/.exec(String(p.targetTime || '').trim());
   let tev = e && e.dur ? e.dur : 0;
@@ -139,7 +141,7 @@ function evProfile(p){
     sc = {dur:tev < 150 ? 1 : tev < 300 ? 2 : 3, lng:sh > .3 ? 3 : sh > .15 ? 2 : sh > .04 ? 1 : 0, med:nM * per >= 5 ? 3 : nM * per >= 2 ? 2 : nM ? 1 : 0,
       spr:Math.min(3, (nS * per >= 8 ? 3 : nS * per >= 3 ? 2 : nS ? 1 : 0) + (race ? 1 : 0)), tmp:Math.min(3, (hk < 6 ? 2 : hk < 12 ? 1 : 0) + (race ? 1 : 0))};
   }
-  let ty = e && e.ty ? e.ty : tev >= 720 ? 'ultra' : null;
+  let ty = p.evTy && EVTY[p.evTy] ? p.evTy : e && e.ty ? e.ty : tev >= 720 ? 'ultra' : null; /* M15: Typ von Hand korrigierbar */
   if (!ty) ty = sc ? (sc.lng >= 2 ? 'alpin' : hk < 6 && sc.lng === 0 && sc.med <= 1 ? 'flach' : sc.spr >= 2 && sc.lng <= 1 ? 'punch' : 'huegel')
     : hk >= 18 ? 'alpin' : hk >= 10 ? 'huegel' : hk >= 5 ? (race ? 'punch' : 'huegel') : 'flach';
   if (!sc) { const r = race ? 1 : 0, d = tev < 150 ? 1 : tev < 300 ? 2 : 3;
@@ -150,6 +152,10 @@ function evProfile(p){
   if (_evpC.size > 50) _evpC.clear(); _evpC.set(key, out); return out;
 }
 function setFmt(v){ S.d.fmt = v; save(); render(); }
+/* M15: Eventtyp in der Planung von Hand festlegen (automatisch = aus Strecke und Höhenmetern) */
+function setEvTy(v){ if (v && EVTY[v]) S.d.evTy = v; else delete S.d.evTy; save(); render(); }
+const evTyChips = d => { const auto = evProfile({...d, evTy:undefined}); if (!auto) return '';
+  return `<div class="mt-4"><p class="mb-2 text-sm" style="color:var(--mute)">Charakter der Strecke (automatisch erkannt: <span>${EVTY[auto.ty][0]}</span>)</p><div class="flex flex-wrap gap-2">${chip('Automatisch', !d.evTy, "setEvTy('')")}${Object.keys(EVTY).map(k => chip(EVTY[k][0], d.evTy === k, `setEvTy('${k}')`)).join('')}</div><p class="mt-1 text-xs" style="color:var(--mute)">Kennst du die Strecke besser, wähle den passenden Charakter. Danach richten sich die Intervalle in Aufbau und Spitze.</p></div>`; };
 const fmtChips = d => { const pr = evProfile({...d, fmt:undefined}), auto = pr ? (pr.race ? 'race' : 'mara') : 'mara', cur = d.fmt || auto;
   return `<div><p class="mb-2 text-sm" style="color:var(--mute)">Format des Events</p><div class="flex flex-wrap gap-2">${chip('Rennen mit Massenstart', cur === 'race', "setFmt('race')")}${chip('Marathon / Radrundfahrt', cur === 'mara', "setFmt('mara')")}</div></div>`; };
 const EVMIX = {
@@ -170,7 +176,7 @@ function evProfCard(p, compact){
     : `<p class="mt-3 text-sm" style="color:var(--mute)">Ohne Streckenprofil geschätzt aus den Höhenmetern pro Kilometer${EVS.find(x => x.id === p.evId && x.ty) ? ' und der bekannten Charakteristik des Events' : ''}. Mit der GPX-Datei der Strecke erkennt die App die einzelnen Anstiege und wird genauer.</p>`;
   const inner = `<p class="hd text-xl font-semibold">${t[0]}</p><p class="mt-1 text-sm" style="color:var(--mute)">${facts}</p><p class="mt-2 text-sm">${t[1]}</p>${cl}
     <div class="mt-3 space-y-1.5">${rows}</div>
-    ${compact ? '' : `<p class="mt-4 font-semibold">So ist dein Plan darauf ausgerichtet</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm">
+    ${p.evTy ? '<p class="mt-2 text-xs" style="color:var(--mute)">Von dir festgelegt. Ändern kannst du den Charakter unter „Plan anpassen“.</p>' : ''}${compact ? '' : `<p class="mt-4 font-semibold">So ist dein Plan darauf ausgerichtet</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm">
       <li>Basisphase: Grundlage und Sweet Spot, wie bei jedem Ziel.</li>
       <li>Aufbauphase: ${mx.build}.</li>
       <li>Spitzenphase: ${peak}, dazu eine Eventsimulation.</li>

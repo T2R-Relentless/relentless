@@ -1090,7 +1090,9 @@ function seasonOver(p){
   const t = d <= 14 ? (ev ? 'Saison geschafft!' : 'Plan geschafft!') : 'Zeit für das nächste Ziel';
   const x = d <= 14 ? `Jetzt kommt die Übergangsphase (noch etwa ${15 - d} Tage): fahr nach Lust und Laune, 2 bis 3 lockere Ausfahrten pro Woche, gern auch etwas anderes wie Laufen, Wandern oder Schwimmen. Keine Intervalle, kein Plan. So erholen sich Körper und Kopf, und du startest motiviert in die nächste Saison.`
     : 'Die Übergangsphase ist vorbei. Plane jetzt deine nächste Saison: Trag dein nächstes Hauptevent ein und dazu alle Rennen, die du fahren willst. Mit A-Events bekommst du mehrere Formhöhepunkte.';
-  return `<section class="hero"><p class="eyebrow" style="color:var(--ice)">${ev ? esc(p.eventName || 'Dein Event') : 'Dein Plan'}</p><p class="hd mt-1 text-3xl font-semibold">${t}</p><p class="mt-2 text-sm" style="opacity:.85">${x}</p><div class="hact"><button class="hbtn" onclick="newPlan()">Nächste Saison planen</button></div></section>`;
+  /* M15: Übergangsphase als konkreter Vorschlag für zwei Wochen */
+  const tr = d <= 14 ? `<div class="mt-3 text-sm" style="opacity:.9"><p><b>Woche 1:</b> 2 lockere Ausfahrten, 45 bis 90 Min., Zone 1 bis 2. Dazu etwas anderes, das dir Spaß macht.</p><p class="mt-1"><b>Woche 2:</b> 2 bis 3 Ausfahrten nach Lust, gern mit Freunden oder auf neuen Strecken, keine Intervalle. Leichtes Krafttraining ist erlaubt.</p></div>` : '';
+  return `<section class="hero"><p class="eyebrow" style="color:var(--ice)">${ev ? esc(p.eventName || 'Dein Event') : 'Dein Plan'}</p><p class="hd mt-1 text-3xl font-semibold">${t}</p><p class="mt-2 text-sm" style="opacity:.85">${x}</p>${tr}<div class="hact"><button class="hbtn" onclick="newPlan()">Nächste Saison planen</button></div></section>`;
 }
 const curWeek = p => { const t = phases(p).slice(-1)[0].to, dd = Math.round((new Date(lstr(new Date()) + 'T12:00:00') - new Date(p.start + 'T12:00:00')) / 864e5); return Math.min(t, Math.max(1, Math.floor(dd / 7) + 1)); };
 const comSes = (p, i) => ({...D('com','Pendeln mit dem Rad', 2 * legOf(p, i), 45, 65, '85–95 U/min', 'Hin- und Rückweg locker fahren. Kleine Gänge, keine Sprints an Ampeln.', 'Pendeln ist günstiger Grundlagenumfang und kostet keine Extrazeit.'), parts:[{lbl:'Hinweg', m:legOf(p, i), st:'Locker zur Arbeit: kleine Gänge, keine Sprints an Ampeln.'}, {lbl:'Rückweg', m:legOf(p, i), st:'Locker nach Hause, die Beine ausrollen lassen.'}]});
@@ -1131,7 +1133,7 @@ const EVTY = {
 const _evpC = new Map();
 function evProfile(p){
   if (!p || p.goal !== 'event' || !(p.dist > 0)) return null;
-  const e = EVS.find(x => x.id === p.evId), key = [p.dist, p.hm, p.targetTime, p.ftp, p.weight, p.evId, p.fmt, p.draft, p.course ? p.course.seg.length + ':' + p.course.hm + ':' + (p.course.laps || 1) : 0].join('|');
+  const e = EVS.find(x => x.id === p.evId), key = [p.dist, p.hm, p.targetTime, p.ftp, p.weight, p.evId, p.fmt, p.draft, p.evTy, p.course ? p.course.seg.length + ':' + p.course.hm + ':' + (p.course.laps || 1) : 0].join('|');
   if (_evpC.has(key)) return _evpC.get(key);
   const hm = p.hm || 0, hk = hm / p.dist, tm = /^(\d+):(\d{1,2})$/.exec(String(p.targetTime || '').trim());
   let tev = e && e.dur ? e.dur : 0;
@@ -1147,7 +1149,7 @@ function evProfile(p){
     sc = {dur:tev < 150 ? 1 : tev < 300 ? 2 : 3, lng:sh > .3 ? 3 : sh > .15 ? 2 : sh > .04 ? 1 : 0, med:nM * per >= 5 ? 3 : nM * per >= 2 ? 2 : nM ? 1 : 0,
       spr:Math.min(3, (nS * per >= 8 ? 3 : nS * per >= 3 ? 2 : nS ? 1 : 0) + (race ? 1 : 0)), tmp:Math.min(3, (hk < 6 ? 2 : hk < 12 ? 1 : 0) + (race ? 1 : 0))};
   }
-  let ty = e && e.ty ? e.ty : tev >= 720 ? 'ultra' : null;
+  let ty = p.evTy && EVTY[p.evTy] ? p.evTy : e && e.ty ? e.ty : tev >= 720 ? 'ultra' : null; /* M15: Typ von Hand korrigierbar */
   if (!ty) ty = sc ? (sc.lng >= 2 ? 'alpin' : hk < 6 && sc.lng === 0 && sc.med <= 1 ? 'flach' : sc.spr >= 2 && sc.lng <= 1 ? 'punch' : 'huegel')
     : hk >= 18 ? 'alpin' : hk >= 10 ? 'huegel' : hk >= 5 ? (race ? 'punch' : 'huegel') : 'flach';
   if (!sc) { const r = race ? 1 : 0, d = tev < 150 ? 1 : tev < 300 ? 2 : 3;
@@ -1158,6 +1160,10 @@ function evProfile(p){
   if (_evpC.size > 50) _evpC.clear(); _evpC.set(key, out); return out;
 }
 function setFmt(v){ S.d.fmt = v; save(); render(); }
+/* M15: Eventtyp in der Planung von Hand festlegen (automatisch = aus Strecke und Höhenmetern) */
+function setEvTy(v){ if (v && EVTY[v]) S.d.evTy = v; else delete S.d.evTy; save(); render(); }
+const evTyChips = d => { const auto = evProfile({...d, evTy:undefined}); if (!auto) return '';
+  return `<div class="mt-4"><p class="mb-2 text-sm" style="color:var(--mute)">Charakter der Strecke (automatisch erkannt: <span>${EVTY[auto.ty][0]}</span>)</p><div class="flex flex-wrap gap-2">${chip('Automatisch', !d.evTy, "setEvTy('')")}${Object.keys(EVTY).map(k => chip(EVTY[k][0], d.evTy === k, `setEvTy('${k}')`)).join('')}</div><p class="mt-1 text-xs" style="color:var(--mute)">Kennst du die Strecke besser, wähle den passenden Charakter. Danach richten sich die Intervalle in Aufbau und Spitze.</p></div>`; };
 const fmtChips = d => { const pr = evProfile({...d, fmt:undefined}), auto = pr ? (pr.race ? 'race' : 'mara') : 'mara', cur = d.fmt || auto;
   return `<div><p class="mb-2 text-sm" style="color:var(--mute)">Format des Events</p><div class="flex flex-wrap gap-2">${chip('Rennen mit Massenstart', cur === 'race', "setFmt('race')")}${chip('Marathon / Radrundfahrt', cur === 'mara', "setFmt('mara')")}</div></div>`; };
 const EVMIX = {
@@ -1178,7 +1184,7 @@ function evProfCard(p, compact){
     : `<p class="mt-3 text-sm" style="color:var(--mute)">Ohne Streckenprofil geschätzt aus den Höhenmetern pro Kilometer${EVS.find(x => x.id === p.evId && x.ty) ? ' und der bekannten Charakteristik des Events' : ''}. Mit der GPX-Datei der Strecke erkennt die App die einzelnen Anstiege und wird genauer.</p>`;
   const inner = `<p class="hd text-xl font-semibold">${t[0]}</p><p class="mt-1 text-sm" style="color:var(--mute)">${facts}</p><p class="mt-2 text-sm">${t[1]}</p>${cl}
     <div class="mt-3 space-y-1.5">${rows}</div>
-    ${compact ? '' : `<p class="mt-4 font-semibold">So ist dein Plan darauf ausgerichtet</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm">
+    ${p.evTy ? '<p class="mt-2 text-xs" style="color:var(--mute)">Von dir festgelegt. Ändern kannst du den Charakter unter „Plan anpassen“.</p>' : ''}${compact ? '' : `<p class="mt-4 font-semibold">So ist dein Plan darauf ausgerichtet</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm">
       <li>Basisphase: Grundlage und Sweet Spot, wie bei jedem Ziel.</li>
       <li>Aufbauphase: ${mx.build}.</li>
       <li>Spitzenphase: ${peak}, dazu eine Eventsimulation.</li>
@@ -1554,6 +1560,20 @@ function msPage(p){
       <p class="mt-2 text-xs" style="color:var(--mute)">Der Korridor kommt aus der FTP-Prognose der App (Faustmodell, siehe Plan-Check) plus etwa ±2 % Messtoleranz. Tests schwanken von Tag zu Tag, darum zählt der Trend über mehrere Checks mehr als ein einzelner Wert.</p></section>`;
 }
 
+/* ---------- Audit 12.11.2026, M14: Training bei Hitze ----------
+   Ab etwa 28 °C in der Trainingszeit (Vorhersage) zeigt die Startseite vor einer harten oder langen Einheit Hinweise: früh oder spät fahren,
+   Intensität etwas senken (der Puls liegt bei gleicher Leistung höher), mehr trinken mit Salz, Warnzeichen kennen. Die Einheit lässt sich auf
+   einen kühleren Tag verschieben (F9, mit Prüfung). Grundlage: Racinais et al. 2015 (Konsens zu Training und Wettkampf bei Hitze),
+   Périard et al. 2021. */
+const HEAT_T = 28;
+function heatCard(){
+  const p = S.p; if (!p || !S.plan || !hasStarted(p) || S.heatSeen === iso(0)) return '';
+  const t = todayIdx(), x = S.plan[t]; if (!x || !x.m || S.done[t] || !(HARD.includes(x.t) || x.t === 'test' || x.t === 'long' || x.t === 'race')) return '';
+  let w = null; try { w = wxDay(iso(0), t, x); } catch (e) { elog(e); } if (!w || w.src !== 'api' || !(w.tmax >= HEAT_T)) return '';
+  const mv = x.t !== 'race' && !/^Eventtag/.test(x.n || '');
+  return `<section class="panel p-4" style="border-left:4px solid #c2410c"><p class="font-semibold">Heute wird es heiß: bis ${Math.round(w.tmax)} °C</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm"><li>Wenn möglich früh am Morgen oder am Abend fahren.</li><li>Die Intensität etwa 5 % niedriger ansetzen oder nach Gefühl fahren. Der Puls liegt bei gleicher Leistung höher.</li><li>Pro Stunde 500 bis 1000 ml trinken, mit Salz (Elektrolyte).</li><li>Bei Schwindel, Kopfschmerz, Gänsehaut oder Übelkeit sofort abbrechen, in den Schatten und trinken.</li></ul>
+    <div class="mt-3 flex flex-wrap gap-2">${mv ? `<button class="btn !w-auto !px-3" style="min-height:44px" onclick="mvAskGo(${ja(t)})">Auf einen anderen Tag legen</button>` : ''}<button class="ghost !w-auto !px-3" style="min-height:44px" onclick="S.heatSeen=iso(0);save();render()">Verstanden</button></div></section>`;
+}
 /* ---------- Audit 12.11.2026, M6: Wiedereinstieg nach Pausen, Urlaub, Krankheit über die Wochengrenze ----------
    1. Pause erkennen: Liegt die letzte eingetragene Fahrt oder erledigte Einheit 7 oder mehr Tage zurück (und war das kein eingetragener
       Urlaub), fragt die App auf der Startseite nach. Mit Zustimmung plant sie einen Wiedereinstieg: 7–13 Tage Pause → eine Woche mit
@@ -1886,7 +1906,7 @@ function subsUi(d){
   const warn = s => { const nxA = [...L.filter(q => q.prio === 'A' && q.date > s.date).map(q => q.date), d.eventDate].filter(Boolean).sort()[0], dd = nxA ? Math.round((new Date(nxA) - new Date(s.date)) / 864e5) : 99, nm = nxA === d.eventDate ? 'dem Saisonhöhepunkt' : 'dem nächsten A-Event'; return dd < 0 ? 'liegt nach dem Hauptevent und wird ignoriert' : s.prio === 'B' && dd < 21 ? `nur ${dd} Tage vor ${nm}, besser als C-Rennen fahren` : s.prio === 'A' && dd < SEASON_MIN * 7 ? `nur ${Math.round(dd / 7)} Wochen vor ${nm}: kein neuer Aufbau möglich, die App hält die Form` : ''; };
   const rows = L.map(s => `<div class="flex items-start gap-2 p-3 text-sm" style="background:var(--tint);border:1px solid var(--line)">${prioBadge(s.prio)}<span class="min-w-0 flex-1"><b data-noi18n>${esc(s.name)}</b><br>${fmt(s.date)}${s.dist ? ', ' + f1(s.dist) + ' km' : ''}${s.hm ? ', ' + s.hm.toLocaleString('de-DE') + ' hm' : ''}${s.min ? ', ca. ' + hm2(s.min) + ' Std.' : ''}${warn(s) ? `<br><span style="color:#9a6a00">⚠ ${warn(s)}</span>` : ''}</span><button class="ghost !px-2 !py-1 text-xs" onclick="subTog('${ja(s.id)}')">${s.prio === 'C' || !s.prio ? 'als B' : s.prio === 'B' ? 'als A' : 'als C'}</button><button class="ghost !px-2 !py-1 text-xs" onclick="subDel('${ja(s.id)}')" aria-label="Entfernen">✕</button></div>`).join('');
   return `<div class="panel p-4" id="season-ev"><p class="font-semibold">Weitere Events der Saison</p>
-    <p class="mt-1 text-sm" style="color:var(--mute)">Trag alle Rennen und Veranstaltungen der Saison ein, beliebig viele und in beliebiger Reihenfolge. Das späteste Event wird automatisch dein Saisonhöhepunkt. <b>A-Events</b> sind weitere Formhöhepunkte: davor ein Tapering, danach eine Woche Regeneration. Ohne A-Events sind alle Events Bausteine auf dem Weg zum Hauptevent. <b>B-Rennen</b> sind dir wichtig: davor ein Mini-Tapering von 2 bis 3 Tagen, danach 1 bis 2 Tage Erholung. <b>C-Rennen</b> fährst du als hartes Training: nur der Tag davor ist locker. Das Rennen ersetzt in seiner Woche den Long Ride.</p>
+    <p class="mt-1 text-sm" style="color:var(--mute)">Trag alle Rennen und Veranstaltungen der Saison ein, beliebig viele und in beliebiger Reihenfolge. Das späteste Event wird automatisch dein Saisonhöhepunkt. <b>A-Events</b> sind weitere Formhöhepunkte: davor ein Tapering, danach eine Woche Regeneration. Ohne A-Events sind alle Events Bausteine auf dem Weg zum Hauptevent. <b>B-Rennen</b> sind dir wichtig: davor ein Mini-Tapering von 2 bis 3 Tagen, danach 1 bis 2 Tage Erholung. <b>C-Rennen</b> fährst du als hartes Training, ohne Tapering davor. Das Rennen ersetzt in seiner Woche den Long Ride.</p>
     ${(() => { const n = seasonNote({...d, start:d.start || mondayOf(d.startDate && d.startDate > iso(0) ? d.startDate : iso(0))}); return n ? `<div class="mt-3">${n}</div>` : ''; })()}${rows || evMainReal(d) ? `<div class="mt-3 space-y-2">${rows}${evMainReal(d) && d.eventDate ? `<div class="flex items-start gap-2 p-3 text-sm" style="background:var(--tint);border:1px solid var(--ice);border-left:3px solid #f87171">${prioBadge('A')}<span class="min-w-0 flex-1"><b data-noi18n>${esc(d.eventName)}</b><br>${fmt(d.eventDate)}${d.dist ? ', ' + f1(d.dist) + ' km' : ''}${d.hm ? ', ' + Number(d.hm).toLocaleString('de-DE') + ' hm' : ''}<br><span class="text-xs font-semibold" style="color:var(--teal)">Saisonhöhepunkt · Strecke und Zielzeit legst du oben und im nächsten Schritt fest</span></span></div>` : ''}</div>` : ''}${subListUi(d)}
     <p class="mt-4 text-sm font-semibold">Eigenes Rennen eintragen</p>
     <div class="mt-2 space-y-3 p-3" style="border:1px dashed var(--line)">
@@ -1903,7 +1923,7 @@ function subsCard(p){
   const rows = L.map(s => { const n = Math.ceil((new Date(s.date + 'T12:00:00') - Date.now()) / 864e5); return `<div class="flex items-center gap-2 text-sm">${prioBadge(s.prio)}<span class="flex-1"><b data-noi18n>${esc(s.name)}</b>, ${fmt(s.date)}${s.dist ? ', ' + f1(s.dist) + ' km' : ''}</span><span style="color:var(--mute)">${n <= 0 ? 'heute' : 'in ' + n + ' Tagen'}</span></div>`; }).join('');
   const main = `<div class="flex items-center gap-2 text-sm">${prioBadge('A')}<span class="flex-1"><b>${p.eventName ? '<span data-noi18n>' + esc(p.eventName) + '</span>' : 'Hauptevent'}</b>, ${fmt(p.eventDate)} · Saisonhöhepunkt</span></div>`;
   return fold('subs', 'Saison und Events', `<div class="mb-3">${seasonNote(p)}</div>${rows ? `<div class="space-y-2">${rows}${main}</div>` : '<p class="text-sm" style="color:var(--mute)">Alle weiteren Events liegen hinter dir.</p>'}
-    <p class="mt-3 text-xs" style="color:var(--mute)">A-Event: Tapering davor, eine Woche Regeneration danach. B-Rennen: 2 bis 3 Tage Mini-Tapering davor, 1 bis 2 Tage Erholung danach. C-Rennen: nur der Tag davor ist locker. In der Woche eines Rennens ersetzt es den Long Ride.</p>
+    <p class="mt-3 text-xs" style="color:var(--mute)">A-Event: Tapering davor, eine Woche Regeneration danach. B-Rennen: 2 bis 3 Tage Mini-Tapering davor, 1 bis 2 Tage Erholung danach. C-Rennen: kein Tapering, du fährst es als hartes Training. In der Woche eines Rennens ersetzt es den Long Ride.</p>
     <button class="ghost mt-3 !py-2 text-sm" onclick="editSubs()">Events bearbeiten</button>`, true, `${L.length} geplant`);
 }
 const subsInWeek = (p, w) => (p.subs || []).filter(s => { const a = absDay(p, s.date); return a >= (w - 1) * 7 && a < w * 7 && s.date < p.eventDate; });
@@ -3681,7 +3701,7 @@ function onboarding(){
       ${seasonModeUi(d)}
       ${sec(seasonOn(d) ? 'Saisonhöhepunkt: dein letztes A-Event' : 'Event', evPick(d) + field('Name des Events', `<input class="inp" placeholder="z. B. Mein Radmarathon" value="${esc(d.eventName)}" oninput="draft('eventName',this.value)">`) + date)}
       ${sec('Strecke', `<div class="grid grid-cols-2 gap-3">${field('Distanz (km)', `<input type="number" inputmode="decimal" class="inp" value="${esc(d.dist)}" oninput="draft('dist',this.value)">`)}${field('Höhenmeter (hm)', `<input type="number" inputmode="numeric" class="inp" value="${esc(d.hm)}" oninput="draft('hm',this.value)">`)}</div>${coursePick(d)}`)}
-      ${sec('Art des Events', fmtChips(d))}${vo2BlkUi(d)}
+      ${sec('Art des Events', fmtChips(d) + evTyChips(d))}${vo2BlkUi(d)}
       ${evProfCard(d, true)}${seasonOn(d) ? subsUi(d) : ''}</div>${nextB(4)}`;
   if (ev && s === 5) body = `${head('Deine Zielzeit', `${d.eventName ? '<span data-noi18n>' + esc(d.eventName) + '</span>' : 'Dein Event'}${/km/.test(d.eventName || '') || !(d.dist > 0) ? '' : ', ' + f1(d.dist) + ' km'}${d.hm ? ', ' + Number(d.hm).toLocaleString('de-DE') + ' hm' : ''}.${d.dist > 0 ? '' : ' Trag in Schritt 4 Distanz und Höhenmeter ein, dann schlägt die App eine realistische Zielzeit vor.'} Mit deinem Stand und deiner Zeit schlägt die App ein realistisches Ziel vor.`)}<div class="mt-4 space-y-4">
       ${sec('Ziel', `<div class="grid grid-cols-2 gap-3">${field('Zielzeit (Std:Min)', `<input id="tt" class="inp" value="${esc(d.targetTime)}" oninput="setTT(this.value)">`)}${field('oder Ø km/h', `<input id="ts" type="text" inputmode="decimal" class="inp" value="${esc(spdOf(d) ? f1(spdOf(d)) : '')}" oninput="setSpeed(this.value)">`)}</div>
@@ -4349,7 +4369,7 @@ function homePage(){
   const p = S.p;
   const gv = (() => { try { const c = planCheck(p, true); return c.ack ? null : c.verdict; } catch (e) { elog(e); return null; } })();
   const warn = gv === 'high' || gv === 'mid' ? `<button class="panel flex w-full items-center gap-3 p-4 text-left" style="border-left:4px solid ${esc(gv === 'high' ? '#c2410c' : '#d9a400')}" onclick="openGoal('dash')"><span class="min-w-0 flex-1"><span class="block font-semibold">${gv === 'high' ? 'Dein Ziel braucht eine Anpassung' : 'Dein Ziel ist in Reichweite'}</span><span class="text-sm" style="color:var(--mute)">${gv === 'high' ? 'Es gibt gute Wege dorthin. Sieh dir die Optionen an, mit Empfehlung.' : 'Mit ein paar Stellschrauben wird es sicherer. Sieh dir die Optionen an.'}</span></span><span aria-hidden="true" class="text-xl">›</span></button>` : '';
-  return `${hlthCard()}${ovlCard()}${gapCard()}${reentFtpCard()}${morHint()}${bkHint()}${typeof zxHomeNote === 'function' ? zxHomeNote() : ''}${pendingCard()}${xrHome()}${warn}${goalMsg && !pg ? `<p class="text-sm" style="color:var(--ok)">✓ ${esc(goalMsg)}</p>` : ''}${heroDay(p)}${mvTodayCard()}${mvModal()}${vaModal()}${weekStrip()}${reviewCard()}${rcHome()}${tipCard()}${dykCard()}
+  return `${hlthCard()}${heatCard()}${ovlCard()}${gapCard()}${reentFtpCard()}${morHint()}${bkHint()}${typeof zxHomeNote === 'function' ? zxHomeNote() : ''}${pendingCard()}${xrHome()}${warn}${goalMsg && !pg ? `<p class="text-sm" style="color:var(--ok)">✓ ${esc(goalMsg)}</p>` : ''}${heroDay(p)}${mvTodayCard()}${mvModal()}${vaModal()}${weekStrip()}${reviewCard()}${rcHome()}${tipCard()}${dykCard()}
     <button class="panel gcard w-full p-5 text-left" onclick="goPg('${p.goal === 'event' ? (efList(p).length > 1 ? 'ev-saison' : 'event') : 'check'}')"><span class="min-w-0 flex-1">${goalCard(false)}</span><span aria-hidden="true" class="text-xl" style="color:var(--mute)">›</span></button>
     ${startCard()}`;
 }
@@ -4531,6 +4551,7 @@ const TIP_SRC = {
   bini11:'Bini R et al. (2011): Effects of bicycle saddle height on knee injury risk and cycling performance. Sports Med 41(6):463–476',
   olivier17:'Olivier J, Creighton P (2017): Bicycle injuries and helmet use: a systematic review and meta-analysis. Int J Epidemiol 46(1):278–292',
   stvo:'Straßenverkehrs-Ordnung (StVO) § 5 Abs. 4: Überholabstand zu Radfahrenden innerorts mindestens 1,5 m, außerorts 2 m',
+  racinais15:'Racinais S et al. (2015): Consensus recommendations on training and competing in the heat. Br J Sports Med 49(18):1164–1173',
   periard15:'Périard JD et al. (2015): Adaptations and mechanisms of human heat acclimation. Scand J Med Sci Sports 25(S1):20–38',
   marcora09:'Marcora SM et al. (2009): Mental fatigue impairs physical performance in humans. J Appl Physiol 106:857–864',
   blanch14:'Blanchfield AW et al. (2014): Talking yourself out of exhaustion: the effects of self-talk on endurance performance. Med Sci Sports Exerc 46(5):998–1007',
@@ -4692,6 +4713,7 @@ const TIPS = [
   ['w02', 'wet', 'wx:cold', 'Hände und Füße kühlen zuerst aus. Überschuhe und warme Handschuhe machen bei Kälte den größten Unterschied.', 'Hands and feet cool first. Overshoes and warm gloves make the biggest difference in the cold.', 'coldex', ''],
   ['w03', 'wet', 'wx:cold', 'Bei Kälte vor harten Intervallen länger einfahren. Kalte Muskeln leisten weniger.', 'In the cold, warm up longer before hard intervals. Cold muscles perform worse.', 'warmup', ''],
   ['w04', 'wet', 'wx:hot', 'Hitze: Fahr früh am Morgen und plane die Intensität etwas niedriger. Der Puls liegt bei gleicher Leistung höher.', 'Heat: ride early in the morning and plan slightly lower intensity. Heart rate is higher at the same power.', '', ''],
+  ['w06', 'wet', 'd:ev21 s:s', 'Rennen im Sommer? Gewöhn dich in den zwei Wochen davor an die Wärme: an 8 bis 10 Tagen 60 bis 90 Minuten locker in der Hitze fahren. Danach schwitzt du früher und der Puls bleibt niedriger.', 'Racing in summer? Get used to the heat in the two weeks before: ride easy in the heat for 60 to 90 minutes on 8 to 10 days. Afterwards you sweat earlier and your heart rate stays lower.', 'racinais15', 'w-race'],
   ['w05', 'wet', 'wx:hot', 'An Hitze gewöhnt sich der Körper in etwa 10 bis 14 Tagen mit regelmäßigem Training in der Wärme.', 'The body adapts to heat in about 10 to 14 days of regular training in warm conditions.', 'periard15', ''],
   ['w06', 'wet', 'wx:wet', 'Regen: Eine leichte Regenjacke und Schutzbleche machen die Fahrt deutlich angenehmer.', 'Rain: a light rain jacket and mudguards make the ride much more pleasant.', '', ''],
   ['w07', 'wet', 's:w', 'Winter: Ein Buff oder eine dünne Mütze unter dem Helm halten viel Wärme. Über den Kopf geht viel Wärme verloren.', 'Winter: a buff or thin cap under the helmet keeps a lot of warmth in.', '', ''],
@@ -4727,7 +4749,7 @@ function tipCtx(day){
   if (!x.m) d.push('rest'); else if (x.t === 'rec' || x.t === 'com') d.push('rec'); else if (x.t === 'base') d.push('base'); else if (HARD.includes(x.t) || x.t === 'test') d.push('int'); else if (x.t === 'long') d.push('long'); else if (x.t === 'race') d.push('race');
   try { if (strMap && strMap[i]) d.push('str'); } catch (e) { elog(e); }
   try { const ev = efList(p).map(q => q.date); const dd = ev.map(e => Math.round((dOnly(e) - dOnly(day)) / 864e5));
-    if (dd.some(n => n === 0)) d.push('race'); if (dd.some(n => n >= 1 && n <= 7)) d.push('ev7'); if (dd.some(n => n === -1)) d.push('post'); } catch (e) { elog(e); }
+    if (dd.some(n => n === 0)) d.push('race'); if (dd.some(n => n >= 1 && n <= 7)) d.push('ev7'); if (dd.some(n => n >= 10 && n <= 21)) d.push('ev21'); if (dd.some(n => n === -1)) d.push('post'); } catch (e) { elog(e); }
   let ph = null; try { const P = phases(p).find(q => S.wk >= q.from && S.wk <= q.to); ph = P ? P.key : null; } catch (e) { elog(e); }
   const mo = dOnly(day).getMonth(), s = [10, 11, 0, 1].includes(mo) ? 'w' : [5, 6, 7].includes(mo) ? 's' : '';
   const wx = []; try { const w = wxDay(day, i, x); if (w && w.src === 'api') { if (w.tmax >= 25) wx.push('hot'); if (w.tmin <= 5) wx.push('cold'); if (w.wet) wx.push('wet'); } } catch (e) { elog(e); }
@@ -6836,7 +6858,7 @@ function efPick(p){ const L = efList(p); if (!L.length) return null; let x = L.f
 function efChips(L, x){ return `<div class="flex flex-wrap gap-2">${L.map(q => chip(`${q.prio} · ${q.main ? '<span>Höhepunkt</span>' : '<span data-noi18n>' + esc(q.name.length > 16 ? q.name.slice(0, 15) + '…' : q.name) + '</span>'}`, q.id === x.id, `efSel='${q.id}';evFT=null;render()`)).join('')}</div>`; }
 function efStrat(q){
   const t = q.r.tev, gh = t > 150 ? 80 : t > 75 ? 45 : 30, load = (q.prio === 'A' || (q.prio === 'B' && t > 150)) && t > 90;
-  return {gh, load, txt:`${t > 75 ? `${gh} g Kohlenhydrate pro Stunde` : 'Ein Gel oder Sportgetränk reicht'}${load ? `, davor ${t > 150 ? '2 Tage' : '1 Tag'} Kohlenhydrate laden (${t > 150 ? '8–10' : '6–8'} g pro kg)` : q.prio === 'C' ? ', normal essen wie an einem harten Trainingstag' : ', am Vortag kohlenhydratreich essen'}`};
+  return {gh, load, txt:`${t > 75 ? `${gh} g Kohlenhydrate pro Stunde` : 'Ein Gel oder Sportgetränk reicht'}${load ? ', 36 bis 48 Std. vorher Kohlenhydrate laden (10 bis 12 g pro kg und Tag)' : q.prio === 'C' ? ', normal essen wie an einem harten Trainingstag' : ', am Vortag kohlenhydratreich essen'}`};
 }
 function efOverview(L){
   const rows = L.map((q, i) => { const s = efStrat(q), nx = L[i + 1], gap = nx ? Math.round((new Date(nx.date) - new Date(q.date)) / 864e5) : 99;
@@ -7389,7 +7411,7 @@ function mvSimP(P0, i, j, mode){
   return P;
 }
 /* Prüfung als Vorschlag: neue harte Doppeltage, wegfallender Ruhetag, Wetter am neuen Tag */
-function mvCheck(i, j, mode){ const w = mvW(); return paCheck(mvSim(i, j, mode), mvPlan(w), mvFut(w) ? {} : {day:j}); }
+function mvCheck(i, j, mode){ const w = mvW(); return paCheck(mvSim(i, j, mode), mvPlan(w), mvFut(w) ? {w} : {day:j, w}); }
 function mvAskGo(i){ mvAsk = {i, step:'day', w:typeof strWeek === 'number' ? strWeek : S.wk}; render(); }
 function mvClose(){ mvAsk = null; render(); }
 function mvPickDay(i, j){
@@ -7802,9 +7824,19 @@ function paRide(x){ return !!x && x.m > 0 && x.t !== 'rest'; }
 function paCheck(P, B, o){
   o = o || {}; const out = [], pair = (L, k) => paHard(L[k]) && paHard(L[k + 1]); let easy = null;
   for (let k = 0; k < 6; k++) if (pair(P, k) && !pair(B, k)) { const d = o.day != null && k + 1 === o.day ? k : k + 1; if (d >= todayIdx() && !S.done[d]) easy = easy == null ? d : easy; out.push(`${DAYS[k]} und ${DAYS[k + 1]} wären dann zwei harte Tage hintereinander. Das ermüdet mehr, als es bringt.`); }
+  /* M13 (Audit 12.11.2026): auch über die Wochengrenze prüfen (Sonntag der Vorwoche, Montag der nächsten Woche) und bei weniger als
+     8 Std. pro Woche vor einer dritten harten Einheit warnen. o.w: Woche des geänderten Plans (Standard: laufende Woche). */
+  try { const wk = o.w != null ? o.w : S.wk, p = S.p;
+    if (p && p.start && wk) {
+      const tot = phases(p).slice(-1)[0].to, prevSun = wk === S.wk && S.prevPlan && S.prevPlan.w === S.wk - 1 ? (S.prevPlan.plan || [])[6] : wk > 1 ? genWeek(p, wk - 1)[6] : null, nextMon = wk < tot ? genWeek(p, wk + 1)[0] : null;
+      if (paHard(P[0]) && paHard(prevSun) && !paHard(B[0])) out.push(`Sonntag der Vorwoche und ${DAYS[0]} wären dann zwei harte Tage hintereinander.`);
+      if (paHard(P[6]) && paHard(nextMon) && !paHard(B[6])) out.push(`${DAYS[6]} und ${DAYS[0]} der nächsten Woche wären dann zwei harte Tage hintereinander.`);
+      const hc = L => L.filter(x => x && x.m > 0 && (HARD.includes(x.t) || x.t === 'race' || x.t === 'test')).length, hrs = (o.budget > 0 ? o.budget / 60 : 0) || tbWkH(p, wk) || p.hours || 0;
+      if (hc(P) >= 3 && hc(P) > hc(B) && hrs < 8) out.push(`Die Woche hätte dann ${hc(P)} harte Einheiten. Bei weniger als 8 Std. pro Woche reichen meist zwei, eine dritte kostet mehr Erholung, als sie bringt.`);
+    } } catch (e) { elog(e); }
   const rest = L => L.filter(x => !paRide(x)).length;
   if (rest(P) < rest(B) && rest(P) === 0) out.push('Damit fällt der letzte Ruhetag der Woche weg.');
-  if (o.day != null) { try { if (S.wx) { const w = wxDay(dstr(o.day), o.day, P[o.day]); if (w && w.wet) out.push(`Für ${DAYS[o.day]} ist Regen angesagt (etwa ${Math.round(w.eff)} °C). Plane Regenkleidung ein oder fahr auf der Rolle.`); else if (w && w.eff < 3) out.push(`Am ${DAYS[o.day]} wird es kalt (etwa ${Math.round(w.eff)} °C). Warm anziehen oder auf der Rolle fahren.`); } } catch (e) { elog(e); } }
+  if (o.day != null) { try { if (S.wx) { const w = wxDay(dstr(o.day), o.day, P[o.day]); if (w && w.wet) out.push(`Für ${DAYS[o.day]} ist Regen angesagt (etwa ${Math.round(w.eff)} °C). Plane Regenkleidung ein oder fahr auf der Rolle.`); else if (w && w.src === 'api' && w.tmax >= 28) out.push(`Am ${DAYS[o.day]} wird es heiß (bis ${Math.round(w.tmax)} °C). Früh oder spät fahren und mehr trinken.`); else if (w && w.eff < 3) out.push(`Am ${DAYS[o.day]} wird es kalt (etwa ${Math.round(w.eff)} °C). Warm anziehen oder auf der Rolle fahren.`); } } catch (e) { elog(e); } }
   if (o.budget > 0) { const m = P.reduce((a, x) => a + (paRide(x) ? x.m : 0), 0); if (m > o.budget * 1.1) out.push(`Die Woche hätte dann ${mm(m)} Training, verfügbar sind ${mm(o.budget)}.`); }
   return {warns:out, easy};
 }

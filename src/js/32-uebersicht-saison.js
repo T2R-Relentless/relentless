@@ -104,7 +104,7 @@ function efPick(p){ const L = efList(p); if (!L.length) return null; let x = L.f
 function efChips(L, x){ return `<div class="flex flex-wrap gap-2">${L.map(q => chip(`${q.prio} · ${q.main ? '<span>Höhepunkt</span>' : '<span data-noi18n>' + esc(q.name.length > 16 ? q.name.slice(0, 15) + '…' : q.name) + '</span>'}`, q.id === x.id, `efSel='${q.id}';evFT=null;render()`)).join('')}</div>`; }
 function efStrat(q){
   const t = q.r.tev, gh = t > 150 ? 80 : t > 75 ? 45 : 30, load = (q.prio === 'A' || (q.prio === 'B' && t > 150)) && t > 90;
-  return {gh, load, txt:`${t > 75 ? `${gh} g Kohlenhydrate pro Stunde` : 'Ein Gel oder Sportgetränk reicht'}${load ? `, davor ${t > 150 ? '2 Tage' : '1 Tag'} Kohlenhydrate laden (${t > 150 ? '8–10' : '6–8'} g pro kg)` : q.prio === 'C' ? ', normal essen wie an einem harten Trainingstag' : ', am Vortag kohlenhydratreich essen'}`};
+  return {gh, load, txt:`${t > 75 ? `${gh} g Kohlenhydrate pro Stunde` : 'Ein Gel oder Sportgetränk reicht'}${load ? ', 36 bis 48 Std. vorher Kohlenhydrate laden (10 bis 12 g pro kg und Tag)' : q.prio === 'C' ? ', normal essen wie an einem harten Trainingstag' : ', am Vortag kohlenhydratreich essen'}`};
 }
 function efOverview(L){
   const rows = L.map((q, i) => { const s = efStrat(q), nx = L[i + 1], gap = nx ? Math.round((new Date(nx.date) - new Date(q.date)) / 864e5) : 99;

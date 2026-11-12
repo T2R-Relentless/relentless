@@ -27,7 +27,7 @@ function mvSimP(P0, i, j, mode){
   return P;
 }
 /* Prüfung als Vorschlag: neue harte Doppeltage, wegfallender Ruhetag, Wetter am neuen Tag */
-function mvCheck(i, j, mode){ const w = mvW(); return paCheck(mvSim(i, j, mode), mvPlan(w), mvFut(w) ? {} : {day:j}); }
+function mvCheck(i, j, mode){ const w = mvW(); return paCheck(mvSim(i, j, mode), mvPlan(w), mvFut(w) ? {w} : {day:j, w}); }
 function mvAskGo(i){ mvAsk = {i, step:'day', w:typeof strWeek === 'number' ? strWeek : S.wk}; render(); }
 function mvClose(){ mvAsk = null; render(); }
 function mvPickDay(i, j){
