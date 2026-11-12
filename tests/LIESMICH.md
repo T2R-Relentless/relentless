@@ -24,6 +24,11 @@ Dann im Browser `http://localhost:8765/tests/` öffnen und **Tests starten** kli
 | `i18n.test.js` | Englische Übersetzung, Einzahl, Liste der noch fehlenden Übersetzungen |
 | `voice.test.js` | Zu jedem gesprochenen Satz gibt es eine abspielbare Datei mit stimmender Dauer |
 | `stats.test.js` | Anonyme Statistik: welche Aktion welches Ereignis zählt, jeweils genau einmal |
+| `budget.test.js` | B6: Zeitbudget nach Jahreszeit schon in der Planung |
+| `form.test.js` | B9: Formkurve bis zum Event, Renntag-Linie, Achsbeschriftung |
+| `sequence.test.js` | B10: Ton- und Ansageplan der Kraft-Einheiten, Sprachdateien |
+| `hints.test.js` | B7: Aktionen aller Hinweiskarten und Knöpfe der Startseite |
+| `statusbar.test.js` | B8: Statusleiste in der installierten App |
 | `elog.test.js` | Fehlerprotokoll: Erfassen, Zusammenfassen, Speichern, Anzeige; normale Nutzung erzeugt keine Einträge |
 
 Die App läuft dabei in einem abgeschotteten Rahmen: eigener Speicher (deine echten Daten bleiben unberührt), angehaltene
@@ -37,3 +42,8 @@ zeigt der Test die erste Abweichung.
 - **Ungewollte Abweichung:** Fehler im Code, beheben.
 - **Gewollte Änderung** (z. B. neuer Text): **Vergleichsstände neu schreiben** klicken und mit `git diff tests/snapshots`
   prüfen, dass sich genau das Gewollte geändert hat. Die Änderung zusammen mit dem Code committen.
+
+## Bildschirmfotos für Berichte
+
+In der Konsole der Testseite: `const a = await boot(); …; await shot(a, 'name')` legt `claude/bilder/name.png` ab
+(375 pt breit, doppelte Auflösung). Funktioniert, weil die App alle Styles und Schriften eingebettet hat.

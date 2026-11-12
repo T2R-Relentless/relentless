@@ -16,6 +16,8 @@ Gerät. Gehostet auf Netlify, nutzbar auch als Claude-Artefakt.
 | `netlify/functions/garmin.mjs` | Garmin-Vermittler `/api/garmin` für die Web-App |
 | `garmin-relentless/` | Garmin-Erweiterung für Claude Desktop und Claude Code |
 | `tools/build.py` | Baut `public/index.html` aus `src/` |
+| `tools/tts/generate.py` | Erzeugt fehlende Sprachdateien (Piper) |
+| `claude/` | Berichte und Bildschirmfotos |
 | `tests/` | Automatische Tests im Browser, siehe `tests/LIESMICH.md` |
 | `assets/` | Originale (Logo) |
 
@@ -44,7 +46,8 @@ Veröffentlichen selbst aus (`netlify.toml`).
 - **Neue Version veröffentlichen:** `APP_BUILD`/`APP_VERSION` (`src/js/26-statistik-update.js`, `src/js/44-version-neuigkeiten.js`),
   `public/version.json` und bei Bedarf den Eintrag für „Was ist neu“ (`WN_DATA`, ebenfalls `src/js/44-version-neuigkeiten.js`) anpassen.
   Ändern sich Dateien, die der Service Worker vorhält, die Cache-Version in `public/sw.js` erhöhen.
-- **Neue gesprochene Sätze** in den Übungsansagen brauchen neue Sprachdateien (Piper-Stimmen, siehe `src/js/45-stimme.js`).
-  Der Test `voice.test.js` meldet fehlende Dateien.
+- **Neue gesprochene Sätze** in den Übungsansagen brauchen neue Sprachdateien. Ablauf: Test „Satzkatalog“ schlägt an →
+  Vergleichsstände neu schreiben → `.tools/venv/bin/python tools/tts/generate.py` (erzeugt fehlende Dateien mit Piper und
+  aktualisiert das Manifest; Einrichtung von Piper siehe Kopf des Skripts). `--check` prüft nur.
 - **Fehlerprotokoll:** Abgefangene Fehler landen auf dem Gerät unter Einstellungen → Sprache, Darstellung, Hilfen →
   Fehlerprotokoll. Nutzer können es kopieren und mitschicken.
