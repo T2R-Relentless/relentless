@@ -115,6 +115,8 @@ function summarize(r, fname){
   try { if (typeof trkKeep === 'function') trkKeep(out, r); } catch (e) { elog(e); }
   /* F26: Bestwerte über 5 s bis 2 h (Mean-Max) dieser Fahrt */
   try { if (typeof mmKeep === 'function') mmKeep(out, r); } catch (e) { elog(e); }
+  /* F27: VO2max aus geplantem Test (Rampe, 5 min) oder aus einem neuen 5-min-Bestwert */
+  try { if (typeof vo2FromRide === 'function') vo2FromRide(out, r); } catch (e) { elog(e); }
   return Object.assign(out, perfExt(sec1, hr1, tc1, np));
 }
 async function uploadRides(inp){

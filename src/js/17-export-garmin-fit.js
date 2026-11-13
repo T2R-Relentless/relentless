@@ -8,6 +8,7 @@ const asc = t => String(t).replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g
 function fitSteps(p, x, part){
   const st = [], pw = pct => Math.round(p.ftp * pct / 100) + 1000, T = m => Math.round(m * 60000);
   const add = (name, min, lo, hi, it) => st.push({name, dur:0, dv:T(min), tt:4, tv:0, lo:pw(lo), hi:pw(hi), it});
+  if (x && x.vo2t && !part && typeof vo2FitSteps === 'function') return vo2FitSteps(p, x);
   const iv = part ? part.iv : x.iv;
   if (iv && iv.reps) {
     const total = part ? part.m : x.m, core = ivCore(iv), rem = Math.max(10, total - core - (iv.pad || 0));
@@ -45,7 +46,8 @@ function fitBytes(name, steps){
 function zwoXml(p, x, part, name){
   const E = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'), r2 = v => (Math.round(v) / 100).toFixed(2), sec = m => Math.round(m * 60);
   const iv = part ? part.iv : x.iv, b = [];
-  if (iv && iv.reps) {
+  if (x && x.vo2t && !part && typeof vo2Zwo === 'function') b.push(...vo2Zwo(p, x));
+  else if (iv && iv.reps) {
     const total = part ? part.m : x.m, core = ivCore(iv), rem = Math.max(10, total - core - (iv.pad || 0));
     const w0 = iv.wu || 15, c0 = iv.cd || 10, wu = Math.max(5, Math.round(rem * w0 / (w0 + c0))), cd = Math.max(5, rem - wu) + (iv.pad || 0), mid = (iv.lo + iv.hi) / 2;
     b.push(`<Warmup Duration="${sec(wu)}" PowerLow="${r2(50)}" PowerHigh="${r2(65)}"/>`);

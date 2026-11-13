@@ -153,7 +153,7 @@ test('Hinweise und Neuigkeiten zu F26', async () => {
   const a = await boot(); makePlan(a, lpDat()); lpPut(a, 'u', '2026-10-12', LP_U);
   const d = a.$("DYK.find(x => x[0] === 'mmprof')"); ok(d && d[2] === 'Leistungsprofil ansehen', 'DYK-Eintrag');
   a.w.dykGo(d[3]); await a.tick(200); ok(a.$("pg") === 'sprof', 'Knopf öffnet die Seite'); ok(a.$("!!document.querySelector('#fx-mm')"), 'Anker vorhanden');
-  ok(a.$("WN_DATA['193'].length") === 2, 'Neuigkeiten 193'); ok(a.$("APP_VERSION") === 193 && a.$("APP_BUILD") === '20261116090000');
+  ok(a.$("WN_DATA['193'].length") === 2, 'Neuigkeiten 193'); ok(a.$("APP_VERSION") >= 193, 'Version 193 oder später');
   /* neuer Bestwert als Vergleichssatz */
   lpPut(a, 'n', '2026-11-09', {...LP_U, 300:380}); ok(a.$("mmDyk()").some(f => f.id === 'cmp-mmpr' && /5 min: 380 W/.test(f.de)), 'neuer Bestwert in „Wusstest du schon?“');
   a.noErrors();

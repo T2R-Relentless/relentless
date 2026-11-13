@@ -378,3 +378,11 @@
 .mm-rc.on{border-color:#f2b134;background:#fff6dc}.mm-rc.off{opacity:.55}
 :root[data-theme=dark] .mm-rc.on{background:rgba(242,177,52,.14)}
 .mm-kb{width:16px;height:4px;vertical-align:2px}
+/* F27: VO2max-Verlauf. Methoden mit Form und Farbe (Quadrat Labor, Kreis Rampe, Dreieck 5 min, Raute Garmin, offenes Dreieck aus Fahrt) */
+.v2-ch{display:block;width:100%;height:auto}
+.v2-ch .tx{font-size:9.5px;fill:var(--mute);font-family:inherit}.v2-ch .gl0{stroke:var(--line);stroke-width:1}
+.v2-L{fill:var(--ink)}.v2-R{fill:var(--mm2)}.v2-F{fill:var(--mm1)}.v2-G{fill:#d9a400}.v2-FR{fill:var(--panel);stroke:var(--mm1);stroke-width:1.5}
+.v2-tr{fill:none!important;stroke-width:1.6;opacity:.7}.v2-tr.v2-L{stroke:var(--ink)}.v2-tr.v2-R{stroke:var(--mm2)}.v2-tr.v2-F,.v2-tr.v2-FR{stroke:var(--mm1);stroke-dasharray:4 3}.v2-tr.v2-G{stroke:#d9a400}
+.v2-eb{stroke:var(--mute);stroke-width:1.2;opacity:.7}.v2-inv{opacity:.35}
+.v2-rec{fill:var(--tint)}.v2-krec{background:var(--tint);border:1px solid var(--line)}
+.v2-ev{stroke:var(--ink);stroke-width:1;stroke-dasharray:2 3;opacity:.6}.v2-ftp{fill:var(--mute)}

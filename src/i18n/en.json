@@ -6758,5 +6758,7 @@
 "Leistungsprofil": "Power profile",
 "Leistungsprofil ansehen": "View power profile",
 "Unter Fortschritt → Leistungsprofil siehst du deine Bestwerte von 15 Sekunden bis 60 Minuten als Netz und als Kurve, dazu deinen Fahrertyp, deine Stärken mit Trainingshinweisen und eine FTP-Schätzung.": "Under Progress → Power profile you see your best efforts from 15 seconds to 60 minutes as a web and as a curve, plus your rider type, your strengths with training tips and an FTP estimate.",
-"Stärken, Fahrertyp und FTP-Schätzung": "Strengths, rider type and FTP estimate"
+"Stärken, Fahrertyp und FTP-Schätzung": "Strengths, rider type and FTP estimate",
+"VO2max ansehen": "View VO2max",
+"Unter Fortschritt → VO2max schätzt die App deine maximale Sauerstoffaufnahme aus einem Rampentest, einem 5-Minuten-Test, einem Laborwert oder deiner Garmin-Uhr, mit Spanne, Quelle und Verlauf.": "Under Progress → VO2max the app estimates your maximal oxygen uptake from a ramp test, a 5-minute test, a lab value or your Garmin watch, with range, source and history."
 }

@@ -41,6 +41,7 @@ function wkBlocks(x){
   const out = []; if (!x || !(x.m > 0) || x.t === 'rest') return out;
   const steady = (m, lo, hi, k, extra) => { lo = lo || 56; hi = hi || 72; const mid = (lo + hi) / 2; out.push(wkB(m * 60, mid, mid, lo, hi, k || 'steady', {cad:x.cad, ...(extra || {})})); };
   if (x.parts) x.parts.forEach((q, j) => { const n0 = out.length; if (q.iv) wkIv(q.iv, q.m, out, x.cad); else steady(q.m, q.lo || x.lo, q.hi || x.hi); if (out[n0]) out[n0].part = q.lbl || (j ? 'Rückweg' : 'Hinweg'); });
+  else if (x.vo2t && typeof vo2Blocks === 'function') vo2Blocks(x, out);
   else if (x.iv) wkIv(x.iv, x.m, out, x.cad);
   else if (x.t === 'test') wkTest(x, out);
   else if (x.t === 'race' || /^Eventtag/.test(x.n || '')) { const f = Math.max(.6, Math.min(1.02, 1 - .1 * Math.log(Math.max(1, x.m / 60)))) * (x.subPrio === 'C' ? 93 : 100); out.push(wkB(x.m * 60, f, f, Math.round(f - 5), Math.round(f + 5), 'race')); }

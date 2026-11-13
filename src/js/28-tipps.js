@@ -11,6 +11,7 @@ const DYK = [
   ['up', 'Lade nach jeder Einheit deine Fahrt hoch (FIT, GPX oder TCX). Die App ordnet sie dem Tag zu, gibt Punkte, lobt, was gut lief, und sagt, was du beim nächsten Mal besser machen kannst.', 'Fahrt hochladen', "goPg('rides')", () => !Object.keys((S.p && S.p.exe) || {}).length],
   /* Neue Funktionen (Versionen 172 bis 188) */
   ['wkprof', 'Jede Rad-Einheit zeigt ihren Ablauf als Grafik: Blöcke nach Dauer und Intensität, Farben nach Zone. Tippe oder wische über die Grafik, dann siehst du Dauer, Watt und Trittfrequenz jedes Abschnitts.', 'Grafik ansehen', "dykProf()", () => !!S.p],
+  ['vo2', 'Unter Fortschritt → VO2max schätzt die App deine maximale Sauerstoffaufnahme aus einem Rampentest, einem 5-Minuten-Test, einem Laborwert oder deiner Garmin-Uhr, mit Spanne, Quelle und Verlauf.', 'VO2max ansehen', "dykVo2()", () => true],
   ['mmprof', 'Unter Fortschritt → Leistungsprofil siehst du deine Bestwerte von 15 Sekunden bis 60 Minuten als Netz und als Kurve, dazu deinen Fahrertyp, deine Stärken mit Trainingshinweisen und eine FTP-Schätzung.', 'Leistungsprofil ansehen', "dykMm()", () => true],
   ['route', 'Im Logbuch hat jede Fahrt mit GPS ein Höhenprofil mit Steigungen, den längsten Anstieg und die Streckenlinie. Start und Ziel blendet die App auf Wunsch um 500 m aus, ganz ohne Karte und ohne Daten nach außen.', 'Höhenprofil ansehen', "dykTrack()", () => true],
   ['logbook', 'Im Logbuch stehen alle deine Fahrten und Übungseinheiten mit Bewertung an einem Ort. Die Verlaufsgrafik darüber zeigt Kilometer, Zeit und Höhenmeter je Woche und Monat.', 'Logbuch öffnen', "navGo('logbook')", () => true],
@@ -81,7 +82,7 @@ function dykInst(){ instHide = false; instHelp = true; try { localStorage.remove
 function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
 /* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
    Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */
-const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), render:() => render()};
+const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), render:() => render()};
 function dykRun(st){
   let m = st.match(/^heroTab\s*=\s*'(\w+)'$/); if (m) { heroTab = m[1]; return; }
   m = st.match(/^(\w+)\((.*)\)$/); const f = m && Object.prototype.hasOwnProperty.call(DYK_FN, m[1]) ? DYK_FN[m[1]] : null;
