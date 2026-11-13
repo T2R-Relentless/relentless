@@ -303,3 +303,12 @@
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
   [data-theme=dark] .ln .ln2{stroke:var(--ice)} /* F23: hervorgehobene Gliedmaße auch im dunklen Design farbig */
+
+/* Gleich große Kacheln: Ausgewählt (btn) und nicht ausgewählt (ghost) haben denselben 1-px-Rahmen,
+   Wochentagsreihen sind ein Raster mit gleich breiten Kacheln statt frei umbrechender Knöpfe */
+.btn{border:1px solid transparent}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:.375rem}
+.chips>*{display:flex;align-items:center;width:100%!important;min-width:0!important;min-height:44px;padding-left:0!important;padding-right:0!important;text-align:center;justify-content:center}
+/* Ziel eines Hinweis-Knopfs: Abschnitt kurz hervorheben, nicht unter der Kopfzeile verstecken */
+[id^="fx-"]{scroll-margin-top:12px}
+.dyk-hit{outline:2px solid var(--ice);outline-offset:2px;transition:outline-color .6s}

@@ -11,13 +11,13 @@ const DYK = [
   ['up', 'Lade nach jeder Einheit deine Fahrt hoch (FIT, GPX oder TCX). Die App ordnet sie dem Tag zu, gibt Punkte, lobt, was gut lief, und sagt, was du beim nächsten Mal besser machen kannst.', 'Fahrt hochladen', "goPg('rides')", () => !Object.keys((S.p && S.p.exe) || {}).length],
   /* Neue Funktionen (Versionen 172 bis 188) */
   ['logbook', 'Im Logbuch stehen alle deine Fahrten und Übungseinheiten mit Bewertung an einem Ort. Die Verlaufsgrafik darüber zeigt Kilometer, Zeit und Höhenmeter je Woche und Monat.', 'Logbuch öffnen', "navGo('logbook')", () => true],
-  ['commute', 'Fährst du an einem Trainingstag doch mit dem Rad zur Arbeit? Tippe in der Woche bei der Einheit auf „Pendeln“. Sie wird auf Hin- und Rückweg verteilt, die Intervalle liegen auf dem Hinweg.', 'Woche ansehen', "navGo('week')", () => hasStarted(S.p) && isComm(S.p)],
+  ['commute', 'Fährst du an einem Trainingstag doch mit dem Rad zur Arbeit? Tippe in der Woche bei der Einheit auf „Pendeln“. Sie wird auf Hin- und Rückweg verteilt, die Intervalle liegen auf dem Hinweg.', 'Woche ansehen', "dykWeek()", () => hasStarted(S.p) && isComm(S.p)],
   ['move', 'Passt eine Einheit an einem anderen Tag besser? Tippe in der Woche auf „Verschieben“, auch für „heute statt Sonntag“. Die App achtet darauf, dass harte Einheiten nicht direkt hintereinander liegen.', 'Woche ansehen', "navGo('week')", () => hasStarted(S.p)],
   ['variant', 'Lust auf Abwechslung? Mit „Andere Variante“ tauschst du eine Einheit gegen eine gleichwertige mit demselben Trainingsreiz, auch in kommenden Wochen.', 'Woche ansehen', "navGo('week')", () => true],
   ['seasonchk', 'Der Plan-Check bewertet deine ganze Saison: Jedes Event bekommt eine Ampel, und bei jeder Maßnahme siehst du, wie viele Minuten sie dir bei welchem Rennen bringt.', 'Plan-Check öffnen', "goPg('check')", () => S.p && S.p.goal === 'event' && (S.p.subs || []).length > 0],
   ['evall', 'Nicht nur für dein Hauptevent: Für jedes Rennen der Saison zeigt die App Zielzeit, Form am Renntag und eine Empfehlung zum Pacing.', 'Saison ansehen', "navGo('event')", () => S.p && S.p.goal === 'event' && (S.p.subs || []).length > 0],
-  ['vac', 'Urlaub oder Reise ohne Rad? Trag den Zeitraum unter Einstellungen → Alltag und Planstart ein. Die App plant drumherum und danach einen sanften Wiedereinstieg.', 'Urlaub eintragen', "dykSet('settings','ali')", () => hasStarted(S.p)],
-  ['tb', 'Im Winter weniger Zeit als im Sommer? Unter Einstellungen → Alltag und Planstart legst du ein Zeitbudget je Jahreszeit fest. Der Plan richtet seinen Umfang danach.', 'Zeitbudget festlegen', "dykSet('settings','ali')", () => true],
+  ['vac', 'Urlaub oder Reise ohne Rad? Trag den Zeitraum unter Einstellungen → Alltag und Planstart ein. Die App plant drumherum und danach einen sanften Wiedereinstieg.', 'Urlaub eintragen', "dykSet('settings','vac')", () => hasStarted(S.p)],
+  ['tb', 'Im Winter weniger Zeit als im Sommer? Unter Einstellungen → Alltag und Planstart legst du ein Zeitbudget je Jahreszeit fest. Der Plan richtet seinen Umfang danach.', 'Zeitbudget festlegen', "dykSet('settings','tb')", () => true],
   ['age', 'Mit deinem Geburtsdatum stimmt die App die Erholung auf dein Alter ab: Ab 50 schlägt sie jede dritte Woche eine Entlastungswoche und mehr Abstand zwischen harten Einheiten vor. Ob du das übernimmst, entscheidest du.', 'Alter und Erholung', "dykSet('settings','age')", () => !(S.p && ageOf(S.p))],
   ['seq', 'Kraft- und Mobilitätsübungen laufen als Ablauf mit Tönen und Ansagen. Du musst nicht aufs Handy sehen: Die App sagt dir, wann die nächste Übung oder Satzpause beginnt.', 'Ablauf einstellen', "dykSet('settings','sq')", () => true],
   ['mob', 'Unter Mehr → Übungen findest du Mobilitätsroutinen für vor und nach der Fahrt, für Ruhetage und für den Schreibtisch.', 'Übungen ansehen', "goPg('ex')", () => true],
@@ -33,7 +33,7 @@ const DYK = [
   ['ms', 'Alle paar Wochen steht ein Fitness-Check im Plan. Danach passt die App deine Wattbereiche an, so trainierst du immer im richtigen Bereich.', 'Fitness-Checks', "goPg('ms')", () => true],
   ['form', 'Unter Fortschritt → Formkurve siehst du deine Fitness und Ermüdung. Die App rechnet hoch, wie frisch du am Renntag bist.', 'Formkurve ansehen', "goPg('sform')", () => true],
   ['pb', 'Fährst du eine neue Bestleistung über 1, 5 oder 20 Minuten, zeigt die App sie in der Bewertung an. Alle Bestwerte findest du unter Fortschritt.', 'Bestwerte ansehen', "goPg('spb')", () => true],
-  ['day', 'Kein Training möglich an einem Tag? Öffne ihn in der Woche und tippe auf „Tag nicht möglich“. Die App verlegt die Einheit auf einen passenden anderen Tag.', 'Woche ansehen', "goPg('week')", () => true],
+  ['day', 'Kein Training möglich an einem Tag? Öffne ihn in der Woche und tippe auf „Tag nicht möglich“. Die App verlegt die Einheit auf einen passenden anderen Tag.', 'Woche ansehen', "dykWeek()", () => true],
   ['shift', 'Urlaub, Krankheit oder Pause? Unter Einstellungen kannst du den Planstart verschieben, dann beginnt der Plan später neu.', 'Planstart verschieben', "dykSet('settings','shift')", () => true],
   ['ex', 'Kraft- und Mobilitätsübungen sind mit Grafik erklärt. Du findest sie bei der Einheit und unter Mehr → Übungen.', 'Übungen ansehen', "goPg('ex')", () => true],
   ['sci', 'Unter Mehr → Wissen erklärt die App kurz Training, Ernährung und Gesundheit, mit Quellen.', 'Wissen öffnen', "goPg('science')", () => true],
@@ -48,7 +48,16 @@ const DYK = [
   ['inst', 'Leg die App auf deinen Home-Bildschirm. Dann startet sie wie eine echte App, ohne Browserleiste und auch offline.', 'So geht’s', "dykInst()", () => dykWeb() && !dykAlone() && typeof instOs === 'function' && !!instOs()],
   ['team', 'Neuigkeiten, Ausfahrten und Termine des Teams findest du auf teamrelentlessriders.de, verlinkt unter Mehr → Team.', 'Zur Homepage', "dykTeam()", () => true],
 ];
-function dykSet(p, k){ const sub = {wx:'set-wx', hr:'set-hr', age:'set-age', sq:'set-sq', shift:'set-ali', ali:'set-ali', theme:'set-lang', lang:'set-lang'}[k]; if (p === 'settings' && sub) { goPg('settings'); goPg(sub); return; } goPg(p); setTimeout(() => { const el = document.getElementById('fx-' + k); if (el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 80); }
+/* Ziel eines Hinweises: [Unterseite, Abschnitt, Eingabefeld]. Der Knopf landet direkt am Feld, nicht nur oben auf der Seite. */
+const DYK_AT = {wx:['set-wx', 'fx-wx', '#wxQ'], hr:['set-hr', 'fx-hr', '#hrMaxI'], wf:['set-wf', null, '#wfKg'], shift:['set-ali', 'fx-shift'], ali:['set-ali', 'fx-ali'],
+  tb:['set-ali', 'fx-tb', '#fx-tb input'], vac:['set-ali', 'fx-vac', '#fx-vac input[type=date]'], age:['set-age', 'fx-age', '#bdD'], sq:['set-sq', null], theme:['set-lang', 'fx-theme'], lang:['set-lang', 'fx-lang']};
+function dykSet(p, k){ const at = p === 'settings' && DYK_AT[k]; if (at) { goPg('settings'); goPg(at[0]); dykFocus(at[1], at[2]); return; } goPg(p); dykFocus('fx-' + k); }
+/* Zum Abschnitt scrollen, Feld fokussieren und den Abschnitt kurz hervorheben */
+function dykFocus(id, sel){ setTimeout(() => { try { const el = id ? document.getElementById(id) : null, f = sel ? document.querySelector(sel) : null, tg = el || (f && f.closest('section')) || f;
+  if (tg) tg.scrollIntoView({block:'start'}); if (f) try { f.focus({preventScroll:true}); } catch (e) { elog(e); }
+  if (tg) { tg.classList.add('dyk-hit'); setTimeout(() => tg.classList.remove('dyk-hit'), 1800); } } catch (e) { elog(e); } }, 80); }
+/* Woche öffnen und gleich den Bereich „Diese Woche nicht alles machbar?“ (Tage sperren, Pendeln) aufklappen */
+function dykWeek(){ S.fold = S.fold || {}; S.fold.wp = true; navGo('week'); dykFocus('fx-wp'); }
 function dykGarmin(){ try { if (typeof gtOpen !== 'undefined') { gtOpen = true; gtStep = 1; render(); return; } } catch (e) { elog(e); } goPg('rides'); }
 const dykList = () => DYK.filter(t => { try { return t[4](); } catch (e) { elog(e); return false; } }).concat(typeof cmpDyk === 'function' ? cmpDyk() : []); /* F21: Vergleiche */
 function dykPick(force){
@@ -69,7 +78,7 @@ function dykInst(){ instHide = false; instHelp = true; try { localStorage.remove
 function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
 /* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
    Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */
-const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), render:() => render()};
+const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), render:() => render()};
 function dykRun(st){
   let m = st.match(/^heroTab\s*=\s*'(\w+)'$/); if (m) { heroTab = m[1]; return; }
   m = st.match(/^(\w+)\((.*)\)$/); const f = m && Object.prototype.hasOwnProperty.call(DYK_FN, m[1]) ? DYK_FN[m[1]] : null;

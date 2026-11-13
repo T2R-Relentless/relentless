@@ -112,10 +112,10 @@ const weekPanel = (w, cur) => {
     return chip(x + (o.com[i] !== undefined ? '*' : ''), o.com[i] === undefined ? p.commute[i] : o.com[i], `toggleComF(${ja(w)},${ja(i)})`);
   }).join('');
   const showCom = isComm(p), std = p.commute.map((v, i) => v ? SD[i] : null).filter(Boolean).join(', ') || 'keine';
-  return `<div class="mb-3">${fold('wp', cur ? 'Diese Woche nicht alles machbar?' : `Woche ${w} im Voraus planen`, `
+  return `<div class="mb-3" id="fx-wp">${fold('wp', cur ? 'Diese Woche nicht alles machbar?' : `Woche ${w} im Voraus planen`, `
   <p class="mb-3 mt-1 text-sm" style="color:var(--mute)">${cur ? 'Sperre Tage, an denen du nicht trainieren kannst: Die Einheit rutscht auf einen freien Tag. Pendeln kannst du zusätzlich ein- oder ausschalten. Einzelne Einheiten lassen sich in der Karte kürzen oder verschieben.' : 'Trage ein, wann du in dieser Woche nicht fahren kannst oder anders pendelst als sonst. Der Plan wird sofort neu verteilt.'}</p>
-  <p class="mb-1.5 text-sm font-semibold">Kein Training möglich</p><div class="mb-3 flex flex-wrap gap-2">${offRow}</div>
-  ${showCom ? `<p class="mb-1.5 text-sm font-semibold">Mit dem Rad zur Arbeit</p><div class="flex flex-wrap gap-2">${comRow}</div>
+  <p class="mb-1.5 text-sm font-semibold">Kein Training möglich</p><div class="chips mb-3">${offRow}</div>
+  ${showCom ? `<p class="mb-1.5 text-sm font-semibold">Mit dem Rad zur Arbeit</p><div class="chips">${comRow}</div>
   <p class="mt-2 text-xs" style="color:var(--mute)">Standard-Pendeltage: ${std}${cur ? '' : '. Ein Stern markiert Abweichungen vom Standard.'}</p>` : ''}
   ${cur ? '<button onclick="resetWeek()" class="ghost mt-3 !py-2 text-sm">Wochenplan zurücksetzen</button>' : has ? `<button onclick="clearOv(${ja(w)})" class="ghost mt-3 !py-2 text-sm">Angaben für diese Woche löschen</button>` : ''}`, false)}</div>`;
 };

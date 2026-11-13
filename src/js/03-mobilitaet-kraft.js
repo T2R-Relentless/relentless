@@ -132,7 +132,7 @@ function strUi(d){
     ${n && d.sex === 'f' ? '<p class="mt-2 text-xs" style="color:var(--mute)">Gut zu wissen: Schweres Krafttraining stärkt auch die Knochen. Für Frauen ist das besonders wertvoll, weil das Osteoporose-Risiko höher ist.</p>' : ''}
     ${n ? `<p class="mb-2 mt-3 text-sm" style="color:var(--mute)">Dein Niveau</p><div class="flex flex-wrap gap-2">${chip('Einsteiger (4 Wochen Technik zuerst)', d.strLvl !== 'exp', "setStrOpt('strLvl','new')")}${chip('Erfahren', d.strLvl === 'exp', "setStrOpt('strLvl','exp')")}</div>
       <p class="mb-2 mt-3 text-sm" style="color:var(--mute)">Wo trainierst du?</p><div class="flex flex-wrap gap-2">${chip('Fitnessstudio', d.strPlace !== 'home', "setStrOpt('strPlace','gym')")}${chip('Zuhause', d.strPlace === 'home', "setStrOpt('strPlace','home')")}</div>
-      <p class="mb-2 mt-3 text-sm" style="color:var(--mute)">Wunschtage (optional). Ohne Auswahl wählt die App Tage, die harte Radeinheiten und den Long Ride schonen.</p><div class="flex flex-wrap gap-2">${SD.map((x, i) => chip(x, d.strDays && d.strDays[i], `tglStrDay(${ja(i)})`)).join('')}</div>
+      <p class="mb-2 mt-3 text-sm" style="color:var(--mute)">Wunschtage (optional). Ohne Auswahl wählt die App Tage, die harte Radeinheiten und den Long Ride schonen.</p><div class="chips">${SD.map((x, i) => chip(x, d.strDays && d.strDays[i], `tglStrDay(${ja(i)})`)).join('')}</div>
       <p class="mt-3 text-sm" style="color:var(--mute)">Aufbauphase: 2 Einheiten (bei 1 Wunsch 1) mit schweren Lasten, in der Spitzenphase nur noch eine zur Erhaltung, in den letzten 2 Wochen vor dem Ziel keine. Das Krafttraining kommt zu deinen Radstunden dazu.</p>` : ''}</div>`;
 }
 

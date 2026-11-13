@@ -98,9 +98,9 @@ test('Wusstest du schon: neue Hinweise vorhanden, übersetzt, Knöpfe führen oh
   await a.en(); for (const k of DYK_NEW) { const t = D.find(x => x[0] === k); ok(a.w.trText(t[1]) !== t[1], 'englisch: ' + k); ok(a.w.trText(t[2]) !== t[2], 'Knopf englisch: ' + k); }
 });
 
-test('Versionen 189 und 190 zeigen kein Neuigkeiten-Fenster', async () => {
-  const a = await boot(); eq(a.$('APP_VERSION'), 190); eq(a.$('WN_DATA["189"]'), undefined); eq(a.$('WN_DATA["190"]'), undefined);
-  eq(a.$('wnItems(188, 190).n'), 0, 'keine Einträge für das Fenster');
+test('Fehlerkorrekturen (Versionen 189 bis 191) zeigen kein Neuigkeiten-Fenster', async () => {
+  const a = await boot(); eq(a.$('APP_VERSION'), 191); [189, 190, 191].forEach(v => eq(a.$(`WN_DATA["${v}"]`), undefined)); eq(a.$('APP_BUILD'), '20261114180000', 'Build-ID unverändert, kein Update-Hinweis');
+  eq(a.$('wnItems(188, 191).n'), 0, 'keine Einträge für das Fenster');
 });
 
 /* Website mit CSP ohne 'unsafe-eval': Hinweis-Knöpfe dürfen keinen zur Laufzeit erzeugten Code brauchen */
@@ -115,4 +115,30 @@ test('Wusstest du schon: jeder Knopf wirkt auch ohne eval (wie unter der CSP der
     ok(changed, `Knopf „${t[2]}“ (${t[0]}) bleibt folgenlos`);
   }
   ok(!/new Function|\beval\(/.test(a.$('dykGo.toString() + dykRun.toString()')), 'kein eval im Code'); a.noErrors('Knöpfe');
+});
+
+/* Kacheln: gleich groß, ob ausgewählt oder nicht; Wochentagsreihen als Raster */
+test('Kacheln: Wochentage und Monate gleich breit und hoch, ausgewählt wie nicht ausgewählt', async () => {
+  const a = await boot({now:at(2026, 11, 12)}); makePlan(a, {goal:'event', eventName:'Hauptrennen', eventDate:'2027-07-10', commuter:true, commute:[false, true, false, true, false, false, false], commuteMin:30, startDate:'2026-11-09'});
+  a.f.style.width = '375px'; a.f.style.height = '800px'; const doc = a.f.contentDocument;
+  const same = (sel, what) => { const L = [...doc.querySelectorAll(sel)]; ok(L.length >= 2, what + ': Elemente gefunden (' + L.length + ')'); const r = L.map(e => e.getBoundingClientRect()), w = r.map(q => Math.round(q.width)), h = r.map(q => Math.round(q.height));
+    ok(Math.max(...w) - Math.min(...w) <= 1, `${what}: Breiten ${w}`); ok(Math.max(...h) - Math.min(...h) <= 1, `${what}: Höhen ${h}`); };
+  a.$("S.d.tb = S.p.tb = {on:true, prof:{w:{h:8, days:4, avail:[false, true, false, true, true, false, true]}, s:{h:12, days:4, avail:[false, true, true, true, true, false, true]}}, mon:['w','w','w','s','s','s','s','s','s','w','w','w']}");
+  a.page('settings'); a.$("goPg('set-ali')"); [...doc.querySelectorAll('#fx-tb .chips')].forEach((c, k) => { c.id = c.id || 'chk' + k; same('#' + c.id + ' > *', 'Zeitbudget Wochentage ' + k); });
+  same('#fx-tb [onclick^="tbMon"]', 'Monate');
+  a.$("S.fold = {...(S.fold || {}), wp:true}"); a.page('week'); [...doc.querySelectorAll('#fx-wp .chips')].forEach((c, k) => { c.id = 'wpc' + k; same('#wpc' + k + ' > *', 'Woche anpassen Reihe ' + k); });
+  const mk = c => { const e = doc.createElement('button'); e.className = c; e.textContent = 'Mo'; doc.getElementById('app').appendChild(e); return getComputedStyle(e); }, B = mk('btn'), G = mk('ghost'); eq(B.borderTopWidth, G.borderTopWidth, 'gleicher Rahmen bei btn und ghost'); eq(B.borderLeftWidth, G.borderLeftWidth);
+  a.f.style.width = ''; a.f.style.height = ''; a.noErrors();
+});
+
+/* Hinweis-Knöpfe landen direkt am Feld */
+test('Wusstest du schon: Knopf landet direkt im passenden Abschnitt und Feld', async () => {
+  const a = await boot({now:at(2026, 11, 12)}); makePlan(a, {goal:'event', eventName:'Hauptrennen', eventDate:'2027-07-10', commuter:true, commute:[false, true, false, true, false, false, false], commuteMin:30, startDate:'2026-11-09'});
+  const doc = a.f.contentDocument, D = a.$('DYK');
+  D.filter(t => /dykSet\('settings'/.test(t[3] || '')).forEach(t => { const k = t[3].match(/dykSet\('settings','(\w+)'\)/)[1]; ok(a.$(`!!DYK_AT['${k}']`), 'Ziel festgelegt für ' + t[0]); });
+  for (const [act, id, foc] of [["dykSet('settings','vac')", 'fx-vac', 'date'], ["dykSet('settings','tb')", 'fx-tb', 'checkbox'], ["dykSet('settings','age')", 'fx-age', 'bdD'], ["dykSet('settings','hr')", 'fx-hr', 'hrMaxI'], ['dykWeek()', 'fx-wp', '']]) {
+    a.page(null); a.$(`dykGo(${JSON.stringify(act)})`); await a.tick(150);
+    ok(doc.getElementById(id), `${act}: Abschnitt ${id} vorhanden`); const f = doc.activeElement; if (foc) ok(f && (f.id === foc || f.type === foc), `${act}: Feld ${foc} hat den Fokus (${f && (f.id || f.type)})`);
+  }
+  ok(/Diese Woche nicht alles machbar/.test(a.text()) && /Mit dem Rad zur Arbeit/.test(a.text()), 'Woche: Bereich zum Pendeln aufgeklappt'); a.noErrors();
 });
