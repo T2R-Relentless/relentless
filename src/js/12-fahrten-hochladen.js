@@ -113,6 +113,8 @@ function summarize(r, fname){
   if (sHm > 0) out.hmDev = 1;
   /* F25: Höhenprofil, Streckenlinie und Leistungsreihe im Hintergrund ablegen */
   try { if (typeof trkKeep === 'function') trkKeep(out, r); } catch (e) { elog(e); }
+  /* F26: Bestwerte über 5 s bis 2 h (Mean-Max) dieser Fahrt */
+  try { if (typeof mmKeep === 'function') mmKeep(out, r); } catch (e) { elog(e); }
   return Object.assign(out, perfExt(sec1, hr1, tc1, np));
 }
 async function uploadRides(inp){

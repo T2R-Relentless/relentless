@@ -52,12 +52,12 @@ function cmpFacts(p){
 /* Einträge für „Wusstest du schon?“: wie DYK-Zeilen [id, Text, Knopf, Aktion, Bedingung], dazu .en und .go;
    ein Vergleich erscheint frühestens nach 60 Tagen wieder (S.cmp: id → Tag der letzten Anzeige) */
 function cmpDyk(){
-  let F = []; try { F = cmpFacts(S.p); } catch (e) { elog(e); return []; }
+  let F = []; try { F = cmpFacts(S.p).concat(typeof mmDyk === 'function' ? mmDyk() : []); } catch (e) { elog(e); return []; }
   const seen = (S.cmp && typeof S.cmp === 'object') ? S.cmp : {}, today = iso(0), cur = (dykGet() || {}).cur;
-  return F.filter(f => f.id === cur || !seen[f.id] || (dOnly(today) - dOnly(seen[f.id])) / 864e5 >= 60).map(f => { const t = [f.id, f.de, f.go === 'logbook' ? 'Logbuch' : 'Gewicht und FTP', '', () => true]; t.en = f.en; t.go = f.go; t.fact = 1; return t; });
+  return F.filter(f => f.id === cur || !seen[f.id] || (dOnly(today) - dOnly(seen[f.id])) / 864e5 >= 60).map(f => { const t = [f.id, f.de, f.go === 'logbook' ? 'Logbuch' : f.go === 'sprof' ? 'Leistungsprofil' : 'Gewicht und FTP', '', () => true]; t.en = f.en; t.go = f.go; t.fact = 1; return t; });
 }
 function cmpShown(id){ if (!/^cmp-/.test(id)) return; S.cmp = S.cmp && typeof S.cmp === 'object' ? S.cmp : {}; if (S.cmp[id] !== iso(0)) { S.cmp[id] = iso(0); setTimeout(() => { try { save(); } catch (e) { elog(e); } }, 0); } }
-function cmpGo(k){ try { track('tipp-genutzt'); } catch (e) { elog(e); } if (k === 'set-wf') { goPg('settings'); goPg('set-wf'); } else goPg(k); }
+function cmpGo(k){ try { track('tipp-genutzt'); } catch (e) { elog(e); } if (k === 'set-wf') { goPg('settings'); goPg('set-wf'); } else if (k === 'sprof' && typeof dykMm === 'function') dykMm(); else goPg(k); }
 /* Einstellung: Vergleichsgruppe */
 function cmpUi(){
   const p = S.p || S.d || {}, g = p.cmpG != null ? p.cmpG : '';

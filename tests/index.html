@@ -54,6 +54,7 @@
 <script src="season-check.test.js"></script>
 <script src="week-edit.test.js"></script>
 <script src="grafik.test.js"></script>
+<script src="leistungsprofil.test.js"></script>
 <script>
   const q = new URLSearchParams(location.search), only = q.get('nur') ? new RegExp(q.get('nur'), 'i') : null;
   document.getElementById('run').onclick = () => (window.__run = runAll({only}));

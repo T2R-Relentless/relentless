@@ -114,7 +114,7 @@ const trkGid = id => { const all = [...(S.man || []), ...(S.hist || []), ...(S.a
 async function trkFetch(id){
   const gid = trkGid(id); if (!gid || trkBusy || typeof gmRide !== 'function' || !gmMode()) return;
   trkBusy = id; trkTried[id] = 1; delete trkErr[id]; try { render(); } catch (e) { elog(e); }
-  try { const {r} = await gmRide({id:gid, n:''}); const rec = trkMake(r); if (rec) { rec.at = Date.now(); trkC[id] = rec; await trkPut(id, rec); } else { trkC[id] = null; trkErr[id] = wkL('Diese Fahrt enthält keine Höhen- oder GPS-Daten.', 'This ride has no altitude or GPS data.'); } }
+  try { const {r} = await gmRide({id:gid, n:''}); try { const o = S.mm && S.mm[id]; if (typeof mmCalc === 'function' && (!o || o.s === 'a')) { const mr = mmCalc(r); if (mr) { mmPut(id, mr, o ? {d:o.d, n:o.n} : (S.arch || []).find(q => q.id === id) || {}); save(); } } } catch (e) { elog(e); } const rec = trkMake(r); if (rec) { rec.at = Date.now(); trkC[id] = rec; await trkPut(id, rec); } else { trkC[id] = null; trkErr[id] = wkL('Diese Fahrt enthält keine Höhen- oder GPS-Daten.', 'This ride has no altitude or GPS data.'); } }
   catch (e) { elog(e); trkErr[id] = (e && e.message) || wkL('Laden nicht möglich.', 'Could not load.'); }
   trkBusy = null; try { render(); } catch (e) { elog(e); }
 }

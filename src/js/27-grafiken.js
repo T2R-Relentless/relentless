@@ -113,6 +113,8 @@ function vzRide(e){ try { return vzTrace(e) + vzZones(e); } catch (er) { elog(er
 /* ---------- Bestwerte ---------- */
 const VZ_TROPHY = '<svg style="flex:none;width:18px;height:18px" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3a3 3 0 0 1-3 4M7 5H4a3 3 0 0 0 3 4"/></svg>';
 function vzPrBadge(e){
+  /* F26: Bestwerte aus dem Leistungsprofil (alle Dauern von 5 s bis 2 h), sonst die gespeicherten von der Bewertung */
+  const mp = typeof mmPrE === 'function' ? mmPrE(e) : null; if (mp) e = {...e, pr:mp};
   if (!e || !e.pr || !e.pr.length) return '';
   const top = [...e.pr].reverse().slice(0, 3), more = e.pr.length - top.length;
   return `<div class="vz-pr mt-3 flex items-start gap-2 p-2.5 text-sm">${VZ_TROPHY}<span><b>${e.pr.length === 1 ? 'Neue Bestleistung' : e.pr.length + ' neue Bestleistungen'}:</b> ${top.map(r => `${r.l} <b>${r.w} W</b> <span style="opacity:.75">(vorher ${r.was} W)</span>`).join(' · ')}${more > 0 ? ` <span style="opacity:.75">(+${more} weitere)</span>` : ''}</span></div>`;

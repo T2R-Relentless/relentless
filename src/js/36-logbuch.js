@@ -122,7 +122,7 @@ function lbRidePage(){
   const trk = typeof trkBlock === 'function' ? trkBlock(id, a) : '', tr = typeof trkC !== 'undefined' && trkC[id] && trkC[id] !== 'busy' ? trkC[id] : null;
   const ser = live && live.ser && live.ser.p ? {b:live.ser.b, p:live.ser.p} : tr && tr.pw ? tr.pw : null, ftp0 = (l && l.ftp) || (live && live.ftp) || (S.p && S.p.ftp) || 0;
   const prof = typeof wkSvg === 'function' ? (l && l.k === 'p' && l.px ? `<div class="mt-3"><p class="eyebrow">${wkL('Ablauf: Soll und Ist', 'Structure: planned and ridden')}</p>${wkSvg(l.px, {ftp:ftp0, act:ser, h:124})}</div>` : ser && ftp0 ? `<div class="mt-3">${wkActSvg(ser, ftp0)}</div>` : '') : '';
-  return `<section class="panel p-4"><p class="hd text-xl font-semibold" data-noi18n>${esc((a && a.n) || (l && l.n) || 'Fahrt')}</p><div class="mt-3 grid grid-cols-2 gap-2">${grid}</div>${soll}${prof}${hints.length ? `<div class="mt-3 space-y-1 text-sm">${hints.map(h => `<div>${h}</div>`).join('')}</div>` : ''}${ev}${chart}${trk}</section>`;
+  return `<section class="panel p-4"><p class="hd text-xl font-semibold" data-noi18n>${esc((a && a.n) || (l && l.n) || 'Fahrt')}</p><div class="mt-3 grid grid-cols-2 gap-2">${grid}</div>${typeof mmRideBlock === 'function' ? mmRideBlock(id) : ''}${soll}${prof}${hints.length ? `<div class="mt-3 space-y-1 text-sm">${hints.map(h => `<div>${h}</div>`).join('')}</div>` : ''}${ev}${chart}${trk}</section>`;
 }
 /* Bewertungen sofort festhalten, sobald sie entstehen */
 { const _w = fn => function(){ const r = fn.apply(this, arguments); try { lbSync(false); } catch (e) { elog(e); } return r; };

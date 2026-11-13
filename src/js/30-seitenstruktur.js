@@ -34,6 +34,7 @@ const ST_ICO = {
   shist:'<path d="M3 18h18M5 18V9M10 18V5M15 18v-7M20 18v-4"/>',
   sperf:'<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>',
   spb:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3a3 3 0 0 1-3 4M7 5H4a3 3 0 0 0 3 4"/>',
+  sprof:'<path d="M12 3l8 5v8l-8 5-8-5V8z"/><path d="M12 8l4 3-1 5h-6l-1-5z"/>',
   slog:'<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>'
 };
 function stRow(k, t, sub){ return `<button class="mrow" onclick="goPg('${ja(k)}')"><span class="mi">${svgI(ST_ICO[k])}</span><span class="min-w-0 flex-1"><span class="block font-semibold">${t}</span><span class="block text-xs" style="color:var(--mute)">${sub}</span></span><span aria-hidden="true" style="color:var(--mute)">›</span></button>`; }
@@ -43,6 +44,7 @@ function stSubs(){
   try { const m = (vzForm() || '').match(/Heute: Fitness (\d+), Form ([+−-]?\d+)/); o.sform = m ? `Fitness ${m[1]}, Form ${m[2]}` + (p.goal === 'event' ? ', Prognose für den Renntag' : '') : 'Fitness, Ermüdung und Form, sobald Fahrten da sind'; } catch (e) { elog(e); o.sform = 'Fitness, Ermüdung und Form'; }
   try { const fe = ftpCalc(perfRides(60)); o.sperf = `FTP ${p.ftp} W` + (fe && fe.v ? `, Schätzung aus Fahrten ${fe.v} W` : '') + ', Effizienz, Ermüdungsresistenz'; } catch (e) { elog(e); o.sperf = `FTP ${p.ftp} W, Effizienz, Ermüdungsresistenz`; }
   try { const pb = S.pb || {}, prev = vzPrev({id:null}), v = Math.max((pb.m20 && pb.m20.w) || 0, prev.m20 || 0), v5 = Math.max((pb.m5 && pb.m5.w) || 0, prev.m5 || 0); o.spb = v || v5 ? [v5 ? `5 Min.: ${v5} W` : '', v ? `20 Min.: ${v} W` : ''].filter(Boolean).join(' · ') : 'Noch keine Fahrten mit Leistungsdaten'; } catch (e) { elog(e); o.spb = 'Deine besten Leistungen'; }
+  try { const C = mmCats(mmBest(...mmRange('8w')), mmG()), T = mmType(C, kgOf(p)); o.sprof = `<span data-noi18n>${esc(T ? T.name + ' · ' + wkL('Netz und Kurve von 15 s bis 60 min', 'web and curve from 15 s to 60 min') : wkL('Bestwerte von 15 s bis 60 min als Netz und Kurve', 'Best efforts from 15 s to 60 min as web and curve'))}</span>`; } catch (e) { elog(e); o.sprof = 'Stärken, Fahrertyp und FTP-Schätzung'; }
   try { const n = (S.log || []).length, h = ((p.logH) || []).length; o.slog = n ? `Diese Woche ${n} ${n === 1 ? 'Anpassung' : 'Anpassungen'}` : h ? 'Diese Woche keine, Archiv der letzten Wochen' : 'Noch keine Anpassungen'; } catch (e) { elog(e); o.slog = 'Was die App am Plan geändert hat'; }
   return o;
 }
@@ -51,7 +53,7 @@ function statePage(){
   const now = hasStarted(p) ? stateCard() : '<section class="panel p-4"><p class="text-sm" style="color:var(--mute)">Der Plan hat noch nicht begonnen. Ab dem Start siehst du hier, wie deine Woche läuft.</p></section>';
   return hrHint() + now
     + grp('Entwicklung', stRow('sform', p.goal === 'event' ? 'Formkurve bis zum Event' : 'Formkurve', o.sform) + stRow('shist', 'Verlauf und Wochenumfang', o.shist))
-    + grp('Leistung', stRow('sperf', 'FTP und Leistung', o.sperf) + stRow('spb', 'Bestwerte', o.spb))
+    + grp('Leistung', stRow('sprof', 'Leistungsprofil', o.sprof) + stRow('sperf', 'FTP und Leistung', o.sperf) + stRow('spb', 'Bestwerte', o.spb)) + (typeof mmProgCard === 'function' ? mmProgCard() : '')
     + grp('Rückblicke', stRow('rc', 'Woche, Monat, Jahr', rcSub()))
     + (hasStarted(p) ? grp('Plan', stRow('slog', 'Anpassungen', o.slog)) : '');
 }
@@ -62,10 +64,11 @@ const ST_PAGES = {
   sform:() => stNoHead(vzForm()) || stEmpty('Die Formkurve erscheint, sobald mindestens drei Fahrten oder erledigte Einheiten da sind. Lade deine Fahrten hoch oder verbinde Garmin.'),
   shist:() => progCard(),
   sperf:() => ppPage() + wfProgCard(),
+  sprof:() => mmPage(),
   spb:() => stNoHead(vzPbCard()).replace('<div class="flex items-center gap-2"><span style="color:#b7791f">' + VZ_TROPHY + '</span></div>', '') || stEmpty('Noch keine Fahrten mit Leistungsdaten. Sobald du Fahrten mit Wattmesser hochlädst, stehen hier deine besten Werte über 5 Sekunden bis 60 Minuten.'),
   slog:() => stNoHead(logCard()) || stEmpty('Noch keine Anpassungen. Wenn du Tage sperrst, dich beim Check-in müde meldest oder eine Fahrt schwach bewertet wird, passt die App den Plan an und erklärt es hier.')
 };
-const ST_T = {sform:'Formkurve', shist:'Verlauf und Umfang', sperf:'FTP und Leistung', spb:'Bestwerte', slog:'Anpassungen'};
+const ST_T = {sprof:'Leistungsprofil', sform:'Formkurve', shist:'Verlauf und Umfang', sperf:'FTP und Leistung', spb:'Bestwerte', slog:'Anpassungen'};
 
 /* ---------- Zwift: viele Einheiten auf einmal exportieren ----------
    Eine ZIP-Datei mit je einer .zwo-Datei pro Einheit, ab heute bis Planende (oder die nächsten 4 Wochen).
