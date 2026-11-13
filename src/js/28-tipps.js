@@ -45,8 +45,8 @@ const DYK = [
   ['gloss', 'Fachbegriffe wie FTP oder TSS sind gepunktet unterstrichen. Tippe darauf, dann erscheint eine kurze Erklärung.', '', '', () => S.gloss !== false],
   ['dark', 'Die App gibt es auch im dunklen Design, angenehm am Abend.', 'Darstellung', "dykSet('settings','theme')", () => S.theme !== 'dark'],
   ['en', 'Die App spricht auch Englisch: Tippe oben auf „EN“.', '', '', () => true],
-  ['inst', 'Leg die App auf deinen Home-Bildschirm. Dann startet sie wie eine echte App, ohne Browserleiste und auch offline.', 'So geht’s', "instHide=false;instHelp=true;try{localStorage.removeItem('relentless.inst.hide')}catch(e){elog(e)};render()", () => dykWeb() && !dykAlone() && typeof instOs === 'function' && !!instOs()],
-  ['team', 'Neuigkeiten, Ausfahrten und Termine des Teams findest du auf teamrelentlessriders.de, verlinkt unter Mehr → Team.', 'Zur Homepage', "window.open('https://teamrelentlessriders.de','_blank','noopener')", () => true],
+  ['inst', 'Leg die App auf deinen Home-Bildschirm. Dann startet sie wie eine echte App, ohne Browserleiste und auch offline.', 'So geht’s', "dykInst()", () => dykWeb() && !dykAlone() && typeof instOs === 'function' && !!instOs()],
+  ['team', 'Neuigkeiten, Ausfahrten und Termine des Teams findest du auf teamrelentlessriders.de, verlinkt unter Mehr → Team.', 'Zur Homepage', "dykTeam()", () => true],
 ];
 function dykSet(p, k){ const sub = {wx:'set-wx', hr:'set-hr', age:'set-age', sq:'set-sq', shift:'set-ali', ali:'set-ali', theme:'set-lang', lang:'set-lang'}[k]; if (p === 'settings' && sub) { goPg('settings'); goPg(sub); return; } goPg(p); setTimeout(() => { const el = document.getElementById('fx-' + k); if (el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 80); }
 function dykGarmin(){ try { if (typeof gtOpen !== 'undefined') { gtOpen = true; gtStep = 1; render(); return; } } catch (e) { elog(e); } goPg('rides'); }
@@ -65,7 +65,19 @@ function dykNext(){ dykPick(true); try { track('tipp-weiter'); } catch (e) { elo
 function dykClose(){ dykPut({hide:iso(0)}); render(); }
 function dykOff(on){ dykPut({off:!on}); render(); }
 const dykIsOff = () => !!dykGet().off;
-function dykGo(a){ try { track('tipp-genutzt'); } catch (e) { elog(e); } try { (new Function(a))(); } catch (e) { elog(e); } }
+function dykInst(){ instHide = false; instHelp = true; try { localStorage.removeItem('relentless.inst.hide'); } catch (e) { elog(e); } render(); }
+function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
+/* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
+   Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */
+const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), render:() => render()};
+function dykRun(st){
+  let m = st.match(/^heroTab\s*=\s*'(\w+)'$/); if (m) { heroTab = m[1]; return; }
+  m = st.match(/^(\w+)\((.*)\)$/); const f = m && Object.prototype.hasOwnProperty.call(DYK_FN, m[1]) ? DYK_FN[m[1]] : null;
+  if (!f) throw new Error('Unbekannte Tipp-Aktion: ' + st);
+  if (m[2].trim() && !/^\s*(null|'[^']*')(\s*,\s*'[^']*')*\s*$/.test(m[2])) throw new Error('Ungültige Argumente: ' + st);
+  f(...[...m[2].matchAll(/'([^']*)'/g)].map(x => x[1]));
+}
+function dykGo(a){ try { track('tipp-genutzt'); } catch (e) { elog(e); } try { String(a || '').split(';').map(x => x.trim()).filter(Boolean).forEach(dykRun); } catch (e) { elog(e); } }
 function dykCard(){
   try {
     const st = dykGet(); if (st.off || st.hide === iso(0) || !S.p || (S.plan && hasStarted(S.p) && (S.plan[todayIdx()] || {}).feel === 'sick')) return '';

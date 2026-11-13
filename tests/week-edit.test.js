@@ -98,7 +98,21 @@ test('Wusstest du schon: neue Hinweise vorhanden, übersetzt, Knöpfe führen oh
   await a.en(); for (const k of DYK_NEW) { const t = D.find(x => x[0] === k); ok(a.w.trText(t[1]) !== t[1], 'englisch: ' + k); ok(a.w.trText(t[2]) !== t[2], 'Knopf englisch: ' + k); }
 });
 
-test('Version 189 zeigt kein Neuigkeiten-Fenster', async () => {
-  const a = await boot(); eq(a.$('APP_VERSION'), 189); eq(a.$('WN_DATA["189"]'), undefined);
-  eq(a.$('wnItems(188, 189).n'), 0, 'keine Einträge für das Fenster');
+test('Versionen 189 und 190 zeigen kein Neuigkeiten-Fenster', async () => {
+  const a = await boot(); eq(a.$('APP_VERSION'), 190); eq(a.$('WN_DATA["189"]'), undefined); eq(a.$('WN_DATA["190"]'), undefined);
+  eq(a.$('wnItems(188, 190).n'), 0, 'keine Einträge für das Fenster');
+});
+
+/* Website mit CSP ohne 'unsafe-eval': Hinweis-Knöpfe dürfen keinen zur Laufzeit erzeugten Code brauchen */
+test('Wusstest du schon: jeder Knopf wirkt auch ohne eval (wie unter der CSP der Website)', async () => {
+  const a = await boot({now:at(2026, 11, 12)}); makePlan(a, {goal:'event', eventName:'Hauptrennen', eventDate:'2027-07-10', commuter:true, commute:[false, true, false, true, false, false, false], commuteMin:30}, [{name:'Vorbereitung', date:'2027-05-02', prio:'B'}]);
+  const D = a.$('DYK').filter(t => t[3]);
+  a.w.Function = function(){ throw new a.w.EvalError('CSP: eval blockiert'); }; a.w.open = () => { a.w.__opened = (a.w.__opened || 0) + 1; return null; };
+  for (const t of D) {
+    a.page(null); a.$('instHelp = false'); const pg0 = a.$('pg'), before = a.text();
+    a.$(`dykGo(${JSON.stringify(t[3])})`); await a.tick(100);
+    const changed = a.$('pg') !== pg0 || a.text() !== before || (t[0] === 'team' && a.w.__opened) || (t[0] === 'inst' && a.$('instHelp') === true);
+    ok(changed, `Knopf „${t[2]}“ (${t[0]}) bleibt folgenlos`);
+  }
+  ok(!/new Function|\beval\(/.test(a.$('dykGo.toString() + dykRun.toString()')), 'kein eval im Code'); a.noErrors('Knöpfe');
 });
