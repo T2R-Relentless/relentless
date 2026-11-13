@@ -110,6 +110,9 @@ function summarize(r, fname){
   const out = {id:'m' + Math.round(t0 / 1000).toString(36) + sec.toString(36), n:(r.name || fname.replace(/\.[^.]+$/, '')).slice(0, 60) || 'Radfahrt', ts:iso8, day:lstr(new Date(t0)), km:Math.round(km * 10) / 10, hm:Math.round(hm), sec, tss:Math.round(sec * IF * IF / 36), IF:Math.round(IF * 100) / 100, est, ...(le ? {ld:le.src} : {}), ...(hrA ? {hrA:Math.round(hrA)} : {}), src:'file', np:Math.round(np || 0), m1:mx && mx[60] || null, m5:mx && mx[300] || null, m20:mx && mx[1200] || null, m60:mx && mx[3600] || null};
   /* F18: Fahrt ohne gültige GPS-Position = Rolle/Indoor (Zwift, Rollentrainer) */
   if (pts.length >= 10 && !pts.some(q => q.lat != null && isFinite(q.lat) && Math.abs(q.lat) <= 90 && !(q.lat === 0 && q.lon === 0))) out.in = 1;
+  if (sHm > 0) out.hmDev = 1;
+  /* F25: Höhenprofil, Streckenlinie und Leistungsreihe im Hintergrund ablegen */
+  try { if (typeof trkKeep === 'function') trkKeep(out, r); } catch (e) { elog(e); }
   return Object.assign(out, perfExt(sec1, hr1, tc1, np));
 }
 async function uploadRides(inp){

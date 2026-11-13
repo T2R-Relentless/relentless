@@ -99,7 +99,7 @@ test('Wusstest du schon: neue Hinweise vorhanden, übersetzt, Knöpfe führen oh
 });
 
 test('Fehlerkorrekturen (Versionen 189 bis 191) zeigen kein Neuigkeiten-Fenster', async () => {
-  const a = await boot(); eq(a.$('APP_VERSION'), 191); [189, 190, 191].forEach(v => eq(a.$(`WN_DATA["${v}"]`), undefined)); eq(a.$('APP_BUILD'), '20261114180000', 'Build-ID unverändert, kein Update-Hinweis');
+  const a = await boot(); ok(a.$('APP_VERSION') >= 191); [189, 190, 191].forEach(v => eq(a.$(`WN_DATA["${v}"]`), undefined)); /* Build-ID: seit v192 (neue Funktionen F24/F25) wieder neu */
   eq(a.$('wnItems(188, 191).n'), 0, 'keine Einträge für das Fenster');
 });
 
@@ -111,7 +111,7 @@ test('Wusstest du schon: jeder Knopf wirkt auch ohne eval (wie unter der CSP der
   for (const t of D) {
     a.page(null); a.$('instHelp = false'); const pg0 = a.$('pg'), before = a.text();
     a.$(`dykGo(${JSON.stringify(t[3])})`); await a.tick(100);
-    const changed = a.$('pg') !== pg0 || a.text() !== before || (t[0] === 'team' && a.w.__opened) || (t[0] === 'inst' && a.$('instHelp') === true);
+    const changed = a.$('pg') !== pg0 || a.text() !== before || (t[0] === 'team' && a.w.__opened) || (t[0] === 'inst' && a.$('instHelp') === true) || (t[0] === 'wkprof' && !!a.f.contentDocument.querySelector('#fx-wk.dyk-hit'));
     ok(changed, `Knopf „${t[2]}“ (${t[0]}) bleibt folgenlos`);
   }
   ok(!/new Function|\beval\(/.test(a.$('dykGo.toString() + dykRun.toString()')), 'kein eval im Code'); a.noErrors('Knöpfe');

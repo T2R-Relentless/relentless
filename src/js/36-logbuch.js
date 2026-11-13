@@ -10,7 +10,15 @@ function lbFromExe(e, w, i, pid){
   const x = e.x || {};
   return {k:'p', day:(e.a && e.a.day) || e.day || null, w, i, n:lbTxt(e.plan || x.n), t:x.t || null, score:e.score != null ? e.score : null, grade:lbTxt(e.grade), verdict:e.verdict || null,
     msgs:(e.msgs || []).slice(0, 10).map(lbTxt), adj:lbTxt(e.adj), ftp:e.ftp || null, sm:x.m || null, am:e.sec ? Math.round(e.sec / 60) : null, hr:e.hrAvg || null, np:e.np || null,
-    mv:x.moved && x.from != null ? x.from : null, vo:x.varOf ? lbTxt(x.varOf) : null, pid:pid || null, at:e.at || Date.now()};
+    mv:x.moved && x.from != null ? x.from : null, vo:x.varOf ? lbTxt(x.varOf) : null, pid:pid || null, at:e.at || Date.now(), px:lbUnit(x)};
+}
+/* F24: Aufbau der geplanten Einheit kompakt festhalten, damit das Soll-Profil auch nach Planwechseln gezeichnet werden kann */
+function lbUnit(x){
+  if (!x || !(x.m > 0)) return null; const iv = v => v ? Object.fromEntries(Object.entries(v).filter(([, y]) => typeof y === 'number' || (Array.isArray(y) && y.every(z => typeof z === 'number')))) : undefined;
+  const o = {t:x.t || null, m:x.m, lo:x.lo || null, hi:x.hi || null, cad:x.cad ? lbTxt(x.cad).slice(0, 30) : null, n:lbTxt(x.n).slice(0, 80)};
+  if (x.iv) o.iv = iv(x.iv); if (x.fin) o.fin = iv(x.fin); if (x.subPrio) o.subPrio = x.subPrio; if (x.t === 'test') o.st = lbTxt(x.st).slice(0, 300);
+  if (x.parts) o.parts = x.parts.map(q => ({lbl:lbTxt(q.lbl).slice(0, 20), m:q.m, lo:q.lo || null, hi:q.hi || null, ...(q.iv ? {iv:iv(q.iv)} : {})}));
+  return o;
 }
 function lbFromExtra(e, pid){
   return {k:'x', day:e.day || null, w:e.w != null ? e.w : null, i:e.i != null ? e.i : null, n:lbTxt(e.n), t:null, score:null, grade:'', verdict:null, cls:e.cls || 'z2',
@@ -22,7 +30,7 @@ function lbSync(withLib){
   try {
     S.lb = S.lb && typeof S.lb === 'object' ? S.lb : {};
     const take = (p, pid, over) => { if (!p) return;
-      Object.entries(p.exe || {}).forEach(([key, e]) => { if (!e || !e.rid) return; const [w, i] = key.split('-').map(Number); if (!(over || !S.lb[e.rid])) return;
+      Object.entries(p.exe || {}).forEach(([key, e]) => { if (!e || !e.rid) return; const [w, i] = key.split('-').map(Number); if (!over && S.lb[e.rid] && !S.lb[e.rid].px && e.x) S.lb[e.rid].px = lbUnit(e.x); if (!(over || !S.lb[e.rid])) return;
         const n = lbFromExe(e, w, i, pid), prev = S.lb[e.rid], px = over && p === S.p && w === S.wk && S.plan ? S.plan[i] : null;
         /* Verschiebung und Variante stehen an der Einheit im Wochenplan, nicht in der Bewertung: übernehmen und behalten */
         if (px) { if (px.moved && px.from != null) n.mv = px.from; if (px.varOf) n.vo = lbTxt(px.varOf); }
@@ -38,8 +46,8 @@ function lbSync(withLib){
 function lbRides(){
   try { rcArchSync(); } catch (e) { elog(e); }
   const m = new Map();
-  (S.arch || []).forEach(a => m.set(a.id, {id:a.id, day:a.d, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, in:a.in ? 1 : 0}));
-  (S.man || []).forEach(a => { const o = m.get(a.id) || {}; m.set(a.id, {...o, id:a.id, day:a.day, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, hr:a.hrAvg || null, ts:a.ts, in:a.in || o.in ? 1 : 0}); });
+  (S.arch || []).forEach(a => m.set(a.id, {id:a.id, day:a.d, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, in:a.in ? 1 : 0, hmDev:a.hmDev ? 1 : 0}));
+  (S.man || []).forEach(a => { const o = m.get(a.id) || {}; m.set(a.id, {...o, id:a.id, day:a.day, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, hr:a.hrAvg || null, ts:a.ts, in:a.in || o.in ? 1 : 0, hmDev:a.hmDev || o.hmDev ? 1 : 0}); });
   return [...m.values()].filter(a => a.day).sort((a, b) => (b.day + (b.ts || '')).localeCompare(a.day + (a.ts || '')));
 }
 const lbKind = id => { const l = S.lb && S.lb[id]; return l ? l.k : ''; };
@@ -110,7 +118,11 @@ function lbRidePage(){
   const soll = l && l.k === 'p' ? `<div class="mt-3 p-3" style="border:1px solid var(--line)"><p class="eyebrow">Soll und Ist</p><p class="mt-1 text-sm">Geplant: <b data-noi18n>${esc(l.n)}</b>${l.sm ? `, ${mm(l.sm)}` : ''}${l.ftp ? ` (FTP damals ${l.ftp} W)` : ''}</p><p class="text-sm">Gefahren: ${mm(Math.round(r.sec / 60))}${np ? `, ${Math.round(np)} W normalisiert` : ''}</p></div>` : '';
   const ev = l ? `<div class="mt-3"><p class="eyebrow">${l.k === 'x' ? 'Zusätzliche Fahrt' : 'Bewertung'}</p>${l.k === 'p' && l.score != null ? `<p class="mt-1 text-2xl font-semibold">${l.score}/100 <span class="text-base font-normal">${esc(l.grade || '')}</span></p>` : l.k === 'x' ? `<p class="mt-1 font-semibold">${(XR_CLS[l.cls] || XR_CLS.z2)[0]}</p>` : ''}<div class="mt-2 space-y-2 text-sm">${(l.msgs || []).map(m => `<p>${m}</p>`).join('')}</div></div>` : `<p class="mt-3 text-sm" style="color:var(--mute)">Für diese Fahrt gibt es keine Bewertung, zum Beispiel weil sie vor dem Planstart lag.</p>`;
   const chart = live && typeof vzRide === 'function' && (live.ser || live.zp || live.zh) ? `<div class="mt-3">${vzRide(live)}</div>` : '';
-  return `<section class="panel p-4"><p class="hd text-xl font-semibold" data-noi18n>${esc((a && a.n) || (l && l.n) || 'Fahrt')}</p><div class="mt-3 grid grid-cols-2 gap-2">${grid}</div>${soll}${hints.length ? `<div class="mt-3 space-y-1 text-sm">${hints.map(h => `<div>${h}</div>`).join('')}</div>` : ''}${ev}${chart}</section>`;
+  /* F24: Soll-Profil mit gefahrener Leistung (FTP von damals), zusätzliche Fahrten: Leistung nach Zonen. F25: Höhenprofil und Strecke */
+  const trk = typeof trkBlock === 'function' ? trkBlock(id, a) : '', tr = typeof trkC !== 'undefined' && trkC[id] && trkC[id] !== 'busy' ? trkC[id] : null;
+  const ser = live && live.ser && live.ser.p ? {b:live.ser.b, p:live.ser.p} : tr && tr.pw ? tr.pw : null, ftp0 = (l && l.ftp) || (live && live.ftp) || (S.p && S.p.ftp) || 0;
+  const prof = typeof wkSvg === 'function' ? (l && l.k === 'p' && l.px ? `<div class="mt-3"><p class="eyebrow">${wkL('Ablauf: Soll und Ist', 'Structure: planned and ridden')}</p>${wkSvg(l.px, {ftp:ftp0, act:ser, h:124})}</div>` : ser && ftp0 ? `<div class="mt-3">${wkActSvg(ser, ftp0)}</div>` : '') : '';
+  return `<section class="panel p-4"><p class="hd text-xl font-semibold" data-noi18n>${esc((a && a.n) || (l && l.n) || 'Fahrt')}</p><div class="mt-3 grid grid-cols-2 gap-2">${grid}</div>${soll}${prof}${hints.length ? `<div class="mt-3 space-y-1 text-sm">${hints.map(h => `<div>${h}</div>`).join('')}</div>` : ''}${ev}${chart}${trk}</section>`;
 }
 /* Bewertungen sofort festhalten, sobald sie entstehen */
 { const _w = fn => function(){ const r = fn.apply(this, arguments); try { lbSync(false); } catch (e) { elog(e); } return r; };

@@ -6750,5 +6750,9 @@
 "Ablauf einstellen": "Set up sequence",
 "Unter Mehr → Übungen findest du Mobilitätsroutinen für vor und nach der Fahrt, für Ruhetage und für den Schreibtisch.": "Under More → Exercises you'll find mobility routines for before and after riding, for rest days and for the desk.",
 "Unter Mehr → Werkzeuge berechnet der Reifendruckrechner einen Startwert für vorn und hinten, passend zu Gewicht, Reifenbreite, Felge und Untergrund.": "Under More → Tools the tyre pressure calculator works out a starting value for front and rear, matched to weight, tyre width, rim and surface.",
-"Reifendruck berechnen": "Calculate tyre pressure"
+"Reifendruck berechnen": "Calculate tyre pressure",
+"Jede Rad-Einheit zeigt ihren Ablauf als Grafik: Blöcke nach Dauer und Intensität, Farben nach Zone. Tippe oder wische über die Grafik, dann siehst du Dauer, Watt und Trittfrequenz jedes Abschnitts.": "Every ride shows its structure as a chart: blocks by duration and intensity, colours by zone. Tap or swipe across the chart to see the duration, watts and cadence of each section.",
+"Grafik ansehen": "View chart",
+"Im Logbuch hat jede Fahrt mit GPS ein Höhenprofil mit Steigungen, den längsten Anstieg und die Streckenlinie. Start und Ziel blendet die App auf Wunsch um 500 m aus, ganz ohne Karte und ohne Daten nach außen.": "In the logbook every ride with GPS has an elevation profile with gradients, the longest climb and the route line. If you like, the app hides 500 m around start and finish, with no map and no data leaving your device.",
+"Höhenprofil ansehen": "View elevation profile"
 }

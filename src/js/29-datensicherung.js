@@ -87,7 +87,9 @@ async function bkInit(){
 /* ---------- Sicherungsdatei ---------- */
 async function exportPlans(){
   save(); const raw = bkRaw(!!S.bkKey); if (storeErr || !raw.state) raw.state = JSON.stringify(S); if (!bkPlansOf(raw.lib) && !S.p) return;
-  const body = {app:'relentless', v:3, exported:new Date().toISOString(), active:(readLib().active || null), state:JSON.parse(raw.state || 'null'), lib:JSON.parse(raw.lib || 'null'), side:raw.side, plans:Object.values(readLib().plans)};
+  const body = {app:'relentless', v:4, exported:new Date().toISOString(), active:(readLib().active || null), state:JSON.parse(raw.state || 'null'), lib:JSON.parse(raw.lib || 'null'), side:raw.side, plans:Object.values(readLib().plans)};
+  /* F25 (v4): Streckendaten aus IndexedDB, abschaltbar (S.bkTrk === false). Ältere Sicherungen (v1–v3) haben kein trk und laden wie bisher. */
+  if (S.bkTrk !== false && typeof trkAll === 'function') { try { const t = await trkAll(); if (Object.keys(t).length) body.trk = t; } catch (e) { elog(e); } }
   const data = new TextEncoder().encode(JSON.stringify(body));
   try { await saveFile('relentless-sicherung-' + iso(0) + '.json', data); track('sicherung-gespeichert'); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.now(); S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
   catch (e) { impMsg = e && e.code === 'declined' ? '' : 'Sicherung nicht möglich.'; }
@@ -101,8 +103,10 @@ function importPlans(inp){
   } catch (e) { impMsg = (e && e.message) || 'Die Datei ist keine gültige Relentless-Sicherung.'; } inp.value = ''; render(); };
   r.readAsText(f);
 }
+/* F25: Streckendaten aus einer Sicherung (v4) ablegen, vorhandene Spuren bleiben */
+async function bkTrkIn(o){ if (!o || !o.trk || typeof trkPut !== 'function') return 0; let n = 0; for (const [id, r] of Object.entries(o.trk)) { if (r && typeof r === 'object' && r.v === 1) { try { await trkPut(id, r); trkC[id] = r; n++; } catch (e) { elog(e); } } } return n; }
 function bkAddPlans(){
-  const o = bkImp.o; bkImp = null; bkPre('Vor dem Laden einer Sicherung');
+  const o = bkImp.o; bkImp = null; bkPre('Vor dem Laden einer Sicherung'); bkTrkIn(o).catch(e => elog(e));
   const lib = readLib(); let n = 0; o.plans.forEach(e => { if (e && e.snap && e.snap.p && e.snap.p.goal) { const id = uid(); lib.plans[id] = {id, name:String(e.name || planName(e.snap.p)).slice(0, 60), created:e.created || Date.now(), updated:Date.now(), snap:e.snap}; n++; } });
   try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (e) { elog(e); storeErr = true; }
   impMsg = n ? n + (n === 1 ? ' Plan' : ' Pläne') + ' aus der Sicherung hinzugefügt.' : 'Keine Pläne in der Datei gefunden.'; try { track('sicherung-geladen'); } catch (e) { elog(e); } render();
@@ -110,7 +114,7 @@ function bkAddPlans(){
 async function bkReplaceAll(){
   const o = bkImp.o; bkImp = null; const keep = bkLS(BK_GK); await bkPre('Vor dem Wiederherstellen einer Sicherung');
   const side = {...(o.side || {})}; if (!side[BK_GK] && keep) side[BK_GK] = keep;
-  try { bkWriteRaw({state:JSON.stringify(o.state), lib:JSON.stringify(o.lib || {v:1, active:o.active || null, plans:Object.fromEntries(o.plans.map(e => [e.id, e]))}), side}); try { track('sicherung-geladen'); } catch (e) { elog(e); } location.reload(); }
+  try { bkWriteRaw({state:JSON.stringify(o.state), lib:JSON.stringify(o.lib || {v:1, active:o.active || null, plans:Object.fromEntries(o.plans.map(e => [e.id, e]))}), side}); try { track('sicherung-geladen'); } catch (e) { elog(e); } try { await bkTrkIn(o); } catch (e) { elog(e); } location.reload(); }
   catch (e) { elog(e); impMsg = 'Wiederherstellen ist nicht möglich (Speicher voll oder blockiert).'; render(); }
 }
 function bkModal(){

@@ -116,7 +116,8 @@ function bkParse(text){
   const bad = m => { throw new Error('Die Datei ist keine gültige Relentless-Sicherung (' + m + ').'); };
   if (!o || typeof o !== 'object' || Array.isArray(o)) bad('kein Objekt');
   if (o.app !== 'relentless') bad('falsche Kennung');
-  if (o.v != null && !(o.v === 1 || o.v === 2 || o.v === 3)) bad('unbekannte Version');
+  if (o.v != null && !(o.v === 1 || o.v === 2 || o.v === 3 || o.v === 4)) bad('unbekannte Version');
+  if (o.trk != null && (typeof o.trk !== 'object' || Array.isArray(o.trk) || Object.keys(o.trk).length > 5000)) bad('ungültige Streckendaten');
   if (!Array.isArray(o.plans)) bad('keine Planliste');
   if (o.plans.length > 500) bad('zu viele Pläne');
   if (o.plans.some(e => !e || typeof e !== 'object' || Array.isArray(e))) bad('ungültiger Planeintrag');

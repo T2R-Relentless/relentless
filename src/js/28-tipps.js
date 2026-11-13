@@ -10,6 +10,8 @@ const dykAlone = () => { try { return matchMedia('(display-mode: standalone)').m
 const DYK = [
   ['up', 'Lade nach jeder Einheit deine Fahrt hoch (FIT, GPX oder TCX). Die App ordnet sie dem Tag zu, gibt Punkte, lobt, was gut lief, und sagt, was du beim nächsten Mal besser machen kannst.', 'Fahrt hochladen', "goPg('rides')", () => !Object.keys((S.p && S.p.exe) || {}).length],
   /* Neue Funktionen (Versionen 172 bis 188) */
+  ['wkprof', 'Jede Rad-Einheit zeigt ihren Ablauf als Grafik: Blöcke nach Dauer und Intensität, Farben nach Zone. Tippe oder wische über die Grafik, dann siehst du Dauer, Watt und Trittfrequenz jedes Abschnitts.', 'Grafik ansehen', "dykProf()", () => !!S.p],
+  ['route', 'Im Logbuch hat jede Fahrt mit GPS ein Höhenprofil mit Steigungen, den längsten Anstieg und die Streckenlinie. Start und Ziel blendet die App auf Wunsch um 500 m aus, ganz ohne Karte und ohne Daten nach außen.', 'Höhenprofil ansehen', "dykTrack()", () => true],
   ['logbook', 'Im Logbuch stehen alle deine Fahrten und Übungseinheiten mit Bewertung an einem Ort. Die Verlaufsgrafik darüber zeigt Kilometer, Zeit und Höhenmeter je Woche und Monat.', 'Logbuch öffnen', "navGo('logbook')", () => true],
   ['commute', 'Fährst du an einem Trainingstag doch mit dem Rad zur Arbeit? Tippe in der Woche bei der Einheit auf „Pendeln“. Sie wird auf Hin- und Rückweg verteilt, die Intervalle liegen auf dem Hinweg.', 'Woche ansehen', "dykWeek()", () => hasStarted(S.p) && isComm(S.p)],
   ['move', 'Passt eine Einheit an einem anderen Tag besser? Tippe in der Woche auf „Verschieben“, auch für „heute statt Sonntag“. Die App achtet darauf, dass harte Einheiten nicht direkt hintereinander liegen.', 'Woche ansehen', "navGo('week')", () => hasStarted(S.p)],
@@ -78,7 +80,7 @@ function dykInst(){ instHide = false; instHelp = true; try { localStorage.remove
 function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
 /* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
    Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */
-const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), render:() => render()};
+const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), render:() => render()};
 function dykRun(st){
   let m = st.match(/^heroTab\s*=\s*'(\w+)'$/); if (m) { heroTab = m[1]; return; }
   m = st.match(/^(\w+)\((.*)\)$/); const f = m && Object.prototype.hasOwnProperty.call(DYK_FN, m[1]) ? DYK_FN[m[1]] : null;

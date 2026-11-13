@@ -66,7 +66,7 @@ function mobBlock(i, cur, pane){
   const s = mobMap[i]; if (!s) return '';
   const dn = cur && S.mobDone && S.mobDone[mobKey(i)];
   return `<div${pane ? '' : ' class="-mx-4 border-t px-4 pt-3" style="border-color:var(--line)"'}>${pane ? `<p class="hd text-xl font-semibold">${s.n}</p><p class="mb-2 text-xs" style="color:var(--mute)">Etwa ${s.m} Min., ohne Geräte</p>` : `<p class="eyebrow mb-2">Zusätzlich: ${s.n}, etwa ${s.m} Min.</p>`}
-    <p style="color:var(--mute)">${esc(s.intro)}</p>
+    <p style="color:var(--mute)">${esc(s.intro)}</p>${typeof wkSeqSvg === 'function' ? wkSeqSvg('mob', i) : ''}
     <ul class="mt-2 list-disc space-y-1 pl-5">${s.ex.map(([id, n, r]) => `<li><button class="exl" onclick="openEx('${ja(id)}')">${esc(n)}</button>: ${esc(r)}</li>`).join('')}</ul>
     <p class="mt-1 text-xs" style="color:var(--mute)">Tippe auf eine Übung für Erklärung und Grafik.</p>
     ${cur ? sqBtn('mob', i) : sqLater()}${cur ? `<button onclick="togMob(${ja(i)})" class="ghost mt-2 !py-2 text-sm" style="${esc(dn ? 'color:var(--ok);border-color:var(--ok)' : '')}">${dn === 'part' ? '◐ ' + s.n + ' teilweise erledigt' : dn ? '✓ ' + s.n + ' erledigt' : s.n + ' als erledigt markieren'}</button>` : ''}</div>`;
@@ -117,7 +117,7 @@ function strBlock(i, cur, pane){
   const s = strMap[i]; if (!s) return '';
   const dn = cur && S.strDone && S.strDone[strKey(i)];
   return `<div${pane ? '' : ' class="-mx-4 border-t px-4 pt-3" style="border-color:var(--line)"'}>${pane ? `<p class="hd text-xl font-semibold">${esc(s.n.replace('Krafttraining: ', ''))}</p><p class="mb-2 text-xs" style="color:var(--mute)">Krafttraining, etwa ${s.m} Min.</p>` : `<p class="eyebrow mb-2">Zusätzlich: ${esc(s.n.replace('Krafttraining: ', 'Krafttraining, '))}, etwa ${s.m} Min.</p>`}
-    <p style="color:var(--mute)">${esc(s.intro)} Nach 10 Min. Aufwärmen (leichtes Einfahren, Mobilität). Intensität: ${esc(s.rir)}, nicht bis zum Muskelversagen.</p>
+    <p style="color:var(--mute)">${esc(s.intro)} Nach 10 Min. Aufwärmen (leichtes Einfahren, Mobilität). Intensität: ${esc(s.rir)}, nicht bis zum Muskelversagen.</p>${typeof wkSeqSvg === 'function' ? wkSeqSvg('str', i) : ''}
     <ul class="mt-2 list-disc space-y-1 pl-5">${s.lines.map(l => `<li><button class="exl" onclick="openEx('${ja(l.id)}')">${esc(l.n)}</button>: ${esc(l.r)}</li>`).join('')}<li>Rumpf (10 Min.), je 2 Sätze: ${s.core.map(c => `<button class="exl" onclick="openEx('${ja(c[1])}')">${esc(c[0])}</button>`).join(', ')}</li></ul>
     <p class="mt-1 text-xs" style="color:var(--mute)">Tippe auf eine Übung für Erklärung und Grafik.</p>
     ${s.same ? '<p class="mt-2 text-sm"><b>Heute auch eine harte Radeinheit:</b> erst Rad, dann Kraft, möglichst mit einigen Stunden Abstand. So leidet die Qualität der Intervalle nicht.</p>' : ''}<p class="mt-2 text-xs" style="color:var(--mute)">Bewegung vor Gewicht, bei Schmerzen abbrechen. Die Radeinheit des Tages und die Wochenstunden bleiben unverändert, Kraft kommt zusätzlich.</p>
