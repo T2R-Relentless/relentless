@@ -280,6 +280,46 @@ function vzOut(ev, id){ if (ev.target.closest && ev.target.closest('svg,button,a
 /* Kachel: zum passenden Tag springen (Zeitraum wechselt, wenn der Tag nicht im gezeigten Zeitraum liegt) */
 function vzJump(day, rng){ if (!day) return; const R0 = vzRows(); if (!R0) return; const w = vzWin(R0, vzRng(), vzEvs(S.p)); if (day < w.a || day > w.b) S.vzRng = rng; vzSt.sel = day; save(); render(); }
 
+/* ---------- Doppelspitze: zwei A-Events binnen drei Wochen ----------
+   Vor dem früheren Event plant die App sonst zwei Wochen Tapering, danach Regeneration und das Tapering fürs spätere
+   Event. Das sind vier bis fünf Wochen mit wenig Belastung, und die Fitness am späteren Event sinkt. Die App rechnet
+   beide Varianten mit derselben Formrechnung (vzRows) und bietet an, das erste Tapering auf eine Woche zu kürzen.
+   Der Plan ändert sich nur nach Zustimmung (Schnappschuss, Rückgängig); die laufende Woche bleibt. */
+function tpShortEv(p){
+  if (!p || p.goal !== 'event') return null; let A = []; try { A = seasonA(p); } catch (e) { elog(e); return null; }
+  for (let k = 1; k < A.length - 1; k++) { const g = A[k].w - A[k - 1].w; if (A[k + 1].w - A[k].w <= 3 && g >= SEASON_MIN && g - 1 >= 8) return {ev:A[k], next:A[k + 1]}; }
+  return null;
+}
+function tpShortProp(){
+  const p = S.p, q = tpShortEv(p); if (!q || !hasStarted(p) || q.ev.w - 2 <= S.wk) return null;
+  const had = Object.prototype.hasOwnProperty.call(p, 'tpShort'), old = p.tpShort;
+  const at = on => { p.tpShort = on ? 1 : 0; let o = null; try { const R = vzRows(), f = d => R && R.rows.find(r => r.day === d), a = f(q.ev.date), b = f(q.next.date); if (a && b) o = {a:{ctl:Math.round(a.ctl), tsb:Math.round(a.tsb)}, b:{ctl:Math.round(b.ctl), tsb:Math.round(b.tsb)}}; } catch (e) { elog(e); } return o; };
+  const two = at(false), one = at(true); if (had) p.tpShort = old; else delete p.tpShort;
+  return two && one ? {...q, on:!!p.tpShort, two, one} : null;
+}
+function tpShortSet(v){
+  const p = S.p, q = tpShortProp(); if (!p || !q) return;
+  try { bkPre(wkL('Vor dem Anpassen des Taperings', 'Before adjusting the taper')); } catch (e) { elog(e); }
+  if (v) p.tpShort = 1; else delete p.tpShort;
+  const nm = esc(q.ev.name || 'A-Event');
+  try { (S.log = S.log || []).unshift({title:v ? 'Tapering verkürzt' : 'Tapering wieder zwei Wochen', day:-1, text:v ? `Vor „${nm}“ (${fmt(q.ev.date)}) plant die App jetzt eine Woche Tapering statt zwei, weil ${fmt(q.next.date)} schon das nächste A-Event folgt. Prognose für den ${fmt(q.next.date)}: Fitness ${q.two.b.ctl} → ${q.one.b.ctl}.` : `Vor „${nm}“ (${fmt(q.ev.date)}) plant die App wieder zwei Wochen Tapering.`}); } catch (e) { elog(e); }
+  save(); try { track(v ? 'tapering-verkuerzt' : 'tapering-zurueck'); } catch (e) { elog(e); } render();
+}
+function tpShortUi(){
+  let q = null; try { q = tpShortProp(); } catch (e) { elog(e); } if (!q) return '';
+  const nm = e => `<span>${esc(e.name || 'A-Event')}</span>`, d = x => esc(fmt(x).slice(0, 6)), sg = v => vzSgn(v), gain = q.one.b.ctl - q.two.b.ctl;
+  if (q.on) return `<div class="mt-3 p-3 text-sm" id="fx-tp" data-noi18n style="border:1px solid var(--line);border-left:3px solid var(--teal)"><p><b>${wkL('Tapering angepasst', 'Taper adjusted')}:</b> ${wkL(`Vor ${nm(q.ev)} (${d(q.ev.date)}) plant die App eine Woche Tapering statt zwei. Fitness am ${d(q.next.date)}: ${q.one.b.ctl} statt ${q.two.b.ctl}.`, `Before ${nm(q.ev)} (${d(q.ev.date)}) the app plans one week of taper instead of two. Fitness on ${d(q.next.date)}: ${q.one.b.ctl} instead of ${q.two.b.ctl}.`)}</p><button class="ghost mt-2 !w-auto !px-3 !py-2 text-sm" style="min-height:44px" onclick="tpShortSet(0)">${wkL('Wieder zwei Wochen Tapering', 'Back to two weeks of taper')}</button></div>`;
+  if (gain < 1) return '';
+  return `<div class="mt-3 p-3 text-sm" id="fx-tp" data-noi18n style="border:1px solid var(--line);border-left:3px solid var(--teal)"><p class="font-semibold">${wkL('Vorschlag: Formhöhepunkt näher ans Hauptevent legen', 'Suggestion: move the peak closer to your main event')}</p>
+    <p class="mt-1">${wkL(`${nm(q.ev)} (${d(q.ev.date)}) und ${nm(q.next)} (${d(q.next.date)}) liegen nur ${q.next.w - q.ev.w} Wochen auseinander. Die App plant vor beiden ein Tapering, dazwischen Regeneration. Das sind mehrere Wochen mit wenig Belastung, und die Fitness sinkt.`, `${nm(q.ev)} (${d(q.ev.date)}) and ${nm(q.next)} (${d(q.next.date)}) are only ${q.next.w - q.ev.w} weeks apart. The app plans a taper before both, with recovery in between. That is several weeks of low load, and fitness drops.`)}</p>
+    <p class="mt-1">${wkL(`Mit einer Woche Tapering statt zwei vor dem ${d(q.ev.date)} bleibt eine volle Trainingswoche mehr:`, `With one week of taper instead of two before ${d(q.ev.date)} you keep one more full training week:`)}</p>
+    <table class="mt-2 w-full text-sm" style="border-collapse:collapse"><thead><tr style="color:var(--mute);text-align:left"><th class="py-1 font-normal"></th><th class="py-1 font-normal">${wkL('Jetzt', 'Now')}</th><th class="py-1 font-normal">${wkL('Angepasst', 'Adjusted')}</th></tr></thead><tbody>
+      <tr style="border-top:1px solid var(--line)"><td class="py-1">${d(q.next.date)} ${nm(q.next)}</td><td class="py-1">${q.two.b.ctl} · ${sg(q.two.b.tsb)}</td><td class="py-1"><b>${q.one.b.ctl} · ${sg(q.one.b.tsb)}</b></td></tr>
+      <tr style="border-top:1px solid var(--line)"><td class="py-1">${d(q.ev.date)} ${nm(q.ev)}</td><td class="py-1">${q.two.a.ctl} · ${sg(q.two.a.tsb)}</td><td class="py-1"><b>${q.one.a.ctl} · ${sg(q.one.a.tsb)}</b></td></tr></tbody></table>
+    <p class="mt-1 text-xs" style="color:var(--mute)">${wkL('Fitness · Form am Renntag. Die laufende Woche bleibt, du kannst die Änderung rückgängig machen.', 'Fitness · form on race day. The current week stays, and you can undo the change.')}</p>
+    <button class="btn mt-2 !w-auto !px-3 !py-2 text-sm" style="min-height:44px" onclick="tpShortSet(1)">${wkL('Plan so anpassen', 'Adjust the plan')}</button></div>`;
+}
+function dykTp(){ navGo('state'); goPg('sform'); dykFocus('fx-tp'); }
 function vzChart(p, R0, rng, full){
   const evs = vzEvs(p), {vis} = vzWin(R0, rng, evs), n = vis.length; if (n < 2) return null;
   const id = 'vz' + (++vzN); if (vzN > 200) { vzReg = {}; vzN = 1; }
@@ -356,7 +396,7 @@ function vzForm(){
   const body = block(false); if (!body) return '';
   const fullV = vzSt.full ? `<div class="vz-fullv" role="dialog" aria-modal="true" aria-label="${esc(wkL('Formkurve im Vollbild', 'Form chart full screen'))}" data-noi18n onclick="vzOut(event, (document.querySelector('.vz-fullv .vz-info')||{}).id ? document.querySelector('.vz-fullv .vz-info').id.slice(0,-2) : '')"><p class="hd text-xl font-semibold">${wkL('Formkurve', 'Form chart')}</p>${block(true)}</div>` : '';
   return `<section class="panel vz-card" onclick="vzOut(event, (this.querySelector('.vz-info')||{}).id ? this.querySelector('.vz-info').id.slice(0,-2) : '')"><p class="hd text-xl font-semibold">Formkurve${isEv ? ' bis zum Event' : ''}</p>
-    <div data-noi18n>${tiles}${body}</div>${out}
+    <div data-noi18n>${tiles}${body}</div>${out}${isEv ? tpShortUi() : ''}
     <p class="mt-2 text-xs" style="color:var(--mute)"><span>Fitness (CTL): Trainingsstand der letzten etwa 6 Wochen.</span> <span>Ermüdung (ATL): Belastung der letzten 7 Tage.</span> <span>Form (TSB): Fitness minus Ermüdung. Über +5 bist du frisch, unter −10 wirkt das Training, unter −30 ist die Belastung hoch.</span></p>
     <p class="mt-2 text-xs" style="color:var(--mute)">Geschätzt aus der Belastung (TSS) deiner Fahrten und erledigten Einheiten. Fehlen Fahrten, liegt die Fitness höher als hier gezeigt.</p></section>${fullV}`;
 }

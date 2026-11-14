@@ -13,6 +13,7 @@ const DYK = [
   ['wkprof', 'Jede Rad-Einheit zeigt ihren Ablauf als Grafik: Blöcke nach Dauer und Intensität, Farben nach Zone. Tippe oder wische über die Grafik, dann siehst du Dauer, Watt und Trittfrequenz jedes Abschnitts.', 'Grafik ansehen', "dykProf()", () => !!S.p],
   ['vo2', 'Unter Fortschritt → VO2max schätzt die App deine maximale Sauerstoffaufnahme aus einem Rampentest, einem 5-Minuten-Test, einem Laborwert oder deiner Garmin-Uhr, mit Spanne, Quelle und Verlauf.', 'VO2max ansehen', "dykVo2()", () => true],
   ['mmprof', 'Unter Fortschritt → Leistungsprofil siehst du deine Bestwerte von 15 Sekunden bis 60 Minuten als Netz und als Kurve, dazu deinen Fahrertyp, deine Stärken mit Trainingshinweisen und eine FTP-Schätzung.', 'Leistungsprofil ansehen', "dykMm()", () => true],
+  ['tpshort', 'Zwei A-Rennen innerhalb von drei Wochen? Unter Fortschritt → Formkurve zeigt die App, wie viel Fitness das doppelte Tapering kostet, und bietet an, den Plan anzupassen.', 'Vorschlag ansehen', "dykTp()", () => { try { return !!tpShortEv(S.p); } catch (e) { return false; } }],
   ['route', 'Im Logbuch hat jede Fahrt mit GPS ein Höhenprofil mit Steigungen, den längsten Anstieg und die Streckenlinie. Alles wird im Gerät berechnet, ganz ohne Karte und ohne Daten nach außen.', 'Höhenprofil ansehen', "dykTrack()", () => true],
   ['logbook', 'Im Logbuch stehen alle deine Fahrten und Übungseinheiten mit Bewertung an einem Ort. Die Verlaufsgrafik darüber zeigt Kilometer, Zeit und Höhenmeter je Woche und Monat.', 'Logbuch öffnen', "navGo('logbook')", () => true],
   ['commute', 'Fährst du an einem Trainingstag doch mit dem Rad zur Arbeit? Tippe in der Woche bei der Einheit auf „Pendeln“. Sie wird auf Hin- und Rückweg verteilt, die Intervalle liegen auf dem Hinweg.', 'Woche ansehen', "dykWeek()", () => hasStarted(S.p) && isComm(S.p)],
@@ -82,7 +83,7 @@ function dykInst(){ instHide = false; instHelp = true; try { localStorage.remove
 function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
 /* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
    Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */
-const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), render:() => render()};
+const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), dykTp:() => dykTp(), render:() => render()};
 function dykRun(st){
   let m = st.match(/^heroTab\s*=\s*'(\w+)'$/); if (m) { heroTab = m[1]; return; }
   m = st.match(/^(\w+)\((.*)\)$/); const f = m && Object.prototype.hasOwnProperty.call(DYK_FN, m[1]) ? DYK_FN[m[1]] : null;

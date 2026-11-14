@@ -56,7 +56,10 @@ function phases(p){
     if (g === 1) { add('taper', s, e, ev, {name:'Form halten', desc:'Direkt nach dem letzten A-Event: locker regenerieren und frisch ins nächste Event.', keep:1}); continue; }
     add('base', s, s, ev, {name:'Regeneration', desc:'Nach dem A-Event: weniger Umfang, locker fahren, Kopf frei bekommen.', color:'#a5b4fc', rec:1});
     const r = g - 1;
-    if (g >= SEASON_MIN) { const tp = r >= 8 ? 2 : 1, pk = Math.max(1, Math.round((r - tp) * .3)), bu = r - tp - pk;
+    /* Doppelspitze (p.tpShort, nur nach Zustimmung): Folgt das nächste A-Event binnen drei Wochen, reicht vor diesem
+       Event eine Woche Tapering. Sonst kosten zwei Tapering-Phasen hintereinander Fitness fürs spätere Event. */
+    const dbl = !!p.tpShort && A[k + 1] && A[k + 1].w - A[k].w <= 3;
+    if (g >= SEASON_MIN) { const tp = r >= 8 && !dbl ? 2 : 1, pk = Math.max(1, Math.round((r - tp) * .3)), bu = r - tp - pk;
       add('build', s + 1, s + bu, ev, {name:'Wiederaufbau'}); add('peak', s + 1 + bu, s + bu + pk, ev); add('taper', e - tp + 1, e, ev); }
     else { add('peak', s + 1, e - 1, ev, {name:'Form halten', desc:'Zu wenig Zeit für einen neuen Aufbau: kurze, knackige Reize halten die Form.', color:'#fb923c', keep:1}); add('taper', e, e, ev, {desc:'Kurzes Tapering: eine Woche weniger Umfang, die Intensität bleibt.'}); }
   }

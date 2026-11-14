@@ -87,3 +87,33 @@ test('F28: Fitness, Ermüdung und Form sind im Glossar erklärt (DE/EN)', async 
   await a.en(); a.page('sform'); await a.tick(30); const ge = [...a.w.document.querySelectorAll('.vz-card .gl')].map(el => a.$(`GL[lang()][${el.dataset.g}][1]`));
   ok(ge.some(x => x === 'TSB (form)') && /Form \(TSB\): fitness minus fatigue/.test(a.text()), 'Englisch: ' + ge.join(' | ')); a.noErrors();
 });
+
+/* Doppelspitze: A-Rennen am 19.09., Hauptevent am 03.10.2027 (zwei Wochen später), Zeitbudget Winter 8 / Sommer 12 Std. */
+async function dblApp(){
+  const a = await boot({now:at(2026, 11, 14)});
+  makePlan(a, {goal:'event', eventName:'Hauptevent', eventDate:'2027-10-03', ftp:300, hours:9}, [{name:'Frühjahr', date:'2027-04-11', prio:'A', dist:80}, {name:'Herbstrennen', date:'2027-09-19', prio:'A', dist:110}]);
+  const rides = []; for (let d = new Date('2026-10-20T12:00:00'); d < new Date('2026-11-14T12:00:00'); d.setDate(d.getDate() + 3)) { const day = d.toISOString().slice(0, 10); rides.push({id:'r' + day, n:'Fahrt', day, ts:day + 'T07:00:00.000Z', sec:3600, tss:45, km:30, hm:200}); }
+  a.$(`tbInit(S.p); S.p.tb.on = true; S.p.tb.prof.w.h = 8; S.p.tb.prof.s.h = 12; S.man = ${JSON.stringify(rides)}; save(); render();`); return a;
+}
+test('Doppelspitze: Vorschlag kürzt das erste Tapering auf eine Woche, nur nach Zustimmung', async () => {
+  const a = await dblApp(), tp = () => a.$('phases(S.p)').filter(x => x.key === 'taper').map(x => x.from + '-' + x.to), ph0 = JSON.stringify(a.$('phases(S.p)'));
+  const q = a.$('tpShortProp()'); ok(q && q.ev.date === '2027-09-19' && q.next.date === '2027-10-03' && !q.on, 'Vorschlag für das Rennen am 19.09.');
+  ok(q.one.b.ctl - q.two.b.ctl >= 1 && q.one.a.ctl > q.two.a.ctl, `Fitness an beiden Renntagen steigt: ${q.two.a.ctl} → ${q.one.a.ctl}, ${q.two.b.ctl} → ${q.one.b.ctl}`); ok(q.one.b.tsb >= 5 && q.one.a.tsb >= 5, 'Form an beiden Renntagen bleibt frisch: ' + q.one.a.tsb + ' / ' + q.one.b.tsb);
+  eq(JSON.stringify(a.$('phases(S.p)')), ph0, 'Vorschlag rechnen ändert den Plan nicht'); ok(!('tpShort' in a.$('S.p')), 'kein Merker ohne Zustimmung');
+  const t0 = tp(), w19 = a.$("seasWk(S.p, '2027-09-19')"); ok(t0.includes((w19 - 1) + '-' + w19), 'vorher zwei Wochen Tapering: ' + t0.join(' '));
+  const t = a.page('sform'); ok(/Vorschlag: Formhöhepunkt näher ans Hauptevent legen/.test(t) && /Plan so anpassen/.test(t), 'Vorschlag auf der Formkurve');
+  const plan0 = JSON.stringify(a.$('S.plan')); a.$('tpShortSet(1)');
+  eq(a.$('S.p.tpShort'), 1); ok(tp().includes(w19 + '-' + w19) && !tp().includes((w19 - 1) + '-' + w19), 'danach eine Woche: ' + tp().join(' '));
+  ok(!a.$(`recWk(S.p, ${w19 - 1})`) && a.$(`recWk(S.p, ${w19 - 2})`) && a.$(`rampOf(S.p, ${w19 - 1})`) === 1, 'Entlastungswoche tauscht mit der Woche davor: letzte volle Woche direkt vor dem Tapering');
+  eq(JSON.stringify(a.$('S.plan')), plan0, 'laufende Woche unverändert'); ok(/Tapering verkürzt/.test(a.$('S.log[0].title')) && a.$('!!bkUndo'), 'Eintrag unter Anpassungen und Schnappschuss');
+  ok(/Tapering angepasst/.test(a.text()) && /Wieder zwei Wochen Tapering/.test(a.text()), 'Hinweis mit Rücknahme');
+  eq(Math.round(a.$("vzRows().rows.find(r => r.day === '2027-10-03').ctl")), q.one.b.ctl, 'Formkurve zeigt den angekündigten Wert');
+  a.$('tpShortSet(0)'); ok(!('tpShort' in a.$('S.p')) && JSON.stringify(a.$('phases(S.p)')) === ph0, 'zurück auf zwei Wochen');
+  ok(a.$("DYK.some(d => d[0] === 'tpshort') && WN_DATA['200'].length === 1"), 'Tipp und Neuigkeiten'); a.$('dykTp()'); await a.tick(50); ok(a.w.document.getElementById('fx-tp'), 'Tipp führt zum Vorschlag');
+  await a.en(); a.page('sform'); ok(/Suggestion: move the peak closer/.test(a.text()), 'Englisch'); a.noErrors();
+});
+test('Doppelspitze: kein Vorschlag ohne enges A-Rennen oder wenn das Tapering schon läuft', async () => {
+  const a = await seasonWithRides(); eq(a.$('tpShortProp()'), null, 'A-Rennen im April, Hauptevent im Juli: kein Vorschlag'); ok(!/Formhöhepunkt näher/.test(a.page('sform')));
+  const b = await dblApp(); b.$("S.wk = seasWk(S.p, '2027-09-19') - 2"); eq(b.$('tpShortProp()'), null, 'kurz vor dem Tapering nicht mehr');
+  b.$("S.wk = 2; S.p.subs.find(s => s.date === '2027-09-19').prio = 'B'"); eq(b.$('tpShortProp()'), null, 'B-Rennen: kein Vorschlag'); b.noErrors();
+});

@@ -35,8 +35,16 @@ const gapOf = d => d && (d.gap2 === true || d.gap2 === false) ? d.gap2 : gapSug(
 const rhyOwn = d => !!d && ((d.rhythm === '2:1' || d.rhythm === '3:1') || d.gap2 === true || d.gap2 === false);
 /* Länge eines Blocks in Wochen: 4 bei 3:1, 3 bei 2:1 */
 const rhyN = p => p && rhyOf(p) === '2:1' ? 3 : 4;
-const recWk = (p, w) => w % rhyN(p) === 0;
-const rampOf = (p, w) => (rhyN(p) === 3 ? [.94, 1, .65] : [.88, .94, 1, .65])[(w - 1) % rhyN(p)];
+/* Doppelspitze (p.tpShort, nur nach Zustimmung, siehe phases): Vor dem früheren von zwei A-Events binnen drei Wochen gibt es
+   eine Woche Tapering. Fiele die Entlastungswoche des Rhythmus direkt davor, lägen wieder zwei leichte Wochen hintereinander.
+   Dann tauscht sie mit der Woche davor: erst Entlastung, dann die letzte volle Woche, dann Tapering. */
+function tpSwap(p){
+  if (!p || !p.tpShort || p.goal !== 'event') return null;
+  try { const A = seasonA(p); for (let k = 1; k < A.length - 1; k++) if (A[k + 1].w - A[k].w <= 3) { const L = A[k].w - 1; if (L % rhyN(p) === 0 && L - 1 > A[k - 1].w + 1) return {load:L, rec:L - 1}; } } catch (e) { elog(e); }
+  return null;
+}
+const recWk = (p, w) => { const s = tpSwap(p); return s && w === s.load ? false : s && w === s.rec ? true : w % rhyN(p) === 0; };
+const rampOf = (p, w) => { const s = tpSwap(p); return s && w === s.load ? 1 : s && w === s.rec ? .65 : (rhyN(p) === 3 ? [.94, 1, .65] : [.88, .94, 1, .65])[(w - 1) % rhyN(p)]; };
 /* laufende Nummer der Belastungswoche (Entlastungswochen nicht mitgezählt) */
 const loadWk = (p, w) => w - Math.floor(w / rhyN(p));
 
