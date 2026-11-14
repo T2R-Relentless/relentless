@@ -76,20 +76,27 @@ const gmB64 = s => { const b = atob(s), u = new Uint8Array(b.length); for (let i
 async function gmRide(g){
   const p = await gmCall('get_activity_recording', {activityId:g.id, maxSamples:5000});
   /* Erweiterung „Garmin für Relentless“: Original-FIT-Datei (jede Sekunde) */
-  if (p && p.data) { const u = gmB64(p.data), {data} = await unpack(u.buffer, p.fileName || g.id + '.zip'); const r = parseFIT(data); r.name = g.n; return {r, name:g.n}; }
+  if (p && p.data) { const u = gmB64(p.data), {data} = await unpack(u.buffer, p.fileName || g.id + '.zip'); const r = parseFIT(data); r.name = g.n; r.ty = g.ty; return {r, name:g.n}; }
   /* Anderer Garmin-Baustein (garmin-personal-mcp): ausgedünnte Aufzeichnung */
   if (!p || !p.records) throw new GmErr('tool', 'Die Fahrt enthält keine Aufzeichnung.');
   const num = v => v == null || v === '' || isNaN(+v) ? null : +v, se = p.session || {}, sp = String(se.sport || '').toLowerCase();
   const pts = (p.records.samples || []).map(q => ({t:q.timestamp ? Date.parse(q.timestamp) / 1000 : null, d:num(q.distance), a:num(q.enhancedAltitude != null ? q.enhancedAltitude : q.altitude), p:num(q.power), h:num(q.heartRate), tc:num(q.temperature), lat:null, lon:null}));
-  return {r:{pts, ses:p.session ? [{sport:sp.includes('cycling') ? 2 : sp ? 99 : null, sec:num(se.totalTimerTime), km:se.totalDistance != null ? se.totalDistance / 1000 : null, hm:num(se.totalAscent), np:num(se.normalizedPower)}] : [], name:g.n}, name:g.n};
+  return {r:{pts, ses:p.session ? [{sport:sp.includes('cycling') ? 2 : sp ? 99 : null, sec:num(se.totalTimerTime), km:se.totalDistance != null ? se.totalDistance / 1000 : null, hm:num(se.totalAscent), np:num(se.normalizedPower)}] : [], name:g.n, ty:g.ty}, name:g.n};
 }
 /* Abgleich: hist = Fahrten für die Auswertung beim Einstieg (90 Tage), man = Fahrten im laufenden Plan (42 Tage, mit Bewertung) */
+/* Schon gespeicherte Garmin-Fahrten nachträglich als Rolle kennzeichnen, wenn Garmin sie als Indoor- oder virtuelle Fahrt führt */
+function gmInFix(list){
+  const ids = new Set((list || []).filter(g => rideIndoorTy(g.ty)).map(g => g.id)); if (!ids.size) return 0; let n = 0;
+  ['man', 'arch', 'hist'].forEach(k => (S[k] || []).forEach(a => { if (a && a.gid && ids.has(String(a.gid)) && !a.in) { a.in = 1; n++; } }));
+  if (n) save(); return n;
+}
 async function gmSync(target, quiet){
   if (gmBusy || !gmMode()) return; gmBusy = true; gmMsg = null; gmProg = 'Verbinde mit Garmin …'; if (!quiet) render();
   const days = target === 'hist' ? 90 : 42, to = iso(0), from = iso(-days), seen = new Set((S.gm.ids || []));
   let n = 0, skip = 0, fail = 0, nPl = 0, nX = 0;
   try {
-    const list = (await gmList(from, to)).filter(g => !seen.has(g.id)).sort((a, b) => a.ts.localeCompare(b.ts)).slice(-40);
+    const all = await gmList(from, to); gmInFix(all);
+    const list = all.filter(g => !seen.has(g.id)).sort((a, b) => a.ts.localeCompare(b.ts)).slice(-40);
     for (const g of list) {
       gmProg = `Lade Fahrt ${n + skip + fail + 1} von ${list.length} …`; if (!quiet) render();
       try {

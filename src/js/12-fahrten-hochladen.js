@@ -63,7 +63,7 @@ function parseFIT(u){
     const m = {}; for (const [n, sz, bt] of d.f) { m[n] = rd(o, sz, bt, d.le); o += sz; } o += d.dsz;
     if (comp) { if (ts) { let t2 = (ts - (ts & 31)) + toff; if (t2 < ts) t2 += 32; ts = t2; m[253] = ts; } } else if (m[253] != null) ts = m[253];
     if (d.g === 20 && m[253] != null) pts.push({t:m[253] + 631065600, d:m[5] != null ? m[5] / 100 : null, a:m[78] != null ? m[78] / 5 - 500 : m[2] != null ? m[2] / 5 - 500 : null, p:m[7], h:m[3], tc:m[13] != null && m[13] < 100 ? m[13] : null, lat:m[0] != null ? m[0] * 180 / 2147483648 : null, lon:m[1] != null ? m[1] * 180 / 2147483648 : null});
-    else if (d.g === 18) ses.push({sport:m[5], sec:m[8] != null ? m[8] / 1000 : m[7] != null ? m[7] / 1000 : null, km:m[9] != null ? m[9] / 100000 : null, hm:m[22], np:m[34]});
+    else if (d.g === 18) ses.push({sport:m[5], sub:m[6], sec:m[8] != null ? m[8] / 1000 : m[7] != null ? m[7] / 1000 : null, km:m[9] != null ? m[9] / 100000 : null, hm:m[22], np:m[34]});
   }
   return {pts, ses, name:''};
 }
@@ -86,6 +86,8 @@ function parseTCX(x){
   if (!pts.length) throw new Error('Die TCX-Datei enthält keine Trackpunkte.'); const nm = act && txt1(act, 'Notes'); return {pts, ses:[], name:nm || ''};
 }
 function hav(a, b){ const R = 6371000, r = Math.PI / 180, dl = (b.lat - a.lat) * r, dn = (b.lon - a.lon) * r, q = Math.sin(dl / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(q)); }
+/* Garmin-Aktivitätstyp einer Rollenfahrt (indoor_cycling, virtual_ride, Spinning, Rollentrainer) */
+const rideIndoorTy = t => /indoor|virtual|trainer|spin/i.test(String(t || ''));
 function summarize(r, fname){
   const ftp = S.p ? S.p.ftp : 0, pts = r.pts.filter(q => q.t != null && isFinite(q.t)).sort((a, b) => a.t - b.t), ses = r.ses || [];
   if (ses.length && ses.some(s => s.sport != null && s.sport !== 2)) throw new Error('Das ist keine Radfahrt.');
@@ -108,8 +110,10 @@ function summarize(r, fname){
   } else if (ses.length && ses[0].np) np = ses[0].np;
   const est = !(np && ftp), hv = hr1.filter(h => h != null), hrA = hv.length > 300 && hv.length > .5 * hr1.length ? hv.reduce((q, h) => q + h, 0) / hv.length : 0, le = est && hrA ? loadEst(sec, {hrAvg:hrA}) : null, IF = est ? (le ? le.IF : .65) : np / ftp, t0 = (pts[0] ? pts[0].t : 0) * 1000, iso8 = new Date(t0).toISOString();
   const out = {id:'m' + Math.round(t0 / 1000).toString(36) + sec.toString(36), n:(r.name || fname.replace(/\.[^.]+$/, '')).slice(0, 60) || 'Radfahrt', ts:iso8, day:lstr(new Date(t0)), km:Math.round(km * 10) / 10, hm:Math.round(hm), sec, tss:Math.round(sec * IF * IF / 36), IF:Math.round(IF * 100) / 100, est, ...(le ? {ld:le.src} : {}), ...(hrA ? {hrA:Math.round(hrA)} : {}), src:'file', np:Math.round(np || 0), m1:mx && mx[60] || null, m5:mx && mx[300] || null, m20:mx && mx[1200] || null, m60:mx && mx[3600] || null};
-  /* F18: Fahrt ohne gültige GPS-Position = Rolle/Indoor (Zwift, Rollentrainer) */
+  /* F18: Fahrt ohne gültige GPS-Position = Rolle/Indoor (Zwift, Rollentrainer). Zwift und ähnliche Apps schreiben virtuelle
+     GPS-Daten, deshalb zählen auch der FIT-Untertyp (5 Spinning, 6 Indoor, 58 virtuell) und der Garmin-Aktivitätstyp. */
   if (pts.length >= 10 && !pts.some(q => q.lat != null && isFinite(q.lat) && Math.abs(q.lat) <= 90 && !(q.lat === 0 && q.lon === 0))) out.in = 1;
+  if (ses.some(s => s && [5, 6, 58].includes(s.sub)) || rideIndoorTy(r.ty)) out.in = 1;
   if (sHm > 0) out.hmDev = 1;
   /* F25: Höhenprofil, Streckenlinie und Leistungsreihe im Hintergrund ablegen */
   try { if (typeof trkKeep === 'function') trkKeep(out, r); } catch (e) { elog(e); }

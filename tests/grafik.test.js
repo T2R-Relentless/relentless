@@ -192,3 +192,17 @@ test('Negativer Split: zweite Hälfte als eigener, höherer Block', async () => 
   eq(a.$("wkBlocks({t:'base', m:60, lo:56, hi:75, n:'Grundlage Z2'})").length, 1, 'normale Grundlage bleibt ein Block');
   a.noErrors();
 });
+
+test('Rolle erkennen: virtuelle GPS-Daten, FIT-Untertyp, Garmin-Typ, gespeicherte Garmin-Fahrten', async () => {
+  const a = await boot(); a.w.__g = gRide({sec:1800, lat0:-11.6, lon0:166.9});
+  ok(!a.$("summarize(__g, 'z.fit').in"), 'Fahrt mit GPS ohne weitere Angabe: draußen');
+  ok(a.$("summarize({...__g, ses:[{sport:2, sub:58}]}, 'z.fit').in") === 1, 'FIT-Untertyp 58 (virtuell, z. B. Zwift)');
+  ok(a.$("summarize({...__g, ses:[{sport:2, sub:6}]}, 'z.fit').in") === 1, 'FIT-Untertyp 6 (Indoor)');
+  ok(a.$("summarize({...__g, ty:'virtual_ride'}, 'z.fit').in") === 1 && a.$("summarize({...__g, ty:'indoor_cycling'}, 'z.fit').in") === 1, 'Garmin-Typ');
+  ok(!a.$("summarize({...__g, ty:'road_biking'}, 'z.fit').in"), 'Rennrad draußen bleibt draußen');
+  a.$("S.man = [{id:'g1', gid:'111', day:'2026-11-10', km:33, sec:3660, hm:133}, {id:'g2', gid:'222', day:'2026-11-08', km:50, sec:6000, hm:400}]");
+  eq(a.$("gmInFix([{id:'111', ty:'virtual_ride'}, {id:'222', ty:'road_biking'}])"), 1, 'eine Fahrt nachträglich als Rolle');
+  ok(a.$("S.man[0].in === 1 && !S.man[1].in"), 'nur die Indoor-Fahrt');
+  ok(a.$("lbSums('w', {roll:false, all:false})['2026-11-09']") == null, 'ohne Rolle zählt sie in der Grafik nicht mehr');
+  a.noErrors();
+});
