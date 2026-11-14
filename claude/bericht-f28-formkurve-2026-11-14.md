@@ -230,3 +230,8 @@ Ziel war, dass die Grafik auf dem iPhone früher im Bild ist.
 - Version 199, Service Worker v36. Build-ID und Neuigkeiten bleiben unverändert, weil es eine Korrektur ist.
 - 246 von 246 Tests bestanden.
 - Bilder: `claude/bilder/f28b-8w-375.png`, `claude/bilder/f28b-saison-320.png`.
+
+**Nachtrag: Form im Glossar**
+- Neuer Glossar-Eintrag „TSB (Form)“ (DE/EN): Fitness minus Ermüdung, dazu die Bereiche (über +5 frisch, −10 bis +5 normal, −30 bis −10 Training wirkt, unter −30 hohe Belastung, über +25 Fitnessverlust).
+- Unter der Grafik stehen drei Sätze (Fitness (CTL), Ermüdung (ATL), Form (TSB)). CTL, ATL und TSB sind antippbar. Die englischen Texte sind ergänzt.
+- Ein neuer Test prüft beides auf Deutsch und Englisch. 247 von 247 Tests bestanden.

@@ -357,7 +357,7 @@ function vzForm(){
   const fullV = vzSt.full ? `<div class="vz-fullv" role="dialog" aria-modal="true" aria-label="${esc(wkL('Formkurve im Vollbild', 'Form chart full screen'))}" data-noi18n onclick="vzOut(event, (document.querySelector('.vz-fullv .vz-info')||{}).id ? document.querySelector('.vz-fullv .vz-info').id.slice(0,-2) : '')"><p class="hd text-xl font-semibold">${wkL('Formkurve', 'Form chart')}</p>${block(true)}</div>` : '';
   return `<section class="panel vz-card" onclick="vzOut(event, (this.querySelector('.vz-info')||{}).id ? this.querySelector('.vz-info').id.slice(0,-2) : '')"><p class="hd text-xl font-semibold">Formkurve${isEv ? ' bis zum Event' : ''}</p>
     <div data-noi18n>${tiles}${body}</div>${out}
-    <p class="mt-2 text-xs" style="color:var(--mute)">Fitness (CTL): Trainingsstand der letzten etwa 6 Wochen. Ermüdung (ATL): Belastung der letzten 7 Tage. Form: Fitness minus Ermüdung.</p>
+    <p class="mt-2 text-xs" style="color:var(--mute)"><span>Fitness (CTL): Trainingsstand der letzten etwa 6 Wochen.</span> <span>Ermüdung (ATL): Belastung der letzten 7 Tage.</span> <span>Form (TSB): Fitness minus Ermüdung. Über +5 bist du frisch, unter −10 wirkt das Training, unter −30 ist die Belastung hoch.</span></p>
     <p class="mt-2 text-xs" style="color:var(--mute)">Geschätzt aus der Belastung (TSS) deiner Fahrten und erledigten Einheiten. Fehlen Fahrten, liegt die Fitness höher als hier gezeigt.</p></section>${fullV}`;
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && vzSt.full) vzSet('full', 0); });

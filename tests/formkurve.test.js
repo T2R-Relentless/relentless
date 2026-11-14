@@ -79,3 +79,11 @@ test('F28: Kacheln, Fähnchen, Vollbild, VoiceOver DE/EN', async () => {
   ok(/^Form chart, 8 weeks\. Fitness today \d+, form (plus|minus) \d+, .+\. On race day 18 April 2027 fitness about \d+, form (plus|minus) \d+\.$/.test(en), 'VoiceOver EN: ' + en);
   a.noErrors();
 });
+
+test('F28: Fitness, Ermüdung und Form sind im Glossar erklärt (DE/EN)', async () => {
+  const a = await seasonWithRides(); a.page('sform'); await a.tick(30);
+  const g = [...a.w.document.querySelectorAll('.vz-card .gl')].map(el => a.$(`GL[lang()][${el.dataset.g}][1]`));
+  ok(['CTL', 'ATL', 'TSB'].every(k => g.some(x => x.startsWith(k))), 'CTL, ATL und TSB antippbar: ' + g.join(' | '));
+  await a.en(); a.page('sform'); await a.tick(30); const ge = [...a.w.document.querySelectorAll('.vz-card .gl')].map(el => a.$(`GL[lang()][${el.dataset.g}][1]`));
+  ok(ge.some(x => x === 'TSB (form)') && /Form \(TSB\): fitness minus fatigue/.test(a.text()), 'Englisch: ' + ge.join(' | ')); a.noErrors();
+});
