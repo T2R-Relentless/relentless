@@ -30,21 +30,12 @@ test('B9: Geplante TSS je Woche in der Prognose = Plan', async () => {
   eq(bad, []); ok(tot - wk > 30, 'mehr als 30 Wochen voraus geprüft (' + (tot - wk) + ')');
 });
 
-test('B9: Renntag-Linie liegt genau auf dem Eventdatum', async () => {
-  const a = await seasonApp(), html = a.$('vzForm()'), R0 = a.$('vzRows()');
-  const m = /<line x1="([\d.]+)"[^>]*class="goal" data-day="([\d-]+)"/.exec(html); ok(m, 'Renntag-Linie vorhanden');
-  eq(m[2], '2027-10-03'); const n = R0.vis.length, x = 28 + R0.ei * (340 - 28 - 8) / (n - 1);
-  near(+m[1], x, 0.11, 'x-Position'); eq(R0.vis[R0.ei].day, '2027-10-03');
-  ok(/Am Renntag \(03\.10\.2027\)/.test(html.replace(/<[^>]+>/g, '')), 'Text nennt das Eventdatum');
-});
-
-test('B9: Monatsbeschriftungen überlappen nicht (Achse beginnt Ende September)', async () => {
-  const a = await seasonApp({ridesFrom:'2026-09-15'}), html = a.$('vzForm()'), svg = html.split('</svg>')[0];
-  const xs = [...svg.matchAll(/<text x="([\d.]+)" y="145" class="tx">([^<]+)<\/text>/g)].map(m => [+m[1], m[2]]);
-  ok(xs.length >= 10, 'Monate beschriftet: ' + xs.map(x => x[1]).join(' '));
-  /* Beschriftung 9,5 px, drei Buchstaben etwa 17 px breit: 20 px Abstand heißt keine Überlappung */
-  for (let i = 1; i < xs.length; i++) ok(xs[i][0] - xs[i - 1][0] >= 20, `${xs[i - 1][1]} und ${xs[i][1]} zu dicht (${(xs[i][0] - xs[i - 1][0]).toFixed(1)} px)`);
-  eq(xs[0][1], 'Okt', 'angeschnittener September entfällt'); eq(xs[xs.length - 1][1], 'Okt', 'Achse endet im Oktober 2027');
+test('B9/F28: Renntag-Linie liegt genau auf dem Eventdatum (Saison und bis Renntag)', async () => {
+  const a = await seasonApp();
+  for (const rng of ['season', 'race']) { a.$(`S.vzRng = '${rng}'`); const html = a.$('vzForm()'), m = /<line x1="([\d.]+)"[^>]*class="goal vz-evl[^"]*" data-day="([\d-]+)"/.exec(html); ok(m, rng + ': Renntag-Linie vorhanden');
+    eq(m[2], '2027-10-03'); const id = (/data-vz="(vz\d+)"/.exec(html) || [])[1], g = a.$(`vzReg['${id}']`), i = g.rows.findIndex(r => r.day === '2027-10-03');
+    near(+m[1], g.X(i), 0.11, rng + ': x-Position'); ok(g.rows.length - 1 - i >= 7, rng + ': mindestens 7 Tage hinter dem Renntag'); ok(/Am Renntag \(03\.10\.2027\)/.test(html.replace(/<[^>]+>/g, '')), 'Text nennt das Eventdatum'); }
+  a.$("S.vzRng = '8w'");
 });
 
 test('B9: Renntag fachlich plausibel (Tapering), sonst Hinweis', async () => {

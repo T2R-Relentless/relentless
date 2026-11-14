@@ -53,9 +53,9 @@ test('Fehlende Distanz: einmal fragen, nicht raten', async () => {
 });
 
 test('Formkurve markiert jedes Event der Saison', async () => {
-  const a = await seasonWithRides(), html = a.$('vzForm()');
-  ['2027-04-18', '2027-05-30', '2027-06-12'].forEach(d => ok(html.includes(`class="vz-ev" data-day="${d}"`), 'Markierung ' + d));
-  ok(html.includes('class="goal" data-day="2027-07-10"'), 'Renntag-Linie Hauptevent');
+  const a = await seasonWithRides(); a.$("S.vzRng = 'season'"); const html = a.$('vzForm()');
+  ['2027-04-18', '2027-05-30', '2027-06-12'].forEach(d => ok(new RegExp(`class="vz-ev[^"]*" data-day="${d}"`).test(html), 'Markierung ' + d));
+  ok(/class="goal vz-evl[^"]*" data-day="2027-07-10"/.test(html), 'Renntag-Linie Hauptevent');
 });
 
 test('Saisonübersicht auf Englisch und dunkel ohne Fehler', async () => {

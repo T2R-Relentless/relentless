@@ -173,44 +173,190 @@ function vzRaceHint(tsb, ctl, peak){
   if (tsb > 30) return 'Die Form am Renntag ist sehr hoch. Das spricht für eine lange Entlastung, bei der schon Fitness verloren geht.';
   return '';
 }
-/* F17: Markierung je Event der Saison (außer dem Hauptevent, das die Renntag-Linie hat): Linie und Prioritätsbuchstabe */
-function vzEvMarks(p, vis, X, T){ let L = []; try { L = efList(p).filter(x => !x.main); } catch (e) { elog(e); }
-  return L.map(x => { const i = vis.findIndex(r => r.day === x.date); if (i < 0) return ''; const xx = X(i).toFixed(1);
-    return `<g class="vz-ev" data-day="${esc(x.date)}"><line x1="${xx}" x2="${xx}" y1="${T + 10}" y2="${T + 26}" stroke="${x.prio === 'A' ? '#e0464e' : x.prio === 'B' ? 'var(--ink)' : 'var(--teal)'}" stroke-width="2"/><text x="${xx}" y="${T + 8}" text-anchor="middle" class="tx" font-weight="700">${esc(x.prio)}</text></g>`; }).join(''); }
-/* Monatsbeschriftungen: am Monatsersten; der angeschnittene erste Monat nur, wenn genug Platz bis zum nächsten bleibt */
-function vzTicks(vis, X, gap = 26){
-  const t = []; for (let i = 0; i < vis.length; i++) { const d = dOnly(vis[i].day); if (d.getDate() === 1 || i === 0) t.push(i); }
-  return t.filter((i, k) => !(k === 0 && i === 0 && t.length > 1 && X(t[1]) - X(i) < gap));
+/* ---------- F28: Formkurve auf dem Smartphone (nur Darstellung und Bedienung; die Rechnung bleibt vzRows) ----------
+   Kennzahlen-Kacheln, Zeitraum (8 Wochen, 3 Monate, bis Renntag, Saison), Hauptgrafik Fitness/Ermüdung mit Achsen,
+   Prognose-Bereich, Event-Fähnchen und Saisonspitze, Form-Grafik mit Bereichen, Wischen mit festem Infofeld, Vollbild.
+   Die SVG-Breite folgt der tatsächlichen Breite (viewBox ≈ Bildpunkte), damit Schrift ≥ 12 pt bleibt und sich
+   Beschriftungen bei 320 bis 430 pt nicht überlappen. */
+const VZ_RNG = ['8w', '3m', 'race', 'season'];
+let vzSt = {sel:null, show:{ctl:1, atl:1, tsb:1}, full:false}, vzReg = {}, vzN = 0, vzRaf = 0;
+const vzRng = () => VZ_RNG.includes(S.vzRng) ? S.vzRng : '8w';
+function vzSet(k, v){
+  if (k === 'rng') { S.vzRng = VZ_RNG.includes(v) ? v : '8w'; vzSt.sel = null; save(); }
+  else if (k === 'show') vzSt.show[v] = vzSt.show[v] ? 0 : 1;
+  else if (k === 'full') vzSt.full = !!v;
+  render();
+}
+/* Formbereiche (dieselben Grenzen wie bisher in der App, gängige Orientierungswerte wie bei TrainingPeaks/intervals.icu) */
+const VZ_BANDS = [[25, 99, 'vzb-lost', 'Formverlust', 'Losing fitness'], [5, 25, 'vzb-fresh', 'Frisch – bereit fürs Rennen', 'Fresh – ready to race'], [-10, 5, 'vzb-neut', 'Neutral', 'Neutral'], [-30, -10, 'vzb-train', 'Training wirkt', 'Productive training'], [-99, -30, 'vzb-high', 'Hohe Belastung', 'High strain']];
+const vzWord = v => v > 25 ? wkL('Formverlust', 'losing fitness') : v >= 5 ? wkL('frisch', 'fresh') : v >= -10 ? wkL('neutral', 'neutral') : v >= -30 ? wkL('Training wirkt', 'productive') : wkL('hohe Belastung', 'high strain');
+const vzSgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+/* Breite der Grafik in Bildpunkten: Inhalt der Seite (max-w-xl, 16 pt Rand), Karte mit 12 pt Innenabstand */
+const vzW = full => Math.round(Math.max(260, Math.min(full ? 1400 : 576, (typeof window !== 'undefined' && window.innerWidth) || 375) - (full ? 24 : 32 + 24 + 2)));
+/* Events der Saison (Hauptevent und weitere Rennen), sortiert */
+function vzEvs(p){ try { return seasonEvs(p).map(x => ({id:x.id, name:x.name, date:x.date, prio:x.prio, main:!!x.main})); } catch (e) { elog(e); return p && p.eventDate ? [{id:'main', name:p.eventName || 'Event', date:p.eventDate, prio:'A', main:true}] : []; } }
+/* Zeitraum: Start- und Endtag; hinter einem Event im Zeitraum bleiben mindestens 7 Tage */
+function vzWin(R0, rng, evs){
+  const rows = R0.rows, T = R0.today, first = rows[0].day, last = rows[rows.length - 1].day; let a, b;
+  if (rng === '3m') { a = addD(T, -30); b = addD(T, 61); }
+  else if (rng === 'race') { const nx = evs.find(e => e.prio === 'A' && e.date >= T); a = T; b = addD(nx ? nx.date : R0.end, 7); }
+  else if (rng === 'season') { a = first; b = last; }
+  else { a = addD(T, -14); b = addD(T, 42); }
+  evs.forEach(e => { if (e.date >= a && e.date <= b && addD(e.date, 7) > b) b = addD(e.date, 7); });
+  if (a < first) a = first; if (b > last) b = last;
+  return {a, b, vis:rows.filter(r => r.day >= a && r.day <= b)};
+}
+/* Runde Gitterwerte: Schritt 5/10/20/25/50/100 …, höchstens vier Abschnitte, 10 % Luft über dem Maximum */
+function vzNice(max){ const m = Math.max(10, max * 1.1), st = [5, 10, 20, 25, 50, 100, 200, 250, 500].find(s => Math.ceil(m / s) <= 4) || 1000; return {st, top:Math.ceil(m / st) * st}; }
+/* Anzeige-Glättung der Ermüdung (7 Tage, zentriert). Nur für die Linie, nicht für Rechnung, Infofeld oder Plan-Check. */
+const vzSm7 = (v, k = 3) => v.map((_, i) => { let s = 0, n = 0; for (let j = Math.max(0, i - k); j <= Math.min(v.length - 1, i + k); j++) { s += v[j]; n++; } return s / n; });
+/* x-Beschriftung: 8 Wochen je Montag als Datum, sonst Monatserste; ausgedünnt, damit sich nichts überlappt (12 px Schrift) */
+const vzLblW = s => s.length * 7.2 + 8;
+function vzXTicks(vis, X, rng, W, L, R){
+  const MON = lang() === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+  const c = []; vis.forEach((r, i) => { const d = dOnly(r.day); if (rng === '8w' ? d.getDay() === 1 : d.getDate() === 1) c.push({i, s:rng === '8w' ? fmt(r.day).slice(0, 6) : MON[d.getMonth()] + (d.getMonth() === 0 && rng === 'season' ? ' ' + String(d.getFullYear()).slice(2) : '')}); });
+  const out = []; let right = -1e9;
+  c.forEach(t => { const w = vzLblW(t.s), x = Math.max(L + w / 2, Math.min(W - R - w / 2, X(t.i))); if (x - w / 2 >= right + 4) { out.push({...t, x, w}); right = x + w / 2; } });
+  return out;
+}
+/* Fähnchen der Events: Priorität und Kurzname, bei Platzmangel nur der Buchstabe, notfalls nur die Linie */
+function vzFlags(evs, vis, X, W, L, R){
+  /* Erst bekommt jedes Event (Hauptevent, dann A, B, C) seinen Buchstaben, dann wird nach Priorität auf „A · Name“
+     erweitert, wo Platz ist. Ohne Platz bleibt nur die Linie. */
+  const taken = [], free = (l, w, own) => !taken.some(t => t !== own && l < t[1] + 4 && l + w > t[0] - 4), rk = e => e.main ? 0 : e.prio === 'A' ? 1 : e.prio === 'B' ? 2 : 3;
+  const out = evs.map(e => ({...e, i:vis.findIndex(r => r.day === e.date), lbl:''})).filter(e => e.i >= 0), ord = out.slice().sort((a, b) => rk(a) - rk(b) || a.i - b.i);
+  const place = (f, lbl, own) => { const w = lbl.length > 1 ? vzLblW(lbl) + 4 : 22; for (const l of [f.x, f.x - w]) if (l >= L - 2 && l + w <= W - R + 2 && free(l, w, own)) return {l, w}; return null; };
+  ord.forEach(f => { f.x = X(f.i); const q = place(f, f.prio); if (q) { f.lbl = f.prio; f.w = q.w; f.left = q.l; f.slot = [q.l, q.l + q.w]; taken.push(f.slot); } });
+  ord.forEach(f => { if (!f.slot) return; const full = `${f.prio} · ${f.name.length > 12 ? f.name.slice(0, 11) + '…' : f.name}`, q = place(f, full, f.slot);
+    if (q) { f.slot[0] = q.l; f.slot[1] = q.l + q.w; f.lbl = full; f.w = q.w; f.left = q.l; } });
+  return out;
+}
+/* Namen je Tag fürs Infofeld: gefahrene Fahrten, geplante Einheiten (wie in der Prognose), Events */
+function vzNames(p, a, b){
+  const o = {}, add = (d, n) => { if (!d || d < a || d > b || !n) return; const L = o[d] || (o[d] = []); if (!L.includes(n)) L.push(n); }, today = iso(0);
+  [...(S.man || []), ...(S.hist || [])].forEach(m => { const d = m.day || (m.ts || '').slice(0, 10); if (d <= today) add(d, String(m.n || '').slice(0, 40)); });
+  if (p && S.plan) S.plan.forEach((x, i) => { const d = dstr(i); if (d >= today && x && x.m > 0) add(d, x.n); });
+  const sw = typeof strWeek !== 'undefined' ? strWeek : null;
+  try { const tot = phases(p).slice(-1)[0].to; for (let w = S.wk + 1; w <= tot; w++) { const base = addD(p.start, (w - 1) * 7); if (base > b) break; if (addD(base, 6) < a) continue;
+      genWeek(p, w).forEach((x, k) => { if (x && x.m > 0) add(addD(base, k), x.n); }); } } catch (e) { elog(e); }
+  try { if (sw !== null) strWeek = sw; } catch (e) { elog(e); }
+  vzEvs(p).forEach(e => add(e.date, `${e.prio}-Event: ${e.name}`));
+  return o;
+}
+/* Infofeld über der Grafik: Datum, Fitness, Ermüdung, Form mit Wort, TSS (gefahren bzw. geplant), Einheit */
+function vzInfo(r, nm, today){
+  if (!r) return '';
+  const d = dOnly(r.day), wd = (lang() === 'en' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'])[d.getDay()], tsb = Math.round(r.tsb);
+  const tag = r.day === today ? wkL('Heute', 'Today') : r.f ? wkL('Prognose', 'Forecast') : '';
+  const t = Math.round(r.t), tss = r.f ? (t ? wkL(`TSS ${t} geplant`, `TSS ${t} planned`) : wkL('Ruhetag', 'Rest day')) : (t ? wkL(`TSS ${t} gefahren`, `TSS ${t} ridden`) : wkL('keine Fahrt', 'no ride'));
+  return `<div class="vzi-h"><b>${wd}, ${esc(fmt(r.day))}</b>${tag ? ` · <span>${tag}</span>` : ''}</div>
+    <div class="vzi-v"><span><i class="vzi-c"></i>${wkL('Fitness', 'Fitness')} <b>${Math.round(r.ctl)}</b></span><span><i class="vzi-a"></i>${wkL('Ermüdung', 'Fatigue')} <b>${Math.round(r.atl)}</b></span><span>${wkL('Form', 'Form')} <b>${vzSgn(tsb)}</b> ${esc(vzWord(tsb))}</span></div>
+    <div class="vzi-t">${esc(tss)}${nm && nm.length ? ' · ' + esc(nm.join(', ')) : ''}</div>`;
+}
+const vzIdx = (px, g) => Math.max(0, Math.min(g.n - 1, Math.round((px - g.L) / Math.max(1, g.W - g.L - g.R) * (g.n - 1))));
+function vzPaint(id, i){
+  const g = vzReg[id]; if (!g) return; i = Math.max(0, Math.min(g.n - 1, i)); g.cur = i; vzSt.sel = g.rows[i].day;
+  if (vzRaf) return; vzRaf = 1; const run = () => { if (!vzRaf) return; vzRaf = 0; const j = g.cur, x = g.X(j).toFixed(1), r = g.rows[j];
+    document.querySelectorAll(`[data-vz="${id}"] .vz-sel`).forEach(l => { l.setAttribute('x1', x); l.setAttribute('x2', x); l.style.display = ''; });
+    document.querySelectorAll(`[data-vz="${id}"] .vz-seld`).forEach(c => { c.setAttribute('cx', x); c.setAttribute('cy', g.Y(r.ctl).toFixed(1)); c.style.display = g.show.ctl ? '' : 'none'; });
+    const el = document.getElementById(id + '-i'); if (el) el.innerHTML = vzInfo(r, g.names[r.day], g.today); };
+  /* flüssig mit requestAnimationFrame; der Zeitgeber springt ein, wenn die Seite im Hintergrund keine Frames zeichnet */
+  if (window.requestAnimationFrame) window.requestAnimationFrame(run); setTimeout(run, 60);
+}
+/* Wischen: ein Finger waagerecht (senkrecht scrollt die Seite, touch-action: pan-y); Antippen eines Fähnchens öffnet den Plan-Check */
+let vzDown = null;
+function vzPx(ev, id){ const svg = ev.currentTarget, r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal; return {x:(ev.clientX - r.left) / r.width * vb.width, y:(ev.clientY - r.top) / r.height * vb.height}; }
+function vzPtr(ev, id, kind){
+  try { const g = vzReg[id]; if (!g) return; const q = vzPx(ev, id);
+    if (kind === 'down') { vzDown = {x:ev.clientX, y:ev.clientY, id}; vzPaint(id, vzIdx(q.x, g)); return; }
+    if (kind === 'move') { if (vzDown || ev.pointerType === 'mouse') vzPaint(id, vzIdx(q.x, g)); return; }
+    if (kind === 'up') { const tap = vzDown && Math.abs(ev.clientX - vzDown.x) < 8 && Math.abs(ev.clientY - vzDown.y) < 8; vzDown = null;
+      if (tap && ev.currentTarget.classList.contains('vz-main') && q.y < g.T) { const f = g.flags.filter(f => Math.abs(f.x - q.x) < 24 || (f.lbl && q.x >= f.left && q.x <= f.left + f.w)).sort((a, b) => Math.abs(a.x - q.x) - Math.abs(b.x - q.x))[0]; if (f) { vzSt.full = false; try { efSel = f.id; } catch (e) { elog(e); } goPg('check'); } } }
+  } catch (e) { elog(e); }
+}
+function vzKey(ev, id){ const g = vzReg[id]; if (!g) return; const k = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0; if (!k) return; ev.preventDefault(); vzPaint(id, (g.cur != null ? g.cur : g.ti) + k * (ev.shiftKey ? 7 : 1)); }
+/* Antippen außerhalb der Grafik setzt die Auswahl auf heute zurück */
+function vzOut(ev, id){ if (ev.target.closest && ev.target.closest('svg,button,a,.gl,select,input')) return; const g = vzReg[id]; if (g && g.cur !== g.ti) vzPaint(id, g.ti); vzSt.sel = null; }
+/* Kachel: zum passenden Tag springen (Zeitraum wechselt, wenn der Tag nicht im gezeigten Zeitraum liegt) */
+function vzJump(day, rng){ if (!day) return; const R0 = vzRows(); if (!R0) return; const w = vzWin(R0, vzRng(), vzEvs(S.p)); if (day < w.a || day > w.b) S.vzRng = rng; vzSt.sel = day; save(); render(); }
+
+function vzChart(p, R0, rng, full){
+  const evs = vzEvs(p), {vis} = vzWin(R0, rng, evs), n = vis.length; if (n < 2) return null;
+  const id = 'vz' + (++vzN); if (vzN > 200) { vzReg = {}; vzN = 1; }
+  const sh = vzSt.show, W = vzW(full), L = 34, R = 10, T = 40, B = 26, H = full ? Math.max(320, Math.round(((window.innerHeight || 700) - 260) * .62)) : 260, H2 = full ? 170 : 130;
+  const X = i => L + i * (W - L - R) / Math.max(1, n - 1), today = R0.today, ti = Math.max(0, vis.findIndex(r => r.day === today)), smooth = rng === 'race' || rng === 'season';
+  const atlD = smooth ? vzSm7(vis.map(r => r.atl)) : vis.map(r => r.atl);
+  const ny = vzNice(Math.max(20, ...vis.map(r => r.ctl), ...(sh.atl ? atlD : [0]))), Y = v => T + (H - T - B) * (1 - v / ny.top), base = H - B;
+  const pts = (vals, a, b) => vals.slice(a, b + 1).map((v, j) => `${X(a + j).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const ctlV = vis.map(r => r.ctl), xT = X(ti);
+  const grid = []; for (let v = 0; v <= ny.top + 1e-9; v += ny.st) grid.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" class="${v ? 'vz-gl' : 'gl0'}"/><text x="${L - 6}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end" class="tx">${v}</text>`);
+  const ticks = vzXTicks(vis, X, rng, W, L, R), flags = vzFlags(evs, vis, X, W, L, R);
+  /* Heute und Prognose: Beschriftungen kollidieren nicht (bei wenig Platz links beide rechts der Linie) */
+  const hw = vzLblW(wkL('Heute', 'Today')), roomL = xT - L > hw + 4, fut = ti < n - 1;
+  const lblNow = roomL ? `<text x="${(xT - 5).toFixed(1)}" y="${T + 14}" text-anchor="end" class="tx vz-nowt">${wkL('Heute', 'Today')}</text>` : `<text x="${(xT + 5).toFixed(1)}" y="${T + 14}" class="tx vz-nowt">${wkL('Heute', 'Today')}</text>`;
+  const lblFut = fut && W - R - xT > (roomL ? 80 : 80 + hw) ? `<text x="${(xT + (roomL ? 5 : hw + 12)).toFixed(1)}" y="${T + 14}" class="tx">${wkL('Prognose', 'Forecast')}</text>` : '';
+  const peakRow = R0.rows.filter(r => r.day <= R0.end).reduce((m, r) => !m || r.ctl > m.ctl ? r : m, null), pi = peakRow ? vis.findIndex(r => r.day === peakRow.day) : -1;
+  const evLine = (f, y1, y2) => `<line x1="${f.x.toFixed(1)}" x2="${f.x.toFixed(1)}" y1="${y1}" y2="${y2}" class="${f.main ? 'goal vz-evl' : 'vz-evl'}${f.prio === 'A' ? ' vz-a' : ''}" data-day="${esc(f.date)}"/>`;
+  const flagSvg = flags.map(f => `<g class="${f.main ? 'vz-evm' : 'vz-ev'}${f.prio === 'A' ? ' vz-a' : ''}" data-day="${esc(f.date)}">${evLine(f, f.lbl ? 30 : 10, base)}${f.lbl ? `<rect x="${f.left.toFixed(1)}" y="6" width="${f.w.toFixed(1)}" height="24" class="vz-fl"/><text x="${(f.left + f.w / 2).toFixed(1)}" y="22" text-anchor="middle" class="tx vz-flt">${esc(f.lbl)}</text>` : ''}</g>`).join('');
+  const main = `<svg viewBox="0 0 ${W} ${H}" width="100%" class="pchart vz-main" data-vz="${id}" tabindex="0" aria-hidden="true" style="touch-action:pan-y" onpointerdown="vzPtr(event,'${id}','down')" onpointermove="vzPtr(event,'${id}','move')" onpointerup="vzPtr(event,'${id}','up')" onpointercancel="vzDown=null" onkeydown="vzKey(event,'${id}')">
+    ${fut ? `<rect x="${xT.toFixed(1)}" y="${T}" width="${(X(n - 1) - xT).toFixed(1)}" height="${base - T}" class="vz-fut"/>` : ''}${grid.join('')}
+    ${sh.atl ? `<polyline points="${pts(atlD, 0, ti)}" class="vz-atl"/>${fut ? `<polyline points="${pts(atlD, ti, n - 1)}" class="vz-atl vz-dash"/>` : ''}` : ''}
+    ${sh.ctl ? `<polyline points="${pts(ctlV, 0, ti)}" class="vz-ctl"/>${fut ? `<polyline points="${pts(ctlV, ti, n - 1)}" class="vz-ctl vz-dash"/>` : ''}` : ''}
+    <line x1="${xT.toFixed(1)}" x2="${xT.toFixed(1)}" y1="${T}" y2="${base}" class="now"/>${lblNow}${lblFut}${flagSvg}
+    ${sh.ctl && pi >= 0 ? `<circle cx="${X(pi).toFixed(1)}" cy="${Y(peakRow.ctl).toFixed(1)}" r="4.5" class="vz-pk"/><text x="${Math.max(L + 30, Math.min(W - R - 30, X(pi))).toFixed(1)}" y="${(Y(peakRow.ctl) - 9).toFixed(1)}" text-anchor="middle" class="tx vz-pkt">${wkL('Spitze', 'Peak')} ${Math.round(peakRow.ctl)}</text>` : ''}
+    ${ticks.map(t => `<text x="${t.x.toFixed(1)}" y="${H - 7}" text-anchor="middle" class="tx vz-xt">${esc(t.s)}</text>`).join('')}
+    <line class="vz-sel" x1="0" x2="0" y1="${T}" y2="${base}" style="display:none"/><circle class="vz-seld" r="5.5" cx="0" cy="0" style="display:none"/></svg>`;
+  /* Form: Bereiche im Hintergrund, 8 Wochen als Tagesbalken, sonst als Fläche um die Nulllinie */
+  const tv = vis.map(r => r.tsb), lo = Math.min(-35, Math.min(...tv) * 1.1), hi = Math.max(30, Math.max(...tv) * 1.1), Yt = v => 6 + (H2 - 12) * (hi - v) / (hi - lo), y0 = Yt(0);
+  const bands = VZ_BANDS.map(([a, b, c]) => { const y1 = Yt(Math.min(hi, b)), y2 = Yt(Math.max(lo, a)); return y2 > y1 ? `<rect x="${L}" y="${y1.toFixed(1)}" width="${W - L - R}" height="${(y2 - y1).toFixed(1)}" class="${c}"/>` : ''; }).join('');
+  const bw = (W - L - R) / n, cls = v => v > 25 ? 'vzt-lost' : v >= 5 ? 'vzt-fresh' : v >= -10 ? 'vzt-neut' : v >= -30 ? 'vzt-train' : 'vzt-high';
+  const area = (a, b, sign) => { if (b < a) return ''; let d = `M${X(a).toFixed(1)},${y0.toFixed(1)}`; for (let i = a; i <= b; i++) d += `L${X(i).toFixed(1)},${Yt(sign > 0 ? Math.max(0, tv[i]) : Math.min(0, tv[i])).toFixed(1)}`; return d + `L${X(b).toFixed(1)},${y0.toFixed(1)}Z`; };
+  const tsbSvg = rng === '8w' ? vis.map((r, i) => { const y1 = Yt(r.tsb); return `<rect x="${(X(i) - bw * .38).toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${(bw * .76).toFixed(1)}" height="${Math.max(.8, Math.abs(y1 - y0)).toFixed(1)}" class="${cls(r.tsb)}${r.f ? ' vz-f' : ''}"/>`; }).join('')
+    : `<path d="${area(0, ti, 1)}" class="vzt-pos"/><path d="${area(0, ti, -1)}" class="vzt-neg"/>${fut ? `<path d="${area(ti, n - 1, 1)}" class="vzt-pos vz-f"/><path d="${area(ti, n - 1, -1)}" class="vzt-neg vz-f"/>` : ''}`;
+  const tsbG = sh.tsb ? `<svg viewBox="0 0 ${W} ${H2}" width="100%" class="pchart vz-tsb" data-vz="${id}" aria-hidden="true" style="touch-action:pan-y" onpointerdown="vzPtr(event,'${id}','down')" onpointermove="vzPtr(event,'${id}','move')" onpointerup="vzPtr(event,'${id}','up')" onpointercancel="vzDown=null">${bands}${tsbSvg}
+    ${flags.map(f => evLine(f, 0, H2)).join('')}<line x1="${xT.toFixed(1)}" x2="${xT.toFixed(1)}" y1="0" y2="${H2}" class="now"/>
+    <line x1="${L}" x2="${W - R}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" class="vz-zero"/><text x="${L - 6}" y="${(y0 + 4).toFixed(1)}" text-anchor="end" class="tx">0</text>
+    ${hi > 30 ? `<text x="${L - 6}" y="${(Yt(25) + 4).toFixed(1)}" text-anchor="end" class="tx">+25</text>` : ''}<text x="${L - 6}" y="${(Yt(-30) + 4).toFixed(1)}" text-anchor="end" class="tx">−30</text>
+    <line class="vz-sel" x1="0" x2="0" y1="0" y2="${H2}" style="display:none"/></svg>
+    <div class="vz-bands">${VZ_BANDS.map(([a, b, c, de, en]) => `<span><i class="${c}"></i>${a >= 25 ? wkL('über +25', 'above +25') : a <= -99 ? wkL('unter −30', 'below −30') : `${vzSgn(a)} ${wkL('bis', 'to')} ${vzSgn(b)}`}: ${wkL(de, en)}</span>`).join('')}</div>` : '';
+  const names = vzNames(p, vis[0].day, vis[n - 1].day), si = vzSt.sel ? vis.findIndex(r => r.day === vzSt.sel) : -1;
+  vzReg[id] = {rows:vis.map(r => ({day:r.day, ctl:r.ctl, atl:r.atl, tsb:r.tsb, t:r.t, f:r.f})), n, L, R, W, T, X, Y, ti, cur:si >= 0 ? si : ti, names, today, flags, show:{...sh}};
+  setTimeout(() => vzPaint(id, vzReg[id] ? vzReg[id].cur : 0), 0);
+  return {id, main, tsbG, vis, smooth, info:vzInfo(vis[si >= 0 ? si : ti], names[(vis[si >= 0 ? si : ti] || {}).day], today)};
 }
 function vzForm(){
   const p = S.p, R0 = vzRows(); if (!R0) return '';
   const {rows, vis, end, today, ei, peak} = R0; if (vis.length < 5) return '';
-  const W = 340, H = 150, H2 = 70, L = 28, R = 8, T = 10, Bm = 18, n = vis.length, X = i => L + i * (W - L - R) / Math.max(1, n - 1);
-  const mx = Math.max(...vis.map(r => Math.max(r.ctl, r.atl)), 20) * 1.1, Y = v => T + (H - T - Bm) * (1 - v / mx);
-  const tm = Math.max(10, ...vis.map(r => Math.abs(r.tsb))) * 1.1, Yt = v => H2 / 2 - (H2 / 2 - 6) * v / tm, ti = vis.findIndex(r => r.f), tI = ti < 0 ? n - 1 : ti - 1;
-  const line = (k, from, to) => vis.slice(from, to + 1).map((r, j) => `${X(from + j).toFixed(1)},${Y(r[k]).toFixed(1)}`).join(' ');
-  const ev = vis[ei], evT = Math.round(ev.tsb), evC = Math.round(ev.ctl), isEv = p.goal === 'event';
-  const mt = vzTicks(vis, X);
-  const MON = lang() === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-  const svg = `<svg viewBox="0 0 ${W} ${H}" class="pchart" role="img" aria-label="Fitness und Ermüdung">
-    ${[0, Math.round(mx / 2 / 10) * 10].map(v => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" class="gl0"/><text x="${L - 4}" y="${Y(v) + 3}" text-anchor="end" class="tx">${v}</text>`).join('')}
-    ${ti > 0 ? `<rect x="${X(tI)}" y="${T}" width="${X(n - 1) - X(tI)}" height="${H - T - Bm}" class="vz-fut"/>` : ''}
-    <polyline points="${line('atl', 0, tI)}" class="vz-atl"/><polyline points="${line('ctl', 0, tI)}" class="vz-ctl"/>
-    ${ti > 0 ? `<polyline points="${line('atl', tI, n - 1)}" class="vz-atl vz-dash"/><polyline points="${line('ctl', tI, n - 1)}" class="vz-ctl vz-dash"/>` : ''}
-    <line x1="${X(tI)}" x2="${X(tI)}" y1="${T}" y2="${H - Bm}" class="now"/><text x="${X(tI) + 3}" y="${T + 8}" class="tx">heute</text>
-    ${isEv ? `<line x1="${X(ei).toFixed(1)}" x2="${X(ei).toFixed(1)}" y1="${T}" y2="${H - Bm}" class="goal" data-day="${esc(vis[ei].day)}"/>` : ''}
-    ${isEv ? vzEvMarks(p, vis, X, T) : ''}
-    ${mt.map(i => `<text x="${X(i)}" y="${H - 5}" class="tx">${MON[new Date(vis[i].day + 'T12:00:00').getMonth()]}</text>`).join('')}</svg>
-    <svg viewBox="0 0 ${W} ${H2}" class="pchart" role="img" aria-label="Form">
-    <line x1="${L}" x2="${W - R}" y1="${Yt(0)}" y2="${Yt(0)}" class="gl0"/><text x="${L - 4}" y="${Yt(0) + 3}" text-anchor="end" class="tx">0</text>
-    ${vis.map((r, i) => { const v = r.tsb, y0 = Yt(0), y1 = Yt(v), bw = Math.max(1, (W - L - R) / n * .8); return `<rect x="${(X(i) - bw / 2).toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(.5, Math.abs(y1 - y0)).toFixed(1)}" fill="${v >= 5 ? '#0a8f6a' : v <= -10 ? '#f07d3a' : '#9aa7b8'}" fill-opacity="${r.f ? .45 : 1}"/>`; }).join('')}
-    <text x="${L + 2}" y="10" class="tx">frisch</text><text x="${L + 2}" y="${H2 - 3}" class="tx">müde</text></svg>`;
+  const isEv = p.goal === 'event', rng = vzRng(), evs = vzEvs(p), ev = vis[ei], evT = Math.round(ev.tsb), evC = Math.round(ev.ctl);
   const cur = rows.find(r => r.day === today) || rows[rows.length - 1], ct = Math.round(cur.tsb);
   const state = v => v > 25 ? 'sehr ausgeruht, aber länger ohne Reiz verliert man Fitness' : v >= 5 ? 'frisch und bereit für eine gute Leistung' : v >= -10 ? 'im normalen Trainingsbereich' : v >= -30 ? 'müde vom Training, das ist im Aufbau gewollt' : 'stark ermüdet, achte auf Erholung';
+  const nx = evs.find(e => e.prio === 'A' && e.date >= today) || (isEv ? evs.find(e => e.main) : null), nxR = nx ? rows.find(r => r.day === nx.date) : null;
+  const pk = rows.filter(r => r.day <= end).reduce((m, r) => !m || r.ctl > m.ctl ? r : m, null);
+  const RN = {'8w':wkL('8 Wochen', '8 weeks'), '3m':wkL('3 Monate', '3 months'), race:wkL('Bis Renntag', 'To race day'), season:wkL('Saison', 'Season')};
+  const dl = d => dOnly(d).toLocaleDateString(wkL('de-DE', 'en-GB'), {day:'numeric', month:'long', year:'numeric'});
+  const say = wkL(`Formkurve, ${RN[rng]}. Fitness heute ${Math.round(cur.ctl)}, Form ${ct < 0 ? 'minus' : 'plus'} ${Math.abs(ct)}, ${vzWord(ct)}.`, `Form chart, ${RN[rng]}. Fitness today ${Math.round(cur.ctl)}, form ${ct < 0 ? 'minus' : 'plus'} ${Math.abs(ct)}, ${vzWord(ct)}.`)
+    + (nx && nxR ? wkL(` Am Renntag ${dl(nx.date)} Fitness etwa ${Math.round(nxR.ctl)}, Form ${nxR.tsb < 0 ? 'minus' : 'plus'} ${Math.abs(Math.round(nxR.tsb))}.`, ` On race day ${dl(nx.date)} fitness about ${Math.round(nxR.ctl)}, form ${nxR.tsb < 0 ? 'minus' : 'plus'} ${Math.abs(Math.round(nxR.tsb))}.`) : '');
+  const tile = (lbl, big, sub, day, rg) => `<button class="vz-tile" onclick="vzJump('${ja(day || '')}','${rg}')"${day ? '' : ' disabled'}><span class="vz-tl">${lbl}</span><span class="vz-tv">${big}</span><span class="vz-ts">${sub}</span></button>`;
+  const tiles = `<div class="vz-tiles">${tile(wkL('Fitness heute', 'Fitness today'), Math.round(cur.ctl), wkL('CTL', 'CTL'), today, '8w')}${tile(wkL('Form heute', 'Form today'), vzSgn(ct), esc(vzWord(ct)), today, '8w')}
+    ${nx && nxR ? tile(`<span data-noi18n>${esc(nx.name.length > 18 ? nx.name.slice(0, 17) + '…' : nx.name)}</span> · ${esc(fmt(nx.date).slice(0, 6))}`, `${Math.round(nxR.ctl)} <small>· ${vzSgn(Math.round(nxR.tsb))}</small>`, wkL('Am Renntag: Fitness · Form', 'Race day: fitness · form'), nx.date, 'race') : tile(wkL('Am Renntag', 'Race day'), '–', wkL('kein A-Event geplant', 'no A event planned'), '', 'race')}
+    ${pk ? tile(wkL('Saisonspitze', 'Season peak'), Math.round(pk.ctl), `${wkL('Fitness am', 'Fitness on')} ${esc(fmt(pk.day).slice(0, 6))}`, pk.day, 'season') : ''}</div>`;
+  const seg = VZ_RNG.map(k => `<button class="${rng === k ? 'on' : ''}" aria-pressed="${rng === k}" style="min-height:44px" onclick="vzSet('rng','${k}')">${RN[k]}</button>`).join('');
+  const gi = re => { try { const i = GL[lang()].findIndex(g => g[0].test(re)); return i >= 0 ? `<span class="gl vz-gi" tabindex="0" role="button" data-g="${i}" aria-label="${esc(wkL('Erklärung', 'Explanation'))}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg></span>` : ''; } catch (e) { elog(e); return ''; } };
+  const chip = (k, l, cls) => `<button class="vz-chip${vzSt.show[k] ? ' on' : ''}" aria-pressed="${!!vzSt.show[k]}" onclick="vzSet('show','${k}')"><i class="${cls}"></i>${l}</button>`;
+  const block = full => { const c = vzChart(p, R0, rng, full); if (!c) return '';
+    return `<div class="vz-ctl-row"><div class="dtabs vz-rng">${seg}</div></div>
+      <div class="vz-legend">${chip('ctl', wkL('Fitness', 'Fitness'), 'vzl-ctl')}${gi('CTL')}${chip('atl', wkL('Ermüdung', 'Fatigue') + (c.smooth ? wkL(' (geglättet)', ' (smoothed)') : ''), 'vzl-atl')}${gi('ATL')}${chip('tsb', wkL('Form', 'Form'), 'vzl-tsb')}
+        ${full ? `<button class="vz-full" aria-label="${esc(wkL('Vollbild schließen', 'Close full screen'))}" onclick="vzSet('full',0)">${ic('close', 20)}</button>` : `<button class="vz-full" aria-label="${esc(wkL('Vergrößern', 'Enlarge'))}" onclick="vzSet('full',1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>`}</div>
+      <div class="vz-info" id="${c.id}-i" aria-live="polite">${c.info}</div>
+      <div role="img" aria-label="${esc(say)}">${c.main}${c.tsbG}</div>
+      <table class="sr-only"><caption>${esc(wkL('Fitness, Ermüdung und Form je Woche', 'Fitness, fatigue and form per week'))}</caption><thead><tr><th>${wkL('Datum', 'Date')}</th><th>${wkL('Fitness', 'Fitness')}</th><th>${wkL('Ermüdung', 'Fatigue')}</th><th>${wkL('Form', 'Form')}</th></tr></thead><tbody>${c.vis.filter((r, i) => i % 7 === 0 || i === c.vis.length - 1).map(r => `<tr><td>${esc(fmt(r.day))}${r.f ? ' ' + wkL('(Prognose)', '(forecast)') : ''}</td><td>${Math.round(r.ctl)}</td><td>${Math.round(r.atl)}</td><td>${vzSgn(Math.round(r.tsb))}</td></tr>`).join('')}</tbody></table>`; };
   const hint = isEv ? vzRaceHint(ev.tsb, ev.ctl, peak) : '';
-  const out = isEv ? `<p class="mt-2 text-sm"><b>Am Renntag (${fmt(end)}):</b> Fitness etwa ${evC}, Form ${evT > 0 ? '+' : ''}${evT}, also ${state(evT)}.${evT < 5 && !hint ? ' Halte dich in den Tagen davor an die Entlastung im Plan.' : ''}</p>${hint ? `<p class="mt-2 p-2.5 text-sm" role="note" style="border:1px solid var(--line);border-left:3px solid #d9a400">${esc(hint)}</p>` : ''}` : `<p class="mt-2 text-sm"><b>Planende (${fmt(end)}):</b> Fitness etwa ${evC}${evC > Math.round(cur.ctl) ? `, ${Math.round(evC - cur.ctl)} mehr als heute` : ''}.</p>`;
-  return `<section class="panel p-4"><p class="hd text-xl font-semibold">Formkurve${isEv ? ' bis zum Event' : ''}</p><p class="mt-1 text-sm" style="color:var(--mute)">Heute: Fitness ${Math.round(cur.ctl)}, Form ${ct > 0 ? '+' : ''}${ct}, du bist ${state(ct)}. Ab heute gestrichelt: so geht es weiter, wenn du den Plan fährst.</p>${svg}
-    <div class="plg"><span><i class="vzl-ctl"></i>Fitness (CTL)</span><span><i class="vzl-atl"></i>Ermüdung (ATL)</span><span><i class="vzl-tsb"></i>Form (Fitness − Ermüdung)</span></div>${out}
-    <p class="mt-1 text-xs" style="color:var(--mute)">Geschätzt aus der Belastung (TSS) deiner Fahrten und erledigten Einheiten. Fehlen Fahrten, liegt die Fitness höher als hier gezeigt.</p></section>`;
+  const out = isEv ? `<p class="mt-3 text-sm"><b>Am Renntag (${fmt(end)}):</b> Fitness etwa ${evC}, Form ${evT > 0 ? '+' : ''}${evT}, also ${state(evT)}.${evT < 5 && !hint ? ' Halte dich in den Tagen davor an die Entlastung im Plan.' : ''}</p>${hint ? `<div class="mt-2 p-2.5 text-sm" role="note" style="border:1px solid var(--line);border-left:3px solid #d9a400"><p>${esc(hint)}</p><button class="ghost mt-2 !w-auto !px-3 !py-2 text-sm" style="min-height:44px" onclick="goPg('check')">Plan-Check öffnen</button></div>` : ''}` : `<p class="mt-3 text-sm"><b>Planende (${fmt(end)}):</b> Fitness etwa ${evC}${evC > Math.round(cur.ctl) ? `, ${Math.round(evC - cur.ctl)} mehr als heute` : ''}.</p>`;
+  const body = block(false); if (!body) return '';
+  const fullV = vzSt.full ? `<div class="vz-fullv" role="dialog" aria-modal="true" aria-label="${esc(wkL('Formkurve im Vollbild', 'Form chart full screen'))}" data-noi18n onclick="vzOut(event, (document.querySelector('.vz-fullv .vz-info')||{}).id ? document.querySelector('.vz-fullv .vz-info').id.slice(0,-2) : '')"><p class="hd text-xl font-semibold">${wkL('Formkurve', 'Form chart')}</p>${block(true)}</div>` : '';
+  return `<section class="panel vz-card" onclick="vzOut(event, (this.querySelector('.vz-info')||{}).id ? this.querySelector('.vz-info').id.slice(0,-2) : '')"><p class="hd text-xl font-semibold">Formkurve${isEv ? ' bis zum Event' : ''}</p>
+    <div data-noi18n>${tiles}<p class="mt-3 text-sm" style="color:var(--mute)">${wkL('Ab heute gestrichelt: so geht es weiter, wenn du den Plan fährst. Wische über die Grafik für die Werte eines Tages.', 'Dashed from today: how it continues if you follow the plan. Swipe across the chart for the values of a day.')}</p>${body}</div>${out}
+    <p class="mt-2 text-xs" style="color:var(--mute)">Geschätzt aus der Belastung (TSS) deiner Fahrten und erledigten Einheiten. Fehlen Fahrten, liegt die Fitness höher als hier gezeigt.</p></section>${fullV}`;
 }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && vzSt.full) vzSet('full', 0); });
 
