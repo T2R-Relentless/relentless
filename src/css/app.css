@@ -298,30 +298,33 @@
   /* F28 Formkurve */
   .vz-card{padding:16px 12px}
   .vz-card>.hd{padding:0 4px}
-  .vz-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
-  .vz-tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;min-height:44px;padding:10px 12px;background:var(--tint);border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer}
+  .vz-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:4px}
+  .vz-tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;text-align:left;min-height:44px;padding:8px 10px;background:var(--tint);border:1px solid var(--line);color:var(--ink);font:inherit;cursor:pointer}
   .vz-tile:disabled{cursor:default}
-  .vz-tl{font-size:13px;color:var(--mute);line-height:1.25}
-  .vz-tv{font-size:30px;font-weight:700;line-height:1.1;letter-spacing:-.01em}
-  .vz-tv small{font-size:18px;font-weight:600}
-  .vz-ts{font-size:13px;color:var(--mute)}
+  .vz-tl{display:block;max-width:100%;font-size:13px;color:var(--mute);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vz-tv{display:flex;align-items:baseline;gap:6px;font-size:28px;font-weight:700;line-height:1.1;letter-spacing:-.01em}
+  .vz-tv small{font-size:14px;font-weight:600;color:var(--mute);letter-spacing:0}
   .vz-ctl-row{margin-top:12px}
-  .vz-rng button{font-size:14px;padding-left:4px;padding-right:4px}
-  .vz-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
-  .vz-chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);background:transparent;color:var(--mute);cursor:pointer}
-  .vz-chip.on{color:var(--ink);border-color:var(--ink)}
-  .vz-chip i{display:inline-block;width:16px;height:3px}
+  .vz-rng button{font-size:13px;padding-left:2px;padding-right:2px;white-space:nowrap}
+  .vz-legend{display:flex;flex-wrap:wrap;align-items:center;gap:0 2px;margin-top:4px}
+  .vz-chip{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:0 6px;font:inherit;font-size:13px;font-weight:600;border:0;background:transparent;color:var(--mute);cursor:pointer;text-decoration:line-through;text-decoration-thickness:1px}
+  .vz-chip.on{color:var(--ink);text-decoration:none}
+  .vz-chip i{display:inline-block;width:12px;height:3px}
   .vz-chip i.vzl-ctl{background:var(--teal);height:4px}
   .vz-chip i.vzl-atl{background:repeating-linear-gradient(90deg,#e11d74 0 4px,transparent 4px 6px);height:2px}
   .vz-chip i.vzl-tsb{width:12px;height:10px;background:linear-gradient(180deg,#0a8f6a 50%,#f07d3a 50%)}
   .vz-chip:not(.on) i{opacity:.35}
-  .vz-gi{display:inline-flex;align-items:center;justify-content:center;width:32px;min-height:44px;border:0;color:var(--mute)}
   .vz-full{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
-  .vz-info{margin-top:8px;padding:8px 10px;background:var(--tint);border:1px solid var(--line);font-size:14px;line-height:1.4;min-height:76px}
-  .vz-info .vzi-v{display:flex;flex-wrap:wrap;gap:2px 14px}
+  .vz-info{margin-top:4px;padding:6px 10px;background:var(--tint);border:1px solid var(--line);font-size:14px;line-height:1.35}
+  .vz-info .vzi-h{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .vz-info .vzi-tss{color:var(--mute)}
+  .vz-info .vzi-v{display:flex;flex-wrap:wrap;gap:0 12px}
   .vz-info .vzi-v i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:5px}
   .vz-info .vzi-c{background:var(--teal)} .vz-info .vzi-a{background:#e11d74}
-  .vz-info .vzi-t{color:var(--mute)}
+  .vz-info .vzi-t{color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vz-cap{margin:6px 0 0;font-size:13px;line-height:1.4;color:var(--mute)}
+  .vz-rng .vz-sh{display:none}
+  @media (max-width:359px){.vz-rng .vz-lg{display:none}.vz-rng .vz-sh{display:inline}.vz-tv{font-size:26px}}
   .pchart.vz-main,.pchart.vz-tsb{margin-top:6px;user-select:none;-webkit-user-select:none;cursor:crosshair}
   .vz-main:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
   .vz-main .tx,.vz-tsb .tx{font-size:12px}

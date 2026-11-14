@@ -249,9 +249,9 @@ function vzInfo(r, nm, today){
   const d = dOnly(r.day), wd = (lang() === 'en' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'])[d.getDay()], tsb = Math.round(r.tsb);
   const tag = r.day === today ? wkL('Heute', 'Today') : r.f ? wkL('Prognose', 'Forecast') : '';
   const t = Math.round(r.t), tss = r.f ? (t ? wkL(`TSS ${t} geplant`, `TSS ${t} planned`) : wkL('Ruhetag', 'Rest day')) : (t ? wkL(`TSS ${t} gefahren`, `TSS ${t} ridden`) : wkL('keine Fahrt', 'no ride'));
-  return `<div class="vzi-h"><b>${wd}, ${esc(fmt(r.day))}</b>${tag ? ` · <span>${tag}</span>` : ''}</div>
+  return `<div class="vzi-h"><span><b>${wd}, ${esc(fmt(r.day))}</b>${tag ? ` · ${tag}` : ''}</span><span class="vzi-tss">${esc(tss)}</span></div>
     <div class="vzi-v"><span><i class="vzi-c"></i>${wkL('Fitness', 'Fitness')} <b>${Math.round(r.ctl)}</b></span><span><i class="vzi-a"></i>${wkL('Ermüdung', 'Fatigue')} <b>${Math.round(r.atl)}</b></span><span>${wkL('Form', 'Form')} <b>${vzSgn(tsb)}</b> ${esc(vzWord(tsb))}</span></div>
-    <div class="vzi-t">${esc(tss)}${nm && nm.length ? ' · ' + esc(nm.join(', ')) : ''}</div>`;
+    <div class="vzi-t">${nm && nm.length ? esc(nm.join(', ')) : '&nbsp;'}</div>`;
 }
 const vzIdx = (px, g) => Math.max(0, Math.min(g.n - 1, Math.round((px - g.L) / Math.max(1, g.W - g.L - g.R) * (g.n - 1))));
 function vzPaint(id, i){
@@ -333,29 +333,31 @@ function vzForm(){
   const nx = evs.find(e => e.prio === 'A' && e.date >= today) || (isEv ? evs.find(e => e.main) : null), nxR = nx ? rows.find(r => r.day === nx.date) : null;
   const pk = rows.filter(r => r.day <= end).reduce((m, r) => !m || r.ctl > m.ctl ? r : m, null);
   const RN = {'8w':wkL('8 Wochen', '8 weeks'), '3m':wkL('3 Monate', '3 months'), race:wkL('Bis Renntag', 'To race day'), season:wkL('Saison', 'Season')};
+  const RS = {'8w':wkL('8 Wo.', '8 wk'), '3m':wkL('3 Mon.', '3 mo'), race:wkL('Renntag', 'Race'), season:wkL('Saison', 'Season')};
   const dl = d => dOnly(d).toLocaleDateString(wkL('de-DE', 'en-GB'), {day:'numeric', month:'long', year:'numeric'});
   const say = wkL(`Formkurve, ${RN[rng]}. Fitness heute ${Math.round(cur.ctl)}, Form ${ct < 0 ? 'minus' : 'plus'} ${Math.abs(ct)}, ${vzWord(ct)}.`, `Form chart, ${RN[rng]}. Fitness today ${Math.round(cur.ctl)}, form ${ct < 0 ? 'minus' : 'plus'} ${Math.abs(ct)}, ${vzWord(ct)}.`)
     + (nx && nxR ? wkL(` Am Renntag ${dl(nx.date)} Fitness etwa ${Math.round(nxR.ctl)}, Form ${nxR.tsb < 0 ? 'minus' : 'plus'} ${Math.abs(Math.round(nxR.tsb))}.`, ` On race day ${dl(nx.date)} fitness about ${Math.round(nxR.ctl)}, form ${nxR.tsb < 0 ? 'minus' : 'plus'} ${Math.abs(Math.round(nxR.tsb))}.`) : '');
-  const tile = (lbl, big, sub, day, rg) => `<button class="vz-tile" onclick="vzJump('${ja(day || '')}','${rg}')"${day ? '' : ' disabled'}><span class="vz-tl">${lbl}</span><span class="vz-tv">${big}</span><span class="vz-ts">${sub}</span></button>`;
-  const tiles = `<div class="vz-tiles">${tile(wkL('Fitness heute', 'Fitness today'), Math.round(cur.ctl), wkL('CTL', 'CTL'), today, '8w')}${tile(wkL('Form heute', 'Form today'), vzSgn(ct), esc(vzWord(ct)), today, '8w')}
-    ${nx && nxR ? tile(`<span data-noi18n>${esc(nx.name.length > 18 ? nx.name.slice(0, 17) + '…' : nx.name)}</span> · ${esc(fmt(nx.date).slice(0, 6))}`, `${Math.round(nxR.ctl)} <small>· ${vzSgn(Math.round(nxR.tsb))}</small>`, wkL('Am Renntag: Fitness · Form', 'Race day: fitness · form'), nx.date, 'race') : tile(wkL('Am Renntag', 'Race day'), '–', wkL('kein A-Event geplant', 'no A event planned'), '', 'race')}
-    ${pk ? tile(wkL('Saisonspitze', 'Season peak'), Math.round(pk.ctl), `${wkL('Fitness am', 'Fitness on')} ${esc(fmt(pk.day).slice(0, 6))}`, pk.day, 'season') : ''}</div>`;
-  const seg = VZ_RNG.map(k => `<button class="${rng === k ? 'on' : ''}" aria-pressed="${rng === k}" style="min-height:44px" onclick="vzSet('rng','${k}')">${RN[k]}</button>`).join('');
-  const gi = re => { try { const i = GL[lang()].findIndex(g => g[0].test(re)); return i >= 0 ? `<span class="gl vz-gi" tabindex="0" role="button" data-g="${i}" aria-label="${esc(wkL('Erklärung', 'Explanation'))}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg></span>` : ''; } catch (e) { elog(e); return ''; } };
+  const tile = (lbl, big, sub, day, rg) => `<button class="vz-tile" onclick="vzJump('${ja(day || '')}','${rg}')"${day ? '' : ' disabled'}><span class="vz-tl">${lbl}</span><span class="vz-tv">${big}${sub ? `<small>${sub}</small>` : ''}</span></button>`;
+  const tiles = `<div class="vz-tiles">${tile(wkL('Fitness heute', 'Fitness today'), Math.round(cur.ctl), '', today, '8w')}${tile(wkL('Form heute', 'Form today'), vzSgn(ct), esc(vzWord(ct)), today, '8w')}
+    ${nx && nxR ? tile(`${esc(fmt(nx.date).slice(0, 6))} · <span data-noi18n>${esc(nx.name)}</span>`, Math.round(nxR.ctl), `${wkL('Form', 'Form')} ${vzSgn(Math.round(nxR.tsb))}`, nx.date, 'race') : tile(wkL('Renntag', 'Race day'), '–', wkL('kein A-Event', 'no A event'), '', 'race')}
+    ${pk ? tile(wkL('Saisonspitze', 'Season peak'), Math.round(pk.ctl), esc(fmt(pk.day).slice(0, 6)), pk.day, 'season') : ''}</div>`;
+  const seg = VZ_RNG.map(k => `<button class="${rng === k ? 'on' : ''}" aria-pressed="${rng === k}" aria-label="${esc(RN[k])}" style="min-height:44px" onclick="vzSet('rng','${k}')"><span class="vz-lg">${RN[k]}</span><span class="vz-sh" aria-hidden="true">${RS[k]}</span></button>`).join('');
   const chip = (k, l, cls) => `<button class="vz-chip${vzSt.show[k] ? ' on' : ''}" aria-pressed="${!!vzSt.show[k]}" onclick="vzSet('show','${k}')"><i class="${cls}"></i>${l}</button>`;
   const block = full => { const c = vzChart(p, R0, rng, full); if (!c) return '';
     return `<div class="vz-ctl-row"><div class="dtabs vz-rng">${seg}</div></div>
-      <div class="vz-legend">${chip('ctl', wkL('Fitness', 'Fitness'), 'vzl-ctl')}${gi('CTL')}${chip('atl', wkL('Ermüdung', 'Fatigue') + (c.smooth ? wkL(' (geglättet)', ' (smoothed)') : ''), 'vzl-atl')}${gi('ATL')}${chip('tsb', wkL('Form', 'Form'), 'vzl-tsb')}
+      <div class="vz-legend">${chip('ctl', wkL('Fitness', 'Fitness'), 'vzl-ctl')}${chip('atl', wkL('Ermüdung', 'Fatigue'), 'vzl-atl')}${chip('tsb', wkL('Form', 'Form'), 'vzl-tsb')}
         ${full ? `<button class="vz-full" aria-label="${esc(wkL('Vollbild schließen', 'Close full screen'))}" onclick="vzSet('full',0)">${ic('close', 20)}</button>` : `<button class="vz-full" aria-label="${esc(wkL('Vergrößern', 'Enlarge'))}" onclick="vzSet('full',1)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>`}</div>
       <div class="vz-info" id="${c.id}-i" aria-live="polite">${c.info}</div>
       <div role="img" aria-label="${esc(say)}">${c.main}${c.tsbG}</div>
+      <p class="vz-cap">${wkL('Ab heute gestrichelt: Prognose, wenn du den Plan fährst. Wische über die Grafik für die Werte eines Tages.', 'Dashed from today: forecast if you follow the plan. Swipe across the chart for the values of a day.')}${c.smooth ? wkL(' Ermüdung geglättet (7 Tage).', ' Fatigue smoothed (7 days).') : ''}</p>
       <table class="sr-only"><caption>${esc(wkL('Fitness, Ermüdung und Form je Woche', 'Fitness, fatigue and form per week'))}</caption><thead><tr><th>${wkL('Datum', 'Date')}</th><th>${wkL('Fitness', 'Fitness')}</th><th>${wkL('Ermüdung', 'Fatigue')}</th><th>${wkL('Form', 'Form')}</th></tr></thead><tbody>${c.vis.filter((r, i) => i % 7 === 0 || i === c.vis.length - 1).map(r => `<tr><td>${esc(fmt(r.day))}${r.f ? ' ' + wkL('(Prognose)', '(forecast)') : ''}</td><td>${Math.round(r.ctl)}</td><td>${Math.round(r.atl)}</td><td>${vzSgn(Math.round(r.tsb))}</td></tr>`).join('')}</tbody></table>`; };
   const hint = isEv ? vzRaceHint(ev.tsb, ev.ctl, peak) : '';
   const out = isEv ? `<p class="mt-3 text-sm"><b>Am Renntag (${fmt(end)}):</b> Fitness etwa ${evC}, Form ${evT > 0 ? '+' : ''}${evT}, also ${state(evT)}.${evT < 5 && !hint ? ' Halte dich in den Tagen davor an die Entlastung im Plan.' : ''}</p>${hint ? `<div class="mt-2 p-2.5 text-sm" role="note" style="border:1px solid var(--line);border-left:3px solid #d9a400"><p>${esc(hint)}</p><button class="ghost mt-2 !w-auto !px-3 !py-2 text-sm" style="min-height:44px" onclick="goPg('check')">Plan-Check öffnen</button></div>` : ''}` : `<p class="mt-3 text-sm"><b>Planende (${fmt(end)}):</b> Fitness etwa ${evC}${evC > Math.round(cur.ctl) ? `, ${Math.round(evC - cur.ctl)} mehr als heute` : ''}.</p>`;
   const body = block(false); if (!body) return '';
   const fullV = vzSt.full ? `<div class="vz-fullv" role="dialog" aria-modal="true" aria-label="${esc(wkL('Formkurve im Vollbild', 'Form chart full screen'))}" data-noi18n onclick="vzOut(event, (document.querySelector('.vz-fullv .vz-info')||{}).id ? document.querySelector('.vz-fullv .vz-info').id.slice(0,-2) : '')"><p class="hd text-xl font-semibold">${wkL('Formkurve', 'Form chart')}</p>${block(true)}</div>` : '';
   return `<section class="panel vz-card" onclick="vzOut(event, (this.querySelector('.vz-info')||{}).id ? this.querySelector('.vz-info').id.slice(0,-2) : '')"><p class="hd text-xl font-semibold">Formkurve${isEv ? ' bis zum Event' : ''}</p>
-    <div data-noi18n>${tiles}<p class="mt-3 text-sm" style="color:var(--mute)">${wkL('Ab heute gestrichelt: so geht es weiter, wenn du den Plan fährst. Wische über die Grafik für die Werte eines Tages.', 'Dashed from today: how it continues if you follow the plan. Swipe across the chart for the values of a day.')}</p>${body}</div>${out}
+    <div data-noi18n>${tiles}${body}</div>${out}
+    <p class="mt-2 text-xs" style="color:var(--mute)">Fitness (CTL): Trainingsstand der letzten etwa 6 Wochen. Ermüdung (ATL): Belastung der letzten 7 Tage. Form: Fitness minus Ermüdung.</p>
     <p class="mt-2 text-xs" style="color:var(--mute)">Geschätzt aus der Belastung (TSS) deiner Fahrten und erledigten Einheiten. Fehlen Fahrten, liegt die Fitness höher als hier gezeigt.</p></section>${fullV}`;
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && vzSt.full) vzSet('full', 0); });

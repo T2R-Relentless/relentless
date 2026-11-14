@@ -4489,6 +4489,7 @@
 "Form (Fitness − Ermüdung)": "Form (fitness − fatigue)",
 "frisch": "fresh",
 "müde": "tired",
+"Fitness (CTL): Trainingsstand der letzten etwa 6 Wochen. Ermüdung (ATL): Belastung der letzten 7 Tage. Form: Fitness minus Ermüdung.": "Fitness (CTL): training level over roughly the last 6 weeks. Fatigue (ATL): load of the last 7 days. Form: fitness minus fatigue.",
 "Geschätzt aus der Belastung (TSS) deiner Fahrten und erledigten Einheiten. Fehlen Fahrten, liegt die Fitness höher als hier gezeigt.": "Estimated from the load (TSS) of your rides and completed sessions. If rides are missing, your fitness is higher than shown here.",
 "Halte dich in den Tagen davor an die Entlastung im Plan.": "Stick to the taper in the plan during the days before.",
 "Wusstest du schon?": "Did you know?",

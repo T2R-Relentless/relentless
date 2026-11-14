@@ -38,7 +38,7 @@ test('F28: y-Maßstab mit runden Gitterwerten, 10 % Luft', async () => {
 
 test('F28: Glättung der Ermüdung nur in der Anzeige, Rechnung unverändert', async () => {
   const a = await seasonWithRides(), before = JSON.stringify(a.$('vzRows()').rows), F0 = JSON.stringify(a.$('seasonForecast(S.p)').map(o => o.form));
-  a.$("S.vzRng = 'season'"); const html = a.$('vzForm()'); ok(/Ermüdung \(geglättet\)/.test(html), 'Legende nennt die Glättung');
+  a.$("S.vzRng = 'season'"); const html = a.$('vzForm()'); ok(/Ermüdung geglättet/.test(html), 'Hinweis nennt die Glättung');
   eq(JSON.stringify(a.$('vzRows()').rows), before, 'Formreihe unverändert'); eq(JSON.stringify(a.$('seasonForecast(S.p)').map(o => o.form)), F0, 'Plan-Check unverändert');
   const sm = a.$('vzSm7'), v = [0, 0, 0, 70, 0, 0, 0]; eq(Math.round(sm(v)[3]), 10, '7-Tage-Mittel'); eq(v[3], 70, 'Eingabe nicht verändert');
   a.$("S.vzRng = '8w'"); ok(!/geglättet/.test(a.$('vzForm()')), '8 Wochen: ungeglättet');

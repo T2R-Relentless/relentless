@@ -206,3 +206,27 @@ Grundlage sind Modellrechnungen, nicht deine echten Daten (die liegen nur auf de
 1. Bilder ansehen und auf dem Handy prüfen. Zum Testen im Heimnetz kann ich `public/` lokal bereitstellen.
 2. „Ja, hochladen“: Ich pushe nur den Branch `feature/f28-formkurve`.
 3. „Ja in Main“: Ich merge per fast-forward nach `main` und pushe, Netlify baut daraus automatisch.
+
+## Nachtrag v199 – Layout gestrafft (nach iPhone-Screenshot vom 14.11.2026, 12:35)
+
+Ziel war, dass die Grafik auf dem iPhone früher im Bild ist.
+
+**Kacheln**
+- Kompakt: Beschriftung einzeilig mit „…“, die Zahl hat den Zusatz in derselben Zeile („+2 neutral“, „64 Form +15“, „66 21.03.“).
+- Der Einleitungssatz über den Kacheln entfällt. Sein Inhalt steht jetzt klein unter der Grafik.
+
+**Umschalter**
+- Die Beschriftungen brechen nicht mehr um.
+- Unter 360 pt Breite gibt es Kurzformen (8 Wo., 3 Mon., Renntag, Saison). Der volle Name bleibt als `aria-label`.
+
+**Legende und Glossar**
+- Die Legende ist eine schlanke Zeile ohne Rahmen. Ausgeblendete Linien sind durchgestrichen und blass. Der Vergrößern-Knopf steht bei 375 pt in derselben Zeile, bei 320 pt in der Zeile darunter.
+- Statt der ⓘ-Knöpfe steht unter der Grafik ein Satz mit „Fitness (CTL) … Ermüdung (ATL) …“. CTL und ATL sind darin wie überall in der App antippbar (Glossar). Die englische Übersetzung ist ergänzt.
+
+**Infofeld**
+- Die TSS stehen rechts in der Kopfzeile, die Einheit einzeilig. Das Feld ist dadurch flacher und springt beim Wischen nicht.
+
+**Version und Tests**
+- Version 199, Service Worker v36. Build-ID und Neuigkeiten bleiben unverändert, weil es eine Korrektur ist.
+- 246 von 246 Tests bestanden.
+- Bilder: `claude/bilder/f28b-8w-375.png`, `claude/bilder/f28b-saison-320.png`.
