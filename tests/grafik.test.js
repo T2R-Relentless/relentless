@@ -182,3 +182,13 @@ test('Hinweise und Neuigkeiten zu F24/F25', async () => {
   a.$("dykGo('dykProf()')"); await a.tick(120); ok(a.f.contentDocument.getElementById('fx-wk'), 'Hinweis führt zur Grafik');
   a.$("dykGo('dykTrack()')"); await a.tick(120); a.noErrors();
 });
+
+test('Negativer Split: zweite Hälfte als eigener, höherer Block', async () => {
+  const a = await boot(), bl = a.$("wkBlocks({t:'long', m:150, lo:56, hi:75, n:'Long Ride, negativer Split', cad:'85–95, in der zweiten Hälfte 90–100 U/min'})");
+  eq(bl.length, 2, 'zwei Hälften'); eq(bl[0].d + bl[1].d, 9000, 'Summe 150 Min.');
+  ok(bl[1].a > bl[0].a && bl[1].lo === 70 && bl[1].hi === 75, 'zweite Hälfte 70–75 % und höher gezeichnet');
+  ok(bl[1].cad === '90–100 U/min' && bl[0].cad === '85–95 U/min', 'Trittfrequenz je Hälfte');
+  const b2 = a.$("wkBlocks({t:'base', m:60, lo:56, hi:75, n:'Grundlage, ruhiger Einstieg'})"); ok(b2.length === 2 && b2[0].hi === 65 && b2[1].lo === 65, 'ruhiger Einstieg ebenso');
+  eq(a.$("wkBlocks({t:'base', m:60, lo:56, hi:75, n:'Grundlage Z2'})").length, 1, 'normale Grundlage bleibt ein Block');
+  a.noErrors();
+});

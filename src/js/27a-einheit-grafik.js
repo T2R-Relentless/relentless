@@ -37,6 +37,8 @@ function wkTest(x, out){
   out.push(wkB(cd * 60, 60, 45, 45, 60, 'cd'));
   const used = wu + 5 + hard + cd; if (x.m > used + .5) out.push(wkB((x.m - used) * 60, 55, 55, 50, 60, 'easy'));
 }
+/* Einheiten mit gesteigerter zweiter Hälfte (Text im Plangenerator): erste Hälfte lo–hi, zweite Hälfte lo–hi, Trittfrequenz je Hälfte */
+const WK_SPLIT = {'Long Ride, negativer Split':[56, 68, 70, 75, '85–95 U/min', '90–100 U/min'], 'Grundlage, ruhiger Einstieg':[56, 65, 65, 75, '90–100 U/min', '90–100 U/min']};
 function wkBlocks(x){
   const out = []; if (!x || !(x.m > 0) || x.t === 'rest') return out;
   const steady = (m, lo, hi, k, extra) => { lo = lo || 56; hi = hi || 72; const mid = (lo + hi) / 2; out.push(wkB(m * 60, mid, mid, lo, hi, k || 'steady', {cad:x.cad, ...(extra || {})})); };
@@ -48,6 +50,8 @@ function wkBlocks(x){
   else if (x.t === 'long' && x.fin) { const f = x.fin, t = f.reps * f.work + (f.reps - 1) * f.rest, w = (f.lo + f.hi) / 2; steady(x.m - t, 56, 75);
     for (let k = 0; k < f.reps; k++) { out.push(wkB(f.work * 60, w, w, f.lo, f.hi, 'work', {no:k + 1, of:f.reps, cad:x.cad})); if (k < f.reps - 1) out.push(wkB(f.rest * 60, 55, 55, 50, 60, 'rest')); } }
   else if (x.t === 'long' && x.hi >= 82) { const t = Math.min(60, x.m * .25), a = Math.round((x.m - t) * .6); steady(a, 56, 75); out.push(wkB(t * 60, 83, 83, 76, 88, 'tempo', {cad:x.cad})); steady(x.m - t - a, 56, 75); }
+  else if (WK_SPLIT[x.n]) { const v = WK_SPLIT[x.n], h = Math.round(x.m / 2);
+    steady(h, v[0], v[1], 'steady', {cad:v[4], part:wkL('1. Hälfte', '1st half')}); steady(x.m - h, v[2], v[3], 'steady', {cad:v[5], part:wkL('2. Hälfte', '2nd half')}); }
   else steady(x.m, x.lo, x.hi);
   return out.filter(b => b.d > 0);
 }
@@ -119,7 +123,8 @@ function wkSvg(x, o = {}){
       axes = `<line x1="${L}" x2="${W - R}" y1="${base}" y2="${base}" class="wk-ax"/>`
         + `<line x1="${L}" x2="${W - R}" y1="${y100.toFixed(1)}" y2="${y100.toFixed(1)}" class="wk-ftp"/>`
         + `<text x="${L - 4}" y="${(y100 + 3).toFixed(1)}" text-anchor="end" class="tx">${np ? 'LTHR' : 'FTP'}</text><text x="${L - 4}" y="${(Y(50) + 3).toFixed(1)}" text-anchor="end" class="tx">50 %</text>`
-        + xt.map(t => `<text x="${(L + sc.X(t)).toFixed(1)}" y="${H - 5}" text-anchor="middle" class="tx">${tl(t)}</text>`).join('');
+        + bl.map((b, i) => { const x0 = L + sc.xs[i], x1 = L + sc.xs[i + 1]; return b.part && b.k === 'steady' && x1 - x0 > 70 ? `<text x="${((x0 + x1) / 2).toFixed(1)}" y="${(Y(Math.max(b.a, b.b)) - 5).toFixed(1)}" text-anchor="middle" class="tx wk-pl">${esc(b.part)} · ${Math.round(b.lo)}–${Math.round(b.hi)} %</text>` : ''; }).join('')
+        + xt.map(t => { const tx = L + sc.X(t), an = tx > W - R - 12 ? 'end' : 'middle'; return `<text x="${(an === 'end' ? W - R : tx).toFixed(1)}" y="${H - 5}" text-anchor="${an}" class="tx">${tl(t)}</text>`; }).join('');
     }
     if (act && ftp) { const k = Math.max(1, Math.round(20 / act.b)), sm = typeof vzSmooth === 'function' ? vzSmooth(act.p, k) : act.p; let d = '', on = false;
       sm.forEach((v, i) => { if (v == null) { on = false; return; } const t = (i + .5) * act.b; d += (on ? 'L' : 'M') + (L + sc.X(t)).toFixed(1) + ',' + Y(v / ftp * 100).toFixed(1); on = true; });
@@ -146,7 +151,7 @@ function wkTip(ev, id){
     const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, px = (ev.clientX - r.left) / r.width * vb.width;
     let i = g.xs.findIndex((v, k) => k < g.bl.length && px >= v && px < g.xs[k + 1]); if (i < 0) i = px < g.xs[0] ? 0 : g.bl.length - 1;
     const b = g.bl[i], cur = svg.querySelector('.wk-cur'); if (cur) { cur.setAttribute('x1', px.toFixed(1)); cur.setAttribute('x2', px.toFixed(1)); cur.style.display = ''; }
-    const at = Math.round(g.ts[i] / 60), name = b.k === 'work' ? (b.opener ? wkL('Kurz zügig', 'Short opener') : wkL('Intervall', 'Interval')) + ` ${b.no}/${b.of}` + (b.set ? wkL(` · Serie ${b.set}/${b.sets}`, ` · set ${b.set}/${b.sets}`) : '') : wkKn(b.k).replace(/^./, c => c.toUpperCase());
+    const at = Math.round(g.ts[i] / 60), name = b.k === 'work' ? (b.opener ? wkL('Kurz zügig', 'Short opener') : wkL('Intervall', 'Interval')) + ` ${b.no}/${b.of}` + (b.set ? wkL(` · Serie ${b.set}/${b.sets}`, ` · set ${b.set}/${b.sets}`) : '') : b.part && b.k === 'steady' ? b.part : wkKn(b.k).replace(/^./, c => c.toUpperCase());
     const ramp = b.a !== b.b ? wkL(` · steigt von ${Math.round(b.a)} auf ${Math.round(b.b)} %`, ` · from ${Math.round(b.a)} to ${Math.round(b.b)} %`).replace(/steigt von (\d+) auf (\d+)/, (m, a, c) => +a > +c ? `sinkt von ${a} auf ${c}` : m) : '';
     let ist = '';
     if (g.act) { const f = (px - g.xs[0]) / (g.xs[g.bl.length] - g.xs[0]), sec = g.ts[i] + Math.max(0, Math.min(1, (px - g.xs[i]) / Math.max(.01, g.xs[i + 1] - g.xs[i]))) * b.d, k = Math.floor(sec / g.act.b), v = g.act.p[k]; if (v != null && isFinite(f)) ist = wkL(` · gefahren ${Math.round(v)} W`, ` · ridden ${Math.round(v)} W`); }
