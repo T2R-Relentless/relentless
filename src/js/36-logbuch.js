@@ -51,6 +51,9 @@ function lbRides(){
   return [...m.values()].filter(a => a.day).sort((a, b) => (b.day + (b.ts || '')).localeCompare(a.day + (a.ts || '')));
 }
 const lbKind = id => { const l = S.lb && S.lb[id]; return l ? l.k : ''; };
+/* Filter „Geplant“ (Einheiten aus dem Plan, auch Kraft und Mobilität) und „Zusätzlich“ (alles andere, auch Fahrten ohne Zuordnung
+   zum Plan, z. B. ältere Garmin-Fahrten). Gilt für Liste und Grafik. */
+const lbFOk = (id, f, pid) => { const k = lbKind(id), pl = k === 'p' || k === 's'; if (f === 'plan' && !pl) return false; if (f === 'x' && pl) return false; return !pid || !!(S.lb[id] && S.lb[id].pid === pid); };
 function lbDot(id){
   const l = S.lb && S.lb[id];
   if (!l) return ['#9aa7b8', 'ohne Bewertung'];
@@ -71,8 +74,7 @@ function lbPage(){
   /* F11: Kraft-, Mobilitäts- und Stabilitätseinheiten (Sequenz) stehen als geplante Einheiten mit im Logbuch */
   const SS = Object.entries(S.lb || {}).filter(([, l]) => l && l.k === 's' && l.day).map(([id, l]) => ({id, day:l.day, n:l.n, km:0, sec:l.sec || 0, hm:0, sq:1, ts:'T99'}));
   let L = lbRides().concat(SS).sort((a, b) => (b.day + (b.ts || '')).localeCompare(a.day + (a.ts || '')));
-  if (lbF === 'plan') L = L.filter(a => lbKind(a.id) === 'p' || lbKind(a.id) === 's'); else if (lbF === 'x') L = L.filter(a => lbKind(a.id) === 'x');
-  if (lbPid) L = L.filter(a => S.lb[a.id] && S.lb[a.id].pid === lbPid);
+  L = L.filter(a => lbFOk(a.id, lbF, lbPid));
   /* F18: Balken angetippt → nur diese Woche bzw. diesen Monat */
   if (lbCh.sel) L = L.filter(a => lbPerKey(lbCh.mode, a.day) === lbCh.sel);
   if (!lbCh.roll) L = L.filter(a => !a.in);
@@ -145,9 +147,9 @@ function lbPeriods(mode, off, today){
 const lbPrevYear = (mode, key) => mode === 'm' ? (+key.slice(0, 4) - 1) + key.slice(4) : addD(key, -364);
 /* Summen je Periode: {key: {km, sec, hm, n}} */
 function lbSums(mode, o){
-  o = o || lbCh; const S0 = {}, add = (k, km, sec, hm) => { const x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0}); x.km += km || 0; x.sec += sec || 0; x.hm += hm || 0; x.n++; };
-  lbRides().forEach(a => { if (!a.day || (!o.roll && a.in)) return; add(lbPerKey(mode, a.day), a.km, a.sec, a.hm); });
-  if (o.all) Object.values(S.lb || {}).forEach(l => { if (l && l.k === 's' && l.day && l.sec > 0) { const k = lbPerKey(mode, l.day), x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0}); x.sec += l.sec; } });
+  o = o || lbCh; const f = o.f != null ? o.f : o === lbCh ? lbF : 'all', pid = o.pid != null ? o.pid : o === lbCh ? lbPid : '', S0 = {}, add = (k, km, sec, hm) => { const x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0}); x.km += km || 0; x.sec += sec || 0; x.hm += hm || 0; x.n++; };
+  lbRides().forEach(a => { if (!a.day || (!o.roll && a.in) || !lbFOk(a.id, f, pid)) return; add(lbPerKey(mode, a.day), a.km, a.sec, a.hm); });
+  if (o.all) Object.entries(S.lb || {}).forEach(([id, l]) => { if (l && l.k === 's' && l.day && l.sec > 0 && lbFOk(id, f, pid)) { const k = lbPerKey(mode, l.day), x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0}); x.sec += l.sec; } });
   return S0;
 }
 const LB_MET = {km:['Distanz', v => Math.round(v.km), v => `${Math.round(v).toLocaleString('de-DE')} km`], h:['Zeit', v => v.sec / 3600, v => hStd(Math.round(v * 4) / 4) + ' Std.'], hm:['Höhenmeter', v => Math.round(v.hm), v => `${Math.round(v).toLocaleString('de-DE')} hm`]};
@@ -190,6 +192,6 @@ function lbChart(){
   return `<section class="panel p-4" id="lb-chart"><p class="hd text-xl font-semibold" aria-live="polite">${head}</p>
     <div class="mt-3 flex items-center gap-2"><div class="dtabs flex-1">${seg('mode', 'w', 'Woche')}${seg('mode', 'm', 'Monat')}</div><div class="dtabs flex-1">${seg('met', 'km', 'km')}${seg('met', 'h', 'Zeit')}${seg('met', 'hm', 'Hm')}</div></div>
     <div class="mt-3 flex items-center justify-between gap-2">${arrow(1, 'Früher')}<span class="text-sm font-semibold" data-noi18n>${esc(rng)}</span>${arrow(-1, 'Später', o.off === 0)}</div>${svg}${tbl}
-    <p class="mt-1 text-xs" style="color:var(--mute)"><span class="lbc-key"></span> Durchschnitt: ${esc(M[2](avg))} je ${wm ? 'Monat' : 'Woche'}</p>${cmp}
+    <p class="mt-1 text-xs" style="color:var(--mute)"><span class="lbc-key"></span> Durchschnitt: ${esc(M[2](avg))} je ${wm ? 'Monat' : 'Woche'}</p>${lbF !== 'all' || lbPid ? `<p class="mt-1 text-xs font-semibold" style="color:var(--teal)" data-noi18n>${lbF === 'plan' ? wkL('Gefiltert: nur geplante Einheiten', 'Filtered: planned sessions only') : lbF === 'x' ? wkL('Gefiltert: nur zusätzliche Fahrten', 'Filtered: extra rides only') : wkL('Gefiltert nach Plan', 'Filtered by plan')}</p>` : ''}${cmp}
     <div class="mt-2 flex flex-wrap gap-2">${tog('roll', 'inkl. Rolle')}${o.met === 'h' ? tog('all', 'Alle Einheiten') : ''}${tog('yoy', 'Vorjahr')}${o.sel ? chip('Filter aufheben', false, "lbSet('sel',null)") : ''}</div></section>`;
 }

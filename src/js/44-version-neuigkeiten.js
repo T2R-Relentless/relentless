@@ -1,7 +1,7 @@
 /* ---------- F14: Versionsstand in der App ablesbar ----------
    Eine Quelle: APP_BUILD (aus build/BUILD_ID), APP_VERSION (aus build/APP_VERSION) und APP_SW (aus der Cache-Version
    in relentless/public/sw.js) setzt der Build ein; version.json enthält dieselben Werte, build.sh --check prüft das. */
-const APP_VERSION = 196, APP_SW = 'relentless-v33';
+const APP_VERSION = 197, APP_SW = 'relentless-v34';
 let viOpen = false, viMsg = '', updVer = 0;
 /* 20261107180000 → „07.11.2026, 18:00“ bzw. „07 Nov 2026, 18:00“ */
 function viDate(id){ const m = String(id || '').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/); if (!m) return String(id || '');

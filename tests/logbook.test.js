@@ -68,3 +68,16 @@ test('Durchschnitt ab der ersten Periode mit Fahrten', async () => {
   /* Dez 70, Jan 70, Feb 0, Mär 120, Apr 0 → 260 / 5 = 52 km; die leeren Monate davor zählen nicht */
   ok(/Durchschnitt: 52 km je Monat/.test(a.text()), a.text().match(/Durchschnitt[^\n]*/)[0]);
 });
+
+test('Filter Geplant/Zusätzlich wirkt auf Liste und Grafik', async () => {
+  const a = await lbApp();
+  a.$(`S.lb = Object.assign(S.lb || {}, {f:{k:'p', day:'2027-03-29', n:'Plan'}, g:{k:'x', day:'2027-04-01', n:'Extra'}}); save();`);
+  const wk = '2027-03-29', km = f => a.$(`lbF='${f}'; (lbSums('w', lbCh)['${wk}'] || {km:0}).km`);
+  const all = km('all'), pl = km('plan'), x = km('x');
+  ok(all > 0 && pl > 0 && x > 0 && pl + x === all, `Woche aufgeteilt: alle ${all}, geplant ${pl}, zusätzlich ${x}`);
+  a.$("lbF='x'"); a.page('logbook'); ok(/nur zusätzliche Fahrten/.test(a.text()) && !/Keine Fahrten für diesen Filter/.test(a.text()), 'Hinweis an der Grafik, Fahrten ohne Zuordnung zählen als zusätzlich');
+  ok(/Zusätzliche Fahrt/.test(a.text()), 'zusätzliche Fahrt in der Liste');
+  a.$("lbF='plan'"); a.$('render()'); ok(/nur geplante Einheiten/.test(a.text()) && !/Zusätzliche Fahrt/.test(a.text()), 'geplant: ohne die zusätzliche Fahrt');
+  eq(a.$("(lbSums('w', {roll:true, all:false})['2027-03-29'] || {}).km"), all, 'eigene Optionen ohne Filter');
+  a.$("lbF='all'"); a.noErrors();
+});
