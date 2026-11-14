@@ -352,6 +352,7 @@
   .vz-pkt{fill:var(--ink);font-weight:700}
   .vz-evl{stroke:var(--mute);stroke-width:1.2;stroke-dasharray:3 3;opacity:.7}
   .vz-evl.vz-a,.pchart .vz-evl.goal{stroke:var(--ink);stroke-width:1.6;stroke-dasharray:none;opacity:.85}
+  :root[data-theme=dark] .pchart .vz-evl.goal{stroke:var(--ink)}
   .vz-fl{fill:var(--tint);stroke:var(--line)}
   .vz-a .vz-fl{fill:var(--ink);stroke:var(--ink)}
   .pchart .vz-flt{font-weight:700;fill:var(--ink)}
@@ -367,7 +368,7 @@
   .vz-bands{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:12px;color:var(--mute)}
   .vz-bands i{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
   .vz-bands i.vzb-lost{background:#9aa7b8;opacity:.6} .vz-bands i.vzb-fresh{background:#0a8f6a;opacity:.6} .vz-bands i.vzb-neut{background:#9aa7b8;opacity:.35} .vz-bands i.vzb-train{background:#00bcb3;opacity:.6} .vz-bands i.vzb-high{background:#f07d3a;opacity:.6}
-  .vz-fullv{position:fixed;inset:0;z-index:70;background:var(--bg);overflow:auto;padding:16px 12px calc(24px + env(safe-area-inset-bottom));padding-top:calc(16px + env(safe-area-inset-top))}
+  .vz-fullv{position:fixed;inset:0;z-index:1000;background:var(--bg);overflow:auto;padding:16px 12px calc(24px + env(safe-area-inset-bottom));padding-top:calc(16px + env(safe-area-inset-top))}
   .lbc-bar{fill:var(--ice);opacity:.7}
   .lbc-on{fill:var(--teal)}
   .lbc-prev{fill:#e0861a}
