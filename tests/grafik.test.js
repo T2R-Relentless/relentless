@@ -138,12 +138,10 @@ test('F25: Fahrt ohne GPS (Rolle) und ohne Höhe: kein Streckenbereich, kein Feh
   a.noErrors();
 });
 
-test('F25: Start und Ziel ausblenden (500 m)', async () => {
-  const a = await boot(), d = a.w.trkDec(a.w.trkMake(gRide({sec:3600}))), h = a.w.trkHide(d.line, 500), s = d.line[0], e = d.line[d.line.length - 1];
-  ok(a.w.trkHav(s, h[0]) >= 500 && a.w.trkHav(e, h[h.length - 1]) >= 500, 'erster und letzter Punkt mindestens 500 m entfernt');
-  ok(a.w.trkHav(s, h[0]) < 700, 'nicht mehr als nötig gekürzt');
-  ok(a.$('trkHideOn()'), 'Standard: ausgeblendet');
-  eq(a.w.trkHide(d.line.slice(0, 3), 500).length, 0, 'sehr kurze Spur: nichts zeigen');
+test('F25: Streckenlinie vollständig, ohne Schalter für Start und Ziel', async () => {
+  const a = await boot(), d = a.w.trkDec(a.w.trkMake(gRide({sec:3600}))), h = a.w.trkLineSvg('x', d);
+  ok(h.includes('trk-s') && h.includes('trk-e') && !/ausgeblendet|500 m/.test(h), 'Start und Ziel sichtbar, kein Hinweis auf Ausblenden');
+  eq(typeof a.w.trkHide, 'undefined', 'Ausblenden entfernt');
 });
 
 test('F25: Logbuch-Detail mit Höhenprofil, Linie, Soll und Ist', async () => {
@@ -153,7 +151,7 @@ test('F25: Logbuch-Detail mit Höhenprofil, Linie, Soll und Ist', async () => {
   ok(a.$(`!!trkC['${id}'] && trkC['${id}'].n > 0`), 'Spur beim Einlesen berechnet');
   a.$(`delete trkC['${id}']`); a.$(`lbOpenRide('${id}')`); await a.tick(150); a.$('render()'); const t = a.text();
   ok(/Höhenprofil/i.test(t) && /Längster Anstieg/.test(t) && /Streckenlinie/i.test(t), 'aus IndexedDB geladen und gezeigt');
-  ok(/Start und Ziel ausblenden/.test(t), 'Schalter Datenschutz'); ok(/Leistung nach Zonen/.test(t), 'ungeplante Fahrt: Ist-Leistung nach Zonen'); ok(!/laut Gerät/.test(t), "ohne Gerätewert eigene geglättete Höhenmeter");
+  ok(!/ausblenden/.test(t), 'kein Schalter für Start und Ziel'); ok(/Leistung nach Zonen/.test(t), 'ungeplante Fahrt: Ist-Leistung nach Zonen'); ok(!/laut Gerät/.test(t), "ohne Gerätewert eigene geglättete Höhenmeter");
   /* Soll und Ist für eine geplante Einheit */
   a.$(`S.lb = S.lb || {}; S.lb['${id}'] = {k:'p', day:'2026-11-16', n:'Sweet Spot', ftp:240, px:{t:'sst', m:71, lo:88, hi:94, iv:{reps:3, work:12, rest:5, lo:88, hi:94, wu:15, cd:10}}, msgs:[]}; render()`);
   const h = a.$("document.getElementById('app').innerHTML"); ok(/Ablauf: Soll und Ist/.test(h) && /class="wk-act"/.test(h), 'Soll-Blöcke mit Ist-Linie');

@@ -7,7 +7,7 @@
    (eigene Datenbank „relentless-tracks“), nicht in localStorage. Keine Karte: Kartenkacheln würden dem Kachelserver Ort und IP
    verraten, die OSM-Richtlinie erlaubt keine Nutzung in größerem Umfang, und ein Anbieter mit Schlüssel kostet ab einem Kontingent
    (Bericht F19). Die Linie wird deshalb nur als SVG gezeichnet, ohne jede Anfrage nach außen. */
-const TRK_V = 1, TRK_MAX = 1500, TRK_HIDE_M = 500;
+const TRK_V = 1, TRK_MAX = 1500;
 const TRK_GC = [[0, 'trg0'], [4, 'trg1'], [8, 'trg2'], [12, 'trg3']];
 const trkGcl = g => g < 0 ? 'trgd' : g < 4 ? 'trg0' : g < 8 ? 'trg1' : g < 12 ? 'trg2' : 'trg3';
 const trkEnc = a => { let p = 0; return a.map(v => { if (v == null) return null; const d = v - p; p = v; return d; }); };
@@ -78,16 +78,6 @@ function trkStats(d){
   const lg = climbs.slice().sort((x, y) => y.len - x.len || y.g - x.g)[0] || null, ai = a.reduce((m, v, i) => v > a[m] ? i : m, 0), mi = a.reduce((m, v, i) => v < a[m] ? i : m, 0);
   return {up:Math.round(up), dn:Math.round(dn), max:Math.round(a[ai]), min:Math.round(a[mi]), maxKm:d.dist[ai], climbs:climbs.sort((x, y) => y.len - x.len).slice(0, 5).sort((x, y) => x.s - y.s), longest:lg, gd:gd.map(v => Math.round(v / 100) / 10)};
 }
-/* Datenschutz: Linie erst 500 m nach dem Start beginnen und 500 m vor dem Ziel enden lassen */
-function trkHide(line, m){
-  if (!line || line.length < 3) return line; const s = line[0], e = line[line.length - 1]; let i = 0, j = line.length - 1;
-  while (i < line.length - 1 && trkHav(s, line[i]) < m) i++; while (j > i && trkHav(e, line[j]) < m) j--;
-  if (!(j > i)) return [];
-  /* Schnittpunkt auf dem Abschnitt genau bei m Metern, damit dünne Abschnitte nicht mehr wegnehmen als nötig */
-  const cut = (ref, p, q) => { const at = f => [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f, q[2]]; let lo = 0, hi = 1; for (let k = 0; k < 24; k++) { const f = (lo + hi) / 2; if (trkHav(ref, at(f)) < m) lo = f; else hi = f; } return at(hi); };
-  const out = line.slice(i, j + 1); if (i > 0) out[0] = cut(s, line[i - 1], line[i]); if (j < line.length - 1) out[out.length - 1] = cut(e, line[j + 1], line[j]);
-  return out;
-}
 
 /* ---------- Ablage in IndexedDB ---------- */
 const trkC = {}; let trkDbP = null;
@@ -121,8 +111,7 @@ async function trkFetch(id){
 
 /* ---------- Zeichnen ---------- */
 let trkOv = 'p', trkReg = {};
-const trkHideOn = () => !(S.trkShow === true);
-function trkSet(k){ if (k === 'hide') { S.trkShow = !trkHideOn() ? false : true; save(); } else trkOv = trkOv === k ? '' : k; render(); }
+function trkSet(k){ trkOv = trkOv === k ? '' : k; render(); }
 const trkKm = v => (Math.round(v * 10) / 10).toLocaleString(wkL('de-DE', 'en-GB'));
 function trkProfSvg(id, d){
   const W = 340, H = 140, L = 34, R = 30, T = 8, B = 18, pw = W - L - R, ph = H - T - B, n = d.n, a = d.alt;
@@ -144,17 +133,17 @@ function trkProfSvg(id, d){
     ${xt.map(v => `<text x="${(L + v / km * pw).toFixed(1)}" y="${H - 5}" text-anchor="middle" class="tx">${v}${v === 0 ? '' : ''}</text>`).join('')}<text x="${W - R}" y="${H - 5}" text-anchor="end" class="tx">km</text>${ovl}${ovt}
     <line class="trk-cur" x1="0" x2="0" y1="${T}" y2="${base}" style="display:none"/></svg>`;
 }
-function trkLineSvg(id, d, hide){
+function trkLineSvg(id, d){
   if (!d.line || d.line.length < 2) return '';
-  const ln = hide ? trkHide(d.line, TRK_HIDE_M) : d.line; if (!ln.length) return `<p class="text-xs" style="color:var(--mute)">${wkL('Die Strecke ist kürzer als die ausgeblendeten Bereiche um Start und Ziel.', 'The route is shorter than the hidden areas around start and finish.')}</p>`;
+  const ln = d.line;
   const lat0 = ln[0][0], pr = trkProj(lat0), P = ln.map(pr), xs = P.map(p => p[0]), ys = P.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   const W = 340, H = 220, m = 12, s = Math.min((W - 2 * m) / Math.max(1, x1 - x0), (H - 2 * m) / Math.max(1, y1 - y0)), ox = (W - (x1 - x0) * s) / 2, oy = (H - (y1 - y0) * s) / 2;
   const PX = p => [ox + (p[0] - x0) * s, H - oy - (p[1] - y0) * s], Q = P.map(PX);
   const dd = Q.map((q, k) => (k ? 'L' : 'M') + q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(''), a = Q[0], b = Q[Q.length - 1];
   trkReg[id + ':l'] = {ln, Q};
-  return `<svg viewBox="0 0 ${W} ${H}" class="pchart trk-l" role="img" aria-label="${esc(wkL('Streckenlinie ohne Karte, Norden oben', 'Route line without map, north up') + (hide ? wkL(', Start und Ziel ausgeblendet', ', start and finish hidden') : ''))}"><path d="${dd}" class="trk-ln0"/><path d="${dd}" class="trk-ln"/>
+  return `<svg viewBox="0 0 ${W} ${H}" class="pchart trk-l" role="img" aria-label="${esc(wkL('Streckenlinie ohne Karte, Norden oben', 'Route line without map, north up'))}"><path d="${dd}" class="trk-ln0"/><path d="${dd}" class="trk-ln"/>
     <circle cx="${a[0].toFixed(1)}" cy="${a[1].toFixed(1)}" r="5" class="trk-s"/><rect x="${(b[0] - 4.5).toFixed(1)}" y="${(b[1] - 4.5).toFixed(1)}" width="9" height="9" class="trk-e"/><circle class="trk-dot" r="5.5" cx="0" cy="0" style="display:none"/></svg>
-    <div class="trk-lg text-xs"><span><i class="trk-s"></i>${hide ? wkL('Start (500 m danach)', 'Start (500 m after)') : wkL('Start', 'Start')}</span><span><i class="trk-e"></i>${hide ? wkL('Ziel (500 m davor)', 'Finish (500 m before)') : wkL('Ziel', 'Finish')}</span><span>${wkL('Norden oben, ohne Kartenhintergrund', 'North up, no map background')}</span></div>`;
+    <div class="trk-lg text-xs"><span><i class="trk-s"></i>${wkL('Start', 'Start')}</span><span><i class="trk-e"></i>${wkL('Ziel', 'Finish')}</span><span>${wkL('Norden oben, ohne Kartenhintergrund', 'North up, no map background')}</span></div>`;
 }
 /* Wischen über das Profil: Werte an dieser Stelle, Punkt auf der Streckenlinie */
 function trkTip(ev, id){
@@ -182,7 +171,7 @@ function trkBlock(id, ride){
       const msg = trkBusy === id ? wkL('Streckendaten werden von Garmin geladen …', 'Loading route data from Garmin …') : trkErr[id] ? trkErr[id] : canGm ? '' : wkL('Für diese Fahrt sind keine Streckendaten gespeichert. Fahrten, die du ab jetzt hochlädst oder von Garmin abrufst, bekommen Höhenprofil und Streckenlinie. Für ältere Fahrten: Datei noch einmal hochladen oder Garmin verbinden.', 'No route data is stored for this ride. Rides you upload or fetch from Garmin from now on get an elevation profile and route line. For older rides: upload the file again or connect Garmin.');
       return msg || canGm ? `<div class="mt-3 p-3 text-sm" id="fx-trk" style="border:1px solid var(--line)" data-noi18n><p class="eyebrow">${wkL('Höhenprofil und Strecke', 'Elevation and route')}</p><p class="mt-1">${esc(msg)}</p>${canGm && trkBusy !== id ? `<button class="ghost mt-2 !py-2 text-sm" style="min-height:44px" onclick="trkTried['${ja(id)}']=0;trkFetch('${ja(id)}')">${wkL('Von Garmin laden', 'Load from Garmin')}</button>` : ''}</div>` : '';
     }
-    const d = trkDec(rec), stt = trkStats(d), hide = trkHideOn(), dev = ride && ride.hmDev && ride.hm && stt ? Math.round(ride.hm) : null;
+    const d = trkDec(rec), stt = trkStats(d), dev = ride && ride.hmDev && ride.hm && stt ? Math.round(ride.hm) : null;
     if (!d.alt && !d.line) return '';
     const cell = (k, v) => `<div class="p-2" style="background:var(--tint);border:1px solid var(--line)"><div class="text-xs" style="color:var(--mute)">${k}</div><div class="text-sm font-semibold">${v}</div></div>`;
     const lg = stt && stt.longest, kpi = stt ? [cell(wkL('Bergauf', 'Climbing'), `${(dev != null ? dev : stt.up).toLocaleString(wkL('de-DE', 'en-GB'))} m${dev != null ? `<span class="block text-xs font-normal" style="color:var(--mute)">${wkL('laut Gerät', 'from device')}</span>` : ''}`), cell(wkL('Bergab', 'Descent'), `${stt.dn.toLocaleString(wkL('de-DE', 'en-GB'))} m`),
@@ -192,7 +181,7 @@ function trkBlock(id, ride){
       return `<div class="wk-zb" aria-hidden="true">${stt.gd.map((v, k) => v ? `<i class="${C[k]}" style="width:${(v / tot * 100).toFixed(1)}%"></i>` : '').join('')}</div><div class="wk-zl">${stt.gd.map((v, k) => v ? `<span><i class="${C[k]}"></i>${L[k]} ${trkKm(v)} km</span>` : '').join('')}</div>`; })() : '';
     const sw = (k, on, t) => `<button class="${on ? 'btn' : 'ghost'} !w-auto !px-3 !py-1.5 text-xs" style="min-height:44px" aria-pressed="${on}" onclick="trkSet('${ja(k)}')">${t}</button>`;
     const ovBtns = d.alt && (d.p || d.h) ? `<div class="mt-2 flex flex-wrap gap-2">${d.p ? sw('p', trkOv === 'p', wkL('Leistung', 'Power')) : ''}${d.h ? sw('h', trkOv === 'h', wkL('Puls', 'Heart rate')) : ''}</div>` : '';
-    const line = d.line ? `<p class="mt-4 text-xs font-semibold" style="color:var(--mute)">${wkL('Streckenlinie', 'Route line')}</p>${trkLineSvg(id, d, hide)}<div class="mt-1">${sw('hide', hide, wkL('Start und Ziel ausblenden (500 m)', 'Hide start and finish (500 m)'))}</div>` : '';
+    const line = d.line ? `<p class="mt-4 text-xs font-semibold" style="color:var(--mute)">${wkL('Streckenlinie', 'Route line')}</p>${trkLineSvg(id, d)}` : '';
     return `<div class="trk-wrap mt-4" id="fx-trk" data-id="${esc(id)}" data-noi18n><p class="eyebrow">${wkL('Höhenprofil', 'Elevation profile')}</p>${d.alt ? `${trkProfSvg(id, d)}<p class="wk-tip text-xs" id="trk-t-${esc(id)}" aria-live="polite">${esc(wkL('Wische über das Profil: km, Höhe, Steigung, Leistung, Puls und Tempo an dieser Stelle.', 'Swipe across the profile: km, elevation, gradient, power, heart rate and speed at that point.'))}</p>${ovBtns}<div class="mt-2 grid grid-cols-2 gap-2">${kpi}</div>${climb}<p class="mt-2 text-xs font-semibold" style="color:var(--mute)">${wkL('Steigungen', 'Gradients')}</p>${gd}` : `<p class="text-xs" style="color:var(--mute)">${wkL('Keine Höhendaten.', 'No altitude data.')}</p>`}${line}</div>`;
   } catch (e) { elog(e); return ''; }
 }

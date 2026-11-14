@@ -116,6 +116,6 @@ test('F27: Seite mit Verlauf, Einordnung, Trainer-Hinweis, Englisch, Hinweise', 
   a.w.vo2Set('unit', 'abs'); await a.tick(20); ok(/l\/min/.test(a.text()));
   await a.en(); a.$("navGo('state'); goPg('svo2')"); await a.tick(30); ok(/Your VO2max|History/.test(a.text()), 'Englisch');
   const d = a.$("DYK.find(x => x[0] === 'vo2')"); ok(d && d[2] === 'VO2max ansehen'); a.w.dykGo(d[3]); await a.tick(200); eq(a.$('pg'), 'svo2'); ok(a.$("!!document.querySelector('#fx-v2')"));
-  ok(a.$("WN_DATA['194'].length") === 1 && a.$('APP_VERSION') === 194 && a.$('APP_BUILD') === '20261117090000');
+  ok(a.$("WN_DATA['194'].length") === 1 && a.$('APP_VERSION') >= 194 && a.$('APP_BUILD') === '20261117090000');
   a.noErrors();
 });

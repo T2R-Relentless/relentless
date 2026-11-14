@@ -295,9 +295,21 @@
   html.sa-wrap body{height:100%;overflow:hidden}
   html.sa-wrap #sc{position:fixed;top:var(--sat);left:0;right:0;bottom:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
   /* F18: Verlaufsgrafik im Logbuch */
-  .lbc-bar{fill:var(--ice);opacity:.55}
+  .lbc-bar{fill:var(--ice);opacity:.7}
   .lbc-on{fill:var(--teal)}
-  .lbc-prev{fill:var(--line)}
+  .lbc-prev{fill:#e0861a}
+  :root[data-theme=dark] .lbc-prev{fill:#f2a64a}
+  .lbc .tx{font-size:11.5px}
+  .lbc .lbc-val{fill:var(--ink);font-weight:700}
+  .lbc-gl{stroke:var(--line);stroke-width:.8}
+  .lbc-nav{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+  .lbc-nav:disabled{opacity:.35}
+  .lbc-lg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;color:var(--mute)}
+  .lbc-sw{display:inline-flex;align-items:center;gap:5px}
+  .lbc-sw i{display:inline-block;width:12px;height:12px}
+  .lbc-sw i.lbc-bar{background:var(--ice);opacity:.7}
+  .lbc-sw i.lbc-prev{background:#e0861a}
+  :root[data-theme=dark] .lbc-sw i.lbc-prev{background:#f2a64a}
   .lbc-avg{stroke:var(--mute);stroke-width:1;stroke-dasharray:3 3}
   .lbc-key{display:inline-block;width:14px;border-top:1px dashed var(--mute);vertical-align:middle;margin-right:2px}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

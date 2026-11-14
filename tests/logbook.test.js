@@ -45,7 +45,11 @@ test('Logbuch: Kopfzeile, Balken antippen filtert die Liste, Blättern, Tabelle'
   ok(t.includes('Fahrt f') && t.includes('Fahrt g') && !t.includes('Fahrt e'), 'Liste auf die Woche gefiltert');
   a.$("lbSet('mode', 'm'); lbSet('met', 'hm')"); eq(a.w.document.querySelectorAll('#lb-chart table tbody tr').length, 12, 'Tabelle für Screenreader');
   ok(/Dieser Monat/.test(a.text()), 'Monatsansicht'); a.$("lbSet('off', 1)"); eq(a.$('lbCh.off'), 1); a.$("lbSet('off', -1)"); eq(a.$('lbCh.off'), 0);
-  a.$("lbSet('yoy', true)"); ok(a.w.document.querySelectorAll('#lb-chart .lbc-prev').length === 12, 'Vorjahr als zweite Reihe'); a.noErrors();
+  a.$("lbSet('yoy', true)"); ok(a.w.document.querySelectorAll('#lb-chart svg .lbc-prev').length === 12, 'Vorjahr als zweite Reihe');
+  ok(/keine Fahrten gespeichert/.test(a.text()) && !a.w.document.querySelector('#lb-chart .lbc-lg'), 'ohne Vorjahresfahrten: Hinweis statt Legende');
+  a.$(`S.man.push({id:'py', n:'Fahrt py', day:'2026-04-01', ts:'2026-04-01T08:00:00.000Z', km:50, sec:7200, hm:400, tss:60}); save(); render()`);
+  ok(a.w.document.querySelector('#lb-chart .lbc-lg') && /Vorjahr \(Apr 2026\): 400 hm/.test(a.text()), 'Legende und Vergleich mit dem Vorjahresmonat: ' + (a.text().match(/Vorjahr \(.{0,40}/) || [''])[0]);
+  ok(a.w.document.querySelectorAll('#lb-chart .lbc-nav').length === 2 && a.w.document.querySelectorAll('#lb-chart .lbc-gl').length >= 2, 'Pfeile über der Grafik, Achse mit Werten'); a.noErrors();
 });
 
 test('Rolle wird erkannt: Fahrt ohne GPS-Position', async () => {
