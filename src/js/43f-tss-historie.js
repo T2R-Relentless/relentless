@@ -142,7 +142,33 @@ function impPropNo(){ if (S.imp && S.imp.prop) S.imp.prop.st = 'no'; save(); ren
    Älteste zuerst: Die VO2max-Schätzung „aus einer Fahrt“ zählt nur bei einem neuen 5-min-Bestwert der 8 Wochen davor (vo2FromRide).
    Dafür müssen die älteren Fahrten ihre Bestwerte schon haben. S.vo2h merkt sich, welche Fahrten schon geprüft sind. */
 const impVo2Done = id => !!(S.vo2h && S.vo2h[id]);
-function impMmList(){ return typeof mmTodo === 'function' ? mmTodo() : []; }
+/* Vorauswahl ohne Download: Eine Fahrt liefert nur dann eine VO2max-Schätzung „aus einer Fahrt“, wenn ihr 5-min-Wert ein neuer
+   Bestwert der 8 Wochen davor ist und Pulsdaten vorliegen (Kriterium Ausbelastung, vo2FromRide). Liegt die Kurve schon vor
+   (Leistungsprofil), lässt sich das vorab prüfen. Aussichtslose Fahrten gelten als geprüft und werden nicht geladen. */
+let impPreK = '';
+function impVo2Pre(){
+  const k = Object.keys(S.mm || {}).length + '|' + (S.arch || []).length + '|' + Object.keys(S.vo2h || {}).length; if (k === impPreK) return 0;
+  S.vo2h = S.vo2h && typeof S.vo2h === 'object' ? S.vo2h : {}; let n = 0; const mark = id => { S.vo2h[id] = 1; n++; };
+  (S.arch || []).forEach(a => { if (!a || !a.imp || !(+a.np > 0) || S.vo2h[a.id]) return;
+    if (!(+a.hr > 0) && !(S.allOut && S.allOut[a.id])) return mark(a.id);
+    const r = (S.mm || {})[a.id]; if (!r || r.s !== 'f') return; const p5 = r.v[mmIx(300)]; if (!p5) return mark(a.id);
+    let prev = null; try { prev = mmBest(addD(a.d, -55), a.d, {skip:a.id})[mmIx(300)]; } catch (e) { elog(e); } if (prev && p5 <= prev.w) mark(a.id); });
+  impPreK = Object.keys(S.mm || {}).length + '|' + (S.arch || []).length + '|' + Object.keys(S.vo2h || {}).length; if (n) { try { save(); } catch (e) { elog(e); } }
+  return n;
+}
+/* Fahrten, die für eine VO2max-Schätzung aus der Historie noch geladen werden müssen */
+function impVo2Todo(){ try { impVo2Pre(); return mmTodo().filter(a => a.imp && +a.np > 0 && !impVo2Done(a.id)); } catch (e) { elog(e); return []; } }
+/* Auf der VO2max-Seite: aus der Historie nachrechnen (lädt nur die aussichtsreichen Fahrten) */
+function vo2HistUi(){
+  if (typeof gmMode !== 'function' || !gmMode()) return '';
+  const run = typeof mmFill !== 'undefined' && mmFill && mmFill.run, L = run ? [] : impVo2Todo(), last = S.imp && S.imp.vo2At ? S.imp : null;
+  if (run) return `<section class="panel mt-3 p-4" role="status"><p class="font-semibold">${tsL('VO2max aus der Historie', 'VO2max from your history')}</p><p class="mt-1 text-sm">${tsL(`Fahrt ${mmFill.i} von ${mmFill.n} …${mmFill.v ? ` ${mmFill.v} ${mmFill.v === 1 ? 'Schätzung' : 'Schätzungen'} bisher.` : ''}`, `Ride ${mmFill.i} of ${mmFill.n} …${mmFill.v ? ` ${mmFill.v} ${mmFill.v === 1 ? 'estimate' : 'estimates'} so far.` : ''}`)}</p><div class="mm-bar mt-2"><i style="width:${Math.round(mmFill.i / Math.max(1, mmFill.n) * 100)}%"></i></div></section>`;
+  if (!L.length && !last) return '';
+  return `<section class="panel mt-3 p-4" id="fx-v2hist-imp"><p class="font-semibold">${tsL('VO2max aus der Historie', 'VO2max from your history')}</p>
+    ${L.length ? `<p class="mt-1 text-sm" style="color:var(--mute)">${tsL(`${L.length} ältere ${L.length === 1 ? 'Fahrt kommt' : 'Fahrten kommen'} in Frage: neuer 5-min-Bestwert der 8 Wochen davor, mit Puls. Die App lädt nur diese von Garmin und prüft, ob du dabei am Anschlag warst (Spitzenpuls mindestens 95 % deiner HFmax).`, `${L.length} older ${L.length === 1 ? 'ride qualifies' : 'rides qualify'}: new 5-min best of the 8 weeks before, with heart rate. The app loads only these from Garmin and checks whether you were at your limit (peak heart rate at least 95 % of your max HR).`)}</p><button class="btn mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="mmFillGo()">${tsL('Aus der Historie nachrechnen', 'Calculate from history')}</button>` : ''}
+    ${last ? `<p class="mt-2 text-sm">${last.vo2n ? tsL(`Zuletzt ${last.vo2n} ${last.vo2n === 1 ? 'Schätzung' : 'Schätzungen'} aus der Historie übernommen.`, `Last run: ${last.vo2n} ${last.vo2n === 1 ? 'estimate' : 'estimates'} taken from your history.`) : tsL('Zuletzt keine Fahrt gefunden, bei der du 5 Minuten am Anschlag warst.', 'Last run: no ride found where you were at your limit for 5 minutes.')}</p>` : ''}</section>`;
+}
+function impMmList(){ try { impVo2Pre(); } catch (e) { elog(e); } return typeof mmTodo === 'function' ? mmTodo() : []; }
 /* VO2max aus einer nachgeladenen Fahrt: dieselbe Prüfung wie beim Einlesen (5-min-Test nach Sitko et al. 2022), still übernommen */
 function impVo2(a, r){ S.vo2h = S.vo2h && typeof S.vo2h === 'object' ? S.vo2h : {}; let e = null; try { e = vo2FromRide({id:a.id, day:a.d, n:a.n}, r); } catch (er) { elog(er); } S.vo2h[a.id] = 1; return e; }
 async function impMmRun(){

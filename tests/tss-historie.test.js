@@ -10,7 +10,9 @@ function thList(n0){ const L = []; let id = 9000; for (let k = 1; k <= 110; k++)
   return L.slice(0, n0 || L.length); }
 /* gmCall durch eine Attrappe ersetzen: Seiten zu 50, optional eine Drosselung (429) beim zweiten Abruf */
 function thStub(a, list, o){ a.w.__L = list; a.w.__calls = []; a.w.__rate = o && o.rate ? 1 : 0;
-  a.$(`S.gm = {mode:'web', ok:true}; IMP_WAIT[0] = 40; IMP_WAIT[1] = 40; gmCall = async (tool, inp) => { __calls.push(inp.start); if (__rate && __calls.length === 2) { __rate = 0; throw new GmErr('rate', 'Zu viele Abrufe'); }
+  /* Schlüssel und „gerade abgeglichen“: sonst setzt der automatische Abgleich (Fenster wird sichtbar) die Test-Verbindung zurück */
+  a.w.localStorage.setItem('relentless.garmin.key', 'TESTSCHLUESSEL');
+  a.$(`S.gm = {mode:'web', ok:true, last:new Date().toISOString()}; IMP_WAIT[0] = 40; IMP_WAIT[1] = 40; gmCall = async (tool, inp) => { __calls.push(inp.start); if (__rate && __calls.length === 2) { __rate = 0; throw new GmErr('rate', 'Zu viele Abrufe'); }
     const L = __L.slice(inp.start, inp.start + inp.limit); return {start:inp.start, activities:L, nextStart:inp.start + inp.limit < __L.length ? inp.start + inp.limit : null}; };`); }
 const thWait = async (a, cond, ms = 15000) => { const t0 = Date.now(); while (!cond()) { if (Date.now() - t0 > ms) throw new Fail('Zeitüberschreitung'); await a.tick(40); } };
 
@@ -147,4 +149,21 @@ test('Leistungsprofil: keine unmögliche Kurve bei Teilwerten, Hinweis, Teilprof
     seg(1200, 200, 130); for (let i = 0; i < 300; i++) pts.push({t:t++, p:400, h:Math.round(150 + 34 * i / 299), d:t * 8, a:300}); seg(60, 600, 180); seg(1800, 210, 140); return {r:{pts, ses:[], name:'x'}, name:'x'}; }`);
   await a.w.mmFillGo(); eq(a.$("S.mm.pa.s"), 'f', 'Teilwerte durch volle Kurve ersetzt'); ok(a.$("S.mm.pa.v[2]") >= 590, '30 s jetzt echt gemessen'); ok(a.$("impVo2Done('pa') && impVo2Done('pz')"), 'VO2max geprüft');
   eq(a.$('mmTodo().length'), 0, 'nichts mehr offen'); a.page('sprof'); ok(!/nur Teilwerte/.test(a.text())); a.noErrors();
+});
+
+test('VO2max aus der Historie für schon geladene Kurven: Vorauswahl ohne Download, nur aussichtsreiche Fahrten laden', async () => {
+  const a = await thBoot(); a.$("S.wf = [{d:'2024-01-01', at:0, ftp:300, kg:85}]; S.p.hrMax = 186; S.d.hrMax = 186; mmSeeded = true; S.gm = {mode:'web', ok:true, last:new Date().toISOString()}"); a.w.localStorage.setItem('relentless.garmin.key', 'TESTSCHLUESSEL');
+  /* wie in der Sicherung: Kurven schon geladen (Leistungsprofil), VO2max nie geprüft */
+  const cur = p5 => [900, 700, 550, 450, 400, 380, p5, 340, 320, 300, 290, 270, 260, 250, 0, 0];
+  a.$(`S.mm = {a1:{d:'2025-03-01', n:'A', kg:85, v:${JSON.stringify(cur(300))}, o:MM_D.map(() => 0), s:'f'}, b1:{d:'2025-04-10', n:'B', kg:85, v:${JSON.stringify(cur(395))}, o:MM_D.map(() => 0), s:'f'},
+    c1:{d:'2025-04-20', n:'C', kg:85, v:${JSON.stringify(cur(350))}, o:MM_D.map(() => 0), s:'f'}, d1:{d:'2025-05-10', n:'D', kg:85, v:${JSON.stringify(cur(410))}, o:MM_D.map(() => 0), s:'f'}};
+    S.arch = [['a1', '2025-03-01', 140, '1'], ['b1', '2025-04-10', 139, '2'], ['c1', '2025-04-20', 141, '3'], ['d1', '2025-05-10', 0, '4']].map(([id, d, hr, g]) => ({id, d, n:id, km:25, hm:300, sec:3300, np:280, hr:hr || undefined, gid:'9' + g, imp:1}));`);
+  eq(a.$('impVo2Todo().map(x => x.id)'), ['a1', 'b1'], 'C kein neuer 5-min-Bestwert, D ohne Puls: nicht laden');
+  a.$("goPg('state'); goPg('svo2')"); ok(/VO2max aus der Historie/.test(a.text()) && /2 ältere Fahrten kommen in Frage/.test(a.text()), 'Karte auf der VO2max-Seite');
+  a.w.__got = []; a.$(`gmRide = async g => { __got.push(g.id); const pk = g.id === '92' ? 181 : 160, w = g.id === '92' ? 395 : 300, t0 = Date.parse(g.id === '92' ? '2025-04-10T15:00:00Z' : '2025-03-01T15:00:00Z') / 1000, pts = []; let t = t0;
+    const seg = (n, p, h) => { for (let i = 0; i < n; i++) pts.push({t:t++, p, h, d:t * 8, a:300}); }; seg(1200, 200, 130); for (let i = 0; i < 300; i++) pts.push({t:t++, p:w, h:Math.round(150 + (pk - 150) * i / 299), d:t * 8, a:300}); seg(1500, 210, 140);
+    return {r:{pts, ses:[], name:'x'}, name:'x'}; }`);
+  await a.w.mmFillGo(); eq(a.$('__got'), ['91', '92'], 'nur die zwei Kandidaten geladen, älteste zuerst');
+  const V = a.$("S.vo2.filter(e => e.src === 'ride')"); eq(V.length, 1, 'eine Schätzung (B: Spitzenpuls 181 ≥ 95 % von 186)'); eq(V[0].date, '2025-04-10'); near(V[0].value, 16.6 + 8.87 * 395 / 85, .3);
+  eq(a.$('impVo2Todo().length'), 0, 'nichts mehr offen'); a.$("goPg('state'); goPg('svo2')"); ok(/Zuletzt 1 Schätzung aus der Historie übernommen/.test(a.text())); a.noErrors();
 });

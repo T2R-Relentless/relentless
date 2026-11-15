@@ -294,3 +294,33 @@ Branch `feature/f33b-vo2max-historie` auf Basis `main` (Version 208, Commit `aa9
 - Alle **306 Tests grün**.
 
 **Nach dem Update:** Leistungsprofil öffnen, „Vollständig von Garmin nachladen“ tippen. Bei rund 300 Fahrten dauert das etwa 10 bis 15 Minuten (eine Datei je Fahrt). Danach sollte auch 30 s, 1 min und 10 min zu Strava passen, sofern die Fahrten bei Garmin liegen.
+
+---
+
+## Nachtrag 15.11.2026: VO2max aus alten Daten wurde nicht berechnet (Fehlerkorrektur, Version 210)
+
+**Befund aus deiner Sicherung:**
+- 279 importierte Fahrten haben schon die vollständige Kurve. Sie kam über „Ältere Fahrten nachberechnen“ auf der Leistungsprofil-Seite.
+- Dieser Weg hat bis Version 209 die VO2max nicht geprüft. Nur 2 Fahrten waren als geprüft markiert, die einzige VO2max war dein Garmin-Wert.
+
+**Welche Fahrten in Frage kommen:**
+- Von den Fahrten mit Kurve haben 19 einen neuen 5-min-Bestwert der 8 Wochen davor.
+- Laut Garmin-Liste erreichten davon mindestens zwei den nötigen Spitzenpuls (95 % von HFmax 186, also 177 bpm):
+  - 10.04.2025: 395 W, max. 179 bpm
+  - 03.06.2025: 402 W, max. 181 bpm
+- Die Fahrt vom 28.03.2025 (387 W) liegt mit max. 176 bpm knapp darunter.
+- Ob der Spitzenpuls genau in den 5 Minuten lag, prüft erst die Originaldatei.
+- Erwartung: etwa 1 bis 3 Schätzungen, je nach Lage des Pulses. Die Prüfung bleibt bewusst streng (Ausbelastung), damit keine lockere Fahrt als VO2max gilt.
+
+**Korrektur:**
+- **Vorauswahl ohne Download:**
+  - Fahrten ohne Puls und Fahrten, deren 5-min-Wert kein neuer Bestwert der 8 Wochen davor ist, gelten sofort als geprüft.
+  - Bei dir müssen damit etwa 19 statt über 500 Dateien geladen werden.
+- **„Ältere Fahrten nachberechnen“** (Leistungsprofil) prüft die VO2max jetzt mit und zählt die Schätzungen.
+- **Neue Karte auf der VO2max-Seite** „VO2max aus der Historie“: Sie nennt die Zahl der Kandidaten, hat den Knopf „Aus der Historie nachrechnen“ und zeigt danach das Ergebnis.
+- **Tests:**
+  - Neu: Vorauswahl, nur Kandidaten geladen, älteste zuerst, eine Schätzung nur bei Spitzenpuls ≥ 95 %, Karte vor und nach dem Nachrechnen.
+  - Die Garmin-Tests waren anfällig, wenn das Testfenster ein- und ausgeblendet wurde (automatischer Abgleich). Sie setzen jetzt einen Testschlüssel und „gerade abgeglichen“.
+  - Alle **307 Tests grün**.
+
+**Nach dem Update:** VO2max-Seite öffnen und „Aus der Historie nachrechnen“ tippen. Bei rund 19 Fahrten dauert das unter einer Minute.
