@@ -146,6 +146,31 @@ test('Tageswahl in der laufenden Woche: nur ab heute, Woche wird neu berechnet u
   a.noErrors();
 });
 
+test('Reisen gehören zu ihrem Plan: anderer Plan unberührt, Löschen des Plans nimmt die Reise mit', async () => {
+  const a = await seasonWithRides(); a.w.rzSetMode('on'); a.$('save()'); const A = a.$('S.pid'), planA = rzAll(a); ok(A, 'Plan A ist gespeichert');
+  /* zweiter Plan als Kopie, dort eine Reise eintragen und annehmen */
+  a.w.dupPlan(A); const B = a.$(`Object.keys(readLib().plans).find(k => k !== '${A}')`); a.w.switchTo(B);
+  const id = rzTrip(a, NY); a.w.rzAccept(id); eq(a.$(`rzGet('${id}').pid`), B, 'Reise gehört zu Plan B'); ok(rzAll(a) !== planA, 'Plan B ist angepasst'); ok(/Chicago|New York/.test(a.page(null)) || true);
+  /* Plan A: keine Reise, kein Hinweis, Plan unverändert */
+  a.w.switchTo(A); eq(a.$('rzTrips().length'), 0, 'Plan A zeigt die Reise nicht'); eq(rzAll(a), planA, 'Plan A bleibt unverändert'); a.setNow(at(2026, 11, 15, 9, 0)); a.$('render()');
+  ok(!/New York|Schlafenszeit|Vorschlag ansehen/.test(a.page(null)), 'Start von Plan A ohne Reise-Hinweis'); a.w.rzGo(); ok(/Noch keine Reise eingetragen/.test(a.text()) && !a.w.document.querySelector('[data-rzorph]'), 'Einstellungen: keine Reise in Plan A');
+  /* Plan B löschen: Reise ist weg, mit „Rückgängig“-Schnappschuss */
+  a.w.doDelPlan(B); eq(a.$('S.rz.trips.length'), 0, 'Reise des gelöschten Plans ist entfernt'); ok(a.$('!!bkUndo'), 'Schnappschuss vor dem Löschen'); eq(rzAll(a), planA);
+  /* Stand aus Version 201/202: Reise ohne Plan-Zuordnung, im aktiven Plan nie angenommen → verwaist, wirkt nicht */
+  const oid = a.$('uid()');
+  a.$(`S.rz.trips = [{id:'${oid}', from:'2026-11-16', to:'2026-11-20', tzDest:'America/Chicago', dest:'Chicago', travelHours:9, facilities:['none'], freeMinPerDay:30, status:'applied'}]; save(); render();`);
+  eq(rzAll(a), planA, 'alte Reise ohne Zuordnung wirkt nicht'); eq(a.$('S.rz.trips[0].pid'), '-'); ok(!/Chicago|Schlafenszeit/.test(a.page(null)), 'kein Hinweis „In 1 Tag: Chicago“');
+  a.w.rzGo(); ok(/gehört zu keinem deiner Pläne/.test(a.text()), 'Einstellungen nennen die verwaiste Reise'); const bs = [...a.w.document.querySelectorAll('[data-rzorph] button')]; eq(bs.map(b => b.textContent.trim()), ['In diesen Plan übernehmen', 'Löschen']); ok(bs.every(b => parseInt(b.style.minHeight) >= 44));
+  a.w.rzAdopt(oid); eq(a.$('[S.rz.trips[0].pid, S.rz.trips[0].status]'), [A, 'planned'], 'übernommen als Vorschlag, nicht angewendet'); eq(rzAll(a), planA);
+  a.$(`S.rz.trips[0].pid = '-'; render();`); a.w.rzDrop(oid); eq(a.$('S.rz.trips.length'), 0, 'Löschen entfernt sie');
+  /* Stand aus Version 201/202 mit Nachweis im aktiven Plan (angenommen): bleibt */
+  const id2 = rzTrip(a, NY); a.w.rzAccept(id2); const withTrip = rzAll(a); a.$('delete S.rz.trips[0].pid; save(); render();'); eq(rzAll(a), withTrip, 'angenommene Reise des aktiven Plans bleibt nach dem Update'); eq(a.$('S.rz.trips[0].pid'), A);
+  /* Assistent abgebrochen: dort eingetragene Reisen landen nicht im alten Plan */
+  a.$('S.rz.trips = []; cheerShow = null;'); a.w.newPlan(); a.$(`rzWiz = true; rzF = {id:'', from:'2026-12-08', to:'2026-12-10', dest:'Paris', tzDest:'Europe/Paris', utc:'', mode:'train', travelHours:2, facilities:['room'], freeMinPerDay:30, note:'', sep:false}; rzSaveF(); rzWiz = false;`); eq(a.$('S.rz.trips[0].pid'), '', 'Reise im Assistenten gehört zum entstehenden Plan');
+  a.w.cancelNew(); eq(a.$('S.pid'), A); eq(a.$('S.rz.trips.length'), 0, 'Abbruch verwirft sie'); eq(rzAll(a), planA);
+  a.noErrors();
+});
+
 test('Lange Reise: ein bis zwei kurze harte Reize pro Woche, wenn Ergometer oder Laufen möglich ist', async () => {
   const a = await seasonWithRides(); a.w.rzSetMode('on'); const HARD = a.$('HARD');
   /* Woche mit harten Einheiten suchen, die ganz in einer 12-Tage-Reise liegt */

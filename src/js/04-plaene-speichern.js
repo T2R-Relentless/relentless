@@ -22,10 +22,10 @@ function switchTo(id){
 }
 function newPlan(){
   save(); const src = S.p || S.d || {}, keep = load(true).d; ['weight', 'ftp', 'sex', 'cycMode', 'cycLast', 'cycLen', 'cycSym', 'cycAdapt', 'hrMax', 'lthr', 'noPwr', 'lvl', 'strPlace', 'strLvl'].forEach(k => { if (src[k] != null) keep[k] = src[k]; }); keep.mode = null;
-  S.newFrom = S.pid || null; PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.blocked = {}; S.actual = {}; S.note = '';
+  if (typeof rzDraftGone === 'function') rzDraftGone(); S.newFrom = S.pid || null; PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.blocked = {}; S.actual = {}; S.note = '';
   S.pid = null; S.pname = ''; S.pnameManual = false; S.d = keep; S.edit = false; S.step = 1; resetView(); save(); render(); scrollTop0();
 }
-function cancelNew(){ const id = S.newFrom; S.newFrom = null; if (id && readLib().plans[id]) switchTo(id); else { S.step = 1; save(); render(); } }
+function cancelNew(){ if (typeof rzDraftGone === 'function') rzDraftGone(); const id = S.newFrom; S.newFrom = null; if (id && readLib().plans[id]) switchTo(id); else { S.step = 1; save(); render(); } }
 function startRename(id){ renId = id; renVal = readLib().plans[id].name; render(); }
 function setRen(v){ renVal = v; }
 function doRename(id){ const n = renVal.trim().slice(0, 60); if (n) { const lib = readLib(); if (lib.plans[id]) { lib.plans[id].name = n; lib.plans[id].manual = true; try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (e) { elog(e); storeErr = true; } if (S.pid === id) { S.pname = n; S.pnameManual = true; save(); } } } renId = null; render(); }
@@ -33,7 +33,7 @@ function dupPlan(id){ save(); const lib = readLib(), e = lib.plans[id]; if (!e) 
 function askDelPlan(id){ delId = id; render(); }
 function doDelPlan(id){
   bkPre('Vor dem Löschen eines Plans');
-  const lib = readLib(); delete lib.plans[id]; const rest = Object.values(lib.plans).sort((a, b) => b.updated - a.updated);
+  const lib = readLib(); delete lib.plans[id]; if (typeof rzPlanGone === 'function') rzPlanGone(id); const rest = Object.values(lib.plans).sort((a, b) => b.updated - a.updated);
   try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (e) { elog(e); storeErr = true; } delId = null;
   if (S.pid === id) { if (rest.length) { S.pid = null; applySnap(rest[0].snap); S.pid = rest[0].id; S.pname = rest[0].name; S.step = 0; resetView(); save(); } else { const f = load(true); PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.pid = null; S.pname = ''; S.d = f.d; S.step = 1; S.edit = false; S.newFrom = null; save(); } }
   render();

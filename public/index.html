@@ -1021,10 +1021,10 @@ function switchTo(id){
 }
 function newPlan(){
   save(); const src = S.p || S.d || {}, keep = load(true).d; ['weight', 'ftp', 'sex', 'cycMode', 'cycLast', 'cycLen', 'cycSym', 'cycAdapt', 'hrMax', 'lthr', 'noPwr', 'lvl', 'strPlace', 'strLvl'].forEach(k => { if (src[k] != null) keep[k] = src[k]; }); keep.mode = null;
-  S.newFrom = S.pid || null; PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.blocked = {}; S.actual = {}; S.note = '';
+  if (typeof rzDraftGone === 'function') rzDraftGone(); S.newFrom = S.pid || null; PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.blocked = {}; S.actual = {}; S.note = '';
   S.pid = null; S.pname = ''; S.pnameManual = false; S.d = keep; S.edit = false; S.step = 1; resetView(); save(); render(); scrollTop0();
 }
-function cancelNew(){ const id = S.newFrom; S.newFrom = null; if (id && readLib().plans[id]) switchTo(id); else { S.step = 1; save(); render(); } }
+function cancelNew(){ if (typeof rzDraftGone === 'function') rzDraftGone(); const id = S.newFrom; S.newFrom = null; if (id && readLib().plans[id]) switchTo(id); else { S.step = 1; save(); render(); } }
 function startRename(id){ renId = id; renVal = readLib().plans[id].name; render(); }
 function setRen(v){ renVal = v; }
 function doRename(id){ const n = renVal.trim().slice(0, 60); if (n) { const lib = readLib(); if (lib.plans[id]) { lib.plans[id].name = n; lib.plans[id].manual = true; try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (e) { elog(e); storeErr = true; } if (S.pid === id) { S.pname = n; S.pnameManual = true; save(); } } } renId = null; render(); }
@@ -1032,7 +1032,7 @@ function dupPlan(id){ save(); const lib = readLib(), e = lib.plans[id]; if (!e) 
 function askDelPlan(id){ delId = id; render(); }
 function doDelPlan(id){
   bkPre('Vor dem Löschen eines Plans');
-  const lib = readLib(); delete lib.plans[id]; const rest = Object.values(lib.plans).sort((a, b) => b.updated - a.updated);
+  const lib = readLib(); delete lib.plans[id]; if (typeof rzPlanGone === 'function') rzPlanGone(id); const rest = Object.values(lib.plans).sort((a, b) => b.updated - a.updated);
   try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (e) { elog(e); storeErr = true; } delId = null;
   if (S.pid === id) { if (rest.length) { S.pid = null; applySnap(rest[0].snap); S.pid = rest[0].id; S.pname = rest[0].name; S.step = 0; resetView(); save(); } else { const f = load(true); PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.pid = null; S.pname = ''; S.d = f.d; S.step = 1; S.edit = false; S.newFrom = null; save(); } }
   render();
@@ -10305,11 +10305,34 @@ const rzOk = t => !!t && rzISO(t.from) && rzISO(t.to) && t.to >= t.from;
 const rzDep = t => rzISO(t.departDay) && t.departDay <= t.from ? t.departDay : t.from;
 const rzRet = t => rzISO(t.returnDay) && t.returnDay >= t.to ? t.returnDay : t.to;
 /* sichtbare Reisen (nur bei eingeschaltetem Reisemodus) */
-function rzTrips(){ return rzOn() ? (S.rz.trips || []).filter(t => rzOk(t) && t.status !== 'hidden').sort((a, b) => a.from.localeCompare(b.from)) : []; }
+/* Reisen gehören zu dem Plan, in dem sie eingetragen wurden (pid). '' = Plan, der gerade im Assistenten entsteht.
+   Reisen aus Version 201/202 haben keine Plan-Zuordnung: Sie bleiben nur dann im aktiven Plan, wenn er sie nachweislich enthält
+   (angenommen laut Protokoll, in der laufenden Woche wirksam oder zusammen mit dem Plan angelegt), sonst gelten sie als verwaist ('-'). */
+function rzLegacyHere(t){
+  try {
+    if ((S.plan || []).some(x => x && x.rz && x.rz.id === t.id)) return true;
+    if ((S.log || []).some(e => e && e.title === 'Reise: Plan angepasst' && String(e.text || '').includes(fmt(t.from)) && String(e.text || '').includes(fmt(t.to)))) return true;
+    const e = readLib().plans[S.pid], at = parseInt(String(t.id).slice(0, -5), 36); return !!(e && e.created && at && at < e.created);
+  } catch (x) { elog(x); return false; }
+}
+function rzSync(){
+  const z = S && S.rz; if (!z || !Array.isArray(z.trips) || !z.trips.length) return; const pid = S.pid || '';
+  z.trips.forEach(t => { if (!t) return; if (t.pid === undefined) { if (pid && S.p) t.pid = rzLegacyHere(t) ? pid : '-'; } else if (t.pid === '' && pid) t.pid = pid; });
+}
+const rzMine = t => !!t && t.pid === (S.pid || '');
+/* Reisen ohne Plan: aus einem gelöschten Plan oder aus einer älteren Version ohne Zuordnung */
+function rzOrphans(){ try { rzSync(); const L = readLib().plans; return ((S.rz && S.rz.trips) || []).filter(t => rzOk(t) && t.pid !== undefined && t.pid !== '' && t.pid !== (S.pid || '') && !L[t.pid]); } catch (e) { elog(e); return []; } }
+function rzAdopt(id){ const t = rzGet(id); if (!t || !S.pid || !rzOrphans().includes(t)) return; t.pid = S.pid; t.status = 'planned'; delete t.declined; delete t.days; delete t.keep; delete t.st0; save(); render(); }
+function rzDrop(id){ const t = rzGet(id); if (!t || !rzOrphans().includes(t)) return; S.rz.trips = S.rz.trips.filter(x => x.id !== id); save(); render(); }
+/* Plan gelöscht: seine Reisen gehen mit (der Schnappschuss vor dem Löschen enthält sie) */
+function rzPlanGone(pid){ try { if (pid && S.rz && Array.isArray(S.rz.trips)) S.rz.trips = S.rz.trips.filter(t => !t || t.pid !== pid); } catch (e) { elog(e); } }
+/* Assistent abgebrochen oder neu begonnen: Reisen des noch nicht gespeicherten Plans verwerfen */
+function rzDraftGone(){ try { if (S.rz && Array.isArray(S.rz.trips)) S.rz.trips = S.rz.trips.filter(t => !t || t.pid !== ''); } catch (e) { elog(e); } }
+function rzTrips(){ if (!rzOn()) return []; rzSync(); return (S.rz.trips || []).filter(t => rzOk(t) && rzMine(t) && t.status !== 'hidden').sort((a, b) => a.from.localeCompare(b.from)); }
 /* Reisen, die im Plan wirken: angenommene, außerdem behaltene Anpassungen nach dem Ausschalten */
 function rzPlanTrips(){
   const z = S && S.rz; if (!z || !Array.isArray(z.trips) || !z.trips.length) return [];
-  return z.trips.filter(t => rzOk(t) && (rzSim && rzSim.id === t.id ? rzSim.on : z.mode === 'on' ? t.status === 'applied' : t.status === 'hidden' && !!t.keep));
+  rzSync(); return z.trips.filter(t => rzOk(t) && rzMine(t) && (rzSim && rzSim.id === t.id ? rzSim.on : z.mode === 'on' ? t.status === 'applied' : t.status === 'hidden' && !!t.keep));
 }
 function rzWith(id, on, fn){ const o = rzSim; rzSim = {id, on}; try { return fn(); } finally { rzSim = o; } }
 /* ---- Zeitzonen (Intl, offline) ---- */
@@ -10484,7 +10507,7 @@ function rzSaveF(){
   if (ddiff(f.from, f.to) > 60) { rzMsg = wkL('Höchstens 60 Tage am Stück.', 'At most 60 days in a row.'); return render(); }
   const dep = f.sep && rzISO(f.departDay) && f.departDay <= f.from ? f.departDay : f.from, ret = f.sep && rzISO(f.returnDay) && f.returnDay >= f.to ? f.returnDay : f.to, h = Math.max(0, Math.min(48, Math.round((parseFloat(String(f.travelHours).replace(',', '.')) || 0) * 2) / 2));
   const old = f.id ? rzGet(f.id) : null, was = old && old.status === 'applied', live = !!(S.p && S.plan && !rzWiz);
-  const t = {id:f.id || uid(), from:f.from, to:f.to, departDay:dep, returnDay:ret, tzHome:rzHomeTz(), tzDest:rzTzOk(f.tzDest) ? f.tzDest : '', dest:String(f.dest || '').slice(0, 40), mode:RZ_MODE.some(m => m[0] === f.mode) ? f.mode : 'flight', travelHours:h, facilities:rzFacs(f), freeMinPerDay:rzFree(f), note:String(f.note || '').slice(0, 200), status:live ? 'planned' : 'applied'};
+  const t = {id:f.id || uid(), pid:old ? old.pid : (S.pid || ''), from:f.from, to:f.to, departDay:dep, returnDay:ret, tzHome:rzHomeTz(), tzDest:rzTzOk(f.tzDest) ? f.tzDest : '', dest:String(f.dest || '').slice(0, 40), mode:RZ_MODE.some(m => m[0] === f.mode) ? f.mode : 'flight', travelHours:h, facilities:rzFacs(f), freeMinPerDay:rzFree(f), note:String(f.note || '').slice(0, 200), status:live ? 'planned' : 'applied'};
   if (was) bkPre('Vor dem Ändern der Reise');
   z.trips = [...z.trips.filter(x => x.id !== t.id), t].sort((a, b) => String(a.from).localeCompare(String(b.from)));
   if (was) rzReweek();
@@ -10582,6 +10605,7 @@ function rzCard(wiz){
   const body = !on ? '' : `<div class="mt-3">${field(rzL('Deine Heimat-Zeitzone', 'Your home time zone'), rzTzSel('rzHome', rzHomeTz(), 'rzTzSet(this.value)'))}</div>
     <p class="eyebrow mt-4">${rzL('Reisen', 'Trips')}</p>${up.length ? up.map(rzTripRow).join('') : `<p class="mt-1 text-sm" style="color:var(--mute)">${rzL('Noch keine Reise eingetragen.', 'No trip entered yet.')}</p>`}
     ${rzF ? rzForm() : `<button class="btn mt-3 !w-auto !px-4" style="min-height:44px" onclick="rzNew()"><span class="inline-flex items-center gap-2">${ic('plane', 18)}<span>${rzL('Reise eintragen', 'Add trip')}</span></span></button>`}
+    ${rzOrphans().filter(t => rzRet(t) >= iso(0)).map(t => `<div class="mt-3 p-3 text-sm" data-rzorph="${esc(t.id)}" style="border:1px solid var(--line);background:var(--tint)"><p><b>${esc(rzCityOf(t))}</b>, ${fmt(t.from)} – ${fmt(t.to)}</p><p class="mt-1" style="color:var(--mute)">${rzL('Diese Reise gehört zu keinem deiner Pläne mehr. Sie wirkt in diesem Plan nicht.', 'This trip no longer belongs to any of your plans. It has no effect on this plan.')}</p><div class="mt-2 flex flex-wrap gap-2"><button class="ghost !w-auto !px-3 text-sm" style="min-height:44px" onclick="rzAdopt('${ja(t.id)}')">${rzL('In diesen Plan übernehmen', 'Add to this plan')}</button><button class="ghost !w-auto !px-3 text-sm" style="min-height:44px" onclick="rzDrop('${ja(t.id)}')">${rzL('Löschen', 'Delete')}</button></div></div>`).join('')}
     ${old.length ? `<p class="mt-3 text-xs" style="color:var(--mute)">${rzL(`${old.length} vergangene ${old.length === 1 ? 'Reise' : 'Reisen'} gespeichert.`, `${old.length} past ${old.length === 1 ? 'trip' : 'trips'} saved.`)}</p>` : ''}`;
   return `<section class="panel p-4" id="fx-rz" data-noi18n><div class="flex items-center gap-3"><span class="min-w-0 flex-1"><span class="block font-semibold">${rzL('Reisemodus', 'Travel mode')}</span><span class="block text-sm" style="color:var(--mute)">${rzL('Plan passt sich an Reisen und Zeitzonen an. Aus = du siehst nichts davon.', 'The plan adapts to trips and time zones. Off = you see none of it.')}</span></span>${rzSwitch()}</div>${ask}${body}</section>`;
 }
@@ -10831,7 +10855,7 @@ TIPS.push(
 /* ---------- F14: Versionsstand in der App ablesbar ----------
    Eine Quelle: APP_BUILD (aus build/BUILD_ID), APP_VERSION (aus build/APP_VERSION) und APP_SW (aus der Cache-Version
    in relentless/public/sw.js) setzt der Build ein; version.json enthält dieselben Werte, build.sh --check prüft das. */
-const APP_VERSION = 202, APP_SW = 'relentless-v39';
+const APP_VERSION = 203, APP_SW = 'relentless-v40';
 let viOpen = false, viMsg = '', updVer = 0;
 /* 20261107180000 → „07.11.2026, 18:00“ bzw. „07 Nov 2026, 18:00“ */
 function viDate(id){ const m = String(id || '').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/); if (!m) return String(id || '');

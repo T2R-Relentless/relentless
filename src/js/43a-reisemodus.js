@@ -39,11 +39,34 @@ const rzOk = t => !!t && rzISO(t.from) && rzISO(t.to) && t.to >= t.from;
 const rzDep = t => rzISO(t.departDay) && t.departDay <= t.from ? t.departDay : t.from;
 const rzRet = t => rzISO(t.returnDay) && t.returnDay >= t.to ? t.returnDay : t.to;
 /* sichtbare Reisen (nur bei eingeschaltetem Reisemodus) */
-function rzTrips(){ return rzOn() ? (S.rz.trips || []).filter(t => rzOk(t) && t.status !== 'hidden').sort((a, b) => a.from.localeCompare(b.from)) : []; }
+/* Reisen gehören zu dem Plan, in dem sie eingetragen wurden (pid). '' = Plan, der gerade im Assistenten entsteht.
+   Reisen aus Version 201/202 haben keine Plan-Zuordnung: Sie bleiben nur dann im aktiven Plan, wenn er sie nachweislich enthält
+   (angenommen laut Protokoll, in der laufenden Woche wirksam oder zusammen mit dem Plan angelegt), sonst gelten sie als verwaist ('-'). */
+function rzLegacyHere(t){
+  try {
+    if ((S.plan || []).some(x => x && x.rz && x.rz.id === t.id)) return true;
+    if ((S.log || []).some(e => e && e.title === 'Reise: Plan angepasst' && String(e.text || '').includes(fmt(t.from)) && String(e.text || '').includes(fmt(t.to)))) return true;
+    const e = readLib().plans[S.pid], at = parseInt(String(t.id).slice(0, -5), 36); return !!(e && e.created && at && at < e.created);
+  } catch (x) { elog(x); return false; }
+}
+function rzSync(){
+  const z = S && S.rz; if (!z || !Array.isArray(z.trips) || !z.trips.length) return; const pid = S.pid || '';
+  z.trips.forEach(t => { if (!t) return; if (t.pid === undefined) { if (pid && S.p) t.pid = rzLegacyHere(t) ? pid : '-'; } else if (t.pid === '' && pid) t.pid = pid; });
+}
+const rzMine = t => !!t && t.pid === (S.pid || '');
+/* Reisen ohne Plan: aus einem gelöschten Plan oder aus einer älteren Version ohne Zuordnung */
+function rzOrphans(){ try { rzSync(); const L = readLib().plans; return ((S.rz && S.rz.trips) || []).filter(t => rzOk(t) && t.pid !== undefined && t.pid !== '' && t.pid !== (S.pid || '') && !L[t.pid]); } catch (e) { elog(e); return []; } }
+function rzAdopt(id){ const t = rzGet(id); if (!t || !S.pid || !rzOrphans().includes(t)) return; t.pid = S.pid; t.status = 'planned'; delete t.declined; delete t.days; delete t.keep; delete t.st0; save(); render(); }
+function rzDrop(id){ const t = rzGet(id); if (!t || !rzOrphans().includes(t)) return; S.rz.trips = S.rz.trips.filter(x => x.id !== id); save(); render(); }
+/* Plan gelöscht: seine Reisen gehen mit (der Schnappschuss vor dem Löschen enthält sie) */
+function rzPlanGone(pid){ try { if (pid && S.rz && Array.isArray(S.rz.trips)) S.rz.trips = S.rz.trips.filter(t => !t || t.pid !== pid); } catch (e) { elog(e); } }
+/* Assistent abgebrochen oder neu begonnen: Reisen des noch nicht gespeicherten Plans verwerfen */
+function rzDraftGone(){ try { if (S.rz && Array.isArray(S.rz.trips)) S.rz.trips = S.rz.trips.filter(t => !t || t.pid !== ''); } catch (e) { elog(e); } }
+function rzTrips(){ if (!rzOn()) return []; rzSync(); return (S.rz.trips || []).filter(t => rzOk(t) && rzMine(t) && t.status !== 'hidden').sort((a, b) => a.from.localeCompare(b.from)); }
 /* Reisen, die im Plan wirken: angenommene, außerdem behaltene Anpassungen nach dem Ausschalten */
 function rzPlanTrips(){
   const z = S && S.rz; if (!z || !Array.isArray(z.trips) || !z.trips.length) return [];
-  return z.trips.filter(t => rzOk(t) && (rzSim && rzSim.id === t.id ? rzSim.on : z.mode === 'on' ? t.status === 'applied' : t.status === 'hidden' && !!t.keep));
+  rzSync(); return z.trips.filter(t => rzOk(t) && rzMine(t) && (rzSim && rzSim.id === t.id ? rzSim.on : z.mode === 'on' ? t.status === 'applied' : t.status === 'hidden' && !!t.keep));
 }
 function rzWith(id, on, fn){ const o = rzSim; rzSim = {id, on}; try { return fn(); } finally { rzSim = o; } }
 /* ---- Zeitzonen (Intl, offline) ---- */
@@ -218,7 +241,7 @@ function rzSaveF(){
   if (ddiff(f.from, f.to) > 60) { rzMsg = wkL('Höchstens 60 Tage am Stück.', 'At most 60 days in a row.'); return render(); }
   const dep = f.sep && rzISO(f.departDay) && f.departDay <= f.from ? f.departDay : f.from, ret = f.sep && rzISO(f.returnDay) && f.returnDay >= f.to ? f.returnDay : f.to, h = Math.max(0, Math.min(48, Math.round((parseFloat(String(f.travelHours).replace(',', '.')) || 0) * 2) / 2));
   const old = f.id ? rzGet(f.id) : null, was = old && old.status === 'applied', live = !!(S.p && S.plan && !rzWiz);
-  const t = {id:f.id || uid(), from:f.from, to:f.to, departDay:dep, returnDay:ret, tzHome:rzHomeTz(), tzDest:rzTzOk(f.tzDest) ? f.tzDest : '', dest:String(f.dest || '').slice(0, 40), mode:RZ_MODE.some(m => m[0] === f.mode) ? f.mode : 'flight', travelHours:h, facilities:rzFacs(f), freeMinPerDay:rzFree(f), note:String(f.note || '').slice(0, 200), status:live ? 'planned' : 'applied'};
+  const t = {id:f.id || uid(), pid:old ? old.pid : (S.pid || ''), from:f.from, to:f.to, departDay:dep, returnDay:ret, tzHome:rzHomeTz(), tzDest:rzTzOk(f.tzDest) ? f.tzDest : '', dest:String(f.dest || '').slice(0, 40), mode:RZ_MODE.some(m => m[0] === f.mode) ? f.mode : 'flight', travelHours:h, facilities:rzFacs(f), freeMinPerDay:rzFree(f), note:String(f.note || '').slice(0, 200), status:live ? 'planned' : 'applied'};
   if (was) bkPre('Vor dem Ändern der Reise');
   z.trips = [...z.trips.filter(x => x.id !== t.id), t].sort((a, b) => String(a.from).localeCompare(String(b.from)));
   if (was) rzReweek();

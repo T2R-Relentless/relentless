@@ -154,3 +154,12 @@ Nicht ausgeführt. Der Ablauf wie bisher:
 - Tests: 267 grün (2 neue in `tests/reise.test.js`), Build-Check aktuell. Bilder: `claude/bilder/f29b-tageswahl-*.png` (beide dunkel).
 - Lauf und Laufband zeigen statt der Kachel „% FTP“ den Pulsbereich (aus Schwellen- oder Maximalpuls). Ohne eingetragenen Puls steht dort „Puls eintragen“ und führt zum Feld. Der Bereich stammt aus den Rad-Zonen; beim Laufen liegt der Puls meist etwas höher.
 - Die Grafik von Lauf und Laufband hat eine Pulsachse (Schwellenpuls gestrichelt, Pulswert der Einheit), ohne eingetragenen Puls das Empfinden. Detailtext beim Antippen und Beschreibung für VoiceOver nennen Puls oder Empfinden statt Prozent FTP, die Zeile darunter zeigt kein IF mehr. Der Reiter heißt an Tagen mit Kraft oder Mobilität weiter „Rad“. Nicht auf dem iPhone geprüft.
+
+## Nachtrag 15.11.2026: Reisen gehören zu ihrem Plan (Version 203, Fehlerkorrektur)
+
+- **Fehler:** Reisen waren für alle Pläne gemeinsam gespeichert. Eine in Plan B angenommene Reise wirkte deshalb auch in Plan A und blieb nach dem Löschen von Plan B stehen.
+- **Korrektur:** Jede Reise trägt die Kennung ihres Plans (`pid`). Sie wirkt und erscheint nur dort. Beim Löschen eines Plans gehen seine Reisen mit (im Schnappschuss „Rückgängig“ enthalten). Im Assistenten eingetragene Reisen gehören zum entstehenden Plan und werden beim Abbruch verworfen.
+- **Stände aus Version 201/202 ohne Zuordnung:** Die Reise bleibt im aktiven Plan, wenn er sie nachweislich enthält (laut Protokoll angenommen, in der laufenden Woche wirksam oder vor dem Plan angelegt). Sonst gilt sie als verwaist, wirkt nicht und steht unter Einstellungen → Reisemodus mit „In diesen Plan übernehmen“ (dann als Vorschlag) und „Löschen“.
+- Der Schalter Reisemodus und die Heimat-Zeitzone gelten weiter für alle Pläne.
+- Kein Eintrag im Neuigkeiten-Fenster, Build-ID unverändert. Tests: 268 grün (1 neuer).
+- Offen: Schaltet man den Reisemodus aus, während ein anderer Plan Reisen hat, wird dessen laufende Woche erst beim nächsten Öffnen dieses Plans neu berechnet. Nicht auf dem iPhone geprüft.
