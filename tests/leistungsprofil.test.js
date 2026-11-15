@@ -40,7 +40,7 @@ test('F26: Ausreißer über 2000 W und unplausibler 5-s-Wert', async () => {
   const rr = a.$('mmCalc')(lpRide([[600, 200], [5, 1200], [600, 200]])); eq(rr.q, 'r', '5 s > 2,2 × 1 min und > 1,5 × 15 s');
   const sprint = a.$('mmCalc')(lpRide([[600, 200], [15, 1000], [600, 200]])); ok(!sprint.q, 'echter 15-s-Sprint bleibt unmarkiert');
   a.$('mmPut')('r1', rr, {day:'2026-11-10', n:'Ausschlag'});
-  eq(a.$('mmBest')('2026-01-01', '2026-12-31')[0], null, '5 s zählt nicht'); ok(a.$('mmBest')('2026-01-01', '2026-12-31')[3].w > 0, '1 min zählt');
+  { const b5 = a.$('mmBest')('2026-01-01', '2026-12-31')[0], b15 = a.$('mmBest')('2026-01-01', '2026-12-31')[1]; ok(!b5 || (b5.der && b15 && b5.w === b15.w), '5 s: Ausreißer zählt nicht, höchstens abgeleitet aus 15 s'); } ok(a.$('mmBest')('2026-01-01', '2026-12-31')[3].w > 0, '1 min zählt');
   a.w.mmMark('r1', 'ok'); eq(a.$('mmBest')('2026-01-01', '2026-12-31')[0].w, 1200, 'nach Bestätigung zählt 5 s');
   a.w.mmMark('r1', 'x'); ok(a.$('mmBest')('2026-01-01', '2026-12-31').every(b => !b), 'ganze Fahrt ausgeschlossen');
   a.noErrors();

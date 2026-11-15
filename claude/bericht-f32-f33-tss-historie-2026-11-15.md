@@ -263,3 +263,34 @@ Branch `feature/f33b-vo2max-historie` auf Basis `main` (Version 208, Commit `aa9
 - Alle **304 Tests grün**, `tools/build.py --check` aktuell.
 
 **Nicht geprüft:** echter Abruf mit deinem Garmin-Konto, iPhone. Keine Änderung an der Netlify Function.
+
+---
+
+## Nachtrag 15.11.2026: Leistungsprofil weicht von Strava ab (Fehlerkorrektur, Version 210)
+
+**Befund aus deiner Sicherung vom 15.11.:**
+- Die Allzeit-Werte stimmen mit Strava („Unbegrenzt“) fast genau überein:
+  - 15 s 1.031/1.030 W, 2 min 467/466, 3 min 441/440, 5 min 402/402
+  - 15 min 348/348, 20 min 328/327, 30 min 318/318, 45 min 306/306, 60 min 292/293
+- Der Screenshot verglich aber „Letzte 8 Wochen“ in Relentless mit „Unbegrenzt“ bei Strava.
+- In den letzten 8 Wochen hatten **21 von 22 Fahrten nur Teilwerte**. Sie wurden vor dem Leistungsprofil (F26) eingelesen, deshalb kennt die App von ihnen nur 1, 5, 20 und 60 min aus der Zusammenfassung.
+- Die Grafik mischte diese Teilwerte mit der vollen Kurve einer einzigen Fahrt. Daher kamen unmögliche Sprünge wie 30 s 326 W unter 1 min 452 W.
+- Allzeit fehlen noch 290 Fahrten mit Leistung ohne Kurve, darunter Rollen- und Zwift-Fahrten, die das Nachberechnen bisher ausließ. Daher fehlen dort vermutlich 30 s (842 W bei Strava), 1 min und 10 min.
+
+**Korrektur:**
+- **Keine unmögliche Kurve mehr:**
+  - Hält man eine Leistung über D', dann auch über jede Dauer D, die D' ganzzahlig teilt: D' in Stücke der Länge D zerlegen, eines liegt mindestens beim Mittel.
+  - Der Bestwert je Dauer ist deshalb mindestens der Wert jeder Vielfach-Dauer, im Beispiel 30 s ≥ 1 min. Das gilt nur für Vielfache; für andere Dauerpaare gilt es nachweislich nicht immer.
+  - Solche Werte sind als „abgeleitet“ markiert, das Detail erklärt es.
+- **Hinweis an der Grafik:** „X von Y Fahrten in diesem Zeitraum haben nur Teilwerte …“ mit Knopf „Vollständig von Garmin nachladen“.
+- **Nachberechnen (`mmFillGo`) verbessert:**
+  - Es nimmt jetzt auch Rollen- und Zwift-Fahrten mit Leistung und arbeitet die älteste zuerst ab.
+  - Es prüft dabei die VO2max (gleiche Regel wie F33b) und nimmt Fahrten aus allen Jahren.
+  - Die Import-Karte nutzt dieselbe Liste.
+
+**Tests:**
+- Neu: Hüllkurve nur über Vielfache, Hinweis, abgeleitetes Detail, Liste mit Zwift-Fahrt und ältester zuerst, Nachladen ersetzt die Teilwerte, VO2max geprüft.
+- Angepasst: Ein Test erwartete bei einem verworfenen 5-s-Ausreißer gar keinen Wert. Jetzt steht dort der aus 15 s abgeleitete Wert, nicht der Ausreißer.
+- Alle **306 Tests grün**.
+
+**Nach dem Update:** Leistungsprofil öffnen, „Vollständig von Garmin nachladen“ tippen. Bei rund 300 Fahrten dauert das etwa 10 bis 15 Minuten (eine Datei je Fahrt). Danach sollte auch 30 s, 1 min und 10 min zu Strava passen, sofern die Fahrten bei Garmin liegen.

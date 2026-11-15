@@ -129,3 +129,22 @@ test('Abgleich ohne Neues: „Alles aktuell“ mit der zuletzt übernommenen Fah
   ok(/^Alles aktuell: Bei Garmin gibt es keine Fahrt, die hier noch fehlt \(geprüft: die letzten 42 Tage\)\./.test(t), t); ok(/Zuletzt übernommen: „Morgenrunde“ \(heute, 07:10 Uhr\), automatisch beim Öffnen der App\./.test(t), t);
   ok(!/Keine neuen Radfahrten/.test(t)); a.w.navGo('more'); a.w.goPg('settings'); a.w.goPg('set-gm'); ok(/Alles aktuell/.test(a.text())); a.noErrors();
 });
+
+test('Leistungsprofil: keine unmögliche Kurve bei Teilwerten, Hinweis, Teilprofile vollständig nachladen', async () => {
+  const a = await thBoot(); a.$("S.wf = [{d:'2026-01-01', at:0, ftp:300, kg:85}]; S.p.hrMax = 190; mmSeeded = true");
+  /* wie in der Sicherung vom 15.11.: eine Fahrt nur mit Teilwerten (1, 5, 20, 60 min), eine mit voller Kurve */
+  a.$(`S.mm = {pa:{d:'2026-10-03', n:'Teilwerte', kg:85, v:[0,0,0,452,0,0,369,0,0,0,303,0,0,266,0,0], o:null, s:'a'},
+    pf:{d:'2026-11-10', n:'Heute', kg:85, v:[513,369,326,300,254,248,240,214,209,201,195,191,183,180,0,0], o:MM_D.map(() => 0), s:'f'}};
+    S.arch = [{id:'pa', d:'2026-10-03', n:'Teilwerte', km:60, hm:500, sec:7200, np:230, m1:452, gid:'88001', imp:1}, {id:'pz', d:'2026-09-30', n:'Zwift', km:30, hm:0, sec:3600, np:220, gid:'88002', in:1, imp:1}];`);
+  const B = a.$("mmBest(iso(-55), iso(0))"), w = t => B[a.$(`mmIx(${t})`)];
+  eq(w(60).w, 452); eq(w(30).w, 452, '30 s ≥ 1 min (60 = 2 × 30)'); eq(w(30).der, 60, 'als abgeleitet markiert'); eq(w(15).w, 452); ok(w(5).w === 513 && !w(5).der, 'echter höherer Wert bleibt');
+  eq(w(600).w, 303, '10 min ≥ 20 min (1200 = 2 × 600)'); eq(w(2700).w, 183, '45 min: kein Vielfaches von 60 min, nicht abgeleitet');
+  const L = MMD => MMD; const D = a.$('MM_D'), ok1 = D.every((t, i) => !B[i] || D.every((u, j) => j <= i || u % t || !B[j] || B[j].w <= B[i].w)); ok(ok1, 'nirgends weniger als bei einem Vielfachen');
+  a.$("mmPer = '8w'"); a.w.goPg('state'); a.w.goPg('sprof'); let t = a.text(); ok(/1 von 2 Fahrten in diesem Zeitraum haben nur Teilwerte/.test(t), 'Hinweis an der Grafik'); a.$('mmSel = 1'); t = a.page('sprof'); ok(/Abgeleitet: Über 1 min bist du 452 W gefahren/.test(t), 'Detail erklärt den abgeleiteten Wert');
+  eq(a.$('mmTodo().map(x => x.id)'), ['pz', 'pa'], 'Zwift-Fahrt mit Leistung dabei, älteste zuerst');
+  /* Nachladen: vollständige Kurve ersetzt die Teilwerte, VO2max wird geprüft */
+  thStub(a, []); a.$(`gmRide = async g => { const t0 = Date.parse('2026-10-03T15:00:00Z') / 1000, pts = []; let t = t0; const seg = (n, p, h) => { for (let i = 0; i < n; i++) pts.push({t:t++, p, h, d:t * 8, a:300}); };
+    seg(1200, 200, 130); for (let i = 0; i < 300; i++) pts.push({t:t++, p:400, h:Math.round(150 + 34 * i / 299), d:t * 8, a:300}); seg(60, 600, 180); seg(1800, 210, 140); return {r:{pts, ses:[], name:'x'}, name:'x'}; }`);
+  await a.w.mmFillGo(); eq(a.$("S.mm.pa.s"), 'f', 'Teilwerte durch volle Kurve ersetzt'); ok(a.$("S.mm.pa.v[2]") >= 590, '30 s jetzt echt gemessen'); ok(a.$("impVo2Done('pa') && impVo2Done('pz')"), 'VO2max geprüft');
+  eq(a.$('mmTodo().length'), 0, 'nichts mehr offen'); a.page('sprof'); ok(!/nur Teilwerte/.test(a.text())); a.noErrors();
+});

@@ -142,7 +142,7 @@ function impPropNo(){ if (S.imp && S.imp.prop) S.imp.prop.st = 'no'; save(); ren
    Älteste zuerst: Die VO2max-Schätzung „aus einer Fahrt“ zählt nur bei einem neuen 5-min-Bestwert der 8 Wochen davor (vo2FromRide).
    Dafür müssen die älteren Fahrten ihre Bestwerte schon haben. S.vo2h merkt sich, welche Fahrten schon geprüft sind. */
 const impVo2Done = id => !!(S.vo2h && S.vo2h[id]);
-function impMmList(){ const mm = S.mm || {}; return (S.arch || []).filter(a => a.imp && +a.np > 0 && a.gid && a.d >= iso(-365) && (!mm[a.id] || !impVo2Done(a.id))).sort((a, b) => a.d.localeCompare(b.d)); }
+function impMmList(){ return typeof mmTodo === 'function' ? mmTodo() : []; }
 /* VO2max aus einer nachgeladenen Fahrt: dieselbe Prüfung wie beim Einlesen (5-min-Test nach Sitko et al. 2022), still übernommen */
 function impVo2(a, r){ S.vo2h = S.vo2h && typeof S.vo2h === 'object' ? S.vo2h : {}; let e = null; try { e = vo2FromRide({id:a.id, day:a.d, n:a.n}, r); } catch (er) { elog(er); } S.vo2h[a.id] = 1; return e; }
 async function impMmRun(){
@@ -150,7 +150,7 @@ async function impMmRun(){
   let tries = 0;
   for (let k = 0; k < L.length && !impMm.stop; k++) {
     const a = L[k];
-    try { const {r} = await gmRide({id:a.gid, n:a.n}); if (!(S.mm && S.mm[a.id])) { const rec = mmCalc(r); if (rec) mmPut(a.id, rec, {d:a.d, n:a.n}); } if (impVo2(a, r)) impMm.v++; tries = 0; }
+    try { const {r} = await gmRide({id:a.gid, n:a.n}); if (!(S.mm && S.mm[a.id] && S.mm[a.id].s === 'f')) { const rec = mmCalc(r); if (rec) mmPut(a.id, rec, {d:a.d, n:a.n}); else S.mm[a.id] = {...(S.mm[a.id] || {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a'}), nf:1}; } if (impVo2(a, r)) impMm.v++; tries = 0; }
     catch (e) { if (e && e.code === 'rate' && tries < IMP_WAIT.length) { await impSleep(IMP_WAIT[tries++]); k--; continue; } if (e instanceof GmErr && e.code !== 'tool') { impMm.err = e.message; break; } }
     impMm.i = k + 1; if (k % 5 === 4) save(); render(); await impSleep(2000);
   }
@@ -179,7 +179,7 @@ function impCard(){
       <div class="mt-2">${impBtn(`impStart('${ja(impRange)}')`, tsL('Ältere Fahrten importieren', 'Import older rides'), true)}</div>`;
   }
   const n = impMmList().length, mm = impMm ? `<p class="mt-2 text-sm" aria-live="polite">${tsL(`Bestwerte und VO2max: ${impMm.i} von ${impMm.n} Fahrten${impMm.v ? `, ${impMm.v} VO2max-Schätzungen` : ''}`, `Best efforts and VO2max: ${impMm.i} of ${impMm.n} rides${impMm.v ? `, ${impMm.v} VO2max estimates` : ''}`)}</p>${bar(Math.round(impMm.i / Math.max(1, impMm.n) * 100))}<div class="mt-2">${impBtn('impMmStop()', tsL('Anhalten', 'Pause'))}</div>`
-    : n && !run ? `<div class="mt-3" style="border-top:1px solid var(--line);padding-top:10px"><p class="text-sm">${tsL(`Für ${n} importierte Fahrten mit Leistung der letzten 12 Monate kann die App Bestwerte (Leistungsprofil) und VO2max nachrechnen. Dafür holt sie jede Fahrt einzeln, etwa 2 Sek. je Fahrt, die älteste zuerst.`, `For ${n} imported rides with power from the last 12 months the app can calculate best efforts (power profile) and VO2max. It fetches each ride individually, about 2 s per ride, oldest first.`)}</p><div class="mt-2">${impBtn('impMmRun()', tsL('Bestwerte und VO2max nachrechnen', 'Calculate best efforts and VO2max'))}</div></div>` : '';
+    : n && !run ? `<div class="mt-3" style="border-top:1px solid var(--line);padding-top:10px"><p class="text-sm">${tsL(`Für ${n} Fahrten kann die App Bestwerte (Leistungsprofil) und VO2max vollständig nachrechnen. Dafür holt sie jede Fahrt einzeln, etwa 2 Sek. je Fahrt, die älteste zuerst.`, `For ${n} rides the app can calculate best efforts (power profile) and VO2max in full. It fetches each ride individually, about 2 s per ride, oldest first.`)}</p><div class="mt-2">${impBtn('impMmRun()', tsL('Bestwerte und VO2max nachrechnen', 'Calculate best efforts and VO2max'))}</div></div>` : '';
   const vInfo = !impMm && S.imp && S.imp.vo2At ? `<p class="mt-2 text-sm" role="status">${S.imp.vo2n ? tsL(`${S.imp.vo2n} VO2max-${S.imp.vo2n === 1 ? 'Schätzung' : 'Schätzungen'} aus der Historie übernommen.`, `${S.imp.vo2n} VO2max ${S.imp.vo2n === 1 ? 'estimate' : 'estimates'} taken from your history.`) : tsL('In der Historie war keine Fahrt, aus der sich die VO2max schätzen lässt (5 Min. am Anschlag mit passendem Puls).', 'No ride in your history allows a VO2max estimate (5 min all-out with matching heart rate).')} ${S.imp.vo2n ? `<button class="underline" style="color:var(--teal);background:none;border:0;min-height:44px" onclick="goPg('state');goPg('svo2')">${tsL('VO2max ansehen', 'View VO2max')}</button>` : ''}</p>` : '';
   return `<div class="mt-4" data-noi18n id="imp-card" style="border-top:1px solid var(--line);padding-top:12px"><p class="font-semibold">${tsL('Ältere Fahrten importieren', 'Import older rides')}</p><p class="mt-1 text-sm" style="color:var(--mute)">${tsL('Damit Fitness und Formkurve von Anfang an stimmen. Die Fahrten erscheinen im Logbuch als „importiert“, ohne Bewertung und ohne Einfluss auf den Plan.', 'So that fitness and the fitness curve are right from the start. The rides appear in the logbook as “imported”, without evaluation and without effect on the plan.')}</p>${body}${mm}${vInfo}${impFtpUi()}${impInfoUi()}</div>`;
 }

@@ -103,6 +103,11 @@ function mmBest(from, to, opt){
   const all = mmAll(), out = MM_D.map(() => null), skip = opt && opt.skip;
   Object.entries(all).forEach(([id, r]) => { if (!r || !r.d || r.d < from || r.d > to || id === skip) return;
     MM_D.forEach((t, i) => { if (!mmCounts(r, i)) return; const w = r.v[i]; if (!out[i] || w > out[i].w) out[i] = {w, id, d:r.d, n:r.n, kg:r.kg || mmKgAt(r.d), o:r.o ? r.o[i] : null, s:r.s}; }); });
+  /* Keine unmöglichen Kurven: Wer über D' eine Leistung gehalten hat, hat sie über jede Dauer D, die D' ganzzahlig teilt,
+     mindestens ebenso gehalten (D' in k Stücke der Länge D zerlegen, eines davon liegt mindestens beim Mittel). Gilt nur für
+     Vielfache. Nötig, solange Fahrten nur Teilwerte haben (1, 5, 20, 60 min aus der Zusammenfassung). Markiert als „abgeleitet“. */
+  for (let i = MM_D.length - 2; i >= 0; i--) for (let j = i + 1; j < MM_D.length; j++) { const a = out[i], b = out[j];
+    if (b && MM_D[j] % MM_D[i] === 0 && (!a || b.w > a.w)) out[i] = {...b, o:null, der:MM_D[j]}; }
   return out;
 }
 const mmVal = (b, unit) => !b ? 0 : unit === 'kg' ? b.w / (b.kg || 75) : b.w;
@@ -335,10 +340,12 @@ function mmPage(){
   const chart = !any ? `<p class="mt-3 text-sm" style="color:var(--mute)">${wkL('In diesem Zeitraum gibt es keine Fahrten mit Leistungsdaten.', 'There are no rides with power data in this period.')}</p>`
     : mmView === 'net' ? `<div class="mt-2">${mmNetSvg(lines, {unit:mmUnit, label:say})}</div><div class="mm-lg">${back.length ? `<span><i class="mm-k mm-ka"></i>${mmPerL('all')}</span>` : ''}<span><i class="mm-k ${mmPer === 'all' ? 'mm-ka' : 'mm-k8'}"></i>${mmPerL(mmPer)}</span></div><div class="mm-lg"><span>${wkL('Ring:', 'Ring:')}</span><span><i class="mm-k mm-kb mm-kr1"></i>${wkL('kurz', 'short')}</span><span><i class="mm-k mm-kb mm-kr2"></i>${wkL('mittel', 'medium')}</span><span><i class="mm-k mm-kb mm-kr3"></i>${wkL('lang', 'long')}</span></div>${mmDetail(B, prev)}`
     : `<div class="mt-2">${mmCurveSvg(lines, mmUnit, ftp, say)}</div><p id="mm-ctip" class="wk-tip text-xs" aria-live="polite">${wkL('Wische über die Kurve, dann siehst du den Wert je Dauer.', 'Swipe across the curve to see the value for each duration.')}</p><div class="mm-lg">${back.length ? `<span><i class="mm-k mm-ka"></i>${mmPerL('all')}</span>` : ''}<span><i class="mm-k ${mmPer === 'all' ? 'mm-ka' : 'mm-k8'}"></i>${mmPerL(mmPer)}</span>${ftp ? `<span><i class="mm-k mm-kf"></i>FTP ${ftp} W</span>` : ''}</div>`;
+  const inP = Object.values(all).filter(r => r && r.d >= f && r.d <= t && !r.x), part = inP.filter(r => r.s === 'a' && !r.nf).length, canF = typeof gmMode === 'function' && !!gmMode() && !(mmFill && mmFill.run);
+  const partT = part ? `<div class="mm-box mt-2 p-3 text-sm" role="status"><p>${wkL(`${part} von ${inP.length} Fahrten in diesem Zeitraum haben nur Teilwerte (1, 5, 20 und 60 min aus der Zusammenfassung). Die Kurve ist deshalb unvollständig, Werte dazwischen sind daraus abgeleitet.`, `${part} of ${inP.length} rides in this period only have partial values (1, 5, 20 and 60 min from the summary). The curve is therefore incomplete; values in between are derived from them.`)}</p>${canF ? `<button class="btn mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="mmFillGo()">${wkL('Vollständig von Garmin nachladen', 'Load fully from Garmin')}</button>` : `<p class="mt-1 text-xs" style="color:var(--mute)">${wkL('Mit Garmin verbunden lädt die App die Fahrten vollständig nach.', 'With Garmin connected the app loads the rides in full.')}</p>`}</div>` : '';
   const na = MM_RAD.filter(t2 => !B[mmIx(t2)]);
   const naT = any && na.length ? `<p class="mt-2 text-xs" style="color:var(--mute)">${wkL('Ohne Wert in diesem Zeitraum (graue Achse): ', 'No value in this period (grey axis): ')}${na.map(mmLbl).join(', ')}.</p>` : '';
   const head = `<section class="panel p-4" id="fx-mm" data-noi18n>${T ? `<p class="hd text-lg font-semibold">${esc(T.name)}</p><p class="mt-1 text-sm">${esc(T.txt.replace(/^[^:]+:\s*/, ''))}</p>` : `<p class="text-sm" style="color:var(--mute)">${wkL('Für den Fahrertyp braucht die App Bestwerte über kurze und lange Dauern.', 'For your rider type the app needs best efforts over short and long durations.')}</p>`}
-    <div class="mt-3">${tabs}${cust}</div>${sw}${chart}${naT}
+    <div class="mt-3">${tabs}${cust}</div>${sw}${partT}${chart}${naT}
     <p class="sr-only">${esc(say)}</p></section>`;
   return head + mmCatsUi(C) + mmFtpUi() + mmFillUi() + mmInfo();
 }
@@ -350,7 +357,8 @@ function mmDetail(B, prev){
   const ch = p ? b.w - p.w : null, pc = p ? Math.round((b.w / p.w - 1) * 100) : null;
   const chT = ch == null ? wkL('Vor 8 Wochen gab es noch keinen Wert.', 'There was no value 8 weeks ago.') : ch === 0 ? wkL('Gleich wie vor 8 Wochen.', 'Same as 8 weeks ago.') : `${ch > 0 ? '+' : '−'}${Math.abs(ch)} W (${pc > 0 ? '+' : pc < 0 ? '−' : '±'}${Math.abs(pc)} %) ${wkL('gegenüber vor 8 Wochen', 'compared with 8 weeks ago')}.`;
   const at = b.o != null ? wkL(` nach ${Math.round(b.o / 60)} min`, ` after ${Math.round(b.o / 60)} min`) : '';
-  return `<div class="mm-box mt-2 p-3 text-sm"><p><b>${mmLbl(t)}: ${b.w} W</b> · ${mmNum(b.w / (b.kg || 75), 2)} W/kg</p><p class="mt-1">${mmDay(b.d)}${at}, <button class="underline" style="color:var(--teal);background:none;border:0;padding:0;min-height:32px" onclick="lbOpenRide('${ja(b.id)}')">${esc(b.n)}</button></p><p class="mt-1" style="color:var(--mute)">${chT}</p></div>`;
+  const derT = b.der ? `<p class="mt-1 text-xs" style="color:var(--mute)">${wkL(`Abgeleitet: Über ${mmLbl(b.der)} bist du ${b.w} W gefahren, über ${mmLbl(t)} also mindestens so viel. Der genaue Wert fehlt, weil die Fahrt nur Teilwerte hat.`, `Derived: you rode ${b.w} W for ${mmLbl(b.der)}, so at least as much for ${mmLbl(t)}. The exact value is missing because the ride only has partial values.`)}</p>` : '';
+  return `<div class="mm-box mt-2 p-3 text-sm"><p><b>${mmLbl(t)}: ${b.w} W</b> · ${mmNum(b.w / (b.kg || 75), 2)} W/kg</p><p class="mt-1">${mmDay(b.d)}${at}, <button class="underline" style="color:var(--teal);background:none;border:0;padding:0;min-height:32px" onclick="lbOpenRide('${ja(b.id)}')">${esc(b.n)}</button></p>${derT}<p class="mt-1" style="color:var(--mute)">${chT}</p></div>`;
 }
 function mmCatsUi(C){
   const rows = MM_CAT.map(c => { const x = C[c.k], nm = wkL(c.l[0], c.l[1]);
@@ -381,13 +389,16 @@ function mmInfo(){
 
 /* ---------- Ältere Fahrten mit Garmin nachberechnen (Fortschritt, abbrechbar, später fortsetzbar) ---------- */
 let mmFill = null;
-function mmTodo(){ const all = mmAll(); return (S.arch || []).filter(a => a && a.gid && !a.in && (!all[a.id] || (all[a.id].s === 'a' && !all[a.id].nf))).sort((a, b) => b.d.localeCompare(a.d)); }
+/* Fahrten, deren Kurve fehlt oder nur aus Teilwerten besteht (auch Rolle und Zwift mit Leistung), dazu importierte Fahrten ohne VO2max-Prüfung.
+   Älteste zuerst, damit die VO2max-Schätzung „neuer 5-min-Bestwert der 8 Wochen davor“ auf den älteren Fahrten aufbaut. */
+function mmTodo(){ const all = mmAll(), v2 = id => typeof impVo2Done === 'function' ? impVo2Done(id) : true;
+  return (S.arch || []).filter(a => a && a.gid && (!a.in || +a.np > 0 || a.m1) && (!all[a.id] ? (+a.np > 0 || a.m1 || !a.imp) : (all[a.id].s === 'a' && !all[a.id].nf) || (a.imp && +a.np > 0 && !v2(a.id) && !all[a.id].nf))).sort((a, b) => a.d.localeCompare(b.d)); }
 async function mmFillGo(){
   if ((mmFill && mmFill.run) || typeof gmRide !== 'function' || !gmMode()) return;
   const L = mmTodo(); if (!L.length) return; mmFill = {run:1, i:0, n:L.length, ok:0, fail:0, msg:''}; render();
   for (const a of L) {
     if (!mmFill.run) break; mmFill.i++; render();
-    try { const {r} = await gmRide({id:a.gid, n:''}); const rec = mmCalc(r); if (rec) { mmPut(a.id, rec, {d:a.d, n:a.n}); mmFill.ok++; } else { const o = S.mm[a.id]; if (o) o.nf = 1; else S.mm[a.id] = {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a', nf:1}; } }
+    try { const {r} = await gmRide({id:a.gid, n:''}); const old = S.mm && S.mm[a.id], rec = old && old.s === 'f' ? old : mmCalc(r); if (rec) { if (rec !== old) mmPut(a.id, rec, {d:a.d, n:a.n}); try { if (typeof impVo2 === 'function' && !impVo2Done(a.id)) impVo2(a, r); } catch (er) { elog(er); } mmFill.ok++; } else { const o = S.mm[a.id]; if (o) o.nf = 1; else S.mm[a.id] = {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a', nf:1}; } }
     catch (e) { elog(e); mmFill.fail++; if (typeof GmErr === 'function' && e instanceof GmErr && e.code !== 'tool') { mmFill.msg = e.message; break; } }
     if (mmFill.i % 5 === 0) { try { save(); } catch (e) { elog(e); } }
   }
