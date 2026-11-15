@@ -93,7 +93,7 @@ function gmInFix(list){
 async function gmSync(target, quiet){
   if (gmBusy || !gmMode()) return; gmBusy = true; gmMsg = null; gmProg = 'Verbinde mit Garmin …'; if (!quiet) render();
   const days = target === 'hist' ? 90 : 42, to = iso(0), from = iso(-days), seen = new Set((S.gm.ids || []));
-  let n = 0, skip = 0, fail = 0, nPl = 0, nX = 0;
+  let n = 0, skip = 0, fail = 0, nPl = 0, nX = 0; const mfD = [];
   try {
     const all = await gmList(from, to); gmInFix(all);
     const list = all.filter(g => !seen.has(g.id)).sort((a, b) => a.ts.localeCompare(b.ts)).slice(-40);
@@ -106,13 +106,14 @@ async function gmSync(target, quiet){
           else { S.hist.push({...Object.fromEntries(Object.entries(a).filter(([k, v]) => v == null || typeof v !== 'object')), np:a.np || 0, m1:a.m1 || null, m5:a.m5 || null, m20:a.m20 || null, m60:a.m60 || null}); n++; }
         } else {
           S.man = S.man || []; if (S.man.some(m => m.id === a.id)) skip++;
-          else { const hw = hrHist(r, 600); if (hw) a.hrW = hw; S.man.push(a); const sv = exeShow, st = streamOf(r), hh = hrHist(r); const e0 = exeAuto(a, st, hh), isX = !!(e0 && String(e0.k || '').startsWith('x-')), e = isX ? null : e0 || gmPrevWeek(a, st, hh); if (e) { nPl++; gmNews.push({k:e.k || exeShow, n:e.plan || e.n, s:e.score, pr:!!(e.pr && e.pr.length)}); } else if (isX) { nX++; gmNews.push({x:e0.id, n:e0.n, pr:!!(e0.pr && e0.pr.length)}); } if (quiet || !e) exeShow = sv; n++; }
+          else { const hw = hrHist(r, 600); if (hw) a.hrW = hw; S.man.push(a); mfD.push(a.day); const sv = exeShow, st = streamOf(r), hh = hrHist(r); const e0 = exeAuto(a, st, hh), isX = !!(e0 && String(e0.k || '').startsWith('x-')), e = isX ? null : e0 || gmPrevWeek(a, st, hh); if (e) { nPl++; gmNews.push({k:e.k || exeShow, n:e.plan || e.n, s:e.score, pr:!!(e.pr && e.pr.length)}); } else if (isX) { nX++; gmNews.push({x:e0.id, n:e0.n, pr:!!(e0.pr && e0.pr.length)}); } if (quiet || !e) exeShow = sv; n++; }
         }
         seen.add(g.id);
       } catch (e) { if (e instanceof GmErr && e.code !== 'tool') throw e; fail++; }
     }
     S.gm = {...S.gm, ids:[...seen].slice(-400), last:new Date().toISOString(), ok:true};
-    gmMsg = {ok:true, t:gmSum(target, n, nPl, nX, skip, fail, days)}; if (n) S.gm = {...S.gm, lastNew:{at:Date.now(), n, auto:!!quiet}};
+    let mfT = ''; try { if (target !== 'hist' && mfD.length) mfT = mfAfterImport(mfD); } catch (e) { elog(e); }
+    gmMsg = {ok:true, t:gmSum(target, n, nPl, nX, skip, fail, days) + (mfT ? ' ' + mfT : '')}; if (n) S.gm = {...S.gm, lastNew:{at:Date.now(), n, auto:!!quiet}};
   } catch (e) { gmMsg = {ok:false, code:e.code, t:e.message}; }
   if (target === 'hist') S.hist = (S.hist || []).sort((a, b) => b.ts.localeCompare(a.ts));
   else { S.man = (S.man || []).filter(a => Date.now() - new Date(a.ts) < 42 * 864e5).sort((a, b) => b.ts.localeCompare(a.ts)); if (S.p && S.plan) analyze(); }

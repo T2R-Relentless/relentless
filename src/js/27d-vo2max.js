@@ -112,7 +112,8 @@ const vo2TypeAt = day => { try { if (!S.p || !S.plan) return ''; for (let i = 0;
 function vo2FromRide(a, r){
   try {
     if (!a || !a.id || !a.day) return null; const segs = vo2Series(r); if (!segs) return null;
-    const x = vo2PlanAt(a.day), kg = mmKgAt(a.day);
+    /* F30: Als Anfahrt/Pendeln markierte Fahrten lösen keine Test-Auswertung aus */
+    const pend = typeof mfIsCommute === 'function' && mfIsCommute(a.id), x = pend ? null : vo2PlanAt(a.day), kg = mmKgAt(a.day);
     if (x && x.vo2t === 'R') { const ev = vo2EvalRamp(segs); if (!ev) return null; const v = vo2Jurov(ev.po, kg, vo2Sex());
       return vo2Add(vo2Make('R', a.day, v, {p:ev.po, weight:kg, protocol:'100+20 W/min', rideId:a.id}, {id:'v' + a.id + 'R', valid:ev.valid, note:ev.note})); }
     if (x && x.vo2t === 'F') { const ev = vo2EvalFive(segs); if (!ev) return null; const v = vo2Sitko(ev.p5, kg);
@@ -120,7 +121,7 @@ function vo2FromRide(a, r){
     /* aus einer Fahrt */
     const ev = vo2EvalFive(segs); if (!ev) return null;
     const prev = mmBest(addD(a.day, -55), a.day, {skip:a.id})[mmIx(300)]; if (prev && ev.p5 <= prev.w) return null;
-    const ty = vo2TypeAt(a.day), why = ev.hrOk === true || ['vo2', 'race', 'test'].includes(ty) || !!(S.allOut && S.allOut[a.id]);
+    const ty = pend ? '' : vo2TypeAt(a.day), why = ev.hrOk === true || ['vo2', 'race', 'test'].includes(ty) || !!(S.allOut && S.allOut[a.id]);
     if (!why || /Sprintstart|sprint start|Unterbrechung|interruption/.test(ev.note)) return null;
     return vo2Add(vo2Make('F', a.day, vo2Sitko(ev.p5, kg), {p:ev.p5, weight:kg, protocol:'5 min aus Fahrt', rideId:a.id}, {id:'v' + a.id + 'FR', src:'ride', note:wkL('aus einer Fahrt, nicht aus einem Test', 'from a ride, not from a test')}));
   } catch (e) { elog(e); return null; }

@@ -77,12 +77,13 @@ function exeTest(x, a, hasP, ftp, hs){
 const RPEX = {rec:[1, 3], base:[2, 4], com:[2, 4], long:[3, 5], sst:[5, 7], thr:[6, 8], vo2:[7, 9], test:[8, 10], race:[6, 10]};
 const HRLIM = {rec:.68, base:.75, com:.75, long:.78};
 /* Intervalle finden: die N stärksten, sich nicht überlappenden Fenster in Intervalllänge, danach zeitlich sortiert */
-function findIv(v, W, N, gap){
+/* brk: Abschnittsgrenzen zusammengeführter Fahrten (F30). Kein Fenster darf über eine Grenze, also über die Pause, reichen. */
+function findIv(v, W, N, gap, brk){
   const ps = [0]; for (let k = 0; k < v.length; k++) ps.push(ps[k] + v[k]);
   const used = new Uint8Array(v.length), res = [];
   for (let n = 0; n < N; n++) {
     let best = -1, bi = -1;
-    for (let s = 0; s + W <= v.length; s++) { if (used[s] || used[s + W - 1] || used[s + (W >> 1)]) continue; const m = (ps[s + W] - ps[s]) / W; if (m > best) { best = m; bi = s; } }
+    for (let s = 0; s + W <= v.length; s++) { if (used[s] || used[s + W - 1] || used[s + (W >> 1)]) continue; if (brk && brk.length && brk.some(b => s < b && s + W > b)) continue; const m = (ps[s + W] - ps[s]) / W; if (m > best) { best = m; bi = s; } }
     if (bi < 0) break;
     for (let j = Math.max(0, bi - gap); j < Math.min(v.length, bi + W + gap); j++) used[j] = 1;
     res.push({s:bi, p:best});
@@ -97,7 +98,7 @@ function exeEval(x, a, w, ftp, hr){
   const sDur = dr >= .9 && dr <= 1.3 ? 1 : dr >= .75 ? .8 : dr > 1.3 ? (steady ? .9 : .8) : dr >= .5 ? .5 : .2;
   msgs.push(dr < .75 ? `Mit ${mm(am)} statt ${mm(pm)} war die Fahrt deutlich kürzer als geplant.` : dr < .9 ? `Mit ${mm(am)} statt ${mm(pm)} war die Fahrt etwas kürzer als geplant.` : dr > 1.3 ? `Mit ${mm(am)} statt ${mm(pm)} warst du deutlich länger unterwegs als geplant.` : `Die Dauer passt (${mm(am)} von geplanten ${mm(pm)}).`);
   if (hasP && x.iv && x.iv.work >= .5 && x.t !== 'test') {
-    const q = x.iv, N = (q.sets || 1) * q.reps, W = Math.round(q.work * 60), found = findIv(v, W, N, Math.round(Math.min(q.rest * 60, W) * .5));
+    const q = x.iv, N = (q.sets || 1) * q.reps, W = Math.round(q.work * 60), found = findIv(v, W, N, Math.round(Math.min(q.rest * 60, W) * .5), a.brk);
     iv = found.map(f => { const pct = f.p / ftp * 100; return {w:Math.round(f.p), pct:Math.round(pct), st:pct < q.lo * .85 ? 'miss' : pct < q.lo * .97 ? 'under' : pct > q.hi * 1.03 ? 'over' : 'in', s:f.s, d:W}; });
     while (iv.length < N) iv.push({w:0, pct:0, st:'miss'});
     const c = k => iv.filter(f => f.st === k).length, nIn = c('in'), nOv = c('over'), nUn = c('under'), nMi = c('miss');
@@ -168,6 +169,8 @@ async function exeUpload(inp, i, p){
     const {a, w:st, hr} = await readRideRaw(f);
     if (x && x.parts) { if (p == null) p = exePFor(i, a); exePStore(i, p, a, st, hr); } else exeStore(i, a, st, hr);
     S.man = (S.man || []).filter(m => m.id !== a.id); S.man.push({...a, day:dstr(i)}); S.man.sort((p, q) => q.ts.localeCompare(p.ts));
+    /* F30: Wer die Fahrt gezielt zu dieser Einheit hochlädt, hat sie zugeordnet. Eine vorher zugeordnete Fahrt wird Zusatzfahrt. */
+    try { const m = mfSt(); m.r[a.id] = {role:'training', src:'user', sid:x && x.parts ? `${w}-${i}-${p}` : `${w}-${i}`}; mfResolve(dstr(i), {force:1, re:1}); } catch (er) { elog(er); }
     if (S.plan) analyze(); track('fahrt-bewertet');
   } catch (er) { exeErr = {i, t:(er && er.message) || 'Die Datei konnte nicht gelesen werden.'}; }
   exeBusy = null; save(); render();

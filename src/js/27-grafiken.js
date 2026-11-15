@@ -19,6 +19,7 @@ function vzAttach(a, r){
     const ser = {b:B, n:P.length, p:agg(P), h:agg(H), z:agg(Z)};
     Object.defineProperty(a, 'vzSer', {value:ser, enumerable:false, configurable:true});
     Object.defineProperty(a, 'vzSec', {value:{p:P, h:H}, enumerable:false, configurable:true});
+    try { mfKeepSec(a); } catch (e) { elog(e); }
   } catch (e) { elog(e); }
 }
 const vzBest = (P, W) => { if (!P || P.length < W) return 0; let s = 0, b = 0; for (let k = 0; k < P.length; k++) { s += P[k] || 0; if (k >= W) s -= P[k - W] || 0; if (k >= W - 1 && s > b) b = s; } return Math.round(b / W); };
@@ -38,7 +39,8 @@ function vzKeep(e, a){
     if (a.vzSer) e.ser = a.vzSer;
     if (sec && ftp && sec.p.filter(v => v != null).length > .5 * sec.p.length) { const zp = VZ_ZP.map(() => 0); sec.p.forEach(v => { if (v == null) return; const pc = v / ftp * 100; zp[VZ_ZP.findIndex(z => pc < z[1])]++; }); e.zp = zp; }
     const hz = vzHrZones(); if (sec && hz && sec.h.filter(v => v != null).length > .5 * sec.h.length) { const zh = hz.z.map(() => 0); sec.h.forEach(v => { if (v == null) return; const pc = v / hz.ref * 100; zh[hz.z.findIndex(z => pc < z[1])]++; }); e.zh = zh; e.zhk = hz.k; }
-    if (sec && e.hasP) {
+    /* F30: Bestwerte nur je Einzelfahrt, nie über die Pause einer zusammengeführten Gruppe hinweg */
+    if (sec && e.hasP && !(a.brk && a.brk.length)) {
       const prev = vzPrev(a), pr = [], cur = {}; VZ_PB.forEach(([k, W, l]) => { const v = vzBest(sec.p, W); if (!v) return; cur[k] = v; if (prev[k] && v > prev[k]) pr.push({k, l, w:v, was:prev[k]}); });
       if (pr.length) e.pr = pr;
       S.pb = {...(S.pb || {})}; VZ_PB.forEach(([k]) => { const v = cur[k]; if (v && (!S.pb[k] || v > S.pb[k].w) && (!prev[k] || v >= prev[k])) S.pb[k] = {w:v, day:a.day, n:a.n, id:a.id}; });
@@ -149,7 +151,7 @@ function vzPbCard(){
 function vzDaily(){
   const d = {}, seen = new Set(), add = (day, t, key) => { if (!day || !(t > 0)) return; if (key) { if (seen.has(key)) return; seen.add(key); } d[day] = (d[day] || 0) + t; };
   /* M5: bewertete Fahrten zuerst (ohne Leistungsdaten mit Belastung aus Puls oder Empfinden), dann alle übrigen Fahrten */
-  const p = S.p; if (p) Object.values(p.exe || {}).forEach(e => add(e.day, exeLoad(e), (e.day || '') + '|' + Math.round((e.sec || 0) / 60)));
+  const p = S.p; if (p) Object.values(p.exe || {}).forEach(e => !(e && e.grp) && add(e.day, exeLoad(e), (e.day || '') + '|' + Math.round((e.sec || 0) / 60)));
   [...(S.man || []), ...(S.hist || [])].forEach(m => add(m.day || (m.ts || '').slice(0, 10), m.tss, (m.day || '') + '|' + Math.round((m.sec || 0) / 60)));
   if (p) {
     /* Erledigte Einheiten ohne hochgeladene Fahrt: geplante Belastung */

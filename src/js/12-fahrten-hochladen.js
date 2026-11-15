@@ -109,7 +109,7 @@ function summarize(r, fname){
     mx = {}; [60, 300, 1200, 3600].forEach(n => { if (v.length >= n) { let q = 0, b = 0; for (let i = 0; i < v.length; i++) { q += v[i]; if (i >= n) q -= v[i - n]; if (i >= n - 1 && q > b) b = q; } mx[n] = Math.round(b / n); } });
   } else if (ses.length && ses[0].np) np = ses[0].np;
   const est = !(np && ftp), hv = hr1.filter(h => h != null), hrA = hv.length > 300 && hv.length > .5 * hr1.length ? hv.reduce((q, h) => q + h, 0) / hv.length : 0, le = est && hrA ? loadEst(sec, {hrAvg:hrA}) : null, IF = est ? (le ? le.IF : .65) : np / ftp, t0 = (pts[0] ? pts[0].t : 0) * 1000, iso8 = new Date(t0).toISOString();
-  const out = {id:'m' + Math.round(t0 / 1000).toString(36) + sec.toString(36), n:(r.name || fname.replace(/\.[^.]+$/, '')).slice(0, 60) || 'Radfahrt', ts:iso8, day:rzDay(t0), km:Math.round(km * 10) / 10, hm:Math.round(hm), sec, tss:Math.round(sec * IF * IF / 36), IF:Math.round(IF * 100) / 100, est, ...(le ? {ld:le.src} : {}), ...(hrA ? {hrA:Math.round(hrA)} : {}), src:'file', np:Math.round(np || 0), m1:mx && mx[60] || null, m5:mx && mx[300] || null, m20:mx && mx[1200] || null, m60:mx && mx[3600] || null};
+  const out = {id:'m' + Math.round(t0 / 1000).toString(36) + sec.toString(36), n:(r.name || fname.replace(/\.[^.]+$/, '')).slice(0, 60) || 'Radfahrt', ts:iso8, day:rzDay(t0), km:Math.round(km * 10) / 10, hm:Math.round(hm), sec, tss:Math.round(sec * IF * IF / 36), IF:Math.round(IF * 100) / 100, est, ...(le ? {ld:le.src} : {}), ...(hrA ? {hrA:Math.round(hrA)} : {}), src:'file', te:new Date((pts.length ? pts[pts.length - 1].t : 0) * 1000).toISOString(), np:Math.round(np || 0), m1:mx && mx[60] || null, m5:mx && mx[300] || null, m20:mx && mx[1200] || null, m60:mx && mx[3600] || null};
   /* F18: Fahrt ohne gültige GPS-Position = Rolle/Indoor (Zwift, Rollentrainer). Zwift und ähnliche Apps schreiben virtuelle
      GPS-Daten, deshalb zählen auch der FIT-Untertyp (5 Spinning, 6 Indoor, 58 virtuell) und der Garmin-Aktivitätstyp. */
   if (pts.length >= 10 && !pts.some(q => q.lat != null && isFinite(q.lat) && Math.abs(q.lat) <= 90 && !(q.lat === 0 && q.lon === 0))) out.in = 1;
@@ -124,19 +124,21 @@ function summarize(r, fname){
   return Object.assign(out, perfExt(sec1, hr1, tc1, np));
 }
 async function uploadRides(inp){
-  const files = [...(inp.files || [])]; upMsg = []; S.man = S.man || [];
+  const files = [...(inp.files || [])], upDays = []; upMsg = []; S.man = S.man || [];
   for (const f of files) {
     try {
       const {name, data} = await unpack(await f.arrayBuffer(), f.name); let r;
       if (data[8] === 0x2E && data[9] === 0x46 && data[10] === 0x49 && data[11] === 0x54) r = parseFIT(data);
       else { const x = new DOMParser().parseFromString(new TextDecoder().decode(data), 'application/xml'); if (x.getElementsByTagName('parsererror').length) throw new Error('Das Dateiformat wird nicht unterstützt. Erlaubt sind FIT, GPX und TCX.'); r = x.getElementsByTagName('gpx').length ? parseGPX(x) : x.getElementsByTagName('TrainingCenterDatabase').length ? parseTCX(x) : (() => { throw new Error('Das Dateiformat wird nicht unterstützt. Erlaubt sind FIT, GPX und TCX.'); })(); }
-      const a = summarize(r, name), st = streamOf(r), hr = hrHist(r), hw = hrHist(r, 600); if (hw) a.hrW = hw;
+      const a = summarize(r, name), st = streamOf(r), hr = hrHist(r), hw = hrHist(r, 600); if (hw) a.hrW = hw; try { vzAttach(a, r); } catch (e) { elog(e); }
       if (S.man.some(m => m.id === a.id)) { upMsg.push([f.name, 'bereits hochgeladen', false]); continue; }
       
-      S.man.push(a); const ev = exeAuto(a, st, hr); upMsg.push([f.name, `${a.km.toLocaleString('de-DE')} km, ${mm(Math.round(a.sec / 60))}, TSS ${a.tss}${a.est ? ' (geschätzt, keine Leistungsdaten oder kein FTP)' : ''}${ev ? (ev.k && String(ev.k).startsWith('x-') ? `. Als Zusatzfahrt erkannt und ausgewertet${ev.adj ? ', Plan angepasst' : ''}` : `. Bewertet als ${ev.plan}: ${ev.score}/100`) : ''}`, true]);
+      S.man.push(a); upDays.push(a.day); const ev = exeAuto(a, st, hr); upMsg.push([f.name, `${a.km.toLocaleString('de-DE')} km, ${mm(Math.round(a.sec / 60))}, TSS ${a.tss}${a.est ? ' (geschätzt, keine Leistungsdaten oder kein FTP)' : ''}${ev ? (ev.k && String(ev.k).startsWith('x-') ? `. Als Zusatzfahrt erkannt und ausgewertet${ev.adj ? ', Plan angepasst' : ''}` : `. Bewertet als ${ev.plan}: ${ev.score}/100`) : ''}`, true]);
     } catch (e) { upMsg.push([f.name, (e && e.message) || 'konnte nicht gelesen werden', false]); }
   }
   S.man = S.man.filter(a => Date.now() - new Date(a.ts) < 42 * 864e5).sort((a, b) => b.ts.localeCompare(a.ts));
+  /* F30: Tage mit mehreren Fahrten neu zuordnen und melden */
+  try { const t = mfAfterImport(upDays); if (t) upMsg.push([wkL('Mehrere Fahrten', 'Several rides'), t, true]); } catch (e) { elog(e); }
   inp.value = ''; if (S.p && S.plan) analyze(); save(); render();
   if (upMsg.some(m => m[2])) track('fahrten-hochgeladen');
 }

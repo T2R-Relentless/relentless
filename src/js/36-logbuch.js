@@ -53,11 +53,12 @@ function lbRides(){
 const lbKind = id => { const l = S.lb && S.lb[id]; return l ? l.k : ''; };
 /* Filter „Geplant“ (Einheiten aus dem Plan, auch Kraft und Mobilität) und „Zusätzlich“ (alles andere, auch Fahrten ohne Zuordnung
    zum Plan, z. B. ältere Garmin-Fahrten). Gilt für Liste und Grafik. */
-const lbFOk = (id, f, pid) => { const k = lbKind(id), pl = k === 'p' || k === 's'; if (f === 'plan' && !pl) return false; if (f === 'x' && pl) return false; return !pid || !!(S.lb[id] && S.lb[id].pid === pid); };
+const lbFOk = (id, f, pid) => { const k = lbKind(id), pl = k === 'p' || k === 's'; if (f === 'c') return k === 'c' && (!pid || !!(S.lb[id] && S.lb[id].pid === pid)); if (f === 'plan' && !pl) return false; if (f === 'x' && pl) return false; return !pid || !!(S.lb[id] && S.lb[id].pid === pid); };
 function lbDot(id){
   const l = S.lb && S.lb[id];
   if (!l) return ['#9aa7b8', 'ohne Bewertung'];
   if (l.k === 'x') { const c = XR_CLS[l.cls] || XR_CLS.z2; return [c[1], c[0]]; }
+  if (l.k === 'c') return ['#7a8aa0', 'Anfahrt/Pendeln'];
   if (l.score == null) return ['#9aa7b8', l.grade || 'bewertet'];
   return [l.score >= 80 ? '#0a8f6a' : l.score >= 60 ? '#d9a400' : '#c0392b', `${l.score}/100`];
 }
@@ -74,6 +75,8 @@ function lbPage(){
   /* F11: Kraft-, Mobilitäts- und Stabilitätseinheiten (Sequenz) stehen als geplante Einheiten mit im Logbuch */
   const SS = Object.entries(S.lb || {}).filter(([, l]) => l && l.k === 's' && l.day).map(([id, l]) => ({id, day:l.day, n:l.n, km:0, sec:l.sec || 0, hm:0, sq:1, ts:'T99'}));
   let L = lbRides().concat(SS).sort((a, b) => (b.day + (b.ts || '')).localeCompare(a.day + (a.ts || '')));
+  /* F30: zusammengeführte Fahrten als ein Eintrag (zählt als eine Fahrt) */
+  try { L = mfLbFold(L); } catch (e) { elog(e); }
   L = L.filter(a => lbFOk(a.id, lbF, lbPid));
   /* F18: Balken angetippt → nur diese Woche bzw. diesen Monat */
   if (lbCh.sel) L = L.filter(a => lbPerKey(lbCh.mode, a.day) === lbCh.sel);
@@ -81,16 +84,16 @@ function lbPage(){
   const chip = (k, l) => `<button class="${lbF === k ? 'btn' : 'ghost'} !w-auto !px-3 !py-2 text-sm" style="min-height:44px" aria-pressed="${lbF === k}" onclick="lbF='${ja(k)}';render()">${l}</button>`;
   const pl = lbPlans();
   const sel = pl.length > 1 ? `<select class="inp !w-auto !py-2 text-sm" style="min-height:44px" aria-label="Nach Plan filtern" onchange="lbPid=this.value;render()"><option value="">Alle Pläne</option>${pl.map(([id, n]) => `<option value="${esc(id)}"${lbPid === id ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>` : '';
-  if (!L.length) return lbHintUi() + (lbRides().length ? lbChart() : '') + `<section class="panel p-4"><div class="flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${sel}</div><p class="mt-3 text-sm" style="color:var(--mute)">${lbF === 'all' && !lbPid ? 'Noch keine Fahrten. Lade Fahrten hoch oder verbinde Garmin, dann erscheinen sie hier mit ihrer Bewertung.' : 'Keine Fahrten für diesen Filter.'}</p></section>`;
+  if (!L.length) return lbHintUi() + (lbRides().length ? lbChart() : '') + `<section class="panel p-4"><div class="flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${mfLbAny() || lbF === 'c' ? chip('c', 'Pendeln') : ''}${sel}</div><p class="mt-3 text-sm" style="color:var(--mute)">${lbF === 'all' && !lbPid ? 'Noch keine Fahrten. Lade Fahrten hoch oder verbinde Garmin, dann erscheinen sie hier mit ihrer Bewertung.' : 'Keine Fahrten für diesen Filter.'}</p></section>`;
   const groups = []; L.forEach(a => { const mo = lbMon(a.day), g = groups[groups.length - 1]; if (g && g.mo === mo) g.l.push(a); else groups.push({mo, l:[a]}); });
   const head = g => { const R = g.l.filter(a => !a.sq), nS = g.l.length - R.length, s = R.reduce((o, a) => ({km:o.km + a.km, sec:o.sec + a.sec, hm:o.hm + a.hm}), {km:0, sec:0, hm:0}), e = new Date(g.mo + 'T12:00:00'); e.setDate(e.getDate() + 6);
     return `<div class="flex items-baseline gap-2 px-1 pt-3 text-xs" style="color:var(--mute)"><span class="eyebrow">Woche ab ${fmt(g.mo)}</span><span class="flex-1 text-right">${R.length ? `<span>${R.length} ${R.length === 1 ? 'Fahrt' : 'Fahrten'} · ${Math.round(s.km).toLocaleString('de-DE')} km · ${mm(Math.round(s.sec / 60))} · ${Math.round(s.hm).toLocaleString('de-DE')} hm</span>` : ''}${R.length && nS ? ' · ' : ''}${nS ? `<span>${nS} ${nS === 1 ? 'Übungseinheit' : 'Übungseinheiten'}</span>` : ''}</span></div>`; };
   const srow = a => { const l = S.lb[a.id], dt = new Date(a.day + 'T12:00:00'), wdn = SD[(dt.getDay() + 6) % 7];
     return `<div class="panel flex w-full items-center gap-3 p-3" style="min-height:44px"><span class="h-3 w-3 shrink-0 rounded-full" style="background:${l.part ? '#d9a400' : '#0a8f6a'}" aria-hidden="true"></span><span class="w-12 shrink-0 text-xs" style="color:var(--mute)">${wdn} ${fmt(a.day).slice(0, 6)}</span><span class="min-w-0 flex-1"><span class="block truncate font-semibold" data-noi18n>${esc(l.n)}</span><span class="block text-xs" style="color:var(--mute)">${rzLbMark(a.id, l)}${l.part ? 'Teilweise erledigt' : 'Erledigt'} · ${mm(Math.max(1, Math.round((l.sec || 0) / 60)))} · ${l.nEx} von ${l.nTot} Übungen</span></span></div>`; };
   const row = a => { const l = S.lb && S.lb[a.id], d = lbDot(a.id), dt = new Date(a.day + 'T12:00:00'), wdn = SD[(dt.getDay() + 6) % 7];
-    const nm = l && l.k === 'p' ? `<span data-noi18n>${esc(l.n)}</span>` : l && l.k === 'x' ? 'Zusätzliche Fahrt' : `<span data-noi18n>${esc(a.n || 'Fahrt')}</span>`;
+    const nm = (l && l.k === 'p' ? `<span data-noi18n>${esc(l.n)}</span>` : l && l.k === 'x' ? 'Zusätzliche Fahrt' : l && l.k === 'c' ? `${ic('commute', 16)} Anfahrt/Pendeln` : `<span data-noi18n>${esc(a.n || 'Fahrt')}</span>`) + (a.grp ? ` <span class="text-xs font-normal" style="color:var(--mute)">${ic('link', 14)} ${a.grp.length} Abschnitte</span>` : '');
     return `<button class="panel flex w-full items-center gap-3 p-3 text-left" style="min-height:44px" onclick="lbOpenRide('${ja(a.id)}')"><span class="h-3 w-3 shrink-0 rounded-full" style="background:${esc(d[0])}" title="${esc(d[1])}" aria-hidden="true"></span><span class="w-12 shrink-0 text-xs" style="color:var(--mute)">${wdn} ${fmt(a.day).slice(0, 6)}</span><span class="min-w-0 flex-1"><span class="block truncate font-semibold">${nm}</span><span class="block text-xs" style="color:var(--mute)">${rzLbMark(a.id, {day:a.day})}${blRideLine(a)}${l && l.k === 'p' && l.score != null ? ` · ${l.score}/100` : ''}${l && l.mv != null ? ` · verschoben von ${SD[l.mv]}` : ''}${l && l.vo ? ' · Variante' : ''}</span></span><span style="color:var(--mute)">${ic('chevR', 18)}</span></button>`; };
-  return lbHintUi() + lbChart() + `<section class="panel mt-3 p-4"><p class="text-sm" style="color:var(--mute)">Alle Fahrten mit ihrer Bewertung, neueste zuerst. Bewertungen bleiben gespeichert, auch nach einem Planwechsel.</p><div class="mt-3 flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${sel}</div></section>
+  return lbHintUi() + lbChart() + `<section class="panel mt-3 p-4"><p class="text-sm" style="color:var(--mute)">Alle Fahrten mit ihrer Bewertung, neueste zuerst. Bewertungen bleiben gespeichert, auch nach einem Planwechsel.</p><div class="mt-3 flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${mfLbAny() || lbF === 'c' ? chip('c', 'Pendeln') : ''}${sel}</div></section>
     <div class="space-y-2">${groups.map(g => head(g) + g.l.map(a => a.sq ? srow(a) : row(a)).join('')).join('')}</div>`;
 }
 /* B7: „Fahrten ansehen“ (Wusstest du schon?): die neueste bewertete Fahrt direkt in der Detailansicht, sonst das Logbuch
@@ -102,7 +105,7 @@ const lbHintUi = () => lbHint ? `<p class="mb-3 p-3 text-sm" role="status" style
 /* Detailansicht einer Fahrt (aus Logbuch und Woche) */
 function lbOpenRide(id){ lbSync(false); lbSel = id; try { xrSeen(id); } catch (e) { elog(e); } goPg('lb-ride'); }
 function lbRidePage(){
-  const id = lbSel, a = lbRides().find(r => r.id === id), l = (S.lb || {})[id];
+  const id = lbSel, a = lbRides().find(r => r.id === id) || (typeof mfLbGroupRow === 'function' ? mfLbGroupRow(id) : null), l = (S.lb || {})[id];
   if (!a && !l) return `<section class="panel p-4"><p class="text-sm">Diese Fahrt ist nicht mehr gespeichert.</p></section>`;
   const r = a || {day:l.day, km:0, sec:(l.am || 0) * 60, hm:0, tss:0, np:l.np};
   const live = (S.p && S.p.extra && S.p.extra[id]) || Object.values((S.p && S.p.exe) || {}).find(e => e && e.rid === id) || null;
@@ -124,7 +127,7 @@ function lbRidePage(){
   const trk = typeof trkBlock === 'function' ? trkBlock(id, a) : '', tr = typeof trkC !== 'undefined' && trkC[id] && trkC[id] !== 'busy' ? trkC[id] : null;
   const ser = live && live.ser && live.ser.p ? {b:live.ser.b, p:live.ser.p} : tr && tr.pw ? tr.pw : null, ftp0 = (l && l.ftp) || (live && live.ftp) || (S.p && S.p.ftp) || 0;
   const prof = typeof wkSvg === 'function' ? (l && l.k === 'p' && l.px ? `<div class="mt-3"><p class="eyebrow">${wkL('Ablauf: Soll und Ist', 'Structure: planned and ridden')}</p>${wkSvg(l.px, {ftp:ftp0, act:ser, h:124})}</div>` : ser && ftp0 ? `<div class="mt-3">${wkActSvg(ser, ftp0)}</div>` : '') : '';
-  return `<section class="panel p-4"><p class="hd text-xl font-semibold" data-noi18n>${esc((a && a.n) || (l && l.n) || 'Fahrt')}</p><div class="mt-3 grid grid-cols-2 gap-2">${grid}</div>${typeof mmRideBlock === 'function' ? mmRideBlock(id) : ''}${soll}${prof}${hints.length ? `<div class="mt-3 space-y-1 text-sm">${hints.map(h => `<div>${h}</div>`).join('')}</div>` : ''}${ev}${chart}${trk}</section>`;
+  return `<section class="panel p-4"><p class="hd text-xl font-semibold" data-noi18n>${esc((a && a.n) || (l && l.n) || 'Fahrt')}</p><div class="mt-3 grid grid-cols-2 gap-2">${grid}</div>${a && a.grp ? mfLbSections(id) : ''}${typeof mfRideBlock === 'function' ? mfRideBlock(id) : ''}${a && a.grp ? '' : typeof mmRideBlock === 'function' ? mmRideBlock(id) : ''}${soll}${prof}${hints.length ? `<div class="mt-3 space-y-1 text-sm">${hints.map(h => `<div>${h}</div>`).join('')}</div>` : ''}${ev}${chart}${trk}</section>`;
 }
 /* Bewertungen sofort festhalten, sobald sie entstehen */
 { const _w = fn => function(){ const r = fn.apply(this, arguments); try { lbSync(false); } catch (e) { elog(e); } return r; };

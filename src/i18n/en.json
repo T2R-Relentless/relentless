@@ -6950,5 +6950,9 @@
 "Ein Ruhetag auf der Reise kostet keine Form.": "A rest day on a trip costs no fitness.",
 "Tipp: Ein Ruhetag auf der Reise kostet keine Form.": "Tip: a rest day on a trip costs no fitness.",
 "Auf Reisen entscheidest du jeden Tag selbst: Unter der Einheit wählst du zwischen dem, was vor Ort geht, zum Beispiel Lauf draußen, Hotel-Ergometer, Kraft im Zimmer oder Pause.": "When travelling you decide each day yourself: below the session you choose from what is possible there, for example a run outdoors, the hotel bike, strength in your room or rest.",
-"Zur Tageswahl": "Go to the day choice"
+"Zur Tageswahl": "Go to the day choice",
+"Zwei Fahrten an einem Tag, etwa Anfahrt und Training? Die App wertet die Fahrt, die zur Einheit passt. Unter „Zuordnung“ am Tag markierst du die Anfahrt als Pendeln oder führst beide zusammen.": "Two rides on one day, such as the ride there and the training? The app counts the ride that fits the session. Under “Assign” on that day you mark the ride there as a commute or merge both.",
+"Zur Zuordnung": "To the assignment",
+"Anfahrt/Pendeln": "Commute",
+"{0} Abschnitte": "{0} sections"
 }
