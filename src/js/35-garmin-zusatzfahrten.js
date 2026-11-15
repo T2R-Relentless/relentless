@@ -34,6 +34,12 @@ function gmSum(target, n, nPl, nX, skip, fail, days){
     const parts = target === 'hist' ? [] : [nPl ? `${nPl} ${nPl === 1 ? 'einer geplanten Einheit zugeordnet' : 'geplanten Einheiten zugeordnet'}` : '', nX ? `${nX} als zusätzliche ${nX === 1 ? 'Fahrt' : 'Fahrten'} erfasst` : '', n - nPl - nX > 0 ? `${n - nPl - nX} ohne Bewertung übernommen (außerhalb der laufenden Planwoche)` : ''].filter(Boolean);
     return `${n} ${n === 1 ? 'neue Fahrt' : 'neue Fahrten'} von Garmin übernommen${parts.length ? ': ' + parts.join(', ') : ''}${fail ? `, ${fail} nicht lesbar` : ''}.`;
   }
-  const ln = S.gm && S.gm.lastNew, recent = ln && Date.now() - ln.at < 3 * 864e5 && ln.auto;
-  return `Keine neuen Radfahrten in den letzten ${days} Tagen${skip ? ' (alles schon vorhanden)' : ''}.${recent ? (ln.n === 1 ? ' Die letzte neue Fahrt wurde schon beim Öffnen der App übernommen und steht in der Woche.' : ` Die letzten ${ln.n} neuen Fahrten wurden schon beim Öffnen der App übernommen und stehen in der Woche.`) : ''}`;
+  /* Nichts Neues seit dem letzten Abgleich. Vorher stand hier „Keine neuen Radfahrten in den letzten 42 Tagen“, das las sich, als gäbe
+     es gar keine Fahrten. Jetzt: ausdrücklich „alles aktuell“ und die zuletzt übernommene Fahrt mit Tag und Uhrzeit. */
+  const L = (target === 'hist' ? S.hist : S.man) || [], last = L.filter(a => a && a.ts && (a.src === 'garmin' || a.gid)).sort((p, q) => q.ts.localeCompare(p.ts))[0];
+  const ln = S.gm && S.gm.lastNew, auto = !!(last && ln && ln.auto && Math.abs(ln.at - Date.now()) < 3 * 864e5 && ln.at >= Date.parse(last.ts));
+  const when = a => { const d = new Date(a.ts), t = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'), r = rel(a); return {de:`${r === 'heute' || r === 'gestern' ? r : 'am ' + fmt(a.day)}, ${t} Uhr`, en:`${r === 'heute' ? 'today' : r === 'gestern' ? 'yesterday' : 'on ' + fmt(a.day)}, ${t}`}; };
+  const w = last ? when(last) : null;
+  return wkL(`Alles aktuell: Bei Garmin gibt es keine Fahrt, die hier noch fehlt (geprüft: die letzten ${days} Tage).${w ? ` Zuletzt übernommen: „${last.n}“ (${w.de})${auto ? ', automatisch beim Öffnen der App' : ''}.` : ''}`,
+    `All up to date: there is no ride on Garmin that is missing here (checked: the last ${days} days).${w ? ` Last imported: “${last.n}” (${w.en})${auto ? ', automatically when the app opened' : ''}.` : ''}`);
 }

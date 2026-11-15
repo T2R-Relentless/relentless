@@ -120,3 +120,12 @@ test('VO2max aus der Historie: älteste zuerst, nur neue 5-min-Bestwerte mit pas
   a.w.navGo('more'); a.w.goPg('settings'); a.w.goPg('set-gm'); ok(/1 VO2max-Schätzung aus der Historie übernommen/.test(a.text())); ok(!a.$('wnShow') || true);
   await a.w.impMmRun(); eq(a.$('__got').length, 3, 'zweiter Lauf: keine Abrufe'); a.noErrors();
 });
+
+test('Abgleich ohne Neues: „Alles aktuell“ mit der zuletzt übernommenen Fahrt statt „keine Radfahrten in 42 Tagen“', async () => {
+  const a = await thBoot(); a.w.localStorage.setItem('relentless.garmin.key', 'TESTSCHLUESSEL');
+  a.$("S.man = [{id:'m1', gid:'777', src:'garmin', n:'Morgenrunde', day:iso(0), ts:new Date(new Date().setHours(7, 10, 0, 0)).toISOString(), sec:5400, km:40, hm:300, np:200, tss:80}]; S.gm = {mode:'web', ok:true, ids:['777'], lastNew:{at:Date.now() - 3600e3, n:1, auto:true}}; save()");
+  a.$("gmCall = async () => ({activities:[{activityId:777, activityName:'Morgenrunde', startTimeGMT:'2026-11-11 06:10:00', activityType:'road_biking'}]})");
+  await a.w.gmSync('man'); const t = a.$('gmMsg.t');
+  ok(/^Alles aktuell: Bei Garmin gibt es keine Fahrt, die hier noch fehlt \(geprüft: die letzten 42 Tage\)\./.test(t), t); ok(/Zuletzt übernommen: „Morgenrunde“ \(heute, 07:10 Uhr\), automatisch beim Öffnen der App\./.test(t), t);
+  ok(!/Keine neuen Radfahrten/.test(t)); a.w.navGo('more'); a.w.goPg('settings'); a.w.goPg('set-gm'); ok(/Alles aktuell/.test(a.text())); a.noErrors();
+});
