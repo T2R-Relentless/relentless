@@ -151,8 +151,10 @@ function vzPbCard(){
 function vzDaily(){
   const d = {}, seen = new Set(), add = (day, t, key) => { if (!day || !(t > 0)) return; if (key) { if (seen.has(key)) return; seen.add(key); } d[day] = (d[day] || 0) + t; };
   /* M5: bewertete Fahrten zuerst (ohne Leistungsdaten mit Belastung aus Puls oder Empfinden), dann alle übrigen Fahrten */
-  const p = S.p; if (p) Object.values(p.exe || {}).forEach(e => !(e && e.grp) && add(e.day, exeLoad(e), (e.day || '') + '|' + Math.round((e.sec || 0) / 60)));
-  [...(S.man || []), ...(S.hist || [])].forEach(m => add(m.day || (m.ts || '').slice(0, 10), m.tss, (m.day || '') + '|' + Math.round((m.sec || 0) / 60)));
+  /* F32: dieselbe TSS wie im Logbuch (rideTss, FTP am Fahrtdatum); ohne Leistung und Puls das Empfinden aus der Bewertung. F33: auch importierte Fahrten (Archiv). */
+  const p = S.p, R = rideAll(), byId = new Map(R.map(r => [r.id, r]));
+  if (p) Object.values(p.exe || {}).forEach(e => { if (!e || e.grp) return; const r = byId.get(e.rid); add(e.day, r ? rideLoad(r, e) : exeLoad(e), (e.day || '') + '|' + Math.round((e.sec || 0) / 60)); });
+  R.forEach(m => add(m.day || (m.ts || '').slice(0, 10), rideLoad(m), (m.day || '') + '|' + Math.round((m.sec || 0) / 60)));
   if (p) {
     /* Erledigte Einheiten ohne hochgeladene Fahrt: geplante Belastung */
     if (S.plan && S.done && hasStarted(p)) S.plan.forEach((x, i) => { if (S.done[i] && x && x.m > 0) { const day = dstr(i); if (!d[day]) { try { d[day] = tss(x); } catch (e) { elog(e); } } } });
@@ -176,8 +178,9 @@ function vzFuture(){
 function vzRows(){
   const p = S.p; if (!p || !hasStarted(p)) return null;
   const past = vzDaily(), fut = vzFuture(), today = iso(0), end = endOf(p); if (Object.keys(past).length < 3) return null;
-  const first = Object.keys(past).sort()[0], start = new Date(Math.max(new Date(first + 'T12:00:00'), Date.now() - 120 * 864e5)), days = [], last = addD(end, 7);
-  for (let d = new Date(start); lstr(d) <= last && days.length < 900; d.setDate(d.getDate() + 1)) days.push(lstr(d));
+  /* F33: ab der ältesten Fahrt (höchstens 2 Jahre zurück), damit importierte Historie die Fitness trägt */
+  const first = Object.keys(past).sort()[0], start = new Date(Math.max(new Date(first + 'T12:00:00'), Date.now() - 730 * 864e5)), days = [], last = addD(end, 7);
+  for (let d = new Date(start); lstr(d) <= last && days.length < 1600; d.setDate(d.getDate() + 1)) days.push(lstr(d));
   const seed = days.slice(0, 28).filter(d => d <= today).reduce((t, d) => t + (past[d] || 0), 0) / Math.max(1, Math.min(28, days.filter(d => d <= today).length));
   let ctl = seed, atl = seed; const kC = 1 - Math.exp(-1 / 42), kA = 1 - Math.exp(-1 / 7), rows = days.map(day => { const t = day <= today ? (past[day] || 0) : (fut[day] || 0), tsb = ctl - atl; ctl += (t - ctl) * kC; atl += (t - atl) * kA; return {day, t, ctl, atl, tsb, f:day > today}; });
   const vis = rows.filter(r => r.day >= iso(-42)), ei = vis.findIndex(r => r.day === end);

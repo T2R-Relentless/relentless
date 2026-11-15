@@ -46,14 +46,16 @@ function lbSync(withLib){
 function lbRides(){
   try { rcArchSync(); } catch (e) { elog(e); }
   const m = new Map();
-  (S.arch || []).forEach(a => m.set(a.id, {id:a.id, day:a.d, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, in:a.in ? 1 : 0, hmDev:a.hmDev ? 1 : 0}));
-  (S.man || []).forEach(a => { const o = m.get(a.id) || {}; m.set(a.id, {...o, id:a.id, day:a.day, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, np:a.np || 0, hr:a.hrAvg || null, ts:a.ts, in:a.in || o.in ? 1 : 0, hmDev:a.hmDev || o.hmDev ? 1 : 0}); });
+  (S.arch || []).forEach(a => m.set(a.id, {id:a.id, day:a.d, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, tssS:a.tssS, hr:a.hr || null, gt:a.gt, gid:a.gid, imp:a.imp ? 1 : 0, ts:a.ts, np:a.np || 0, in:a.in ? 1 : 0, hmDev:a.hmDev ? 1 : 0}));
+  (S.man || []).forEach(a => { const o = m.get(a.id) || {}; m.set(a.id, {...o, id:a.id, day:a.day, n:a.n, km:a.km || 0, sec:a.sec || 0, hm:a.hm || 0, tss:a.tss || 0, tssS:a.tssS, np:a.np || 0, hr:a.hrA || a.hrAvg || null, gid:a.gid || o.gid, imp:0, ts:a.ts, in:a.in || o.in ? 1 : 0, hmDev:a.hmDev || o.hmDev ? 1 : 0}); });
+  /* F32: TSS aus der einen Rechnung (FTP am Fahrtdatum, Puls, Garmin-Rückfall) */
+  m.forEach(a => { const t = rideTss(a); a.tss = t.tss; a.tsr = t; });
   return [...m.values()].filter(a => a.day).sort((a, b) => (b.day + (b.ts || '')).localeCompare(a.day + (a.ts || '')));
 }
 const lbKind = id => { const l = S.lb && S.lb[id]; return l ? l.k : ''; };
 /* Filter „Geplant“ (Einheiten aus dem Plan, auch Kraft und Mobilität) und „Zusätzlich“ (alles andere, auch Fahrten ohne Zuordnung
    zum Plan, z. B. ältere Garmin-Fahrten). Gilt für Liste und Grafik. */
-const lbFOk = (id, f, pid) => { const k = lbKind(id), pl = k === 'p' || k === 's'; if (f === 'c') return k === 'c' && (!pid || !!(S.lb[id] && S.lb[id].pid === pid)); if (f === 'plan' && !pl) return false; if (f === 'x' && pl) return false; return !pid || !!(S.lb[id] && S.lb[id].pid === pid); };
+const lbFOk = (id, f, pid) => { const k = lbKind(id), pl = k === 'p' || k === 's'; if (f === 'c') return k === 'c' && (!pid || !!(S.lb[id] && S.lb[id].pid === pid)); if (f === 'imp') return !pl && !pid; if (f === 'plan' && !pl) return false; if (f === 'x' && pl) return false; return !pid || !!(S.lb[id] && S.lb[id].pid === pid); };
 function lbDot(id){
   const l = S.lb && S.lb[id];
   if (!l) return ['#9aa7b8', 'ohne Bewertung'];
@@ -77,23 +79,23 @@ function lbPage(){
   let L = lbRides().concat(SS).sort((a, b) => (b.day + (b.ts || '')).localeCompare(a.day + (a.ts || '')));
   /* F30: zusammengeführte Fahrten als ein Eintrag (zählt als eine Fahrt) */
   try { L = mfLbFold(L); } catch (e) { elog(e); }
-  L = L.filter(a => lbFOk(a.id, lbF, lbPid));
+  L = L.filter(a => lbFOk(a.id, lbF, lbPid) && (lbF !== 'imp' || a.imp));
   /* F18: Balken angetippt → nur diese Woche bzw. diesen Monat */
   if (lbCh.sel) L = L.filter(a => lbPerKey(lbCh.mode, a.day) === lbCh.sel);
   if (!lbCh.roll) L = L.filter(a => !a.in);
   const chip = (k, l) => `<button class="${lbF === k ? 'btn' : 'ghost'} !w-auto !px-3 !py-2 text-sm" style="min-height:44px" aria-pressed="${lbF === k}" onclick="lbF='${ja(k)}';render()">${l}</button>`;
   const pl = lbPlans();
   const sel = pl.length > 1 ? `<select class="inp !w-auto !py-2 text-sm" style="min-height:44px" aria-label="Nach Plan filtern" onchange="lbPid=this.value;render()"><option value="">Alle Pläne</option>${pl.map(([id, n]) => `<option value="${esc(id)}"${lbPid === id ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select>` : '';
-  if (!L.length) return lbHintUi() + (lbRides().length ? lbChart() : '') + `<section class="panel p-4"><div class="flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${mfLbAny() || lbF === 'c' ? chip('c', 'Pendeln') : ''}${sel}</div><p class="mt-3 text-sm" style="color:var(--mute)">${lbF === 'all' && !lbPid ? 'Noch keine Fahrten. Lade Fahrten hoch oder verbinde Garmin, dann erscheinen sie hier mit ihrer Bewertung.' : 'Keine Fahrten für diesen Filter.'}</p></section>`;
+  if (!L.length) return lbHintUi() + (lbRides().length ? lbChart() : '') + `<section class="panel p-4"><div class="flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${mfLbAny() || lbF === 'c' ? chip('c', 'Pendeln') : ''}${(S.arch || []).some(a => a.imp) || lbF === 'imp' ? chip('imp', 'Importiert') : ''}${sel}</div><p class="mt-3 text-sm" style="color:var(--mute)">${lbF === 'all' && !lbPid ? 'Noch keine Fahrten. Lade Fahrten hoch oder verbinde Garmin, dann erscheinen sie hier mit ihrer Bewertung.' : 'Keine Fahrten für diesen Filter.'}</p></section>`;
   const groups = []; L.forEach(a => { const mo = lbMon(a.day), g = groups[groups.length - 1]; if (g && g.mo === mo) g.l.push(a); else groups.push({mo, l:[a]}); });
-  const head = g => { const R = g.l.filter(a => !a.sq), nS = g.l.length - R.length, s = R.reduce((o, a) => ({km:o.km + a.km, sec:o.sec + a.sec, hm:o.hm + a.hm}), {km:0, sec:0, hm:0}), e = new Date(g.mo + 'T12:00:00'); e.setDate(e.getDate() + 6);
-    return `<div class="flex items-baseline gap-2 px-1 pt-3 text-xs" style="color:var(--mute)"><span class="eyebrow">Woche ab ${fmt(g.mo)}</span><span class="flex-1 text-right">${R.length ? `<span>${R.length} ${R.length === 1 ? 'Fahrt' : 'Fahrten'} · ${Math.round(s.km).toLocaleString('de-DE')} km · ${mm(Math.round(s.sec / 60))} · ${Math.round(s.hm).toLocaleString('de-DE')} hm</span>` : ''}${R.length && nS ? ' · ' : ''}${nS ? `<span>${nS} ${nS === 1 ? 'Übungseinheit' : 'Übungseinheiten'}</span>` : ''}</span></div>`; };
+  const head = g => { const R = g.l.filter(a => !a.sq), nS = g.l.length - R.length, s = R.reduce((o, a) => ({km:o.km + a.km, sec:o.sec + a.sec, hm:o.hm + a.hm, tss:o.tss + (a.tss || 0)}), {km:0, sec:0, hm:0, tss:0}), e = new Date(g.mo + 'T12:00:00'); e.setDate(e.getDate() + 6);
+    return `<div class="flex items-baseline gap-2 px-1 pt-3 text-xs" style="color:var(--mute)"><span class="eyebrow">Woche ab ${fmt(g.mo)}</span><span class="flex-1 text-right">${R.length ? `<span>${R.length} ${R.length === 1 ? 'Fahrt' : 'Fahrten'} · ${Math.round(s.km).toLocaleString('de-DE')} km · ${mm(Math.round(s.sec / 60))} · ${Math.round(s.hm).toLocaleString('de-DE')} hm${s.tss ? ` · TSS ${Math.round(s.tss)}` : ''}</span>` : ''}${R.length && nS ? ' · ' : ''}${nS ? `<span>${nS} ${nS === 1 ? 'Übungseinheit' : 'Übungseinheiten'}</span>` : ''}</span></div>`; };
   const srow = a => { const l = S.lb[a.id], dt = new Date(a.day + 'T12:00:00'), wdn = SD[(dt.getDay() + 6) % 7];
     return `<div class="panel flex w-full items-center gap-3 p-3" style="min-height:44px"><span class="h-3 w-3 shrink-0 rounded-full" style="background:${l.part ? '#d9a400' : '#0a8f6a'}" aria-hidden="true"></span><span class="w-12 shrink-0 text-xs" style="color:var(--mute)">${wdn} ${fmt(a.day).slice(0, 6)}</span><span class="min-w-0 flex-1"><span class="block truncate font-semibold" data-noi18n>${esc(l.n)}</span><span class="block text-xs" style="color:var(--mute)">${rzLbMark(a.id, l)}${l.part ? 'Teilweise erledigt' : 'Erledigt'} · ${mm(Math.max(1, Math.round((l.sec || 0) / 60)))} · ${l.nEx} von ${l.nTot} Übungen</span></span></div>`; };
   const row = a => { const l = S.lb && S.lb[a.id], d = lbDot(a.id), dt = new Date(a.day + 'T12:00:00'), wdn = SD[(dt.getDay() + 6) % 7];
     const nm = (l && l.k === 'p' ? `<span data-noi18n>${esc(l.n)}</span>` : l && l.k === 'x' ? 'Zusätzliche Fahrt' : l && l.k === 'c' ? `${ic('commute', 16)} Anfahrt/Pendeln` : `<span data-noi18n>${esc(a.n || 'Fahrt')}</span>`) + (a.grp ? ` <span class="text-xs font-normal" style="color:var(--mute)">${ic('link', 14)} ${a.grp.length} Abschnitte</span>` : '');
-    return `<button class="panel flex w-full items-center gap-3 p-3 text-left" style="min-height:44px" onclick="lbOpenRide('${ja(a.id)}')"><span class="h-3 w-3 shrink-0 rounded-full" style="background:${esc(d[0])}" title="${esc(d[1])}" aria-hidden="true"></span><span class="w-12 shrink-0 text-xs" style="color:var(--mute)">${wdn} ${fmt(a.day).slice(0, 6)}</span><span class="min-w-0 flex-1"><span class="block truncate font-semibold">${nm}</span><span class="block text-xs" style="color:var(--mute)">${rzLbMark(a.id, {day:a.day})}${blRideLine(a)}${l && l.k === 'p' && l.score != null ? ` · ${l.score}/100` : ''}${l && l.mv != null ? ` · verschoben von ${SD[l.mv]}` : ''}${l && l.vo ? ' · Variante' : ''}</span></span><span style="color:var(--mute)">${ic('chevR', 18)}</span></button>`; };
-  return lbHintUi() + lbChart() + `<section class="panel mt-3 p-4"><p class="text-sm" style="color:var(--mute)">Alle Fahrten mit ihrer Bewertung, neueste zuerst. Bewertungen bleiben gespeichert, auch nach einem Planwechsel.</p><div class="mt-3 flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${mfLbAny() || lbF === 'c' ? chip('c', 'Pendeln') : ''}${sel}</div></section>
+    return `<button class="panel flex w-full items-center gap-3 p-3 text-left" style="min-height:44px" onclick="lbOpenRide('${ja(a.id)}')"><span class="h-3 w-3 shrink-0 rounded-full" style="background:${esc(d[0])}" title="${esc(d[1])}" aria-hidden="true"></span><span class="w-12 shrink-0 text-xs" style="color:var(--mute)">${wdn} ${fmt(a.day).slice(0, 6)}</span><span class="min-w-0 flex-1"><span class="block truncate font-semibold">${nm}</span><span class="block text-xs" style="color:var(--mute)">${rzLbMark(a.id, {day:a.day})}${a.imp ? `<span style="color:var(--teal)">${ic('down', 13)} importiert · </span>` : ''}${blRideLine(a)}${a.tss ? ` · TSS ${a.tss}${a.tsr && a.tsr.src !== 'power' ? ' (geschätzt)' : ''}${a.tsr && a.tsr.IF ? ` · IF ${String(a.tsr.IF.toFixed(2)).replace('.', ',')}` : ''}` : ''}${l && l.k === 'p' && l.score != null ? ` · ${l.score}/100` : ''}${l && l.mv != null ? ` · verschoben von ${SD[l.mv]}` : ''}${l && l.vo ? ' · Variante' : ''}</span></span><span style="color:var(--mute)">${ic('chevR', 18)}</span></button>`; };
+  return lbHintUi() + lbChart() + `<section class="panel mt-3 p-4"><p class="text-sm" style="color:var(--mute)">Alle Fahrten mit ihrer Bewertung, neueste zuerst. Bewertungen bleiben gespeichert, auch nach einem Planwechsel.</p><div class="mt-3 flex flex-wrap gap-2">${chip('all', 'Alle')}${chip('plan', 'Geplant')}${chip('x', 'Zusätzlich')}${mfLbAny() || lbF === 'c' ? chip('c', 'Pendeln') : ''}${(S.arch || []).some(a => a.imp) || lbF === 'imp' ? chip('imp', 'Importiert') : ''}${sel}</div></section>
     <div class="space-y-2">${groups.map(g => head(g) + g.l.map(a => a.sq ? srow(a) : row(a)).join('')).join('')}</div>`;
 }
 /* B7: „Fahrten ansehen“ (Wusstest du schon?): die neueste bewertete Fahrt direkt in der Detailansicht, sonst das Logbuch
@@ -112,7 +114,8 @@ function lbRidePage(){
   const hr = r.hr || (l && l.hr), np = r.np || (l && l.np), kmh = r.sec > 0 ? r.km / (r.sec / 3600) : 0, dt = new Date(r.day + 'T12:00:00');
   const cell = (k, v) => `<div class="p-2.5" style="background:var(--tint);border:1px solid var(--line)"><div class="text-xs" style="color:var(--mute)">${k}</div><div class="font-semibold">${v}</div></div>`;
   const grid = [cell('Datum', `${DAYS[(dt.getDay() + 6) % 7]}, ${fmt(r.day)}`), cell('Dauer', mm(Math.round(r.sec / 60))), cell('Distanz', `${f1(r.km)} km`), cell('Höhenmeter', `${Math.round(r.hm || 0).toLocaleString('de-DE')} hm`),
-    kmh ? cell('Schnitt', `${f1(kmh)} km/h`) : '', hr ? cell('Puls Ø', `${Math.round(hr)} bpm`) : '', np ? cell('Leistung (NP)', `${Math.round(np)} W`) : '', r.tss ? cell('Belastung', `TSS ${Math.round(r.tss)}`) : ''].join('');
+    kmh ? cell('Schnitt', `${f1(kmh)} km/h`) : '', hr ? cell('Puls Ø', `${Math.round(hr)} bpm`) : '', np ? cell('Leistung (NP)', `${Math.round(np)} W`) : '', ...(() => { const t = r.tsr || (typeof rideTss === 'function' ? rideTss(r) : null); if (!t) return [r.tss ? cell('Belastung', `TSS ${Math.round(r.tss)}`) : ''];
+      return [cell('Belastung', t.tss ? `TSS ${t.tss}<span class="block text-xs font-normal" style="color:var(--mute)" data-noi18n>${esc(tssSrcTxt(t.src))}</span>` : `–<span class="block text-xs font-normal" style="color:var(--mute)" data-noi18n>${esc(tssSrcTxt('none'))}</span>`), t.IF ? cell('IF', String(t.IF.toFixed(2)).replace('.', ',')) : '', t.ftp ? cell('FTP verwendet', `${t.ftp} W${t.ftpEst ? '<span class="block text-xs font-normal" style="color:var(--mute)">geschätzt (vor deinem FTP-Verlauf)</span>' : ''}`) : '']; })(), r.imp ? cell('Herkunft', 'Garmin, importiert') : ''].join('');
   const hints = [];
   if (l && l.mv != null) hints.push(`Verschoben von ${DAYS[l.mv]}.`);
   if (l && l.vo) hints.push(`Variante von „${esc(l.vo)}“: gleicher Trainingsreiz, Belastung innerhalb von ±10 %. Die Intervalle wurden gegen die gefahrene Variante geprüft.`);
@@ -139,23 +142,25 @@ function lbRidePage(){
    „Alle Einheiten“. Zwölf Perioden je Ansicht, Pfeile oder Wischen blättern zurück. Antippen eines Balkens filtert die
    Liste darunter. Für Screenreader steht dieselbe Reihe als Tabelle bereit. */
 var lbCh = {mode:'w', met:'km', off:0, sel:null, roll:true, all:false, yoy:false};
-const lbPerKey = (mode, day) => mode === 'm' ? day.slice(0, 7) : lbMon(day);
+const lbPerKey = (mode, day) => mode === 'm' || mode === 'a' ? day.slice(0, 7) : lbMon(day);
 /* Perioden einer Ansicht: 12 Schlüssel, neueste zuletzt; off = wie viele Zwölferblöcke zurück */
 function lbPeriods(mode, off, today){
   const t = today || iso(0), out = [];
+  /* F32: „Alles“ = jeder Monat ab der ersten Fahrt (mindestens 12) */
+  if (mode === 'a') { let f = t.slice(0, 7); lbRides().forEach(a => { if (a.day && a.day.slice(0, 7) < f) f = a.day.slice(0, 7); }); const d = dOnly(t.slice(0, 7) + '-01'); d.setMonth(d.getMonth() - 11); if (f < lstr(d).slice(0, 7)) { const q = dOnly(f + '-01'); while (lstr(q).slice(0, 7) <= t.slice(0, 7)) { out.push(lstr(q).slice(0, 7)); q.setMonth(q.getMonth() + 1); } return out; } return lbPeriods('m', 0, t); }
   if (mode === 'm') { const d = dOnly(t.slice(0, 7) + '-01'); d.setMonth(d.getMonth() - off * 12 - 11); for (let k = 0; k < 12; k++) { out.push(lstr(d).slice(0, 7)); d.setMonth(d.getMonth() + 1); } }
   else { const m0 = lbMon(t); for (let k = 11; k >= 0; k--) out.push(addD(m0, -7 * (off * 12 + k))); }
   return out;
 }
-const lbPrevYear = (mode, key) => mode === 'm' ? (+key.slice(0, 4) - 1) + key.slice(4) : addD(key, -364);
+const lbPrevYear = (mode, key) => mode !== 'w' ? (+key.slice(0, 4) - 1) + key.slice(4) : addD(key, -364);
 /* Summen je Periode: {key: {km, sec, hm, n}} */
 function lbSums(mode, o){
-  o = o || lbCh; const f = o.f != null ? o.f : o === lbCh ? lbF : 'all', pid = o.pid != null ? o.pid : o === lbCh ? lbPid : '', S0 = {}, add = (k, km, sec, hm) => { const x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0}); x.km += km || 0; x.sec += sec || 0; x.hm += hm || 0; x.n++; };
-  lbRides().forEach(a => { if (!a.day || (!o.roll && a.in) || !lbFOk(a.id, f, pid)) return; add(lbPerKey(mode, a.day), a.km, a.sec, a.hm); });
-  if (o.all) Object.entries(S.lb || {}).forEach(([id, l]) => { if (l && l.k === 's' && l.day && l.sec > 0 && lbFOk(id, f, pid)) { const k = lbPerKey(mode, l.day), x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0}); x.sec += l.sec; } });
+  o = o || lbCh; const f = o.f != null ? o.f : o === lbCh ? lbF : 'all', pid = o.pid != null ? o.pid : o === lbCh ? lbPid : '', S0 = {}, add = (k, km, sec, hm, t) => { const x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0, tss:0, est:0}); x.km += km || 0; x.sec += sec || 0; x.hm += hm || 0; x.n++; x.tss = (x.tss || 0) + (t ? t.tss : 0); if (t && t.src !== 'power') x.est = (x.est || 0) + 1; };
+  (typeof mfLbFold === 'function' ? lbRides() : lbRides()).forEach(a => { if (!a.day || (!o.roll && a.in) || !lbFOk(a.id, f, pid) || (f === 'imp' && !a.imp)) return; add(lbPerKey(mode, a.day), a.km, a.sec, a.hm, a.tsr); });
+  if (o.all) Object.entries(S.lb || {}).forEach(([id, l]) => { if (l && l.k === 's' && l.day && l.sec > 0 && lbFOk(id, f, pid)) { const k = lbPerKey(mode, l.day), x = S0[k] || (S0[k] = {km:0, sec:0, hm:0, n:0, tss:0, est:0}); x.sec += l.sec; } });
   return S0;
 }
-const LB_MET = {km:['Distanz', v => Math.round(v.km), v => `${Math.round(v).toLocaleString('de-DE')} km`], h:['Zeit', v => v.sec / 3600, v => hStd(Math.round(v * 4) / 4) + ' Std.'], hm:['Höhenmeter', v => Math.round(v.hm), v => `${Math.round(v).toLocaleString('de-DE')} hm`]};
+const LB_MET = {km:['Distanz', v => Math.round(v.km), v => `${Math.round(v).toLocaleString('de-DE')} km`], h:['Zeit', v => v.sec / 3600, v => hStd(Math.round(v * 4) / 4) + ' Std.'], hm:['Höhenmeter', v => Math.round(v.hm), v => `${Math.round(v).toLocaleString('de-DE')} hm`], tss:['TSS', v => Math.round(v.tss || 0), v => `${Math.round(v).toLocaleString('de-DE')} TSS`]};
 const lbPerLbl = (mode, key, long) => { const MO = lang() === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
   if (mode === 'm') { const m = +key.slice(5, 7) - 1; return long ? `${MO[m]} ${key.slice(0, 4)}` : MO[m]; }
   const e = addD(key, 6); return long ? `${fmt(key).slice(0, 6)}–${fmt(e)}` : fmt(key).slice(0, 6); };
@@ -163,28 +168,48 @@ function lbSet(k, v){ if (k === 'mode') { lbCh.mode = v; lbCh.off = 0; lbCh.sel 
 let lbSwX = null;
 function lbSwS(e){ lbSwX = e.touches && e.touches[0] ? e.touches[0].clientX : null; }
 function lbSwE(e){ const t = e.changedTouches && e.changedTouches[0]; if (lbSwX == null || !t) return; const dx = t.clientX - lbSwX; lbSwX = null; if (Math.abs(dx) > 45) lbSet('off', dx > 0 ? 1 : -1); }
+/* F32: geplanter TSS einer Woche bzw. eines Monats im laufenden Plan (null außerhalb des Plans). Laufende Woche aus S.plan, sonst genWeek. */
+const lbPlC = {};
+function lbPlanTss(mode, key){
+  const p = S.p; if (!p || !p.start || S.step !== 0) return null; let end; try { end = endOf(p); } catch (e) { return null; }
+  const days = []; if (mode === 'w') for (let k = 0; k < 7; k++) days.push(addD(key, k)); else { const d = dOnly(key + '-01'); while (lstr(d).slice(0, 7) === key) { days.push(lstr(d)); d.setDate(d.getDate() + 1); } }
+  const ck = (S.pid || '') + '|' + p.start + '|' + end + '|' + JSON.stringify(S.plan || []).length; if (lbPlC.k !== ck) { for (const z in lbPlC) delete lbPlC[z]; lbPlC.k = ck; }
+  let t = 0, any = false, sw = typeof strWeek !== 'undefined' ? strWeek : null;
+  days.forEach(ds => { if (ds < p.start || ds > end) return; const n = Math.round((dOnly(ds) - dOnly(p.start)) / 864e5), w = Math.floor(n / 7) + 1, i = n % 7; any = true;
+    let wk = w === S.wk && S.plan ? S.plan : lbPlC[w]; if (!wk) { try { wk = lbPlC[w] = genWeek(p, w); } catch (e) { wk = lbPlC[w] = []; } }
+    const x = wk[i]; if (x && x.m > 0) { try { t += tss(x); } catch (e) { elog(e); } } });
+  try { if (sw !== null) strWeek = sw; } catch (e) { elog(e); }
+  return any ? Math.round(t) : null;
+}
 function lbChart(){
   const o = lbCh, keys = lbPeriods(o.mode, o.off), sums = lbSums(o.mode, o), M = LB_MET[o.met], val = k => M[1](sums[k] || {km:0, sec:0, hm:0}), V = keys.map(val);
-  const prev = o.yoy ? keys.map(k => val(lbPrevYear(o.mode, k))) : null, cur = lbPerKey(o.mode, iso(0)), wm = o.mode === 'm';
+  const prev = o.yoy && o.mode !== 'a' ? keys.map(k => val(lbPrevYear(o.mode, k))) : null, cur = lbPerKey(o.mode, iso(0)), wm = o.mode !== 'w', isT = o.met === 'tss';
+  /* F32: geplanter TSS je Periode (Umriss hinter dem Ist-Balken) und Sprung-Hinweis (Woche mehr als 30 % über dem Schnitt der 4 Wochen davor, Richtwert) */
+  const PL = isT ? keys.map(k => lbPlanTss(o.mode, k)) : null;
+  const jump = isT && o.mode === 'w' ? keys.map((k, i) => { const pv = [1, 2, 3, 4].map(j => val(addD(k, -7 * j))), nz = pv.filter(v => v > 0).length, a4 = pv.reduce((q, v) => q + v, 0) / 4; return nz >= 2 && a4 > 0 && V[i] > a4 * 1.3 && V[i] - a4 >= 30 ? Math.round((V[i] / a4 - 1) * 100) : 0; }) : null;
   /* Durchschnitt ab der ersten Periode mit Daten (leere Zeit vor der ersten Fahrt zählt nicht mit) */
   const first = Object.keys(sums).sort()[0], from = Math.max(0, keys.findIndex(k => first && k >= first)), Va = first && first <= keys[keys.length - 1] ? V.slice(from) : V, avg = Va.reduce((q, v) => q + v, 0) / Math.max(1, Va.length);
   /* Grafik über die volle Breite, Achse links mit runden Werten, Schrift größer als bei den übrigen Verlaufsgrafiken */
-  const top0 = Math.max(1, ...V, ...(prev || [0])), st0 = top0 / 3, mg = Math.pow(10, Math.floor(Math.log10(st0))), stp = [1, 2, 2.5, 5, 10].map(f => f * mg).find(f => f >= st0) || 10 * mg;
+  const top0 = Math.max(1, ...V, ...(prev || [0]), ...(PL || [0]).map(v => v || 0)), st0 = top0 / 3, mg = Math.pow(10, Math.floor(Math.log10(st0))), stp = [1, 2, 2.5, 5, 10].map(f => f * mg).find(f => f >= st0) || 10 * mg;
   const mx = Math.max(stp * Math.ceil(top0 * 1.08 / stp), stp), W = 340, H = 200, L = 34, R = 4, T = 16, B = 24, bw = (W - L - R) / keys.length, Y = v => T + (H - T - B) * (1 - v / mx);
   const tk = v => o.met === 'h' ? `${Math.round(v * 10) / 10} h`.replace('.', wkL(',', '.')) : Math.round(v).toLocaleString(wkL('de-DE', 'en-GB'));
   const grid = []; for (let v = stp; v <= mx + 1e-9; v += stp) grid.push(`<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" class="lbc-gl"/><text x="${L - 4}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end" class="tx">${esc(tk(v))}</text>`);
-  const sk = o.sel || cur, sv = sums[sk] || {km:0, sec:0, hm:0, n:0}, isCur = sk === cur;
-  const head = `${isCur ? (wm ? 'Dieser Monat' : 'Diese Woche') : lbPerLbl(o.mode, sk, true)}: ${Math.round(sv.km).toLocaleString('de-DE')} km · ${hm2(Math.round(sv.sec / 60))} h · ${Math.round(sv.hm).toLocaleString('de-DE')} Hm`;
+  const sk = o.sel || cur, sv = sums[sk] || {km:0, sec:0, hm:0, n:0, tss:0, est:0}, isCur = sk === cur, si = keys.indexOf(sk);
+  const head = isT ? `${isCur ? (wm ? 'Dieser Monat' : 'Diese Woche') : lbPerLbl(o.mode, sk, true)}: <span data-noi18n>${Math.round(sv.tss || 0).toLocaleString(wkL('de-DE', 'en-GB'))} TSS</span>`
+    : `${isCur ? (wm ? 'Dieser Monat' : 'Diese Woche') : lbPerLbl(o.mode, sk, true)}: ${Math.round(sv.km).toLocaleString('de-DE')} km · ${hm2(Math.round(sv.sec / 60))} h · ${Math.round(sv.hm).toLocaleString('de-DE')} Hm`;
+  const tInfo = isT ? `<p class="mt-1 text-sm" data-noi18n>${[PL && si >= 0 && PL[si] != null ? wkL(`geplant ${PL[si]} TSS`, `planned ${PL[si]} TSS`) : '', wkL(`${sv.n || 0} ${sv.n === 1 ? 'Fahrt' : 'Fahrten'}`, `${sv.n || 0} ${sv.n === 1 ? 'ride' : 'rides'}`), sv.est ? wkL(`${sv.est} davon geschätzt`, `${sv.est} of them estimated`) : ''].filter(Boolean).join(' · ')}${jump && si >= 0 && jump[si] ? `<br><span style="color:#9a6a00">${wkL(`Deutlich mehr als zuletzt: +${jump[si]} % zum Schnitt der 4 Wochen davor.`, `Clearly more than recently: +${jump[si]} % vs the average of the 4 weeks before.`)}</span>` : ''}</p>` : '';
+  const lstep = o.mode === 'a' ? Math.max(1, Math.ceil(keys.length / 12)) : 1;
   const bars = keys.map((k, i) => { const x = L + i * bw, y = Y(V[i]), on = k === sk, py = prev ? Y(prev[i]) : 0, cx = x + bw * (prev ? .52 : .14), cw = bw * (prev ? .38 : .72);
-    return `${prev ? `<rect x="${(x + bw * .1).toFixed(1)}" y="${py.toFixed(1)}" width="${(bw * .38).toFixed(1)}" height="${Math.max(prev[i] > 0 ? 1.5 : 0, H - B - py).toFixed(1)}" class="lbc-prev"/>` : ''}<rect x="${cx.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(V[i] > 0 ? 1.5 : 0, H - B - y).toFixed(1)}" class="${on ? 'lbc-on' : 'lbc-bar'}" data-k="${esc(k)}"/>
-      ${on && V[i] > 0 ? `<text x="${(prev ? x + bw / 2 : cx + cw / 2).toFixed(1)}" y="${(Math.min(y, prev ? py : y) - 4).toFixed(1)}" text-anchor="middle" class="tx lbc-val">${esc(tk(V[i]))}</text>` : ''}<rect x="${x.toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent" style="cursor:pointer" onclick="lbSet('sel','${ja(k)}')"/>${i % (wm ? 1 : 2) === (wm ? 0 : 1) || on ? `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 7}" text-anchor="middle" class="tx"${on ? ' font-weight="700"' : ''}>${esc(lbPerLbl(o.mode, k))}</text>` : ''}`; }).join('');
+    const pl = PL && PL[i] > 0 ? `<rect x="${(cx - .5).toFixed(1)}" y="${Y(PL[i]).toFixed(1)}" width="${(cw + 1).toFixed(1)}" height="${(H - B - Y(PL[i])).toFixed(1)}" class="lbc-plan"/>` : '', jm = jump && jump[i] ? `<path d="M${(cx + cw / 2 - 4).toFixed(1)},${(y - 3).toFixed(1)}l4,-6l4,6z" class="lbc-jump"/>` : '';
+    return `${pl}${prev ? `<rect x="${(x + bw * .1).toFixed(1)}" y="${py.toFixed(1)}" width="${(bw * .38).toFixed(1)}" height="${Math.max(prev[i] > 0 ? 1.5 : 0, H - B - py).toFixed(1)}" class="lbc-prev"/>` : ''}${jm}<rect x="${cx.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(V[i] > 0 ? 1.5 : 0, H - B - y).toFixed(1)}" class="${on ? 'lbc-on' : 'lbc-bar'}" data-k="${esc(k)}"/>
+      ${on && V[i] > 0 ? `<text x="${(prev ? x + bw / 2 : cx + cw / 2).toFixed(1)}" y="${(Math.min(y, prev ? py : y) - 4).toFixed(1)}" text-anchor="middle" class="tx lbc-val">${esc(tk(V[i]))}</text>` : ''}<rect x="${x.toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent" style="cursor:pointer" onclick="lbSet('sel','${ja(k)}')"/>${(o.mode === 'a' ? (keys.length - 1 - i) % lstep === 0 : i % (wm ? 1 : 2) === (wm ? 0 : 1)) || on ? `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 7}" text-anchor="middle" class="tx"${on ? ' font-weight="700"' : ''}>${esc(lbPerLbl(o.mode, k))}</text>` : ''}`; }).join('');
   const svg = `<svg viewBox="0 0 ${W} ${H}" class="pchart lbc" aria-hidden="true" ontouchstart="lbSwS(event)" ontouchend="lbSwE(event)">${grid.join('')}${bars}<line x1="${L}" x2="${W - R}" y1="${Y(avg).toFixed(1)}" y2="${Y(avg).toFixed(1)}" class="lbc-avg"/><line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" class="gl0"/></svg>`;
-  const tbl = `<table class="sr-only"><caption>${M[0]} je ${wm ? 'Monat' : 'Woche'}</caption><thead><tr><th>${wm ? 'Monat' : 'Woche'}</th><th>${M[0]}</th>${prev ? '<th>Vorjahr</th>' : ''}</tr></thead><tbody>${keys.map((k, i) => `<tr><td>${esc(lbPerLbl(o.mode, k, true))}</td><td>${esc(M[2](V[i]))}</td>${prev ? `<td>${esc(M[2](prev[i]))}</td>` : ''}</tr>`).join('')}</tbody></table>`;
+  const tbl = `<table class="sr-only"><caption>${M[0]} je ${wm ? 'Monat' : 'Woche'}</caption><thead><tr><th>${wm ? 'Monat' : 'Woche'}</th><th>${M[0]}</th>${prev ? '<th>Vorjahr</th>' : ''}${PL ? '<th>Geplant</th>' : ''}</tr></thead><tbody>${keys.map((k, i) => `<tr><td>${esc(lbPerLbl(o.mode, k, true))}</td><td>${esc(M[2](V[i]))}${jump && jump[i] ? ', deutlich mehr als zuletzt' : ''}</td>${prev ? `<td>${esc(M[2](prev[i]))}</td>` : ''}${PL ? `<td>${PL[i] != null ? esc(M[2](PL[i])) : '–'}</td>` : ''}</tr>`).join('')}</tbody></table>`;
   const seg = (k, v, l) => `<button class="${o[k] === v ? 'on' : ''}" aria-pressed="${o[k] === v}" style="min-height:44px" onclick="lbSet('${k}','${v}')">${l}</button>`;
   const tog = (k, l) => chip(l, !!o[k], `lbSet('${k}',${o[k] ? 'false' : 'true'})`);
   const arrow = (d, l, dis) => `<button class="lbc-nav" aria-label="${l}"${dis ? ' disabled' : ''} onclick="lbSet('off',${d})">${ic(d > 0 ? 'chevL' : 'chevR', 18)}</button>`;
   /* Angezeigter Zeitraum zwischen den Pfeilen */
-  const k0 = keys[0], k1 = keys[keys.length - 1], rng = wm ? `${lbPerLbl('m', k0, true)} – ${lbPerLbl('m', k1, true)}` : `${fmt(k0).slice(0, 6)} – ${fmt(addD(k1, 6))}`;
+  const k0 = keys[0], k1 = keys[keys.length - 1], rng = o.mode === 'a' ? `${lbPerLbl('m', k0, true)} – ${lbPerLbl('m', k1, true)}` : wm ? `${lbPerLbl('m', k0, true)} – ${lbPerLbl('m', k1, true)}` : `${fmt(k0).slice(0, 6)} – ${fmt(addD(k1, 6))}`;
   /* Vorjahresvergleich für die gewählte Periode bzw. die aktuelle */
   let cmp = '';
   if (prev) { const yr = +(wm ? k1.slice(0, 4) : addD(k1, 6).slice(0, 4)), pk = lbPrevYear(o.mode, sk), pv = val(pk), cv = val(sk), anyP = prev.some(v => v > 0);
@@ -192,9 +217,9 @@ function lbChart(){
     cmp = anyP ? `<div class="lbc-lg text-xs" data-noi18n>${sw('lbc-bar', wkL('aktuell', 'current'))}${sw('lbc-prev', wkL('Vorjahr', 'previous year'))}</div>`
       + `<p class="mt-1 text-sm" data-noi18n>${wkL('Vorjahr', 'Previous year')} (${esc(lbPerLbl(o.mode, pk, true))}): <b>${esc(M[2](pv))}</b>${pv > 0 ? ` · ${isCur ? wkL('bisher', 'so far') : wkL('jetzt', 'now')} <b>${cv >= pv ? '+' : '−'}${Math.abs(Math.round((cv - pv) / pv * 100))} %</b>` : ''}</p>`
         : `<p class="mt-1 text-sm" style="color:var(--mute)" data-noi18n>${wkL(`Für diesen Zeitraum im Vorjahr (${yr - 1}) sind keine Fahrten gespeichert. Der Vergleich erscheint, sobald dort Fahrten im Logbuch liegen, etwa über den Garmin-Abruf oder hochgeladene Dateien.`, `No rides are stored for this period in the previous year (${yr - 1}). The comparison appears once rides from then are in the logbook, e.g. via the Garmin import or uploaded files.`)}</p>`; }
-  return `<section class="panel p-4" id="lb-chart"><p class="hd text-xl font-semibold" aria-live="polite">${head}</p>
-    <div class="mt-3 flex items-center gap-2"><div class="dtabs flex-1">${seg('mode', 'w', 'Woche')}${seg('mode', 'm', 'Monat')}</div><div class="dtabs flex-1">${seg('met', 'km', 'km')}${seg('met', 'h', 'Zeit')}${seg('met', 'hm', 'Hm')}</div></div>
-    <div class="mt-3 flex items-center justify-between gap-2">${arrow(1, 'Früher')}<span class="text-sm font-semibold" data-noi18n>${esc(rng)}</span>${arrow(-1, 'Später', o.off === 0)}</div>${svg}${tbl}
-    <p class="mt-1 text-xs" style="color:var(--mute)"><span class="lbc-key"></span> Durchschnitt: ${esc(M[2](avg))} je ${wm ? 'Monat' : 'Woche'}</p>${lbF !== 'all' || lbPid ? `<p class="mt-1 text-xs font-semibold" style="color:var(--teal)" data-noi18n>${lbF === 'plan' ? wkL('Gefiltert: nur geplante Einheiten', 'Filtered: planned sessions only') : lbF === 'x' ? wkL('Gefiltert: nur zusätzliche Fahrten', 'Filtered: extra rides only') : wkL('Gefiltert nach Plan', 'Filtered by plan')}</p>` : ''}${cmp}
-    <div class="mt-2 flex flex-wrap gap-2">${tog('roll', 'inkl. Rolle')}${o.met === 'h' ? tog('all', 'Alle Einheiten') : ''}${tog('yoy', 'Vorjahr')}${o.sel ? chip('Filter aufheben', false, "lbSet('sel',null)") : ''}</div></section>`;
+  return `<section class="panel p-4" id="lb-chart"><p class="hd text-xl font-semibold" aria-live="polite">${head}</p>${tInfo}
+    <div class="mt-3 flex items-center gap-2"><div class="dtabs flex-1">${seg('mode', 'w', 'Woche')}${seg('mode', 'm', 'Monat')}${seg('mode', 'a', 'Alles')}</div><div class="dtabs flex-1">${seg('met', 'km', 'km')}${seg('met', 'h', 'Zeit')}${seg('met', 'hm', 'Hm')}${seg('met', 'tss', 'TSS')}</div></div>
+    <div class="mt-3 flex items-center justify-between gap-2">${o.mode === 'a' ? '<span></span>' : arrow(1, 'Früher')}<span class="text-sm font-semibold" data-noi18n>${esc(rng)}</span>${o.mode === 'a' ? '<span></span>' : arrow(-1, 'Später', o.off === 0)}</div>${svg}${tbl}
+    <p class="mt-1 text-xs" style="color:var(--mute)"><span class="lbc-key"></span> Durchschnitt: ${esc(M[2](avg))} je ${wm ? 'Monat' : 'Woche'}</p>${isT ? `<p class="mt-1 text-xs" style="color:var(--mute)" data-noi18n>${PL && PL.some(v => v != null) ? `<span class="lbc-pkey"></span> ${wkL('Umriss: geplant laut Plan', 'Outline: planned')} · ` : ''}${o.mode === 'w' ? `<span style="color:#d9a400">▲</span> ${wkL('deutlich mehr als zuletzt (über 30 % mehr als der Schnitt der 4 Wochen davor, Richtwert, kein Alarm)', 'clearly more than recently (over 30 % above the average of the 4 weeks before, guide value, not an alarm)')}` : ''}<br>${wkL('TSS mit der FTP am Fahrtdatum, ohne Leistungsmesser aus dem Puls geschätzt.', 'TSS with the FTP on the day of the ride, estimated from heart rate without a power meter.')}</p>` : ''}${lbF !== 'all' || lbPid ? `<p class="mt-1 text-xs font-semibold" style="color:var(--teal)" data-noi18n>${lbF === 'plan' ? wkL('Gefiltert: nur geplante Einheiten', 'Filtered: planned sessions only') : lbF === 'x' ? wkL('Gefiltert: nur zusätzliche Fahrten', 'Filtered: extra rides only') : wkL('Gefiltert nach Plan', 'Filtered by plan')}</p>` : ''}${cmp}
+    <div class="mt-2 flex flex-wrap gap-2">${tog('roll', 'inkl. Rolle')}${o.met === 'h' ? tog('all', 'Alle Einheiten') : ''}${o.mode === 'a' ? '' : tog('yoy', 'Vorjahr')}${o.sel ? chip('Filter aufheben', false, "lbSet('sel',null)") : ''}</div></section>`;
 }

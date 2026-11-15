@@ -115,6 +115,8 @@ function summarize(r, fname){
   if (pts.length >= 10 && !pts.some(q => q.lat != null && isFinite(q.lat) && Math.abs(q.lat) <= 90 && !(q.lat === 0 && q.lon === 0))) out.in = 1;
   if (ses.some(s => s && [5, 6, 58].includes(s.sub)) || rideIndoorTy(r.ty)) out.in = 1;
   if (sHm > 0) out.hmDev = 1;
+  /* F32: eine TSS-Rechnung für alle Stellen (FTP am Fahrtdatum, sonst Puls, sonst keine TSS) */
+  try { const t = rideTss(out); out.tss = t.tss; out.tssS = t.src; } catch (e) { elog(e); }
   /* F25: Höhenprofil, Streckenlinie und Leistungsreihe im Hintergrund ablegen */
   try { if (typeof trkKeep === 'function') trkKeep(out, r); } catch (e) { elog(e); }
   /* F26: Bestwerte über 5 s bis 2 h (Mean-Max) dieser Fahrt */

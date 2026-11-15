@@ -14,9 +14,12 @@ let rcSel = {w:null, m:null, y:null};
 function rcArchSync(){
   try {
     S.arch = S.arch || []; const have = new Set(S.arch.map(a => a.id)); let add = 0;
+    /* F33: eine importierte Zusammenfassung weicht der vollständig eingelesenen Fahrt mit derselben Garmin-ID */
+    const impG = new Map(S.arch.filter(a => a.imp && a.gid).map(a => [String(a.gid), a.id]));
     [...allActs(), ...(S.hist || [])].forEach(a => { if (!a || !a.id || !a.day || have.has(a.id)) return; have.add(a.id); add++;
-      S.arch.push({id:a.id, d:a.day, h:a.ts ? new Date(a.ts).getHours() : null, n:String(a.n || 'Radfahrt').slice(0, 50), km:a.km || 0, hm:a.hm || 0, sec:a.sec || 0, tss:a.tss || 0, np:a.np || 0, m1:a.m1 || null, m5:a.m5 || null, m20:a.m20 || null, m60:a.m60 || null, ...(a.in ? {in:1} : {}), ...(a.gid ? {gid:String(a.gid).slice(0, 30)} : {}), ...(a.hmDev ? {hmDev:1} : {})}); });
-    if (add) { S.arch.sort((a, b) => a.d.localeCompare(b.d)); if (S.arch.length > 2500) S.arch = S.arch.slice(-2500); }
+      if (a.gid && impG.has(String(a.gid))) { const old = impG.get(String(a.gid)); S.arch = S.arch.filter(x => x.id !== old); }
+      S.arch.push({id:a.id, d:a.day, h:a.ts ? new Date(a.ts).getHours() : null, n:String(a.n || 'Radfahrt').slice(0, 50), km:a.km || 0, hm:a.hm || 0, sec:a.sec || 0, tss:a.tss || 0, ...(a.tssS ? {tssS:a.tssS} : {}), ...(a.hrA ? {hr:a.hrA} : {}), np:a.np || 0, m1:a.m1 || null, m5:a.m5 || null, m20:a.m20 || null, m60:a.m60 || null, ...(a.in ? {in:1} : {}), ...(a.gid ? {gid:String(a.gid).slice(0, 30)} : {}), ...(a.hmDev ? {hmDev:1} : {})}); });
+    if (add) { S.arch.sort((a, b) => a.d.localeCompare(b.d)); if (S.arch.length > 4000) S.arch = S.arch.slice(-4000); }
   } catch (e) { elog(e); }
 }
 const rcRides = (from, to) => (S.arch || []).filter(a => a.d >= from && a.d <= to);

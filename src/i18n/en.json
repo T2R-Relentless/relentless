@@ -6962,5 +6962,17 @@
 "kurzes Tapering ({0} Tage)": "short taper ({0} days)",
 "kein Tapering, normal weiter trainieren": "no taper, keep training as normal",
 "{0} über {1} Tage, danach eine lockere Woche": "{0} over {1} days, followed by an easy week",
-"Tapering über {0} Tage, danach eine lockere Woche": "{0}-day taper, followed by an easy week"
+"Tapering über {0} Tage, danach eine lockere Woche": "{0}-day taper, followed by an easy week",
+"Garmin verbunden, aber die Formkurve beginnt erst mit dem Plan? Importiere ältere Fahrten, etwa die letzten 3 Monate. Dann stimmt deine Fitness von Anfang an.": "Garmin connected, but the fitness curve only starts with the plan? Import older rides, e.g. the last 3 months. Then your fitness is right from the start.",
+"Fahrten importieren": "Import rides",
+"Im Logbuch zeigt die Verlaufsgrafik jetzt auch TSS je Woche, mit dem geplanten Wert als Umriss.": "In the logbook the history chart now also shows TSS per week, with the planned value as an outline.",
+"TSS ansehen": "View TSS",
+"Alles": "All",
+"Importiert": "Imported",
+"importiert": "imported",
+"FTP verwendet": "FTP used",
+"geschätzt (vor deinem FTP-Verlauf)": "estimated (before your FTP history)",
+"Herkunft": "Source",
+"Garmin, importiert": "Garmin, imported",
+" (geschätzt)": " (estimated)"
 }

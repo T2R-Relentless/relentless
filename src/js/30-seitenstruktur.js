@@ -239,7 +239,7 @@ const SET_PAGES = {
   'tool-tire':() => tpPage(),
   'set-sq':() => sqCfgUi(false) + '<p class="mt-3 text-sm" style="color:var(--mute)">Gilt für alle Übungseinheiten, die du als Sequenz ablaufen lässt.</p>',
   'set-wx':() => iaNoHead(iaSetParts().wx || ''),
-  'set-gm':() => `<section class="panel p-4">${gmCard('man')}</section>`,
+  'set-gm':() => `<section class="panel p-4">${gmCard('man')}${typeof impCard === 'function' ? impCard() : ''}</section>`,
   'set-priv':() => iaNoHead(iaSetParts().priv || ''),
 };
 const SET_T = {'set-lang':'Sprache, Darstellung, Hilfen', 'set-ali':'Alltag und Planstart', 'set-hr':'Herzfrequenz und Leistungsmesser', 'set-wf':'Gewicht und FTP', 'set-age':'Alter und Erholung', 'set-health':'Gesundheitshinweis', 'set-sq':'Übungsablauf und Töne', 'set-wx':'Wetter und Kleidung', 'set-gm':'Garmin Connect', 'set-priv':'Datenschutz'};

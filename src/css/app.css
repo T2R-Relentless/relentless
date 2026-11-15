@@ -492,3 +492,7 @@
 .evcard{border:1px solid var(--line)}
 .evcard .evfuel{border-top:1px solid var(--line);padding-top:8px;margin-top:12px}
 .evcard .evfuel summary{min-height:44px;display:flex;align-items:center}
+/* F32: geplanter TSS als Umriss, Sprung-Hinweis */
+.lbc-plan{fill:none;stroke:var(--mute);stroke-width:1.2;stroke-dasharray:3 2}
+.lbc-jump{fill:#d9a400}
+.lbc-pkey{display:inline-block;width:12px;height:10px;border:1.2px dashed var(--mute);vertical-align:-1px}

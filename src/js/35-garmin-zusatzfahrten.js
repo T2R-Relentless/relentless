@@ -18,8 +18,7 @@ const blRideLine = e => `${f1(e.km || 0)} km · ${mm(Math.round((e.sec || 0) / 6
 function blWeekRides(w){
   if (!S.p || !S.p.start) return [];
   const from = wkDay(w, 0), to = wkDay(w, 6), out = new Map();
-  (S.arch || []).forEach(a => { if (a.d >= from && a.d <= to) out.set(a.id, {id:a.id, day:a.d, km:a.km, sec:a.sec, hm:a.hm, tss:a.tss}); });
-  (S.man || []).forEach(a => { if (a.day >= from && a.day <= to) out.set(a.id, {id:a.id, day:a.day, km:a.km, sec:a.sec, hm:a.hm, tss:a.tss}); });
+  rideAll().forEach(a => { if (a.day >= from && a.day <= to) out.set(a.id, {id:a.id, day:a.day, km:a.km, sec:a.sec, hm:a.hm, tss:rideTss(a).tss}); });
   return [...out.values()];
 }
 /* Wochensumme der tatsächlich gefahrenen Fahrten, zusätzliche Fahrten eingeschlossen */
