@@ -11,6 +11,7 @@ const VA_ZONE = {base:[55, 77], rec:[0, 56], sst:[80, 104], thr:[88, 112], vo2:[
 const VA_STIM = {base:'Grundlage', rec:'Erholung', sst:'Sweet Spot', thr:'Schwelle', vo2:'VO2max', spr:'Sprint'};
 function vaStim(x){
   if (!x || !x.m || x.parts || x.blocked || x.both) return null;
+  if (x.rz && (x.rz.sub === 'ergo' || x.rz.sub === 'run' || x.rz.sub === 'seq' || x.rz.sub === 'travel' || x.rz.sub === 'rest')) return null; /* Reise-Ersatz (Laufband, Lauf, Übungen): keine Rad-Varianten, dafür die Tageswahl */
   if (/^(Eventtag|Aktivierung|Deine Zieltour|Fitness-Check)/.test(x.n || '') || x.t === 'race' || x.t === 'test') return null;
   if (x.t === 'rec') return 'rec';
   if (x.t === 'base' || (x.t === 'long' && !/Eventsimulation/.test(x.n || ''))) return 'base';

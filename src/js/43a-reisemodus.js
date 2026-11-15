@@ -106,7 +106,7 @@ function rzSeqDay(kind, min, st, tip){ return {...REST, n:RZ_SEQ_N[kind], st, ti
 /* Ersatz für einen Reisetag. c: {nInt} zählt harte Reize der Woche */
 function rzSub(x, k, t, c){
   const F = rzFree(t), fac = rzFacs(t), own = fac.includes('own_bike'), ergo = fac.includes('gym_bike') ? 'bike' : fac.includes('treadmill') ? 'mill' : null, run = fac.includes('running');
-  const tag = (o, sub) => ({...o, rz:{k:k.k, id:t.id, sub, ...(o.rzSeq ? {seq:o.rzSeq} : {}), ...(sub === 'ergo' ? {rpe:1} : {})}, ...(x.m > 0 && (o.n !== x.n || o.m !== x.m) ? {orig:x.orig || x} : {})});
+  const tag = (o, sub, opt) => ({...o, rz:{k:k.k, id:t.id, sub, ...(opt ? {opt} : {}), ...(o.rzSeq ? {seq:o.rzSeq} : {}), ...(sub === 'ergo' || sub === 'run' ? {rpe:1} : {})}, ...(x.m > 0 && (o.n !== x.n || o.m !== x.m) ? {orig:x.orig || x} : {})});
   const seqMin = n => [15, 20, 30, 45].filter(v => v <= Math.max(15, n)).pop();
   if (k.k === 'dep' || k.k === 'ret') {
     const long = (+t.travelHours || 0) > 4;
@@ -117,15 +117,33 @@ function rzSub(x, k, t, c){
   if (k.k === 'post') return (k.soft ? rzHardT(x) : rzKey(x)) ? tag(D('base', 'Grundlage Z2', Math.min(x.m, 60), 56, 70, '90 U/min', 'Locker in Zone 2. Nach der Rückkehr erst wieder reinkommen, harte Einheiten folgen danach.' + (k.jet ? ' Fahr möglichst bei Tageslicht, das hilft der inneren Uhr.' : ''), 'Wiedereinstieg nach der Reise.'), 'easy') : x.m > 0 ? tag(x, 'keep') : x;
   /* Aufenthalt */
   if (!(x.m > 0)) return tag(x, 'rest');
-  if (own) return rzHardT(x) && k.jet ? tag(D('base', 'Grundlage Z2', Math.min(x.m, 90), 56, 70, '90 U/min', 'Locker in Zone 2, möglichst bei Tageslicht. In den ersten Tagen nach einem Zeitzonenwechsel keine harten Intervalle.', 'Die innere Uhr braucht ein paar Tage.'), 'easy') : tag(x, 'keep');
-  if (ergo) { const hard = rzHardT(x) && !k.jet && F >= 30 && c.nInt < 2; if (hard) c.nInt++; return tag(rzErgo(x, F, ergo === 'mill', hard), 'ergo'); }
-  if (run) {
-    if (rzHardT(x) && rzLen(t) > 7 && !k.jet && F >= 30 && c.nInt < 1) { c.nInt++; return tag(rzHill(), 'run'); }
-    if (x.t === 'base' || x.t === 'long') return tag(rzRun(F), 'run');
+  /* Tageswahl: Die Person kann an jedem Tag des Aufenthalts selbst wählen, was im Rahmen der angegebenen Möglichkeiten geht */
+  const pk = t.days && t.days[k.ds], pick = pk && rzOpts(t).includes(pk) ? pk : null, want = pick || (own ? 'own' : ergo || null);
+  const seq = kind => kind === 'kraft' ? rzSeqDay('kraft', seqMin(F), 'Statt der Radeinheit: Kraft für Beine und Rumpf ohne Geräte, leise und auf kleiner Fläche.', 'Kraft in den Beinen bleibt auch ohne Rad erhalten, wenn du sie regelmäßig forderst.')
+    : kind === 'stabi' ? rzSeqDay('stabi', seqMin(F), 'Statt der Radeinheit: Rumpf und Hüfte stabilisieren, ohne Geräte und leise.', 'Ein stabiler Rumpf hilft dir auf langen Fahrten.')
+    : rzSeqDay('mob', seqMin(Math.min(F, 20)), x.t === 'rec' ? 'Statt der lockeren Fahrt: Mobilität gegen das lange Sitzen.' : 'Statt der Radeinheit: Mobilität gegen das lange Sitzen.', 'Bewegung hilft bei der Erholung von der Reise.');
+  if (want === 'own') return rzHardT(x) && k.jet ? tag(D('base', 'Grundlage Z2', Math.min(x.m, 90), 56, 70, '90 U/min', 'Locker in Zone 2, möglichst bei Tageslicht. In den ersten Tagen nach einem Zeitzonenwechsel keine harten Intervalle.', 'Die innere Uhr braucht ein paar Tage.'), 'easy', 'own') : tag(x, 'keep', 'own');
+  if (want === 'bike' || want === 'mill') { const hard = rzHardT(x) && !k.jet && F >= 30 && c.nInt < 2; if (hard) c.nInt++; return tag(rzErgo(x, F, want === 'mill', hard), 'ergo', want); }
+  if (want === 'rest') return tag({...REST, st:'Heute Pause, von dir gewählt. Wenn du magst, geh spazieren und beweg dich locker.', tip:'Ein Ruhetag auf der Reise kostet keine Form.'}, 'rest', 'rest');
+  if (want === 'run' || (!pick && run)) {
+    if (rzHardT(x) && rzLen(t) > 7 && !k.jet && F >= 30 && c.nInt < 1) { c.nInt++; return tag(rzHill(), 'run', 'run'); }
+    if (pick || x.t === 'base' || x.t === 'long') return tag(rzRun(F), 'run', 'run');
   }
-  if (rzHardT(x)) return tag(rzSeqDay('kraft', seqMin(F), 'Statt der Radeinheit: Kraft für Beine und Rumpf ohne Geräte, leise und auf kleiner Fläche.', 'Kraft in den Beinen bleibt auch ohne Rad erhalten, wenn du sie regelmäßig forderst.'), 'seq');
-  if (x.t === 'base' || x.t === 'long') return tag(rzSeqDay('stabi', seqMin(F), 'Statt der Radeinheit: Rumpf und Hüfte stabilisieren, ohne Geräte und leise.', 'Ein stabiler Rumpf hilft dir auf langen Fahrten.'), 'seq');
-  return tag(rzSeqDay('mob', seqMin(Math.min(F, 20)), 'Statt der lockeren Fahrt: Mobilität gegen das lange Sitzen.', 'Bewegung hilft bei der Erholung von der Reise.'), 'seq');
+  if (pick) return tag(seq(pick), 'seq', pick);
+  const kind = rzHardT(x) ? 'kraft' : x.t === 'base' || x.t === 'long' ? 'stabi' : 'mob';
+  return tag(seq(kind), 'seq', kind);
+}
+/* Laufband und Lauf sind keine Radeinheit: keine Wattwerte, keine Trittfrequenz, keine Workout-Dateien fürs Rad */
+const rzNoBike = x => !!(x && x.rz && (x.rz.sub === 'run' || x.rz.opt === 'mill'));
+/* Was an einem Tag des Aufenthalts zur Wahl steht: Geräte nur, wenn sie für die Reise angegeben sind; Übungen und Pause gehen immer */
+function rzOpts(t){ const f = rzFacs(t); return [f.includes('own_bike') && 'own', f.includes('gym_bike') && 'bike', f.includes('treadmill') && 'mill', f.includes('running') && 'run', 'kraft', 'stabi', 'mob', 'rest'].filter(Boolean); }
+/* Tageswahl setzen ('' = wieder der Vorschlag der App). Nur für angenommene Reisen, nur ab heute. */
+function rzDayPick(id, ds, key){
+  const t = rzGet(id); if (!t || !rzOn() || t.status !== 'applied' || !rzISO(ds) || ds < iso(0) || ds <= rzDep(t) || ds >= rzRet(t)) return;
+  if (key && !rzOpts(t).includes(key)) return;
+  const d = {...(t.days || {})}; if (key) d[ds] = key; else delete d[ds];
+  if (Object.keys(d).length) t.days = d; else delete t.days;
+  rzReweek(); save(); render();
 }
 function rzApply1(P, p, w, t){
   const K = rzKinds(t, p, w); if (!K.some(Boolean)) return P;

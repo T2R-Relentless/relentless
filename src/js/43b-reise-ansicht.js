@@ -127,11 +127,19 @@ function rzDayUi(x, i, cur, ds){
   const live = cur && i === todayIdx(), L = [];
   if (t) { const d = rzDiffH(t, ds), dest = esc(rzCityOf(t));
     L.push(`<p class="text-sm"><span class="inline-flex items-center gap-2" style="color:var(--teal)">${ic('plane', 16)}<b>${ds === rzDep(t) ? rzL('Hinreise', 'Outbound') : ds === rzRet(t) ? rzL('Rückreise', 'Return') : rzL('Unterwegs', 'Away')}: ${dest}</b></span>${t.tzDest && d ? `<span class="block text-xs" style="color:var(--mute)">${live ? rzL(`Ortszeit ${rzClock(Date.now(), t.tzDest)} Uhr · Heimat: ${rzClock(Date.now(), t.tzHome || rzHomeTz())} Uhr`, `Local time ${rzClock(Date.now(), t.tzDest)} · home: ${rzClock(Date.now(), t.tzHome || rzHomeTz())}`) : rzL(`Ortszeit ${rzHTxt(d)} Std. gegenüber zu Hause. Zeiten gelten in Ortszeit.`, `Local time ${rzHTxt(d)} h from home. Times are local.`)}</span>` : ''}</p>`); }
-  if (k && k.rpe) L.push(`<p class="text-xs" style="color:var(--mute)">${rzL('Die Wattwerte sind nur Orientierung: Hotel-Geräte messen ungenau. Fahr nach Gefühl und Puls.', 'The watt figures are only a guide: hotel machines measure inaccurately. Go by feel and heart rate.')}</p>`);
+  if (k && k.rpe && k.opt === 'mill') L.push(`<p class="text-xs" style="color:var(--mute)">${rzL('Auf dem Laufband gibt es keine Wattwerte. Geh oder lauf nach Gefühl und Puls.', 'There are no watt figures on the treadmill. Walk or run by feel and heart rate.')}</p>`);
+  else if (k && k.rpe && k.sub !== 'run') L.push(`<p class="text-xs" style="color:var(--mute)">${rzL('Die Wattwerte sind nur Orientierung: Hotel-Geräte messen ungenau. Fahr nach Gefühl und Puls.', 'The watt figures are only a guide: hotel machines measure inaccurately. Go by feel and heart rate.')}</p>`);
   if (k && k.seq) L.push(rzSeqBtn(k.seq[0], k.seq[1], ds, live));
   else if (t && x && !(x.m > 0) && !rzFix(x)) L.push(rzSeqBtn('mob', 15, ds, live));
   if (k && k.sub === 'run') L.push(`<p class="text-xs" style="color:var(--mute)">${rzL('Laufen ist nur eine lockere Alternative. Steig vorsichtig ein, wenn du es nicht gewohnt bist.', 'Running is only an easy alternative. Start carefully if you are not used to it.')}</p>`);
+  if (t && k && k.k === 'stay' && k.opt && t.status === 'applied' && ds >= iso(0)) L.push(rzPickUi(t, k, ds, live));
   return L.length ? `<div class="rzday" data-noi18n>${L.join('')}</div>` : '';
+}
+/* Tageswahl: an jedem Tag des Aufenthalts selbst wählen, was im Rahmen der angegebenen Möglichkeiten geht */
+const RZ_OPT = {own:['Rad wie geplant', 'Bike as planned'], bike:['Hotel-Ergometer', 'Hotel bike'], mill:['Laufband', 'Treadmill'], run:['Lauf draußen', 'Run outdoors'], kraft:['Kraft im Zimmer', 'Strength in the room'], stabi:['Stabilität', 'Core stability'], mob:['Mobilität', 'Mobility'], rest:['Pause', 'Rest day']};
+function rzPickUi(t, k, ds, live){
+  const own = !!(t.days && t.days[ds]), id = ja(t.id);
+  return `<div class="rzpick" data-rzpick="${ds}"><p class="text-xs font-semibold">${live ? rzL('Heute lieber etwas anderes?', 'Prefer something else today?') : rzL('An diesem Tag lieber etwas anderes?', 'Prefer something else on this day?')}</p><div class="mt-1 flex flex-wrap gap-2" role="group" aria-label="${rzL('Einheit für diesen Reisetag wählen', 'Choose the session for this travel day')}">${rzOpts(t).map(o => `<button type="button" class="${k.opt === o ? 'btn' : 'ghost'} !w-auto !px-3 text-sm" style="min-height:44px" aria-pressed="${k.opt === o}" onclick="rzDayPick('${id}','${ds}','${o}')">${rzL(RZ_OPT[o][0], RZ_OPT[o][1])}</button>`).join('')}</div>${own ? `<button type="button" class="ghost mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="rzDayPick('${id}','${ds}','')">${rzL('Vorschlag der App wiederherstellen', 'Restore the app’s suggestion')}</button>` : `<p class="mt-1 text-xs" style="color:var(--mute)">${rzL('Zur Wahl steht, was du für die Reise angegeben hast. Übungen und Pause gehen immer.', 'You can choose from what you entered for the trip. Exercises and rest are always possible.')}</p>`}</div>`;
 }
 /* ---- Start: offene Vorschläge, Reise heute, Schlaf vor der Abreise ---- */
 function rzHome(){
@@ -147,6 +155,7 @@ function rzHome(){
   return out.join('');
 }
 function rzGo(id){ rzOpen = id || null; navGo('more'); goPg('settings'); goPg('set-rz'); dykFocus('fx-rz'); }
+function dykRzDay(){ navGo('week'); setTimeout(() => { try { const e = document.querySelector('.rzpick'); if (e) { e.scrollIntoView({block:'center'}); const b = e.querySelector('button'); if (b) b.focus({preventScroll:true}); } } catch (x) { elog(x); } }, 60); }
 function dykRz(){ navGo('more'); goPg('settings'); goPg('set-rz'); dykFocus('fx-rz', '#fx-rz .rzsw'); }
 /* ---- Woche: Knopf „Ich bin unterwegs“ ---- */
 function rzWeekBtn(w){ if (!rzOn() || !S.p || !S.p.start) return ''; const from = addD(S.p.start, ((w || S.wk) - 1) * 7), d0 = from < iso(0) ? iso(0) : from; return `<button class="ghost !w-auto !px-3 text-sm" data-noi18n style="min-height:44px" onclick="rzGo();rzNew('${d0}')"><span class="inline-flex items-center gap-2">${ic('plane', 16)}<span>${rzL('Ich bin unterwegs', 'I am away')}</span></span></button>`; }

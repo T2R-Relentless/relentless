@@ -105,6 +105,44 @@ test('Ersatzprogramm passt zu Ausstattung und freier Zeit', async () => {
   a.noErrors();
 });
 
+test('Tageswahl: an Reisetagen selbst wählen, nur im Rahmen der Ausstattung, zurück zum Vorschlag', async () => {
+  const a = await seasonWithRides(); a.w.rzSetMode('on');
+  /* Woche 5 (07.–13.12.2026), Reise Di–Do: Mittwoch ist der Tag des Aufenthalts */
+  const id = rzTrip(a, {from:'2026-12-08', to:'2026-12-10', dest:'Paris', tzDest:'Europe/Paris', travelHours:2, mode:'train', facilities:['treadmill', 'running'], freeMinPerDay:45}); a.w.rzAccept(id);
+  const D9 = '2026-12-09', day = () => a.$('(() => { const x = genWeek(S.p, 5)[2]; return {n:x.n, m:x.m, t:x.t, sub:x.rz.sub, opt:x.rz.opt, seq:x.rz.seq ? x.rz.seq.join("-") : "", va:vaStim(x), orig:!!x.orig}; })()'), all0 = rzAll(a), d0 = day();
+  ok(/^Laufband/.test(d0.n), 'Vorschlag: Laufband'); eq(d0.opt, 'mill'); eq(d0.va, null, 'Laufband: keine Rad-Varianten (Trittfrequenz, Fahrtechnik, neue Runde)');
+  eq(a.$(`rzOpts(rzGet('${id}'))`), ['mill', 'run', 'kraft', 'stabi', 'mob', 'rest'], 'zur Wahl steht nur, was angegeben ist');
+  a.w.rzDayPick(id, D9, 'run'); let d = day(); eq([d.sub, d.opt, d.va], ['run', 'run', null], 'Lauf draußen gewählt'); ok(/Lauf/.test(d.n) && d.orig);
+  a.w.rzDayPick(id, D9, 'kraft'); d = day(); eq([d.sub, d.seq, d.m], ['seq', 'kraft-45', 0], 'Kraft im Zimmer, passend zur freien Zeit');
+  a.w.rzDayPick(id, D9, 'mob'); eq(day().seq, 'mob-20'); a.w.rzDayPick(id, D9, 'stabi'); eq(day().seq, 'stabi-45');
+  a.w.rzDayPick(id, D9, 'rest'); d = day(); eq([d.t, d.m, d.opt], ['rest', 0, 'rest'], 'Pause');
+  a.w.rzDayPick(id, D9, 'bike'); eq(day().opt, 'rest', 'Ergometer ist nicht angegeben: Wahl wird nicht angenommen'); a.w.rzDayPick(id, D9, 'own'); eq(day().opt, 'rest');
+  a.w.rzDayPick(id, '2026-12-08', 'run'); a.w.rzDayPick(id, '2026-12-10', 'run'); a.w.rzDayPick(id, '2026-12-11', 'run'); eq(a.$(`Object.keys(rzGet('${id}').days)`), [D9], 'Reisetage und Tage außerhalb haben keine Wahl');
+  /* Anzeige: Knöpfe mit 44 pt, gewählter Knopf gedrückt, Weg zurück */
+  a.w.navGo('week'); a.$('vw = 5; open = 2; render();'); let B = [...a.w.document.querySelectorAll('.rzpick button')];
+  eq(B.map(b => b.textContent.trim()), ['Laufband', 'Lauf draußen', 'Kraft im Zimmer', 'Stabilität', 'Mobilität', 'Pause', 'Vorschlag der App wiederherstellen']); ok(B.every(b => parseInt(b.style.minHeight) >= 44), 'Tippflächen mindestens 44 pt');
+  eq(B.filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.textContent.trim()), ['Pause']); ok(!/Hotel-Ergometer/.test(a.w.document.querySelector('.rzpick').textContent));
+  B[6].click(); eq(rzAll(a), all0, '„Vorschlag der App wiederherstellen“ stellt den Plan exakt wieder her'); eq(a.$(`rzGet('${id}').days`), undefined);
+  eq(a.w.document.querySelectorAll('.rzpick').length, 1, 'nur am Tag des Aufenthalts'); let card = a.w.document.querySelector('.rzpick').closest('.panel').innerText;
+  ok(!/Trittfrequenz|Downloads|\d W\b/.test(card) && /Empfinden/.test(card) && /Auf dem Laufband gibt es keine Wattwerte/.test(card), 'Laufband: keine Trittfrequenz, keine Watt, keine Rad-Dateien');
+  a.w.rzDayPick(id, D9, 'run'); card = a.w.document.querySelector('.rzpick').closest('.panel').innerText; ok(!/Trittfrequenz|Downloads|\d W\b|Wattwerte/.test(card) && /Empfinden/.test(card), 'Lauf: keine Trittfrequenz, keine Watt'); a.w.rzDayPick(id, D9, ''); ok(/Zur Wahl steht, was du für die Reise angegeben hast/.test(a.text()));
+  /* nicht angenommene Reise und ausgeschalteter Reisemodus: keine Wahl */
+  a.w.rzDayPick(id, D9, 'run'); a.w.rzRevert(id); a.$('render()'); eq(a.w.document.querySelectorAll('.rzpick').length, 0, 'zurückgenommen: keine Tageswahl'); a.w.rzDayPick(id, D9, 'kraft'); eq(a.$(`rzGet('${id}').days['${D9}']`), 'run', 'ohne angenommene Reise keine Änderung');
+  a.noErrors();
+});
+
+test('Tageswahl in der laufenden Woche: nur ab heute, Woche wird neu berechnet und wiederhergestellt', async () => {
+  const a = await seasonWithRides(); a.w.rzSetMode('on');
+  const id = rzTrip(a, {from:'2026-11-12', to:'2026-11-15', dest:'Paris', tzDest:'Europe/Paris', travelHours:2, mode:'train', facilities:['running'], freeMinPerDay:30}); a.w.rzAccept(id);
+  const j = a.$('S.plan.findIndex(x => x.rz && x.rz.k === "stay" && x.rz.opt)'); ok(j === 4 || j === 5, 'Freitag oder Samstag ist ein Tag mit Einheit (' + j + ')');
+  const ds = a.$(`dstrW(${j})`), before = JSON.stringify(a.$('S.plan')), past = JSON.stringify(a.$('S.plan.slice(0, todayIdx())'));
+  a.w.rzDayPick(id, ds, 'kraft'); eq(a.$(`S.plan[${j}].rz.opt`), 'kraft', 'laufende Woche übernimmt die Wahl'); ok(a.$(`!!S.plan[${j}].rz.seq`)); eq(JSON.stringify(a.$('S.plan.slice(0, todayIdx())')), past, 'vergangene Tage bleiben');
+  a.w.navGo('week'); a.$(`open = ${j}; render();`); ok(/Unterwegs: Kraft ohne Geräte/.test(a.text()) && a.w.document.querySelector('.rzpick'), 'Woche zeigt die gewählte Einheit und die Wahl');
+  a.w.rzDayPick(id, ds, ''); eq(JSON.stringify(a.$('S.plan')), before, 'zurück zum Vorschlag: Woche wie vorher');
+  a.setNow(at(2026, 11, 14, 9, 0)); a.w.rzDayPick(id, '2026-11-13', 'rest'); eq(a.$(`rzGet('${id}').days`), undefined, 'vergangene Tage lassen sich nicht ändern');
+  a.noErrors();
+});
+
 test('Lange Reise: ein bis zwei kurze harte Reize pro Woche, wenn Ergometer oder Laufen möglich ist', async () => {
   const a = await seasonWithRides(); a.w.rzSetMode('on'); const HARD = a.$('HARD');
   /* Woche mit harten Einheiten suchen, die ganz in einer 12-Tage-Reise liegt */
@@ -164,8 +202,8 @@ test('Ausschalten: Reisen ausgeblendet und wiederhergestellt, Rückfrage zum Zur
 
 test('Bestehende Nutzer: nie ungefragt an; Angebot im Neuigkeiten-Fenster schaltet ein', async () => {
   const a = await seasonWithRides(); eq(a.$('rzOn()'), false); eq(a.$('(S.rz || {}).mode || "unset"'), 'unset');
-  const it = a.$('WN_DATA["201"][0]'); eq([it.go, it.lb, it.lbEn], ['rz:on', 'Einschalten', 'Switch on']);
-  a.$('wnShow = {from:200, auto:true}; render();'); ok(/Einschalten/.test(a.w.document.querySelector('.exbox').innerText), 'Knopf „Einschalten“'); a.w.wnJump(0);
+  eq(a.$('WN_DATA["202"][0].go'), 'nav:week'); const it = a.$('WN_DATA["201"][0]'); eq([it.go, it.lb, it.lbEn], ['rz:on', 'Einschalten', 'Switch on']);
+  a.$('wnShow = {from:200, auto:true}; render();'); ok(/Einschalten/.test(a.w.document.querySelector('.exbox').innerText), 'Knopf „Einschalten“'); a.w.wnJump(a.$('wnItems(200, APP_VERSION, null, 99).items.findIndex(x => x.go === "rz:on")'));
   eq(a.$('S.rz.mode'), 'on', 'eingeschaltet erst nach dem Tippen'); ok(/Reisemodus/.test(a.text()) && /Reise eintragen/.test(a.text()), 'landet auf der Seite Reisemodus');
   /* Hinweis „Wusstest du schon?“ führt zum Schalter */
   ok(a.$(`DYK.some(d => d[0] === 'rz' && d[3] === 'dykRz()')`) && a.$('typeof DYK_FN.dykRz') === 'function', 'DYK-Hinweis mit Ziel'); a.noErrors();
@@ -235,5 +273,7 @@ test('Englisch: Reise-Seiten ohne fehlende Übersetzungen', async () => {
   [a.$('rzRun(30)'), a.$('rzHill()')].forEach(x => [x.n, x.st, x.tip].forEach(s => TR(s)));
   for (const k of ['dep', 'ret', 'pre', 'post', 'stay']) for (const fac of [['none'], ['own_bike'], ['running']]) for (const ty of ['vo2', 'base', 'rec', 'long']) for (const hrs of [2, 9]) for (const jet of [false, true]) { const x = a.$(`rzSub(D('${ty}', 'Grundlage Z2', 90, 60, 70, '', '', ''), {k:'${k}', jet:${jet}}, {id:'q', from:'2026-12-01', to:'2026-12-12', travelHours:${hrs}, facilities:${JSON.stringify(fac)}, freeMinPerDay:30}, {nInt:0})`); [x.n, x.st, x.tip].forEach(s => TR(s || '')); }
   TR('Wegen deiner Reise vom Dienstag hierher verlegt.'); a.$(`rzWhy(rzGet('${id}'))`).forEach(s => TR(s)); a.$('rzRtAll().map(r => r.intro)').forEach(s => TR(s));
+  for (const pk of ['own', 'bike', 'mill', 'run', 'kraft', 'stabi', 'mob', 'rest']) for (const ty of ['vo2', 'base', 'rec']) { const x = a.$(`rzSub(D('${ty}', 'Grundlage Z2', 90, 60, 70, '', '', ''), {k:'stay', ds:'2026-12-05'}, {id:'q', from:'2026-12-01', to:'2026-12-12', travelHours:2, facilities:['own_bike', 'gym_bike', 'treadmill', 'running'], freeMinPerDay:30, days:{'2026-12-05':'${pk}'}}, {nInt:0})`); [x.n, x.st, x.tip].forEach(s => TR(s || '')); }
+  a.w.navGo('week'); a.$('vw = 2; open = 2; render();'); ok(/Prefer something else on this day\?/.test(a.text()) && /Rest day/.test(a.text()), 'Tageswahl auf Englisch');
   eq([...a.w.__iMiss.values()], [], 'fehlende Übersetzungen'); a.noErrors();
 });

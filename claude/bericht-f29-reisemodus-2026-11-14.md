@@ -143,3 +143,13 @@ Nicht ausgeführt. Der Ablauf wie bisher:
 1. „Ja, hochladen“ – dann pushe ich den Branch `feature/f29-reisemodus`.
 2. „Ja in Main“ – dann führe ich ihn per Fast-forward nach `main` und pushe. Netlify baut daraus automatisch.
 3. Danach auf dem iPhone prüfen: Update-Hinweis und „Neu in Version 201“ mit dem Knopf „Einschalten“, eine Reise eintragen, Vorschlag annehmen und zurücknehmen, eine Sequenz „Unterwegs“ mit Ansage starten.
+
+## Nachtrag 15.11.2026: Tageswahl auf Reisen (Version 202)
+
+- **Fehler behoben:** Für Laufband, Lauf und Übungen bot „Andere Variante“ Rad-Varianten an (Trittfrequenz, Fahrtechnik, neue Runde). Reise-Ersatz hat jetzt keine Rad-Varianten mehr (`vaStim`). Laufband und Lauf zeigen keine Trittfrequenz, keine Wattwerte und keine Workout-Dateien fürs Rad (`rzNoBike`).
+- **Neu: Tageswahl.** An jedem Tag des Aufenthalts einer angenommenen Reise steht in der Woche unter der Einheit eine Auswahl: eigenes Rad, Hotel-Ergometer, Laufband, Lauf draußen (jeweils nur, wenn für die Reise angegeben), dazu immer Kraft im Zimmer, Stabilität, Mobilität und Pause. „Vorschlag der App wiederherstellen“ stellt den Plan exakt wieder her.
+- Gespeichert in `trip.days = {Datum: Wahl}`. Gilt ab heute, nicht für Hin- und Rückreisetag, nicht für planfreie Tage. Beim Ändern einer Reise wird die Tageswahl verworfen.
+- Regeln bleiben: harte Reize nur ohne Jetlag, ab 30 Min. und höchstens zwei pro Woche; Lauf nur locker, harter Lauf nur bei Reisen über 7 Tage.
+- Hinweis „Wusstest du schon?“ (`rzday`, nur während einer Reise), Eintrag im Neuigkeiten-Fenster, Build-ID neu.
+- Tests: 267 grün (2 neue in `tests/reise.test.js`), Build-Check aktuell. Bilder: `claude/bilder/f29b-tageswahl-*.png` (beide dunkel).
+- Offen: Die Kachel „% FTP“ und die Grafik mit Prozentachse stehen bei Laufband und Lauf weiter da. Der Reiter heißt an Tagen mit Kraft oder Mobilität weiter „Rad“. Nicht auf dem iPhone geprüft.
