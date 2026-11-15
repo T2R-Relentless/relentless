@@ -237,7 +237,9 @@ F32/F33: Version 208, Neuigkeiten, Hinweise, Bericht
 
 ## Nachtrag 15.11.2026: VO2max aus der Historie (Version 209)
 
-Branch `feature/f33b-vo2max-historie` auf Basis `main` (Version 208, Commit `aa97c00`). Build-ID `20261220090000`, Service Worker `relentless-v46`.
+Branch `feature/f33b-vo2max-historie` auf Basis `main` (Version 208, Commit `aa97c00`). Service Worker `relentless-v46`.
+
+**Stilles Update (auf Wunsch):** kein Eintrag in „Neu in dieser Version“, Build-ID unverändert `20261213090000`. Damit erscheinen weder Fenster noch Update-Hinweis. Die neue Fassung kommt beim nächsten normalen Laden über den Service Worker (`relentless-v46`). Der Hinweis in „Wusstest du schon?“ (`vo2h`) bleibt.
 
 **Was neu ist:**
 - Der Knopf unter „Ältere Fahrten importieren“ heißt jetzt **„Bestwerte und VO2max nachrechnen“**. Für importierte Fahrten mit Leistung der letzten 12 Monate holt die App die Originaldatei (wie bisher für die Bestwerte) und prüft sie zusätzlich mit derselben Regel wie beim Einlesen neuer Fahrten (`vo2FromRide`, F27).
