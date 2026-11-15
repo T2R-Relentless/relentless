@@ -66,6 +66,8 @@ const rpeTxt = x => { const r = (typeof RPEX !== 'undefined' && RPEX[x.t]) || [3
 const hrTxt = h => h[1] - h[0] < 3 ? `ab ${h[0]}` : `${h[0]}–${h[1]}`;
 function intTiles(x, tl){
   const h = hrRng(x.lo, x.hi), T = (v, l) => tl(v, l);
+  /* Lauf und Laufband (Reisemodus): kein FTP-Anteil, stattdessen der Pulsbereich; ohne eingetragenen Puls der Weg zum Feld */
+  if (typeof rzNoBike === 'function' && rzNoBike(x)) return T(h ? hrTxt(h) : `<button type="button" class="underline" style="min-height:44px;min-width:44px" onclick="dykSet('settings','hr')">Puls eintragen</button>`, 'Puls (Schläge/Min.)') + T(rpeTxt(x), 'Empfinden');
   if (noPwr()) return (h ? T(hrTxt(h), 'Puls (Schläge/Min.)') : x.lo >= 120 ? T('Vollgas', 'Intensität') : T(`${x.lo}–${x.hi} %`, 'FTP')) + T(rpeTxt(x), 'Empfinden');
   return (h ? '' : T(`${x.lo}–${x.hi} %`, 'FTP')) + T(`${watt(x.lo)}–${watt(x.hi)} W`, 'Leistung') + (h ? T(hrTxt(h), 'Puls') : '');
 }

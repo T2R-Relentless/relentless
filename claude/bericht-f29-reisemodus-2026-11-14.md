@@ -152,4 +152,5 @@ Nicht ausgeführt. Der Ablauf wie bisher:
 - Regeln bleiben: harte Reize nur ohne Jetlag, ab 30 Min. und höchstens zwei pro Woche; Lauf nur locker, harter Lauf nur bei Reisen über 7 Tage.
 - Hinweis „Wusstest du schon?“ (`rzday`, nur während einer Reise), Eintrag im Neuigkeiten-Fenster, Build-ID neu.
 - Tests: 267 grün (2 neue in `tests/reise.test.js`), Build-Check aktuell. Bilder: `claude/bilder/f29b-tageswahl-*.png` (beide dunkel).
-- Offen: Die Kachel „% FTP“ und die Grafik mit Prozentachse stehen bei Laufband und Lauf weiter da. Der Reiter heißt an Tagen mit Kraft oder Mobilität weiter „Rad“. Nicht auf dem iPhone geprüft.
+- Lauf und Laufband zeigen statt der Kachel „% FTP“ den Pulsbereich (aus Schwellen- oder Maximalpuls). Ohne eingetragenen Puls steht dort „Puls eintragen“ und führt zum Feld. Der Bereich stammt aus den Rad-Zonen; beim Laufen liegt der Puls meist etwas höher.
+- Offen: Die Grafik mit Prozentachse steht bei Laufband und Lauf weiter da. Der Reiter heißt an Tagen mit Kraft oder Mobilität weiter „Rad“. Nicht auf dem iPhone geprüft.
