@@ -206,3 +206,24 @@ test('Rolle erkennen: virtuelle GPS-Daten, FIT-Untertyp, Garmin-Typ, gespeichert
   ok(a.$("lbSums('w', {roll:false, all:false})['2026-11-09']") == null, 'ohne Rolle zählt sie in der Grafik nicht mehr');
   a.noErrors();
 });
+
+test('Puls-Zonen: nachgerechnet, wenn der Puls erst nach der Fahrt eingetragen wird; Verlauf bleibt bei der Neubewertung', async () => {
+  const a = await boot({now:at(2026, 11, 16)}); makePlan(a, gDat());
+  a.$('S.p.lthr = 0; S.d.lthr = 0; S.p.hrMax = 0; S.d.hrMax = 0;');
+  const i = a.$("S.plan.findIndex(x => x.m > 0 && ['base', 'long', 'rec'].includes(x.t))"); ok(i >= 0, 'lockere Einheit in der Woche');
+  a.w.__r = gRide({sec:5400, pow:false});
+  a.$(`(() => { const x = summarize(__r, 'test.fit'); vzAttach(x, __r); S.man = [x]; exeStore(${i}, x, streamOf(__r), hrHist(__r)); save(); })()`);
+  const E = () => a.$(`S.p.exe[S.wk + '-' + ${i}]`); let e = E();
+  ok(e && e.ser && e.ser.h && !e.hasP, 'Bewertung mit Pulsverlauf, ohne Leistung'); ok(!e.zh, 'ohne eingetragenen Puls keine Zonenzeiten');
+  ok(!/Zeit in Zonen/.test(a.$(`vzZones(S.p.exe[S.wk + '-' + ${i}])`)), 'ohne Puls keine Zonen-Ansicht');
+  /* Puls nachtragen: Zonen erscheinen, auch ohne gespeicherte Zonenzeiten */
+  a.$('S.p.lthr = 160; S.d.lthr = 160;'); const z = a.$(`vzZones(S.p.exe[S.wk + '-' + ${i}])`); ok(/Zeit in Zonen \(Puls\)/.test(z), 'Puls-Zonen aus dem Verlauf nachgerechnet');
+  const q = a.$(`vzZhLate(S.p.exe[S.wk + '-' + ${i}])`); eq(q.zhk, 'lthr'); near(q.zh.reduce((s, v) => s + v, 0), 5400, 15, 'Summe der Zonenzeiten entspricht der Fahrzeit');
+  /* Neubewertung nach Puls-Änderung: Verlauf und Zonen bleiben */
+  ok(a.$(`(() => { const e = S.p.exe[S.wk + '-' + ${i}]; return !!(e.hr && e.a && EXST.includes(e.x.t)); })()`), 'Fahrt wird bei Puls-Änderung neu bewertet');
+  a.w.exeHrSync(true); e = E(); ok(e.ser && e.ser.h && e.ser.h.length > 100, 'Verlauf bleibt nach der Neubewertung'); eq(e.zhk, 'lthr'); ok(e.zh && e.zh.some(Boolean), 'Zonenzeiten gespeichert');
+  a.$(`exeShow = S.wk + '-' + ${i}; render();`); const t = a.text(); ok(/Verlauf · /.test(t) && /Zeit in Zonen \(Puls\)/.test(t), 'Fenster zeigt Verlauf und Puls-Zonen');
+  /* anderer Bezugswert: Zonen folgen dem neuen Puls */
+  const z1 = JSON.stringify(e.zh); a.$('S.p.lthr = 150; S.d.lthr = 150;'); a.w.exeHrSync(true); ok(JSON.stringify(E().zh) !== z1, 'geänderter Schwellenpuls verschiebt die Zonenzeiten');
+  a.noErrors();
+});

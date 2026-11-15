@@ -88,12 +88,30 @@ function vzTrace(e){
   return `<div class="mt-4"><p class="text-xs font-semibold" style="color:var(--mute)">Verlauf · ${vzHm(tot)}</p>${svg}${lg}${note ? `<p class="mt-1 text-xs" style="color:var(--mute)">${note}</p>` : ''}</div>`;
 }
 
+/* Grafikdaten einer Bewertung (Verlauf, Zonenzeiten, Bestwerte): bleiben erhalten, wenn die Bewertung neu gerechnet wird.
+   Die Puls-Zonen entstehen dabei neu aus dem Verlauf, weil sich Schwellen- oder Maximalpuls geändert haben können. */
+function vzCarry(e){
+  const o = {}; if (!e) return o; ['ser', 'zp', 'ftp', 'pr'].forEach(k => { if (e[k] != null) o[k] = e[k]; });
+  const q = vzZhLate(e) || (e.zh ? {zh:e.zh, zhk:e.zhk} : null); if (q) Object.assign(o, q);
+  return o;
+}
+/* Puls-Zonen aus dem gespeicherten Verlauf (Mittelwerte über je b Sekunden). Für Fahrten, die eingelesen wurden,
+   bevor Schwellen- oder Maximalpuls eingetragen war. */
+function vzZhLate(e){
+  try {
+    const hz = vzHrZones(), s = e && e.ser; if (!hz || !s || !s.h || !s.b) return null;
+    const n = s.h.filter(v => v != null).length; if (!n || n <= .5 * s.h.length) return null;
+    const zh = hz.z.map(() => 0); s.h.forEach(v => { if (v == null) return; const pc = v / hz.ref * 100; zh[hz.z.findIndex(z => pc < z[1])] += s.b; });
+    return {zh, zhk:hz.k};
+  } catch (er) { elog(er); return null; }
+}
 /* ---------- Grafik 2: Zeit in Zonen, Plan gegen Ist ---------- */
 function vzTargetZone(e){
   const x = e.x || {}, mid = e.ivT ? (e.ivT.lo + e.ivT.hi) / 2 : x.lo && x.hi ? (x.lo + x.hi) / 2 : null; if (mid == null) return null;
   return VZ_ZP.findIndex(z => mid < z[1]);
 }
 function vzZones(e){
+  if (!(e.zh && e.zh.some(Boolean))) { const q = vzZhLate(e); if (q) e = {...e, ...q}; }
   const useP = !!(e.zp && e.zp.some(Boolean)), arr = useP ? e.zp : e.zh; if (!arr || !arr.some(Boolean)) return '';
   const Z = useP ? VZ_ZP : e.zhk === 'lthr' ? VZ_ZH_L : VZ_ZH_M, tot = arr.reduce((s, v) => s + v, 0), mx = Math.max(...arr);
   let tz = useP ? vzTargetZone(e) : null; if (!useP && e.x && ['base', 'long', 'rec', 'com'].includes(e.x.t)) tz = e.x.t === 'rec' ? 0 : 1;

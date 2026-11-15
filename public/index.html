@@ -3263,7 +3263,7 @@ function exeHrSync(force){
   exeHrBusy = true;
   try {
     const re = e => { if (!e || !e.x) return e;
-      if (!e.hasP && e.hr && e.a && EXST.includes(e.x.t)) { const ne = exeEval(e.x, {...e.a, ...(e.ah || {})}, null, S.p.ftp, e.hr); return {...ne, part:e.part, lbl:e.lbl, at:e.at, rpe:e.rpe, feel:e.feel, soft:e.soft, acts:[...(e.acts || [])], adj:ne.verdict === 'over' && !ne.iv ? 'Der Plan bleibt unverändert. Fahr die nächste lockere Einheit bewusst ruhig.' : e.adj}; }
+      if (!e.hasP && e.hr && e.a && EXST.includes(e.x.t)) { const ne = exeEval(e.x, {...e.a, ...(e.ah || {})}, null, S.p.ftp, e.hr); return {...ne, ...vzCarry(e), part:e.part, lbl:e.lbl, at:e.at, rpe:e.rpe, feel:e.feel, soft:e.soft, acts:[...(e.acts || [])], adj:ne.verdict === 'over' && !ne.iv ? 'Der Plan bleibt unverändert. Fahr die nächste lockere Einheit bewusst ruhig.' : e.adj}; }
       if (e.hasP) return exeHrApply({...e, msgs:[...e.msgs]});
       return {...e, hrk:exeHrKurz(e.x, {...(e.a || {}), ...(e.ah || {})}, e.hr ? hrStat(e.hr) : null, null, false, EXST.includes(e.x.t))}; };
     Object.entries(S.p.exeP || {}).forEach(([k, arr]) => { S.p.exeP[k] = arr.map(re); const [w, i] = k.split('-').map(Number); exeCombine(w, i); });
@@ -6071,12 +6071,30 @@ function vzTrace(e){
   return `<div class="mt-4"><p class="text-xs font-semibold" style="color:var(--mute)">Verlauf · ${vzHm(tot)}</p>${svg}${lg}${note ? `<p class="mt-1 text-xs" style="color:var(--mute)">${note}</p>` : ''}</div>`;
 }
 
+/* Grafikdaten einer Bewertung (Verlauf, Zonenzeiten, Bestwerte): bleiben erhalten, wenn die Bewertung neu gerechnet wird.
+   Die Puls-Zonen entstehen dabei neu aus dem Verlauf, weil sich Schwellen- oder Maximalpuls geändert haben können. */
+function vzCarry(e){
+  const o = {}; if (!e) return o; ['ser', 'zp', 'ftp', 'pr'].forEach(k => { if (e[k] != null) o[k] = e[k]; });
+  const q = vzZhLate(e) || (e.zh ? {zh:e.zh, zhk:e.zhk} : null); if (q) Object.assign(o, q);
+  return o;
+}
+/* Puls-Zonen aus dem gespeicherten Verlauf (Mittelwerte über je b Sekunden). Für Fahrten, die eingelesen wurden,
+   bevor Schwellen- oder Maximalpuls eingetragen war. */
+function vzZhLate(e){
+  try {
+    const hz = vzHrZones(), s = e && e.ser; if (!hz || !s || !s.h || !s.b) return null;
+    const n = s.h.filter(v => v != null).length; if (!n || n <= .5 * s.h.length) return null;
+    const zh = hz.z.map(() => 0); s.h.forEach(v => { if (v == null) return; const pc = v / hz.ref * 100; zh[hz.z.findIndex(z => pc < z[1])] += s.b; });
+    return {zh, zhk:hz.k};
+  } catch (er) { elog(er); return null; }
+}
 /* ---------- Grafik 2: Zeit in Zonen, Plan gegen Ist ---------- */
 function vzTargetZone(e){
   const x = e.x || {}, mid = e.ivT ? (e.ivT.lo + e.ivT.hi) / 2 : x.lo && x.hi ? (x.lo + x.hi) / 2 : null; if (mid == null) return null;
   return VZ_ZP.findIndex(z => mid < z[1]);
 }
 function vzZones(e){
+  if (!(e.zh && e.zh.some(Boolean))) { const q = vzZhLate(e); if (q) e = {...e, ...q}; }
   const useP = !!(e.zp && e.zp.some(Boolean)), arr = useP ? e.zp : e.zh; if (!arr || !arr.some(Boolean)) return '';
   const Z = useP ? VZ_ZP : e.zhk === 'lthr' ? VZ_ZH_L : VZ_ZH_M, tot = arr.reduce((s, v) => s + v, 0), mx = Math.max(...arr);
   let tz = useP ? vzTargetZone(e) : null; if (!useP && e.x && ['base', 'long', 'rec', 'com'].includes(e.x.t)) tz = e.x.t === 'rec' ? 0 : 1;
@@ -10862,7 +10880,7 @@ TIPS.push(
 /* ---------- F14: Versionsstand in der App ablesbar ----------
    Eine Quelle: APP_BUILD (aus build/BUILD_ID), APP_VERSION (aus build/APP_VERSION) und APP_SW (aus der Cache-Version
    in relentless/public/sw.js) setzt der Build ein; version.json enthält dieselben Werte, build.sh --check prüft das. */
-const APP_VERSION = 204, APP_SW = 'relentless-v41';
+const APP_VERSION = 205, APP_SW = 'relentless-v42';
 let viOpen = false, viMsg = '', updVer = 0;
 /* 20261107180000 → „07.11.2026, 18:00“ bzw. „07 Nov 2026, 18:00“ */
 function viDate(id){ const m = String(id || '').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/); if (!m) return String(id || '');

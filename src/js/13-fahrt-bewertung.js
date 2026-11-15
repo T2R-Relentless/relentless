@@ -294,7 +294,7 @@ function exeHrSync(force){
   exeHrBusy = true;
   try {
     const re = e => { if (!e || !e.x) return e;
-      if (!e.hasP && e.hr && e.a && EXST.includes(e.x.t)) { const ne = exeEval(e.x, {...e.a, ...(e.ah || {})}, null, S.p.ftp, e.hr); return {...ne, part:e.part, lbl:e.lbl, at:e.at, rpe:e.rpe, feel:e.feel, soft:e.soft, acts:[...(e.acts || [])], adj:ne.verdict === 'over' && !ne.iv ? 'Der Plan bleibt unverändert. Fahr die nächste lockere Einheit bewusst ruhig.' : e.adj}; }
+      if (!e.hasP && e.hr && e.a && EXST.includes(e.x.t)) { const ne = exeEval(e.x, {...e.a, ...(e.ah || {})}, null, S.p.ftp, e.hr); return {...ne, ...vzCarry(e), part:e.part, lbl:e.lbl, at:e.at, rpe:e.rpe, feel:e.feel, soft:e.soft, acts:[...(e.acts || [])], adj:ne.verdict === 'over' && !ne.iv ? 'Der Plan bleibt unverändert. Fahr die nächste lockere Einheit bewusst ruhig.' : e.adj}; }
       if (e.hasP) return exeHrApply({...e, msgs:[...e.msgs]});
       return {...e, hrk:exeHrKurz(e.x, {...(e.a || {}), ...(e.ah || {})}, e.hr ? hrStat(e.hr) : null, null, false, EXST.includes(e.x.t))}; };
     Object.entries(S.p.exeP || {}).forEach(([k, arr]) => { S.p.exeP[k] = arr.map(re); const [w, i] = k.split('-').map(Number); exeCombine(w, i); });
