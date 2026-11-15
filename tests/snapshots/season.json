@@ -9,9 +9,9 @@
    "kind": "race",
    "n": "Frühjahrsklassiker",
    "pace": [
-    230,
-    254,
-    283
+    180,
+    209,
+    268
    ],
    "t": 245,
    "tAmb": 240
@@ -25,9 +25,9 @@
    "kind": "tt",
    "n": "Bergzeitfahren",
    "pace": [
-    269,
+    281,
     293,
-    296
+    308
    ],
    "t": 65,
    "tAmb": null
@@ -41,8 +41,8 @@
    "kind": "race",
    "n": "Kriterium",
    "pace": [
-    269,
-    293,
+    219,
+    249,
     296
    ],
    "t": 65,
@@ -57,9 +57,9 @@
    "kind": "race",
    "n": "Hauptrennen",
    "pace": [
-    223,
-    247,
-    276
+    172,
+    202,
+    261
    ],
    "t": 325,
    "tAmb": null

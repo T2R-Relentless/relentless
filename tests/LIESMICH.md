@@ -30,6 +30,7 @@ Dann im Browser `http://localhost:8765/tests/` öffnen und **Tests starten** kli
 | `hints.test.js` | B7: Aktionen aller Hinweiskarten und Knöpfe der Startseite |
 | `statusbar.test.js` | B8: Statusleiste in der installierten App |
 | `mehrfahrten.test.js` | F30: mehrere Fahrten an einem Tag (Zuordnung, Zusammenführen, Rückfrage, Pendeln, Rückgängig, Altdaten) |
+| `events.test.js` | F31: Events bearbeiten (Formular, Vorschlag mit Rückgängig, Löschen, Duplizieren, Karten, Pacing je Art) |
 | `elog.test.js` | Fehlerprotokoll: Erfassen, Zusammenfassen, Speichern, Anzeige; normale Nutzung erzeugt keine Einträge |
 
 Die App läuft dabei in einem abgeschotteten Rahmen: eigener Speicher (deine echten Daten bleiben unberührt), angehaltene
