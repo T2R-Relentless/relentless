@@ -29,7 +29,14 @@
   @media (prefers-reduced-motion:reduce){.flash,.spin{animation:none}}
 
   .exov{position:fixed;inset:0;z-index:60;background:rgba(7,23,71,.6);display:flex;align-items:center;justify-content:center;padding:12px}
-  .exbox{background:#fff;color:var(--ink);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:16px;border:1px solid var(--line)}
+  /* Fenster: kleiner als der Bildschirm (Statusleiste und Home-Balken bleiben frei, dort fängt iOS Wischgesten ab), scrollt selbst
+     und gibt das Wischen am Anfang und Ende nicht an die Seite dahinter weiter. */
+  .exbox{background:#fff;color:var(--ink);width:100%;max-width:520px;max-height:86vh;max-height:calc(100dvh - 56px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:16px;border:1px solid var(--line)}
+  .exov{overscroll-behavior:contain;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  /* Solange ein Fenster offen ist, scrollt die Seite dahinter nicht mit. Sonst nimmt sie auf dem iPhone die Wischgeste an sich,
+     und das Fenster reagiert nicht. html selbst bleibt ohne overflow:hidden (siehe sa-wrap). */
+  html.modal-open.sa-wrap #sc{overflow-y:hidden}
+  html.modal-open:not(.sa-wrap) body{overflow:hidden}
   .exgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
   .exf svg{width:100%;height:auto;background:var(--tint);border:1px solid var(--line);display:block}
   .exc{font-size:.75rem;color:var(--mute);margin-top:4px;line-height:1.3}

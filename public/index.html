@@ -45,7 +45,14 @@
   @media (prefers-reduced-motion:reduce){.flash,.spin{animation:none}}
 
   .exov{position:fixed;inset:0;z-index:60;background:rgba(7,23,71,.6);display:flex;align-items:center;justify-content:center;padding:12px}
-  .exbox{background:#fff;color:var(--ink);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:16px;border:1px solid var(--line)}
+  /* Fenster: kleiner als der Bildschirm (Statusleiste und Home-Balken bleiben frei, dort fängt iOS Wischgesten ab), scrollt selbst
+     und gibt das Wischen am Anfang und Ende nicht an die Seite dahinter weiter. */
+  .exbox{background:#fff;color:var(--ink);width:100%;max-width:520px;max-height:86vh;max-height:calc(100dvh - 56px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:16px;border:1px solid var(--line)}
+  .exov{overscroll-behavior:contain;padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  /* Solange ein Fenster offen ist, scrollt die Seite dahinter nicht mit. Sonst nimmt sie auf dem iPhone die Wischgeste an sich,
+     und das Fenster reagiert nicht. html selbst bleibt ohne overflow:hidden (siehe sa-wrap). */
+  html.modal-open.sa-wrap #sc{overflow-y:hidden}
+  html.modal-open:not(.sa-wrap) body{overflow:hidden}
   .exgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
   .exf svg{width:100%;height:auto;background:var(--tint);border:1px solid var(--line);display:block}
   .exc{font-size:.75rem;color:var(--mute);margin-top:4px;line-height:1.3}
@@ -10855,7 +10862,7 @@ TIPS.push(
 /* ---------- F14: Versionsstand in der App ablesbar ----------
    Eine Quelle: APP_BUILD (aus build/BUILD_ID), APP_VERSION (aus build/APP_VERSION) und APP_SW (aus der Cache-Version
    in relentless/public/sw.js) setzt der Build ein; version.json enthält dieselben Werte, build.sh --check prüft das. */
-const APP_VERSION = 203, APP_SW = 'relentless-v40';
+const APP_VERSION = 204, APP_SW = 'relentless-v41';
 let viOpen = false, viMsg = '', updVer = 0;
 /* 20261107180000 → „07.11.2026, 18:00“ bzw. „07 Nov 2026, 18:00“ */
 function viDate(id){ const m = String(id || '').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/); if (!m) return String(id || '');
@@ -11568,6 +11575,7 @@ function render(){
   if (S.p && S.p.perDay && S.p.dayMin && S.p.avail) S.p.hours = Math.max(.5, dsum(S.p) / 60);
   if (S.p && S.step === 0) { S.blocked = S.blocked || {}; const w = curWeek(S.p); whSnap(w); if (S.wk !== w || !S.plan || S.v !== 3 || S.plan.some(x => HARD.includes(x.t) && !x.iv && !x.adapted)) { S.v = 3; S.blocked = {}; if (S.plan && S.wk && S.wk !== w) { S.prevPlan = {w:S.wk, plan:S.plan, done:S.done || {}}; try { lgArchive(); } catch (e) { elog(e); } } S.wk = w; S.plan = genWeek(S.p, w); S.done = {}; S.log = []; S.note = ''; S.actual = {}; save(); } }
   document.getElementById('app').innerHTML = updBanner() + storeBanner() + (formMsg && S.step ? `<div role="alert" class="text-sm" style="background:#fdecea;color:#7a1f17;padding:10px 16px">${esc(formMsg)}</div>` : '') + bkUndoBar() + instBanner() + ((S.p && S.step === 0) ? dashboard() : onboarding()) + wkModal() + exModal() + sqView() + wnModal() + goalModal() + (exeShow ? exeModal() : (nextCheer(), (m => m || bkModal() || gtModal())(cheerModal()))); glHide(); postRender(document.getElementById('app')); darkFix(document.getElementById('app')); exAnimStart(); if (S.wx) setTimeout(() => wxFetch(), 0);
+  try { document.documentElement.classList.toggle('modal-open', !!document.querySelector('#app .exov')); } catch (e) { elog(e); }
   flashIdx = null; fkAfter(_fk, _fs);
 }
 (function(){ try { const lib = readLib(), ids = Object.keys(lib.plans);

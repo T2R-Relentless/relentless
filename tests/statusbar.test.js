@@ -48,3 +48,15 @@ test('Im Browser (nicht installiert) bleibt alles wie bisher', async () => {
   ok(!d.documentElement.classList.contains('sa-wrap'), 'kein App-Modus'); eq(css(a, sc, 'position'), 'static'); eq(css(a, sc, 'overflow-y'), 'visible');
   eq(d.querySelector('.sbar').getBoundingClientRect().height, 0, 'ohne Notch keine Fläche');
 });
+
+test('Fenster: scrollt selbst, kleiner als der Bildschirm, Seite dahinter steht still', async () => {
+  const a = await seasonWithRides(), H = a.w.document.documentElement;
+  ok(!H.classList.contains('modal-open'), 'ohne Fenster keine Sperre');
+  a.$('wnShow = {from:170, auto:false}; render();'); const box = a.w.document.querySelector('.exov .exbox'), cs = a.w.getComputedStyle(box);
+  ok(H.classList.contains('modal-open'), 'offenes Fenster sperrt die Seite dahinter'); eq(cs.overflowY, 'auto'); eq(cs.overscrollBehaviorY, 'contain', 'Wischen wird nicht an die Seite weitergegeben');
+  ok(box.getBoundingClientRect().height <= a.w.innerHeight - 56 + 1, 'Fenster lässt oben und unten Rand (' + Math.round(box.getBoundingClientRect().height) + ' von ' + a.w.innerHeight + ')'); ok(box.scrollHeight > box.clientHeight, 'langer Inhalt scrollt im Fenster');
+  eq(a.w.getComputedStyle(a.w.document.body).overflow, 'hidden', 'Browser: Seite dahinter scrollt nicht');
+  H.classList.add('sa-wrap'); const sc = a.w.document.getElementById('sc'); if (sc) eq(a.w.getComputedStyle(sc).overflowY, 'hidden', 'installierte App: Seite dahinter scrollt nicht'); H.classList.remove('sa-wrap');
+  a.w.wnClose(); ok(!H.classList.contains('modal-open'), 'nach dem Schließen wieder frei'); ok(a.w.getComputedStyle(a.w.document.body).overflow !== 'hidden');
+  a.noErrors();
+});
