@@ -232,3 +232,32 @@ F32/F33: Version 208, Neuigkeiten, Hinweise, Bericht
 1. Bericht und Bilder ansehen. Am besten in der App mit deinem Garmin-Konto „3 Monate“ importieren und das Logbuch mit TSS ansehen.
 2. Freigabe geben („Ja in Main“). Dann pushe ich den Branch und bringe `main` per Fast-Forward auf den neuen Stand.
 3. Netlify baut aus `main`. Die Function bleibt unverändert, ein eigenes Deployment der Function ist nicht nötig.
+
+---
+
+## Nachtrag 15.11.2026: VO2max aus der Historie (Version 209)
+
+Branch `feature/f33b-vo2max-historie` auf Basis `main` (Version 208, Commit `aa97c00`). Build-ID `20261220090000`, Service Worker `relentless-v46`.
+
+**Was neu ist:**
+- Der Knopf unter „Ältere Fahrten importieren“ heißt jetzt **„Bestwerte und VO2max nachrechnen“**. Für importierte Fahrten mit Leistung der letzten 12 Monate holt die App die Originaldatei (wie bisher für die Bestwerte) und prüft sie zusätzlich mit derselben Regel wie beim Einlesen neuer Fahrten (`vo2FromRide`, F27).
+- VO2max „aus einer Fahrt“ nach Sitko et al. 2022 (doi 10.1123/ijspp.2020-0923): VO2max = 16,6 + 8,87 × 5-min-Leistung (W/kg). Spanne wie bisher nach Borszcz et al. 2024 (doi 10.1123/ijspp.2023-0330).
+- Die Prüfung zählt nur, wenn **alles** davon zutrifft:
+  - die 5 Minuten sind ein neuer 5-min-Bestwert der 8 Wochen davor
+  - ohne Sprintstart und ohne Unterbrechung
+  - der Puls zeigt eine Ausbelastung (≥ 95 % HFmax bzw. bis zum Ende steigend)
+- Die Fahrten werden **die älteste zuerst** geprüft, damit „neuer Bestwert der 8 Wochen davor“ auf den schon nachgeladenen älteren Fahrten beruht.
+- Die Werte werden still übernommen, ohne Feier. Gewicht ist das am Fahrtdatum gültige aus dem Verlauf (F7).
+- Am Ende steht „X VO2max-Schätzungen aus der Historie übernommen“ mit Link zur VO2max-Seite, oder ehrlich „keine Fahrt, aus der sich die VO2max schätzen lässt“.
+- Geprüfte Fahrten merkt sich die App (`S.vo2h`, Teil der Sicherung). Ein zweiter Lauf lädt nichts doppelt.
+- Fahrten, deren Bestwerte schon da waren, werden für die VO2max noch einmal geholt.
+- Wer eine ältere importierte Fahrt im Logbuch öffnet und dabei Höhenprofil und Strecke nachlädt (F25), bekommt dieselbe VO2max-Prüfung dazu.
+- Nicht übernommen werden Rampentests und 5-min-Tests als *geplante* Einheit, weil der Plan von damals nicht mehr vorliegt. Historische Fahrten zählen nur als „aus einer Fahrt“.
+
+**Test** (neu in `tests/tss-historie.test.js`):
+- Drei Fahrten, 05.08. (330 W, Puls bis 182), 20.08. (310 W) und 25.09. (345 W bei Puls 150).
+- Ergebnis: Abruf älteste zuerst, genau eine Schätzung (05.08.), Wert nach Sitko geprüft, Bestwerte für alle drei, Meldung, zweiter Lauf ohne Abruf.
+- Der Reise-Test zum Neuigkeiten-Fenster hing an der Versionsnummer, weil das Fenster höchstens 6 Einträge zeigt. Er blendet neuere Einträge jetzt im Testrahmen aus.
+- Alle **304 Tests grün**, `tools/build.py --check` aktuell.
+
+**Nicht geprüft:** echter Abruf mit deinem Garmin-Konto, iPhone. Keine Änderung an der Netlify Function.

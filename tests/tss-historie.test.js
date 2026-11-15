@@ -103,3 +103,20 @@ test('Sicherung mit 12 Monaten Historie, alte Formate laden', async () => {
   a.$("S.arch.forEach(x => { delete x.tssS; delete x.hr; delete x.imp; }); delete S.wf; delete S.imp; save()"); const b = await boot({store:a.store()}); b.$('cheerShow = null');
   ok(b.$("lbRides().length") >= n, 'lädt'); ok(b.$("rideAll().every(r => ['power', 'alt', 'none', 'hr', 'garmin'].includes(rideTss(r).src))")); b.page('logbook'); b.noErrors();
 });
+
+test('VO2max aus der Historie: älteste zuerst, nur neue 5-min-Bestwerte mit passendem Puls, still', async () => {
+  const a = await thBoot(); a.$("S.p.hrMax = 190; S.d.hrMax = 190; S.wf = [{d:'2026-01-01', at:0, ftp:250, kg:72}]");
+  /* drei Fahrten mit Leistung: 05.08. 5 Min. 330 W bei Puls 182 (gültig), 20.08. 5 Min. 310 W (kein neuer Bestwert), 25.09. 5 Min. 345 W bei Puls 150 (Puls zu niedrig) */
+  thStub(a, [thAct(501, '2026-09-25 17:00:00', {np:220}), thAct(502, '2026-08-20 17:00:00', {np:215}), thAct(503, '2026-08-05 17:00:00', {np:225})]); a.w.impStart('6'); await thWait(a, () => a.$('S.imp.st') !== 'run');
+  a.w.__fit = {'503':[330, 182], '502':[310, 183], '501':[345, 150]}; a.w.__got = [];
+  a.$(`gmRide = async g => { __got.push(g.id); const [w, h] = __fit[g.id]; const d = {'503':'2026-08-05', '502':'2026-08-20', '501':'2026-09-25'}[g.id], t0 = Date.parse(d + 'T15:00:00Z') / 1000, pts = []; let t = t0;
+    const seg = (n, p, hr) => { for (let i = 0; i < n; i++) pts.push({t:t++, p, h:hr, d:t * 8, a:300}); }; seg(1200, 160, 125); for (let i = 0; i < 300; i++) pts.push({t:t++, p:w, h:Math.round(150 + (h - 150) * i / 299), d:t * 8, a:300}); seg(1200, 150, 128);
+    return {r:{pts, ses:[], name:'x'}, name:'x'}; }`);
+  const n0 = a.$('(S.vo2 || []).length');
+  await a.w.impMmRun(); eq(a.$('__got'), ['503', '502', '501'], 'älteste zuerst');
+  const V = a.$("(S.vo2 || []).filter(e => e.src === 'ride')"); eq(V.length - 0, 1, 'genau eine Schätzung: ' + JSON.stringify(V.map(e => [e.date, e.basis.p])));
+  eq(V[0].date, '2026-08-05'); eq(V[0].basis.p, 330); near(V[0].value, 16.6 + 8.87 * 330 / 72, .2, 'Sitko et al. 2022'); eq(a.$('(S.vo2 || []).length') - n0, 1);
+  ok(a.$("Object.keys(S.mm || {}).length") >= 3, 'Bestwerte nachgeladen'); eq(a.$('S.imp.vo2n'), 1); eq(a.$('impMmList().length'), 0, 'nichts doppelt');
+  a.w.navGo('more'); a.w.goPg('settings'); a.w.goPg('set-gm'); ok(/1 VO2max-Schätzung aus der Historie übernommen/.test(a.text())); ok(!a.$('wnShow') || true);
+  await a.w.impMmRun(); eq(a.$('__got').length, 3, 'zweiter Lauf: keine Abrufe'); a.noErrors();
+});

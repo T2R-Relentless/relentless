@@ -6974,5 +6974,7 @@
 "geschätzt (vor deinem FTP-Verlauf)": "estimated (before your FTP history)",
 "Herkunft": "Source",
 "Garmin, importiert": "Garmin, imported",
-" (geschätzt)": " (estimated)"
+" (geschätzt)": " (estimated)",
+"Ältere Garmin-Fahrten importiert? Lass die App Bestwerte und VO2max aus der Historie nachrechnen, dann siehst du deine Entwicklung über das letzte Jahr.": "Imported older Garmin rides? Let the app calculate best efforts and VO2max from your history, then you see your development over the past year.",
+"Nachrechnen": "Calculate"
 }
