@@ -251,7 +251,7 @@ function setPage(){
   const gm = S.gm && S.gm.mode ? `Verbunden${S.gm.last ? ', zuletzt ' + fmt(lstr(new Date(S.gm.last))) : ''}` : 'Nicht verbunden';
   const n = Object.keys(readLib().plans).length;
   return iaGrp('Allgemein', iaRow('set-lang', 'lang', 'Sprache, Darstellung, Hilfen', `${lang() === 'en' ? 'English' : 'Deutsch'} · ${th}`) + iaRow('set-sq', 'sq', 'Übungsablauf und Töne', (() => { const c = sqCfg(); return [c.snd ? 'Töne an' : 'Töne aus', c.voice ? 'Ansage an' : '', `Übergang ${c.tr} Sek.`].filter(Boolean).join(' · '); })()) + iaRow('set-health', 'hr', 'Gesundheitshinweis', S.hlthOk ? 'Gelesen' : 'Bitte einmal lesen', !S.hlthOk))
-    + iaGrp('Training', iaRow('set-ali', 'ali', 'Alltag und Planstart', tbSub() || alltag) + iaRow('set-wf', 'wf', 'Gewicht und FTP', esc(wfSub())) + iaRow('set-age', 'age', 'Alter und Erholung', agSub()) + iaRow('set-hr', 'hr', 'Herzfrequenz und Leistungsmesser', hr, !hrMaxOf() && !lthrOf()) + iaRow('set-wx', 'wx', 'Wetter und Kleidung', wx))
+    + iaGrp('Training', iaRow('set-ali', 'ali', 'Alltag und Planstart', tbSub() || alltag) + iaRow('set-rz', 'rz', 'Reisemodus', `<span data-noi18n>${esc(rzSub1())}</span>`) + iaRow('set-wf', 'wf', 'Gewicht und FTP', esc(wfSub())) + iaRow('set-age', 'age', 'Alter und Erholung', agSub()) + iaRow('set-hr', 'hr', 'Herzfrequenz und Leistungsmesser', hr, !hrMaxOf() && !lthrOf()) + iaRow('set-wx', 'wx', 'Wetter und Kleidung', wx))
     + iaGrp('Verbindungen und Daten', iaRow('set-gm', 'gm', 'Garmin Connect', gm) + iaRow('plans', 'data', 'Pläne und Sicherung', `${n} ${n === 1 ? 'Plan' : 'Pläne'}${S.bkAt ? ', letzte Sicherung ' + fmt(lstr(new Date(S.bkAt))) : ', noch keine Sicherung'}`, !S.bkAt) + (x.priv ? iaRow('set-priv', 'priv', 'Datenschutz', (typeof trOff === 'function' && trOff()) ? 'Anonyme Statistik aus' : 'Anonyme Statistik an') : ''))
     + `<div class="mt-6">${x.dz || ''}</div>` + verLine();
 }
@@ -322,7 +322,7 @@ const EV_PAGES = {
   'ev-prof':() => epPage(),
   'ev-pace':() => efPacePage() || `<section class="panel p-4"><p class="text-sm">${paceTxt(p0(), evProfile(p0()))}</p><p class="mt-2 text-xs" style="color:var(--mute)">Steht auch am Eventtag und bei den Eventsimulationen im Plan. Grundlage: haltbarer Anteil der FTP über die erwartete Fahrzeit (IF ≈ 1 − 0,10 · ln Std.).</p></section>`,
   'ev-fuel':() => evFuelPage(),
-  'ev-saison':() => evSeasonPage() || `<section class="panel p-4"><p class="text-sm">Keine Events im Plan.</p></section>`,
+  'ev-saison':() => (evSeasonPage() || `<section class="panel p-4"><p class="text-sm">Keine Events im Plan.</p></section>`) + rzSeason(),
   'ev-subs':() => iaNoHead(subsCard(p0())) || `<section class="panel p-4"><p class="text-sm" style="color:var(--mute)">Noch keine weiteren Events. Trag alle Rennen deiner Saison ein, beliebig viele: als A-Event mit eigenem Formhöhepunkt oder als B- und C-Rennen auf dem Weg zum Hauptevent.</p><button class="ghost mt-3 !py-2 text-sm" onclick="editSubs()">Events hinzufügen</button></section>`
 };
 const p0 = () => S.p;

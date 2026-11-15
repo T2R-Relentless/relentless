@@ -241,6 +241,7 @@ function vzNames(p, a, b){
       genWeek(p, w).forEach((x, k) => { if (x && x.m > 0) add(addD(base, k), x.n); }); } } catch (e) { elog(e); }
   try { if (sw !== null) strWeek = sw; } catch (e) { elog(e); }
   vzEvs(p).forEach(e => add(e.date, `${e.prio}-Event: ${e.name}`));
+  try { rzVzNames(add, a, b); } catch (e) { elog(e); } /* F29: „Reise: …“ im Infofeld */
   return o;
 }
 /* Infofeld über der Grafik: Datum, Fitness, Ermüdung, Form mit Wort, TSS (gefahren bzw. geplant), Einheit */
@@ -339,7 +340,7 @@ function vzChart(p, R0, rng, full){
   const evLine = (f, y1, y2) => `<line x1="${f.x.toFixed(1)}" x2="${f.x.toFixed(1)}" y1="${y1}" y2="${y2}" class="${f.main ? 'goal vz-evl' : 'vz-evl'}${f.prio === 'A' ? ' vz-a' : ''}" data-day="${esc(f.date)}"/>`;
   const flagSvg = flags.map(f => `<g class="${f.main ? 'vz-evm' : 'vz-ev'}${f.prio === 'A' ? ' vz-a' : ''}" data-day="${esc(f.date)}">${evLine(f, f.lbl ? 30 : 10, base)}${f.lbl ? `<rect x="${f.left.toFixed(1)}" y="6" width="${f.w.toFixed(1)}" height="24" class="vz-fl"/><text x="${(f.left + f.w / 2).toFixed(1)}" y="22" text-anchor="middle" class="tx vz-flt">${esc(f.lbl)}</text>` : ''}</g>`).join('');
   const main = `<svg viewBox="0 0 ${W} ${H}" width="100%" class="pchart vz-main" data-vz="${id}" tabindex="0" aria-hidden="true" style="touch-action:pan-y" onpointerdown="vzPtr(event,'${id}','down')" onpointermove="vzPtr(event,'${id}','move')" onpointerup="vzPtr(event,'${id}','up')" onpointercancel="vzDown=null" onkeydown="vzKey(event,'${id}')">
-    ${fut ? `<rect x="${xT.toFixed(1)}" y="${T}" width="${(X(n - 1) - xT).toFixed(1)}" height="${base - T}" class="vz-fut"/>` : ''}${grid.join('')}
+    ${fut ? `<rect x="${xT.toFixed(1)}" y="${T}" width="${(X(n - 1) - xT).toFixed(1)}" height="${base - T}" class="vz-fut"/>` : ''}${rzVzBands(vis, X, T, base - T)}${grid.join('')}
     ${sh.atl ? `<polyline points="${pts(atlD, 0, ti)}" class="vz-atl"/>${fut ? `<polyline points="${pts(atlD, ti, n - 1)}" class="vz-atl vz-dash"/>` : ''}` : ''}
     ${sh.ctl ? `<polyline points="${pts(ctlV, 0, ti)}" class="vz-ctl"/>${fut ? `<polyline points="${pts(ctlV, ti, n - 1)}" class="vz-ctl vz-dash"/>` : ''}` : ''}
     <line x1="${xT.toFixed(1)}" x2="${xT.toFixed(1)}" y1="${T}" y2="${base}" class="now"/>${lblNow}${lblFut}${flagSvg}

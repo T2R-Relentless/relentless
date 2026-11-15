@@ -112,7 +112,7 @@ const weekPanel = (w, cur) => {
     return chip(x + (o.com[i] !== undefined ? '*' : ''), o.com[i] === undefined ? p.commute[i] : o.com[i], `toggleComF(${ja(w)},${ja(i)})`);
   }).join('');
   const showCom = isComm(p), std = p.commute.map((v, i) => v ? SD[i] : null).filter(Boolean).join(', ') || 'keine';
-  return `<div class="mb-3" id="fx-wp">${fold('wp', cur ? 'Diese Woche nicht alles machbar?' : `Woche ${w} im Voraus planen`, `
+  return `<div class="mb-3" id="fx-wp">${rzWeekBtn(w) ? `<div class="mb-2 flex justify-end">${rzWeekBtn(w)}</div>` : ''}${fold('wp', cur ? 'Diese Woche nicht alles machbar?' : `Woche ${w} im Voraus planen`, `
   <p class="mb-3 mt-1 text-sm" style="color:var(--mute)">${cur ? 'Sperre Tage, an denen du nicht trainieren kannst: Die Einheit rutscht auf einen freien Tag. Pendeln kannst du zusätzlich ein- oder ausschalten. Einzelne Einheiten lassen sich in der Karte kürzen oder verschieben.' : 'Trage ein, wann du in dieser Woche nicht fahren kannst oder anders pendelst als sonst. Der Plan wird sofort neu verteilt.'}</p>
   <p class="mb-1.5 text-sm font-semibold">Kein Training möglich</p><div class="chips mb-3">${offRow}</div>
   ${showCom ? `<p class="mb-1.5 text-sm font-semibold">Mit dem Rad zur Arbeit</p><div class="chips">${comRow}</div>

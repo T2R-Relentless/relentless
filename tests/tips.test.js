@@ -1,13 +1,13 @@
 /* F20: Katalog „Tipp zu heute“ – Umfang, Sprachen, Tags, Quellen, keine schnellen Wiederholungen */
 R.file = 'tips';
-const TAGK = {d:['rest', 'rec', 'base', 'int', 'long', 'str', 'ev7', 'ev21', 'race', 'post'], ph:['base', 'build', 'peak', 'taper'], s:['w', 's'], wx:['hot', 'cold', 'wet'], lv:['new', 'amb']};
+const TAGK = {d:['rest', 'rec', 'base', 'int', 'long', 'str', 'ev7', 'ev21', 'race', 'post'], ph:['base', 'build', 'peak', 'taper'], s:['w', 's'], wx:['hot', 'cold', 'wet'], lv:['new', 'amb'], rz:['day', 'move', 'jet', 'pre', 'post']};
 
 test('Mindestens 150 Tipps, jeder mit Deutsch, Englisch, Kategorie und gültigen Tags', async () => {
   const a = await boot(), T = a.$('TIPS'), cats = a.$('TIP_CAT'), bad = [];
   ok(T.length >= 150, T.length + ' Tipps'); eq(new Set(T.map(t => t[0])).size, T.length, 'IDs eindeutig');
   T.forEach(t => { if (!t[3] || !t[4] || t[3] === t[4]) bad.push(t[0] + ': Sprachen'); if (!cats[t[1]]) bad.push(t[0] + ': Kategorie');
     String(t[2]).split(/\s+/).filter(Boolean).forEach(x => { const [k, v] = x.split(':'); if (!TAGK[k] || !v.split(',').every(q => TAGK[k].includes(q))) bad.push(t[0] + ': Tag ' + x); }); });
-  eq(bad, []); const per = {}; T.forEach(t => per[t[1]] = (per[t[1]] || 0) + 1); ok(Object.keys(per).length === 9, 'neun Kategorien: ' + JSON.stringify(per));
+  eq(bad, []); const per = {}; T.forEach(t => per[t[1]] = (per[t[1]] || 0) + 1); ok(Object.keys(per).length === 10, 'zehn Kategorien (mit „Unterwegs“, F29): ' + JSON.stringify(per));
 });
 
 test('Kein Tipp mit Zahlen ohne Quelle im Katalog, alle Quellen vorhanden', async () => {

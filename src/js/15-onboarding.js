@@ -405,6 +405,7 @@ function onboarding(){
       ${comQ}
       ${timeQ}
       ${d.mode === 'light' ? '' : tbCard()}
+      ${d.mode === 'light' ? '' : rzWizard()}
       <div><p class="mb-2 font-semibold">Welcher Tag ist dein Long-Ride-Tag?</p><div class="chips">${SD.map((x,i) => chip(x, d.longDay === i, `setLong(${ja(i)})`)).join('')}</div>${comOn(d, d.longDay) ? '<p class="mt-2 text-sm" style="color:var(--mute)">Dein Long-Ride-Tag ist ein Pendeltag. Der Long Ride wird dann auf Hin- und Rückweg aufgeteilt. Am Stück geht es meist besser an einem freien Tag.</p>' : ''}</div>
       ${strUi(d)}
       ${mobUi(d)}</div>

@@ -230,13 +230,13 @@ function tipCtx(day){
   let ph = null; try { const P = phases(p).find(q => S.wk >= q.from && S.wk <= q.to); ph = P ? P.key : null; } catch (e) { elog(e); }
   const mo = dOnly(day).getMonth(), s = [10, 11, 0, 1].includes(mo) ? 'w' : [5, 6, 7].includes(mo) ? 's' : '';
   const wx = []; try { const w = wxDay(day, i, x); if (w && w.src === 'api') { if (w.tmax >= 25) wx.push('hot'); if (w.tmin <= 5) wx.push('cold'); if (w.wet) wx.push('wet'); } } catch (e) { elog(e); }
-  return {d, ph, s, wx, lv:p.lvl === 'new' ? 'new' : p.lvl === 'amb' ? 'amb' : ''};
+  return {d, ph, s, wx, lv:p.lvl === 'new' ? 'new' : p.lvl === 'amb' ? 'amb' : '', rz:(() => { try { return rzTipCtx(day); } catch (e) { elog(e); return []; } })()}; /* F29: rz = Reisekontext, leer bei ausgeschaltetem Reisemodus */
 }
 /* Passt ein Tipp? Jede angegebene Tag-Art muss treffen; Wert = Anzahl getroffener Tag-Arten (spezifischer = besser) */
 function tipFit(t, c){
   const g = tipTags(t); let sc = 0;
-  for (const [k, vs] of Object.entries(g)) { const have = k === 'd' ? c.d : k === 'ph' ? [c.ph] : k === 's' ? [c.s] : k === 'wx' ? c.wx : k === 'lv' ? [c.lv] : [];
-    if (!vs.some(v => have.includes(v))) return -1; sc++; }
+  for (const [k, vs] of Object.entries(g)) { const have = k === 'd' ? c.d : k === 'ph' ? [c.ph] : k === 's' ? [c.s] : k === 'wx' ? c.wx : k === 'lv' ? [c.lv] : k === 'rz' ? (c.rz || []) : [];
+    if (!vs.some(v => have.includes(v))) return -1; sc += k === 'rz' ? 3 : 1; }
   return sc;
 }
 const tipHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; };

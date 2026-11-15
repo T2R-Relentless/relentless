@@ -72,6 +72,8 @@ function sqCatalog(){
     mobMap = {0:MOB.mob, 1:MOB.stab}; ses.push(sqSession('mob', 0), sqSession('mob', 1));
     /* F23: alle Varianten aller Routinen */
     Object.keys(MOB_RT).forEach(k => MOB_RT[k].v.forEach((_, v) => { mobMap = {0:mobRt(k, v)}; ses.push(sqSession('mob', 0)); }));
+    /* F29: Sequenzen „Unterwegs“ */
+    rzRtAll().forEach(r => { mobMap = {0:r}; ses.push(sqSession('mob', 0)); });
     ['tech', 'base', 'build', 'erh', 'leicht'].forEach(k => [false, true].forEach(home => { strMap = {0:strSession({strPlace:home ? 'home' : 'gym'}, k)}; ses.push(sqSession('str', 0)); }));
     ses.filter(Boolean).forEach(se => [true, false].forEach(hints => [5, 10, 15, 20].forEach(tr => sqSays(se, {...SQ_DEF, voice:true, hints, tr}).forEach(add))));
     sqFixed().forEach(add);
@@ -95,7 +97,7 @@ function heroDay(p){ try { /* npOver gilt nur während dieses Aufbaus, siehe fin
   if (heroTab === 'test' && !testChip) heroTab = null;
   const fuelChip = ['fuel', `${mini('fuel', heroTab === 'fuel' ? '#071747' : '#fff')}<span>Essen: Tipps und Beispiele</span>`];
   const extras = [sm ? ['str', `${mini('str', heroTab === 'str' ? '#071747' : '#fff')}<span>Kraft ${sm.m} Min. · Übungen${(S.strDone || {})[strKey(i)] ? ' ✓' : ''}</span>`] : null, mb ? ['mob', `${mini(mb.n === 'Mobilität' ? 'mob' : 'stab', heroTab === 'mob' ? '#071747' : '#fff')}<span>${mb.n} ${mb.m} Min. · Übungen${(S.mobDone || {})[mobKey(i)] ? ' ✓' : ''}</span>`] : null].filter(Boolean);
-  const st = x.parts ? x.parts.map(q => q.lbl + ': ' + q.st).join(' ') : x.st; heroIdx = i; npOver = npFlag(i);
+  const st = x.parts ? x.parts.map(q => q.lbl + ': ' + q.st).join(' ') : x.st; heroIdx = i; npOver = x && x.rz && x.rz.rpe ? true : npFlag(i);
   return `<section class="hero" style="border-left-color:${esc(x.m ? T.c : 'var(--ice)')}"><p class="eyebrow" style="color:var(--ice)">${lbl}</p>
     <p class="hd mt-1 text-3xl font-semibold leading-tight ${esc(rideDn ? 'line-through' : '')}">${x.feel === 'sick' ? esc(x.n) : x.m ? esc(x.n) : sm || mb ? 'Radfrei · ' + esc([sm ? 'Kraft' : '', mb ? mb.n : ''].filter(Boolean).join(' und ')) : 'Radfrei'}</p>
     ${x.m ? `<div class="hmeta"><b>${mm(x.m)}</b>${heroInt(x)}<span>${zone(x.hi)} · TSS ~${tss(x)}</span></div>
