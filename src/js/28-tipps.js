@@ -47,6 +47,7 @@ const DYK = [
   ['subs', 'Plane deine ganze Saison: Trag alle Rennen ein, beliebig viele. A-Events bekommen einen eigenen Formhöhepunkt, B- und C-Rennen sind Bausteine auf dem Weg zum Hauptevent.', 'Event öffnen', "goPg('event')", () => S.p && S.p.goal === 'event'],
   ['backup', 'Deine Pläne liegen nur auf diesem Gerät. Speichere ab und zu eine Sicherung, dann kannst du sie auf einem neuen Handy wieder laden.', 'Sicherung speichern', "goPg('plans')", () => true],
   ['plans', 'Du kannst mehrere Pläne anlegen, z. B. für zwei Rennen, und zwischen ihnen wechseln. Den aktiven Plan passt du unter Mehr → Meine Pläne an.', 'Meine Pläne', "goPg('plans')", () => true],
+  ['mfday', 'Zwei Fahrten an einem Tag, etwa Anfahrt und Training? Die App wertet die Fahrt, die zur Einheit passt. Unter „Zuordnung“ am Tag markierst du die Anfahrt als Pendeln oder führst beide zusammen.', 'Zur Zuordnung', "dykMf()", () => { try { return !!S.p && (S.man || []).some(a => a.day === iso(0) || a.day === iso(-1)); } catch (e) { return false; } }],
   ['rzday', 'Auf Reisen entscheidest du jeden Tag selbst: Unter der Einheit wählst du zwischen dem, was vor Ort geht, zum Beispiel Lauf draußen, Hotel-Ergometer, Kraft im Zimmer oder Pause.', 'Zur Tageswahl', "dykRzDay()", () => { try { const d = iso(0), t = rzOn() && rzAt(d); return !!(t && t.status === 'applied' && d > rzDep(t) && d < rzRet(t)); } catch (e) { return false; } }],
   ['rz', 'Oft auf Dienstreise oder im Urlaub ohne Rad? Der Reisemodus passt deinen Plan an Reisen und Zeitzonen an, mit Übungen fürs Hotelzimmer.', 'Reisemodus ansehen', "dykRz()", () => { try { return !rzOn(); } catch (e) { return false; } }],
   ['gloss', 'Fachbegriffe wie FTP oder TSS sind gepunktet unterstrichen. Tippe darauf, dann erscheint eine kurze Erklärung.', '', '', () => S.gloss !== false],
@@ -85,7 +86,7 @@ function dykInst(){ instHide = false; instHelp = true; try { localStorage.remove
 function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
 /* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
    Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */
-const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), dykTp:() => dykTp(), dykRz:() => dykRz(), dykRzDay:() => dykRzDay(), render:() => render()};
+const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), dykTp:() => dykTp(), dykRz:() => dykRz(), dykRzDay:() => dykRzDay(), dykMf:() => dykMf(), render:() => render()};
 function dykRun(st){
   let m = st.match(/^heroTab\s*=\s*'(\w+)'$/); if (m) { heroTab = m[1]; return; }
   m = st.match(/^(\w+)\((.*)\)$/); const f = m && Object.prototype.hasOwnProperty.call(DYK_FN, m[1]) ? DYK_FN[m[1]] : null;
