@@ -173,11 +173,11 @@ function seasonForecast(p){
         const hv = Math.min(14, Math.max(hAv(p), hRec(pp, tev)[1])), pa = ftpProj(p, hv * rt, weeks), ta = evTime(q, Math.max(pa.mid, o.ftpHi || 0) * (1 - pen) * lm, kg, dr);
         if (ta && (!o.t || ta < o.t)) o.tAmb = Math.floor(ta / 5) * 5; } catch (e) { elog(e); }
     }
-    const T = o.t || tev, ifs = Math.max(.6, 1 - .1 * Math.log(Math.max(1, T / 60))), hi = Math.round(ifs * 100), F = o.ftp || p.ftp;
-    o.pace = {lo:hi - 8, hi, cl:Math.min(100, hi + 10), wLo:Math.round(F * (hi - 8) / 100), wHi:Math.round(F * hi / 100), wCl:Math.round(F * Math.min(100, hi + 10) / 100)};
+    /* F31: Pacing je Art (Feld, Zeitfahren, RTF/Radmarathon), siehe evPace */
+    const T = o.t || tev, F = o.ftp || p.ftp; o.pace = evPace(kind, T, F);
     const lt = p.lthr || 0; if (p.noPwr && lt) { const h = evHrPct(T); o.hr = {lo:Math.round(lt * h[0] / 100), hi:Math.round(lt * h[1] / 100)}; }
     const row = R && R.rows.find(r => r.day === x.date); if (row) o.form = {ctl:Math.round(row.ctl), tsb:Math.round(row.tsb)};
-    o.taper = x.prio === 'A' ? 'volles Tapering (1 bis 2 Wochen weniger Umfang)' : x.prio === 'B' ? 'kurzes Tapering (3 Tage)' : 'kein Tapering, normal weiter trainieren';
+    o.taper = x.main ? 'volles Tapering (1 bis 2 Wochen weniger Umfang)' : x.prio === 'A' ? 'Tapering über 3 Tage, danach eine lockere Woche' : x.prio === 'B' ? 'kurzes Tapering (3 Tage)' : 'kein Tapering, normal weiter trainieren';
     return o;
   });
 }
@@ -197,15 +197,7 @@ function evSeasonPage(){
   const askCard = ask ? `<section class="panel p-4" style="border-left:3px solid var(--teal)"><p class="font-semibold">Angaben zu <span data-noi18n>${esc(ask.name)}</span></p><p class="mt-1 text-sm" style="color:var(--mute)">Für Zielzeit und Pacing braucht die App ${ask.miss === 'dist' ? 'Distanz und Höhenmeter' : 'die Höhenmeter'}. Sie schätzt sie nicht. Die Dauer des Eventtags im Plan richtet sich danach.</p>
     <div class="mt-3 grid grid-cols-2 gap-3">${field('Distanz (km)', `<input type="text" inputmode="decimal" class="inp" style="min-height:44px" value="${esc(ask.dist || '')}" onchange="evSet('${ja(ask.id)}','dist',this.value)">`)}${field('Höhenmeter', `<input type="text" inputmode="numeric" class="inp" style="min-height:44px" value="${esc(ask.hm || '')}" onchange="evSet('${ja(ask.id)}','hm',this.value)">`)}</div>
     <button class="ghost mt-3 !w-auto !px-3 text-sm" style="min-height:44px" onclick="evSet('${ja(ask.id)}','skip')">Später</button></section>` : '';
-  const sg = v => (v > 0 ? '+' : '') + v;
-  const row = o => { const dist = o.dist ? `${f1(o.dist)} km${o.hm ? ', ' + o.hm.toLocaleString('de-DE') + ' hm' : ''}` : 'Distanz fehlt';
-    const cells = o.past ? `<p class="mt-1 text-xs" style="color:var(--mute)">vorbei</p>` : `<div class="mt-2 grid grid-cols-2 gap-2 text-sm">
-      <div class="p-2.5" style="background:var(--tint)"><div class="text-xs" style="color:var(--mute)">Zielzeit</div><div class="font-semibold">${o.t ? `${hm2(o.t)} Std. · Ø ${f1(o.kmh)} km/h` : '–'}</div>${o.tAmb ? `<div class="text-xs">ambitioniert ${hm2(o.tAmb)} Std.</div>` : ''}</div>
-      <div class="p-2.5" style="background:var(--tint)"><div class="text-xs" style="color:var(--mute)">Form am Eventtag</div><div class="font-semibold">${o.form ? `Form ${sg(o.form.tsb)} · Fitness ${o.form.ctl}` : '–'}</div>${o.ftp ? `<div class="text-xs">FTP etwa ${o.ftp} W (${f1(o.ftp / kgOf(p))} W/kg)</div>` : ''}</div>
-      <div class="p-2.5" style="background:var(--tint);grid-column:span 2"><div class="text-xs" style="color:var(--mute)">Pacing</div><div class="font-semibold">${o.hr ? `Puls ${o.hr.lo}–${o.hr.hi} bpm` : `${o.pace.wLo}–${o.pace.wHi} W im Flachen, am Berg bis ${o.pace.wCl} W`}</div><div class="text-xs">${o.taper}</div></div></div>
-      <div class="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Art des Events">${Object.keys(EV_KIND).map(k => `<button class="${o.kind === k ? 'btn' : 'ghost'} !w-auto !px-3 !py-1.5 text-xs" style="min-height:44px" aria-pressed="${o.kind === k}" onclick="evSet('${ja(o.id)}','kind','${ja(k)}')">${EV_KIND[k][0]}</button>`).join('')}</div>`;
-    return `<div class="py-3" style="border-top:1px solid var(--line)" data-ev="${esc(o.id)}"><div class="flex items-center gap-2">${prioBadge(o.prio)}<b class="min-w-0 flex-1" data-noi18n>${esc(o.name)}</b><span class="text-xs" style="color:var(--mute)">${fmt(o.date)}${o.past ? '' : `, in ${o.days} ${o.days === 1 ? 'Tag' : 'Tagen'}`}</span></div><p class="mt-0.5 text-xs" style="color:var(--mute)">${dist}${o.main ? ' · Saisonhöhepunkt' : ''}</p>${cells}${rzEvUi(o)}</div>`; };
   const noForm = (() => { const R = formRows(p); return R && R.src === 'plan' ? '<p class="mt-2 text-xs" style="color:var(--mute)">Die Form ist aus den geplanten Einheiten gerechnet, bis die App aus deinen Fahrten die Fitness kennt (Formkurve).</p>' : ''; })();
-  return askCard + `<section class="panel p-4"><p class="eyebrow">Alle Events der Saison</p><p class="mt-1 text-sm" style="color:var(--mute)">Zielzeit und Pacing rechnen mit deiner erwarteten FTP am jeweiligen Eventtag. Die Art des Events bestimmt den Windschatten: Rennen und Jedermann im Feld, RTF in der Gruppe, Zeitfahren solo.</p><div class="mt-2">${F.map(row).join('')}</div>${noForm}
+  return askCard + `<section class="panel p-4"><p class="eyebrow">Alle Events der Saison</p><p class="mt-1 text-sm" style="color:var(--mute)">Zielzeit und Pacing rechnen mit deiner erwarteten FTP am jeweiligen Eventtag. Die Art des Events bestimmt den Windschatten: Rennen und Jedermann im Feld, RTF in der Gruppe, Zeitfahren solo.</p><div class="evlist mt-3">${F.map(o => evCard(o)).join('')}</div>${evAddBtn()}${noForm}
     <p class="mt-2 text-xs" style="color:var(--mute)">Modell: Leistungsbilanz nach Martin et al. 1998, etwa ±10 %. FTP-Prognose: Faustmodell des Plan-Checks. Pacing: haltbarer Anteil der FTP über die Dauer.</p></section>`;
 }

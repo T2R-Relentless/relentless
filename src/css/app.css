@@ -486,3 +486,9 @@
   .rzbar i{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
   .pchart .vz-rz{fill:var(--teal);opacity:.13}
   :root[data-theme=dark] .pchart .vz-rz{opacity:.15}
+
+/* F31: Event-Karten klar abgegrenzt, „Anreise und Zeitzone“ als letzte Zeile innerhalb der Karte */
+.evlist{display:flex;flex-direction:column;gap:12px}
+.evcard{border:1px solid var(--line)}
+.evcard .evfuel{border-top:1px solid var(--line);padding-top:8px;margin-top:12px}
+.evcard .evfuel summary{min-height:44px;display:flex;align-items:center}

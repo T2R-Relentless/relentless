@@ -6954,5 +6954,13 @@
 "Zwei Fahrten an einem Tag, etwa Anfahrt und Training? Die App wertet die Fahrt, die zur Einheit passt. Unter „Zuordnung“ am Tag markierst du die Anfahrt als Pendeln oder führst beide zusammen.": "Two rides on one day, such as the ride there and the training? The app counts the ride that fits the session. Under “Assign” on that day you mark the ride there as a commute or merge both.",
 "Zur Zuordnung": "To the assignment",
 "Anfahrt/Pendeln": "Commute",
-"{0} Abschnitte": "{0} sections"
+"{0} Abschnitte": "{0} sections",
+"Ein Rennen verschoben oder die Strecke geändert? Tippe in der Event-Liste auf den Stift. Die App zeigt dir vorher, wie sich dein Plan ändert.": "Race moved or course changed? Tap the pencil in the event list. The app shows you beforehand how your plan changes.",
+"Events ansehen": "View events",
+"Tapering über 3 Tage, danach eine lockere Woche": "3-day taper, followed by an easy week",
+"volles Tapering ({0} bis {1} Wochen weniger Umfang)": "full taper ({0} to {1} weeks of less volume)",
+"kurzes Tapering ({0} Tage)": "short taper ({0} days)",
+"kein Tapering, normal weiter trainieren": "no taper, keep training as normal",
+"{0} über {1} Tage, danach eine lockere Woche": "{0} over {1} days, followed by an easy week",
+"Tapering über {0} Tage, danach eine lockere Woche": "{0}-day taper, followed by an easy week"
 }
