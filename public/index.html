@@ -6446,7 +6446,10 @@ const wkMinSay = s => { const m = Math.round(s / 60 * 10) / 10; return s < 60 ? 
 const WK_KN = {wu:['einfahren', 'warm-up'], cd:['ausfahren', 'cool-down'], work:['Intervall', 'interval'], rest:['locker', 'easy'], under:['knapp unter der Schwelle', 'just below threshold'], sr:['Serienpause', 'set break'], easy:['locker', 'easy'], steady:['gleichmäßig', 'steady'], tempo:['Tempo', 'tempo'], race:['Renntempo', 'race pace'], test:['Testabschnitt', 'test effort']};
 const wkKn = k => { const v = WK_KN[k] || WK_KN.steady; return wkL(v[0], v[1]); };
 /* Zielangabe: Watt (aus FTP), sonst Puls (ohne Wattmesser), sonst Empfinden */
+/* Lauf und Laufband (Reisemodus): Grafik, Beschreibung und Kennzahlen ohne FTP-Anteil, dafür Puls oder Empfinden */
+const wkNb = x => !!(x && (x.nb || (typeof rzNoBike === 'function' && rzNoBike(x))));
 function wkTgt(b, ftp, x){
+  if (wkNb(x)) { const a = Math.min(b.lo, b.hi), c = Math.max(b.lo, b.hi), h = typeof hrRng === 'function' ? hrRng(a, c) : null; return h ? wkL('Puls ', 'HR ') + hrTxt(h) : b.k === 'work' || b.k === 'steady' ? wkL('Empfinden ', 'RPE ') + rpeTxt(x) : wkL('locker', 'easy'); }
   const np = typeof noPwr === 'function' && noPwr(), lo = Math.min(b.lo, b.hi), hi = Math.max(b.lo, b.hi), pc = `${Math.round(lo)}–${Math.round(hi)} % FTP`;
   if (np) { const h = typeof hrRng === 'function' ? hrRng(lo, hi) : null; return h ? wkL('Puls ', 'HR ') + hrTxt(h) + ' · ' + pc : wkL('Empfinden ', 'RPE ') + rpeTxt(x || {t:'base'}) + ' · ' + pc; }
   return ftp ? `${Math.round(ftp * lo / 100)}–${Math.round(ftp * hi / 100)} W · ${pc}` : pc;
@@ -6454,7 +6457,7 @@ function wkTgt(b, ftp, x){
 /* Zusammenfassung für VoiceOver: „Einheit 75 Minuten: 15 Minuten einfahren, 3 mal 12 Minuten bei 88 bis 94 Prozent FTP mit 5 Minuten Pause, 10 Minuten ausfahren“ */
 function wkSay(x, bl){
   bl = bl || wkBlocks(x); if (!bl.length) return '';
-  const pct = b => wkL(`bei ${Math.round(b.lo)} bis ${Math.round(b.hi)} Prozent FTP`, `at ${Math.round(b.lo)} to ${Math.round(b.hi)} percent FTP`), out = []; let i = 0;
+  const nb = wkNb(x), pct = b => { if (nb) { const h = typeof hrRng === 'function' ? hrRng(Math.min(b.lo, b.hi), Math.max(b.lo, b.hi)) : null; return h ? wkL(`bei Puls ${h[0]} bis ${h[1]}`, `at heart rate ${h[0]} to ${h[1]}`) : wkL('nach Gefühl', 'by feel'); } return wkL(`bei ${Math.round(b.lo)} bis ${Math.round(b.hi)} Prozent FTP`, `at ${Math.round(b.lo)} to ${Math.round(b.hi)} percent FTP`); }, out = []; let i = 0;
   while (i < bl.length) {
     const b = bl[i];
     if (b.k === 'work') { let j = i, n = 0, rest = null; while (j < bl.length && (bl[j].k === 'work' || bl[j].k === 'rest' || bl[j].k === 'under' || bl[j].k === 'sr') && (bl[j].k !== 'work' || (bl[j].d === b.d && bl[j].lo === b.lo))) { if (bl[j].k === 'work') n++; else if (!rest && bl[j].k !== 'sr') rest = bl[j]; j++; }
@@ -6501,16 +6504,18 @@ function wkSvg(x, o = {}){
       const np = typeof noPwr === 'function' && noPwr(), y100 = Y(100), step = sc.TT > 4 * 3600 ? 3600 : sc.TT > 2 * 3600 ? 1800 : sc.TT > 5400 ? 1200 : sc.TT > 2400 ? 900 : 600, xt = [];
       for (let t = 0; t <= sc.TT + 1; t += step) xt.push(t);
       const tl = t => t === 0 ? '0' : t % 3600 === 0 ? t / 3600 + ' h' : t >= 3600 ? Math.floor(t / 3600) + ':' + String(t % 3600 / 60).padStart(2, '0') : t / 60 + "'";
-      axes = `<line x1="${L}" x2="${W - R}" y1="${base}" y2="${base}" class="wk-ax"/>`
-        + `<line x1="${L}" x2="${W - R}" y1="${y100.toFixed(1)}" y2="${y100.toFixed(1)}" class="wk-ftp"/>`
-        + `<text x="${L - 4}" y="${(y100 + 3).toFixed(1)}" text-anchor="end" class="tx">${np ? 'LTHR' : 'FTP'}</text><text x="${L - 4}" y="${(Y(50) + 3).toFixed(1)}" text-anchor="end" class="tx">50 %</text>`
+      const nb = wkNb(x), lt = nb && typeof lthrOf === 'function' ? lthrOf() : 0, mid = nb ? ((x.lo || 56) + (x.hi || 68)) / 2 : 0, yM = nb ? Y(mid) : 0, tx = (y, s) => `<text x="${L - 4}" y="${(y + 3).toFixed(1)}" text-anchor="end" class="tx">${s}</text>`;
+      /* Lauf und Laufband: Achse in Pulsschlägen (Schwellenpuls gestrichelt), ohne eingetragenen Puls das Empfinden */
+      const yAx = nb ? (lt ? `<line x1="${L}" x2="${W - R}" y1="${y100.toFixed(1)}" y2="${y100.toFixed(1)}" class="wk-ftp"/>` + tx(T + 3, wkL('Puls', 'HR')) + tx(y100, lt) + (Math.abs(yM - y100) > 10 ? tx(yM, Math.round(lt * hrPct(mid) / 100)) : '') : tx(yM, rpeTxt(x)))
+        : `<line x1="${L}" x2="${W - R}" y1="${y100.toFixed(1)}" y2="${y100.toFixed(1)}" class="wk-ftp"/>` + tx(y100, np ? 'LTHR' : 'FTP') + tx(Y(50), '50 %');
+      axes = `<line x1="${L}" x2="${W - R}" y1="${base}" y2="${base}" class="wk-ax"/>` + yAx
         + bl.map((b, i) => { const x0 = L + sc.xs[i], x1 = L + sc.xs[i + 1]; return b.part && b.k === 'steady' && x1 - x0 > 70 ? `<text x="${((x0 + x1) / 2).toFixed(1)}" y="${(Y(Math.max(b.a, b.b)) - 5).toFixed(1)}" text-anchor="middle" class="tx wk-pl">${esc(b.part)} · ${Math.round(b.lo)}–${Math.round(b.hi)} %</text>` : ''; }).join('')
         + xt.map(t => { const tx = L + sc.X(t), an = tx > W - R - 12 ? 'end' : 'middle'; return `<text x="${(an === 'end' ? W - R : tx).toFixed(1)}" y="${H - 5}" text-anchor="${an}" class="tx">${tl(t)}</text>`; }).join('');
     }
     if (act && ftp) { const k = Math.max(1, Math.round(20 / act.b)), sm = typeof vzSmooth === 'function' ? vzSmooth(act.p, k) : act.p; let d = '', on = false;
       sm.forEach((v, i) => { if (v == null) { on = false; return; } const t = (i + .5) * act.b; d += (on ? 'L' : 'M') + (L + sc.X(t)).toFixed(1) + ',' + Y(v / ftp * 100).toFixed(1); on = true; });
       line = `<path d="${d}" class="wk-act"/>`; }
-    if (!mini) wkReg[id] = {bl, xs:sc.xs.map(v => v + L), ts:sc.ts, wide:sc.wide, ftp, x:x ? {t:x.t, cad:x.cad} : null, act:act && ftp ? {p:act.p, b:act.b} : null, X:null, sc};
+    if (!mini) wkReg[id] = {bl, xs:sc.xs.map(v => v + L), ts:sc.ts, wide:sc.wide, ftp, x:x ? {t:x.t, cad:x.cad, ...(wkNb(x) ? {nb:1} : {})} : null, act:act && ftp ? {p:act.p, b:act.b} : null, X:null, sc};
     const svg = `<svg viewBox="0 0 ${W} ${H}" ${mini ? `preserveAspectRatio="none" style="width:100%;height:${H}px;display:block"` : ''} class="wk ${mini ? 'wk-mini' : 'pchart'}" ${mini && !o.label ? 'aria-hidden="true" focusable="false"' : `role="img" aria-label="${say}"`}${mini ? '' : ` data-wk="${id}" onpointerdown="wkTip(event,'${id}')" onpointermove="wkTip(event,'${id}')"`}>${shapes}${axes}${line}${mini ? '' : `<line class="wk-cur" x1="0" x2="0" y1="${T}" y2="${base}" style="display:none"/>`}</svg>`;
     if (mini) return `<span class="wk-mw" data-noi18n>${svg}</span>`;
     const tip = `<p class="wk-tip text-xs" id="${id}-t" aria-live="polite">${esc(wkL('Tippe oder wische über die Grafik für Details zu jedem Abschnitt.', 'Tap or swipe across the chart for details on each section.'))}</p>`;
@@ -6523,7 +6528,7 @@ function wkSum(x, bl, act){
   const IF = typeof tssIF === 'function' ? tssIF(x) : 0, ts = typeof tss === 'function' ? tss(x) : 0;
   const bar = zs.map((v, k) => v ? `<i class="${wkCls(k)}" style="width:${(v / tot * 100).toFixed(1)}%"></i>` : '').join('');
   const lg = zs.map((v, k) => v / tot >= .04 ? `<span><i class="${wkCls(k)}"></i>${WK_Z[k][2]} ${wkMin(Math.round(v / 60) * 60)}</span>` : '').join('');
-  return `<p class="mt-1 text-xs" style="color:var(--mute)">${wkMin(x.m * 60)} · TSS ~${ts} · IF ${IF ? IF.toFixed(2).replace('.', wkL(',', '.')) : '–'}${act ? ' · ' + wkL('Linie: gefahrene Leistung (20 Sek. geglättet)', 'Line: power ridden (20 s smoothed)') : ''}</p><div class="wk-zb" aria-hidden="true">${bar}</div><div class="wk-zl">${lg}</div>`;
+  return `<p class="mt-1 text-xs" style="color:var(--mute)">${wkMin(x.m * 60)} · TSS ~${ts}${wkNb(x) ? '' : ` · IF ${IF ? IF.toFixed(2).replace('.', wkL(',', '.')) : '–'}`}${act ? ' · ' + wkL('Linie: gefahrene Leistung (20 Sek. geglättet)', 'Line: power ridden (20 s smoothed)') : ''}</p><div class="wk-zb" aria-hidden="true">${bar}</div><div class="wk-zl">${lg}</div>`;
 }
 /* Antippen bzw. Wischen: Abschnitt unter dem Finger beschreiben und Markierung setzen */
 function wkTip(ev, id){

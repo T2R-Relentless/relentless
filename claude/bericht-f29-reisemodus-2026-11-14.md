@@ -153,4 +153,4 @@ Nicht ausgeführt. Der Ablauf wie bisher:
 - Hinweis „Wusstest du schon?“ (`rzday`, nur während einer Reise), Eintrag im Neuigkeiten-Fenster, Build-ID neu.
 - Tests: 267 grün (2 neue in `tests/reise.test.js`), Build-Check aktuell. Bilder: `claude/bilder/f29b-tageswahl-*.png` (beide dunkel).
 - Lauf und Laufband zeigen statt der Kachel „% FTP“ den Pulsbereich (aus Schwellen- oder Maximalpuls). Ohne eingetragenen Puls steht dort „Puls eintragen“ und führt zum Feld. Der Bereich stammt aus den Rad-Zonen; beim Laufen liegt der Puls meist etwas höher.
-- Offen: Die Grafik mit Prozentachse steht bei Laufband und Lauf weiter da. Der Reiter heißt an Tagen mit Kraft oder Mobilität weiter „Rad“. Nicht auf dem iPhone geprüft.
+- Die Grafik von Lauf und Laufband hat eine Pulsachse (Schwellenpuls gestrichelt, Pulswert der Einheit), ohne eingetragenen Puls das Empfinden. Detailtext beim Antippen und Beschreibung für VoiceOver nennen Puls oder Empfinden statt Prozent FTP, die Zeile darunter zeigt kein IF mehr. Der Reiter heißt an Tagen mit Kraft oder Mobilität weiter „Rad“. Nicht auf dem iPhone geprüft.
