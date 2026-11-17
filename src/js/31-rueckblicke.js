@@ -80,7 +80,7 @@ function rcWeekLines(r){
   const p = S.p, k = 'w' + r.w + p.start, pc = r.n ? r.nd / r.n : 1, L = [], rides = rcRides(r.from, r.to), s = rcSum(rides);
   const ev = rcEvals().filter(e => e.day >= r.from && e.day <= r.to && e.score != null).sort((a, b) => b.score - a.score)[0];
   const xr = rcExtras().filter(e => e.day >= r.from && e.day <= r.to), prs = rcPrs(r.from, r.to), st = rcStreak(), prev = rcWeeks().find(q => q.w === r.w - 1);
-  if (r.sick) L.push(pickV([`Du warst diese Woche ${r.sick === 1 ? 'einen Tag' : r.sick + ' Tage'} krank. Gut, dass du pausiert hast.`, `${r.sick === 1 ? 'Ein Krankheitstag' : r.sick + ' Krankheitstage'} haben die Woche gebremst. Pause war die richtige Entscheidung.`], k));
+  if (r.sick) L.push(pickV([`Du warst diese Woche ${r.sick === 1 ? 'einen Tag' : r.sick + ' Tage'} krank. Gut, dass du pausiert hast.`, `${r.sick === 1 ? 'Ein Krankheitstag hat' : r.sick + ' Krankheitstage haben'} die Woche gebremst. Pause war die richtige Entscheidung.`], k));
   else if (pc >= .95) L.push(pickV([`Alle ${r.n} Einheiten erledigt, ${rcH(r.dm * 60)} Std. im Sattel. Genau so entsteht Form.`, `${r.nd} von ${r.n} Einheiten, ${rcH(r.dm * 60)} Std. Eine Woche wie aus dem Lehrbuch.`], k));
   else if (pc >= .7) L.push(`${r.nd} von ${r.n} Einheiten und ${rcH(r.dm * 60)} Std. Das Wichtigste der Woche ist drin.`);
   else if (r.nd) L.push(`${r.nd} von ${r.n} Einheiten, ${rcH(r.dm * 60)} Std. Weniger als geplant, aber jede Einheit zählt für deine Form.`);
