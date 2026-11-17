@@ -227,7 +227,7 @@ function goalModal(){
       ${main ? `<p class="mt-2 text-sm"><b>Warum:</b> ${g.why}</p><p class="mt-1 text-sm" style="color:var(--mute)">${o.why}</p>` : `<details class="mt-1 text-sm" style="color:var(--mute)"><summary class="cursor-pointer">Einordnung</summary><p class="mt-1">${o.why}</p></details>`}
       <button class="${esc(main ? 'btn' : 'ghost !py-1.5 text-sm')} mt-3" onclick="pickGoal(${ja(i)})">${main ? 'Empfehlung übernehmen' : 'Diese Option wählen'}</button></div>`;
   return `<div class="exov" onclick="if(event.target===this)closeGoal()" role="dialog" aria-modal="true" aria-label="Ziel wieder erreichbar machen"><div class="exbox">
-    <div class="flex items-start gap-3"><h3 class="hd flex-1 text-2xl font-semibold">Ziel wieder erreichbar machen</h3><button class="ghost !px-3 !py-1.5" onclick="closeGoal()" aria-label="Schließen">✕</button></div>
+    <div class="flex items-start gap-3"><h3 class="hd flex-1 text-2xl font-semibold">Ziel wieder erreichbar machen</h3><button class="ghost !px-3 !py-1.5" onclick="closeGoal()" aria-label="Schließen" style="min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center">${icX()}</button></div>
     <p class="mt-1 text-sm">${g.ev ? `Dein Ziel: <b>${esc(p.targetTime)} Std.</b> Erwartet mit dem aktuellen Plan: <b>${g.r0.t ? hm2(g.r0.t) : '–'} Std.</b>` : `Dein Ziel: <b>${g.tgt} W</b>. Erwartet mit dem aktuellen Plan: <b>${g.r0.ftp} W</b>.`}</p>
     ${g.rec ? card(g.rec, i0, true) : ''}
     <p class="mt-4 font-semibold">Weitere Optionen</p><div class="mt-2 space-y-2">${g.O.map((o, i) => i === i0 ? '' : card(o, i, false)).join('')}</div>

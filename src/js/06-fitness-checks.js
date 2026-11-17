@@ -105,7 +105,7 @@ function testBox(w, i, cur){
     ${due ? `<div class="mt-2 flex flex-wrap gap-2">${chip('20-Min-Test', testKind === '20', "setTestKind('20')")}${chip('Rampentest', testKind === 'ramp', "setTestKind('ramp')")}${chip('FTP direkt', testKind === 'ftp', "setTestKind('ftp')")}</div>
       <div class="mt-2 flex items-end gap-2"><label class="flex-1 text-xs" style="color:var(--mute)">${testKind === '20' ? 'Durchschnittsleistung der 20 Minuten' : testKind === 'ramp' ? 'Beste Minute im Rampentest' : 'FTP aus Zwift, Garmin oder Labor'} (W)<input id="tv${esc(w)}" type="number" inputmode="numeric" class="inp mt-1" value="${esc(pre || '')}"></label><button class="btn !w-auto" onclick="saveTest(${ja(w)}, ${ja(i)})">Auswerten</button></div>
       ${auto ? `<p class="mt-1 text-xs" style="color:var(--ok)">Aus deiner hochgeladenen Fahrt „${esc(auto.n)}“ erkannt: beste 20 Min. ${auto.m20 || '–'} W, beste Minute ${auto.m1 || '–'} W.</p>` : ''}
-      ${testMsg ? `<p class="mt-1 text-sm" style="color:#c0392b">⚠ ${esc(testMsg)}</p>` : ''}` : '<p class="mt-2 text-xs" style="color:var(--mute)">Das Ergebnis kannst du am Testtag hier eintragen. Die App rechnet daraus deinen FTP und vergleicht ihn mit dem erwarteten Korridor.</p>'}</div>`;
+      ${testMsg ? `<p class="mt-1 text-sm" style="color:#c0392b">${icWarn()}${esc(testMsg)}</p>` : ''}` : '<p class="mt-2 text-xs" style="color:var(--mute)">Das Ergebnis kannst du am Testtag hier eintragen. Die App rechnet daraus deinen FTP und vergleicht ihn mit dem erwarteten Korridor.</p>'}</div>`;
 }
 function msChart(p){
   const ph = phases(p), tot = ph[ph.length - 1].to, f0 = p.ftpStart || p.ftp; let h = hAv(p) * .86; try { h = planStats(p).hAvg; } catch (e) { elog(e); }

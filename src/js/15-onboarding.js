@@ -22,6 +22,13 @@ function lightFinish(){
   lightMsg = ''; finish();
 }
 let lightMsg = '';
+/* Schnellplanung Schritt 2: Geschlecht, Alter und Erholung sind optional und eingeklappt, damit der Schritt kurz bleibt.
+   Offen, sobald dort etwas eingetragen ist; der Zustand übersteht das Neuzeichnen (lightMore). */
+let lightMore = false;
+function lightMoreUi(d){
+  const set = (d.sex && d.sex !== 'x') || d.birthDate || d.birthYear || rhyOwn(d), open = lightMore || !!set;
+  return `<details class="wsec panel mt-4"${open ? ' open' : ''} ontoggle="lightMore=this.open"><summary><span><span class="block font-semibold">Weitere Angaben (optional)</span><span class="mt-0.5 block text-xs" style="color:var(--mute)">Geschlecht, Alter und Erholung. Ohne Angabe plant die App mit Standardwerten.</span></span><span class="wchev" aria-hidden="true">▾</span></summary><div class="wbody">${sexUi(d, true)}<div class="pt-2">${ageUi(d, true)}</div></div></details>`;
+}
 
 /* ---------- Planstart: heute oder später ---------- */
 const addD = (ds, n) => { const d = new Date(ds + 'T12:00:00'); d.setDate(d.getDate() + n); return lstr(d); };
@@ -41,7 +48,7 @@ function setStartD(v){
 function startWarn(sd, goalD, ev){
   if (!goalD) return '';
   const wk = Math.floor((new Date(goalD + 'T12:00:00') - new Date(sd + 'T12:00:00')) / 6048e5);
-  if (goalD <= addD(sd, 13)) return `<p class="mt-2 text-sm" style="color:#c0392b">⚠ Zwischen Planstart und ${ev ? 'Event' : 'Zieltermin'} liegen weniger als 2 Wochen. Wähle einen früheren Start oder einen späteren Termin.</p>`;
+  if (goalD <= addD(sd, 13)) return `<p class="mt-2 text-sm" style="color:#c0392b">${icWarn()}Zwischen Planstart und ${ev ? 'Event' : 'Zieltermin'} liegen weniger als 2 Wochen. Wähle einen früheren Start oder einen späteren Termin.</p>`;
   return `<p class="mt-2 text-sm">Bis ${ev ? 'zum Event' : 'zum Zieltermin'}: <b>${wk} Wochen Training</b>.${ev && wk < 8 ? ' <span style="color:#9a6a00">Für eine gute Vorbereitung sind 8 bis 16 Wochen ideal. Die App verkürzt die Aufbauphasen entsprechend.</span>' : ''}</p>`;
 }
 function startUi(d){
@@ -71,7 +78,7 @@ function shiftUi(p){
     <details class="mt-2"${shiftAsk && !opts.some(o => o[0] === shiftAsk) ? ' open' : ''}><summary class="cursor-pointer text-sm" style="color:var(--teal)">Anderes Datum</summary><input type="date" class="inp mt-2" min="${iso(1)}" value="${esc(shiftAsk)}" onchange="shiftAsk=this.value;render()" aria-label="Neuer Planstart"></details>
     ${!ev ? `<div class="mt-2 flex flex-wrap gap-2">${chip('Zieltermin mitverschieben', shiftEnd, 'shiftEnd=true;render()')}${chip('Zieltermin behalten', !shiftEnd, 'shiftEnd=false;render()')}</div>` : '<p class="mt-2 text-xs" style="color:var(--mute)">Das Eventdatum bleibt, die Trainingszeit davor wird kürzer.</p>'}
     ${shiftAsk ? `<div class="mt-3 p-3 text-sm" style="background:var(--tint);border:1px solid var(--line)"><p>Neuer Start: <b>${fmtL(shiftAsk)}</b>.${st ? ' Der Plan beginnt dann wieder mit Woche 1. Abgehakte Einheiten in diesem Plan werden zurückgesetzt, deine hochgeladenen Fahrten bleiben erhalten.' : ''}</p>${startWarn(shiftAsk, !ev && shiftEnd ? addD(p.endDate, Math.round((new Date(shiftAsk + 'T12:00:00') - new Date((st ? iso(0) : p.startDate) + 'T12:00:00')) / 864e5)) : p[ev ? 'eventDate' : 'endDate'], ev)}<div class="mt-2 flex gap-2"><button class="btn !w-auto" onclick="shiftStart('${ja(shiftAsk)}')">Plan verschieben</button><button class="ghost" onclick="shiftAsk='';render()">Abbrechen</button></div></div>` : ''}
-    ${shiftMsg ? `<p class="mt-2 text-sm" style="color:#c0392b">⚠ ${esc(shiftMsg)}</p>` : ''}`;
+    ${shiftMsg ? `<p class="mt-2 text-sm" style="color:#c0392b">${icWarn()}${esc(shiftMsg)}</p>` : ''}`;
 }
 /* ---------- Einfache Optionen für den Zieltermin ---------- */
 function nextMD(md){ const y = new Date().getFullYear(); for (const yy of [y, y + 1, y + 2]) { const ds = yy + '-' + md; if (ds >= iso(28)) return ds; } return iso(120); }
@@ -97,7 +104,7 @@ function lightPage(d){
   const ev = d.goal === 'event', lv = d.lvl || 'hob', kg = d.weight > 0 ? d.weight : 75, ftpE = d.ftpKnown > 0 ? d.ftpKnown : Math.round(LVL[lv][1] * lvlF(d) * kg / 5) * 5;
   const ls = Math.min(4, Math.max(1, S.step || 1)), showStart = !(S.edit && S.p && hasStarted(S.p));
   const cancel = S.edit && S.p ? '<button class="ghost" onclick="cancelEdit()">Abbrechen</button>' : S.newFrom ? '<button class="ghost" onclick="cancelNew()">Abbrechen</button>' : '';
-  const msg = lightMsg ? `<p class="mt-4 text-sm" style="color:#c0392b">⚠ ${esc(lightMsg)}</p>` : '';
+  const msg = lightMsg ? `<p class="mt-4 text-sm" style="color:#c0392b">${icWarn()}${esc(lightMsg)}</p>` : '';
   const navRow = (prev, next) => `${msg}<div class="mt-6 flex flex-wrap gap-3">${prev ? `<button class="ghost" onclick="lightNav(${ja(prev)})">Zurück</button>` : cancel}${next ? `<button class="btn flex-1" onclick="lightNav(${ja(next)})">Weiter</button>` : finalBtn('lightFinish')}</div>`;
   const head = (t, sub) => `<h2 class="hd text-3xl font-semibold">${t}</h2><p class="mb-4 mt-1" style="color:var(--mute)">${sub}</p>`;
   if (ls === 1) return modeBar(d) + head('Worauf trainierst du hin?', 'Vier kurze Schritte, dann steht dein Plan. Alles Weitere stellt die App sinnvoll ein, und du kannst später unter Mehr → Meine Pläne → „Plan anpassen“ jedes Detail ändern.')
@@ -113,7 +120,7 @@ function lightPage(d){
     <div class="panel mt-4 p-4"><div class="grid grid-cols-2 gap-3">${field('Gewicht (kg)', `<input type="number" inputmode="decimal" class="inp" value="${esc(d.weight || '')}" oninput="draft('weight',this.value)">`)}${field('FTP, falls bekannt (W)', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc(ftpE)}" value="${esc(d.ftpKnown || '')}" oninput="S.d.ftpKnown=Number(this.value)||0;save()">`)}</div>
       <p class="mt-2 text-xs" style="color:var(--mute)">Kennst du deinen FTP, trag ihn ein. Sonst schätzt die App ihn aus deiner Einschätzung oben (hier etwa ${ftpE} W).</p></div>
     <div class="mt-4 space-y-2">${pwAsk(d, true)}${d.pwMix && !d.noPwr ? pwMixHr(d) : ''}${d.noPwr ? `<div class="panel p-4">${field('Schwellenpuls, falls bekannt', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc((lthrEst() || {}).v || 'z. B. 165')}" value="${esc(d.lthr || '')}" onchange="setHr('lthr',this.value)">`)}<p class="mt-2 text-xs" style="color:var(--mute)">Kennst du ihn nicht, misst ihn der Fitnesstest in der ersten Woche: 30 Minuten gleichmäßig hart, dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Den FTP für die Prognose kannst du später im Plan über ein Bergzeitfahren schätzen lassen.</p></div>` : ''}${lopt(!!d.test0, 'togTest0()', 'Mit einem Fitnesstest starten', d.noPwr ? 'Ein 30-Minuten-Test in der ersten Woche für deinen Schwellenpuls. Danach zeigen die Einheiten deine persönlichen Pulsbereiche. Empfohlen, wenn du ihn nicht kennst.' : 'Ein 20-Minuten-Test in der ersten Woche. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, wenn du deinen FTP nicht kennst.', LIC.test, true)}</div>
-    <div class="panel mt-4 p-4">${sexUi(d, true)}</div><div class="panel mt-4 p-4">${ageUi(d, true)}</div>`
+    ${lightMoreUi(d)}`
     + navRow(1, 3);
   if (ls === 3) { const nD = d.avail.filter(Boolean).length, per = nD ? Math.round(d.hours * 60 / nD) : 0, ld = d.avail[6] ? 6 : d.avail[5] ? 5 : d.avail.lastIndexOf(true);
     return head('Wie viel Zeit hast du?', 'Der Plan richtet sich nach deiner Woche, nicht umgekehrt.')
@@ -269,7 +276,7 @@ function cyclePage(p){
   const sub = S.plan ? S.plan.map((x, i) => x && x.cycMoved && x.cycMoved.from !== undefined ? `${DAYS[x.cycMoved.from]} → ${DAYS[i]}: ${esc(x.n)}` : null).filter(Boolean) : [];
   return `<section class="panel p-4"><div class="flex items-center gap-4">${cycRing(c, 112)}<div class="min-w-0"><p class="text-sm" style="color:var(--mute)">Heute</p><p class="hd text-2xl font-semibold leading-tight">Zyklustag ${c.day}</p><p class="mt-1"><span class="cyc-pill" style="background:${esc(c.col)}">${c.label}</span></p><p class="mt-2 text-sm">Nächste Periode voraussichtlich <b>${fmt(c.next)}</b>${nd > 0 ? ` (in ${nd} Tag${nd > 1 ? 'en' : ''})` : ''}</p></div></div>
       <p class="mt-3 text-sm">${CYCTIP[c.ph]}</p>
-      ${c.old ? '<p class="mt-2 text-sm" style="color:#9a6a00">⚠ Deine letzte eingetragene Periode ist über zwei Zyklen her. Trag den letzten Beginn ein, damit die Vorhersage stimmt.</p>' : ''}
+      ${c.old ? '<p class="mt-2 text-sm" style="color:#9a6a00">' + icWarn() + 'Deine letzte eingetragene Periode ist über zwei Zyklen her. Trag den letzten Beginn ein, damit die Vorhersage stimmt.</p>' : ''}
       <div class="mt-3 flex flex-wrap items-end gap-2"><button class="btn !w-auto" onclick="perStart()">Periode hat heute begonnen</button><label class="text-xs" style="color:var(--mute)">oder an einem anderen Tag<input type="date" class="inp mt-1 !py-1.5" max="${iso(0)}" value="${esc(p.cycLast || '')}" onchange="perStart(this.value)"></label></div>
       ${cycMsg ? `<p class="mt-2 text-sm" style="color:var(--ok)">✓ ${esc(cycMsg)}</p>` : ''}</section>
     <section class="panel p-4"><h2 class="hd text-xl font-semibold">Die nächsten 5 Wochen</h2><p class="mt-1 text-sm" style="color:var(--mute)">Zyklus (Vorhersage) und geplante Schlüsseleinheiten. Die Zahl ist der Zyklustag, darüber das Datum.</p>
@@ -398,7 +405,7 @@ function onboarding(){
           <p class="mt-2 text-sm" style="color:var(--mute)">${nC ? `An ${nC === 1 ? 'deinem Pendeltag' : 'deinen ' + nC + ' Pendeltagen'} bist du mindestens ${2 * leg} Min. auf dem Rad (Hin- und Rückweg à ${leg} Min.), zusammen ${mm(nC * 2 * leg)} pro Woche. ` : 'Wähle die Tage, an denen du mit dem Rad zur Arbeit fährst. '}Der Arbeitsweg zählt zum Trainingsumfang und wird locker gefahren. Steht an einem Pendeltag eine harte Einheit an, fährst du die Intervalle am Stück auf dem Hinweg, der Rückweg bleibt locker. Bei kurzen Wegen (unter 45 Min.) legt der Plan Intervalle möglichst auf Tage ohne Pendeln.</p>` : ''}</div>`;
     const timeQ = `<div><p class="mb-2 font-semibold">Wie viel Zeit hast du?</p>
         ${d.perDay ? `<div class="space-y-2">${rows}</div><p class="mt-2 text-sm" style="color:var(--mute)">Insgesamt: <b id="dtot">${dayTotal(d)}</b>. Die Wochenzeit ist immer genau die Summe deiner Tage. Keine Einheit wird länger als die Zeit des Tages.${nC ? ` An Pendeltagen ist der Arbeitsweg (${2 * leg} Min.) automatisch eingerechnet. Trag dort nur ein, wie viel du zusätzlich fahren kannst, etwa für Intervalle auf dem Hinweg oder einen Umweg auf dem Heimweg.` : ''}</p>${d.dayMin[d.longDay] < 90 ? '<p class="mt-1 text-sm" style="color:#9a6a00">Tipp: Gib deinem Long-Ride-Tag mindestens 90 Min., dann wird daraus ein echter Long Ride.</p>' : ''}`
-          : field('Trainingsstunden pro Woche' + (nC ? ' (inklusive Arbeitsweg)' : ''), `<input type="number" inputmode="decimal" step="0.25" class="inp" value="${esc(d.hours)}" oninput="draft('hours',this.value)" onchange="render()">`) + `<p class="mt-1 text-sm" style="color:var(--mute)">${nC ? `Davon sind ${mm(comSum(d))} dein Arbeitsweg. Der Rest verteilt sich auf deine Trainingstage, der Long Ride bekommt den größten Anteil.` : `Die App verteilt die Zeit auf deine ${d.avail.filter(Boolean).length} Trainingstage, der Long Ride bekommt den größten Anteil.`} Willst du für einzelne Tage eine Obergrenze setzen, wähle „Zeit pro Tag festlegen“.</p>${comSum(d) > (Number(d.hours) || 0) * 60 ? `<p class="mt-1 text-sm" style="color:#9a6a00">⚠ Deine Pendelfahrten allein dauern ${mm(comSum(d))} pro Woche, mehr als die angegebenen ${hStd(Number(d.hours) || 0)} Std. Die App rechnet deshalb mit mindestens ${hm2(comSum(d))} Std. <button class="underline" onclick="draft('hours',${ja(comSum(d) / 60)});render()">Wert übernehmen</button></p>` : ''}`}
+          : field('Trainingsstunden pro Woche' + (nC ? ' (inklusive Arbeitsweg)' : ''), `<input type="number" inputmode="decimal" step="0.25" class="inp" value="${esc(d.hours)}" oninput="draft('hours',this.value)" onchange="render()">`) + `<p class="mt-1 text-sm" style="color:var(--mute)">${nC ? `Davon sind ${mm(comSum(d))} dein Arbeitsweg. Der Rest verteilt sich auf deine Trainingstage, der Long Ride bekommt den größten Anteil.` : `Die App verteilt die Zeit auf deine ${d.avail.filter(Boolean).length} Trainingstage, der Long Ride bekommt den größten Anteil.`} Willst du für einzelne Tage eine Obergrenze setzen, wähle „Zeit pro Tag festlegen“.</p>${comSum(d) > (Number(d.hours) || 0) * 60 ? `<p class="mt-1 text-sm" style="color:#9a6a00">${icWarn()}Deine Pendelfahrten allein dauern ${mm(comSum(d))} pro Woche, mehr als die angegebenen ${hStd(Number(d.hours) || 0)} Std. Die App rechnet deshalb mit mindestens ${hm2(comSum(d))} Std. <button class="underline" onclick="draft('hours',${ja(comSum(d) / 60)});render()">Wert übernehmen</button></p>` : ''}`}
         <div class="mt-3">${chip('Zeit pro Tag festlegen', d.perDay, 'togglePerDay()')}</div>${weekPrev(d)}</div>`;
     body = `<h2 class="hd text-3xl font-semibold">Dein Alltag</h2><p class="mb-4 mt-1" style="color:var(--mute)">Der Plan richtet sich nach deiner Woche, nicht umgekehrt.</p><div class="space-y-6">
       <div><p class="mb-2 font-semibold">An welchen Tagen kannst du trainieren?</p><div class="chips">${SD.map((x,i) => chip(x, d.avail[i], `tgl('avail',${ja(i)})`)).join('')}</div></div>

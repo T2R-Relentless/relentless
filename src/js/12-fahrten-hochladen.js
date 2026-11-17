@@ -146,7 +146,7 @@ async function uploadRides(inp){
 }
 function delMan(id){ S.man = (S.man || []).filter(a => a.id !== id); if (S.p && S.plan) analyze(); save(); render(); }
 function uploadCard(){
-  const man = S.man || [], msgs = upMsg.map(([n, t, ok]) => `<p class="text-sm" style="color:${esc(ok ? 'var(--ok)' : '#c0392b')}">${ok ? '✓' : '⚠'} <b>${esc(n)}</b>: ${esc(t)}</p>`).join('');
+  const man = S.man || [], msgs = upMsg.map(([n, t, ok]) => `<p class="text-sm" style="color:${esc(ok ? 'var(--ok)' : '#c0392b')}">${ok ? '✓' : icWarn()} <b>${esc(n)}</b>: ${esc(t)}</p>`).join('');
   const list = man.slice(0, 6).map(a => `<div class="flex items-center gap-2 rounded-xl p-3 text-sm" style="background:var(--tint);border:1px solid var(--line)"><span class="min-w-0 flex-1"><span class="block truncate font-semibold">${esc(a.n)}</span><span style="color:var(--mute)">${rel(a)}, ${a.km.toLocaleString('de-DE')} km, ${mm(Math.round(a.sec / 60))}, TSS ${a.tss}${a.est ? ' (geschätzt)' : ''}</span></span><button class="ghost !px-3 !py-1.5" onclick="delMan('${ja(a.id)}')" aria-label="Fahrt entfernen">Entfernen</button></div>`).join('');
   return fold('up', 'Fahrten hochladen', `<p class="text-sm" style="color:var(--mute)">Lade aufgezeichnete Fahrten als Datei hoch. Die App gleicht sie mit deinem Plan ab, und Fahrten dieser Woche werden automatisch der Einheit am selben Tag zugeordnet und bewertet. Erlaubt sind FIT, GPX und TCX, auch als ZIP oder GZ. Die Dateien werden nur in deinem Browser ausgewertet und nicht hochgeladen.</p>
     <label class="btn mt-3 inline-block cursor-pointer">Dateien wählen<input type="file" multiple accept=".fit,.gpx,.tcx,.zip,.gz,.xml" style="display:none" onchange="uploadRides(this)"></label>

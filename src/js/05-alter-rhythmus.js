@@ -121,7 +121,7 @@ function ageUi(d, light, set){
     <p class="mt-3 mb-2 text-sm" style="color:var(--mute)">Abstand zwischen harten Einheiten</p><div class="flex flex-wrap gap-2">${chip('Normal', !g, 'setGap(false)')}${chip('Mehr Abstand', g, 'setGap(true)')}</div>
     ${own ? `<button class="mt-2 text-sm font-semibold" style="color:var(--teal);background:none;border:0;padding:0;min-height:44px" onclick="agAuto()">Vorschlag nach Alter verwenden</button>` : ''}
     ${hint ? `<p class="mt-3 p-2.5 text-sm" style="background:var(--tint);border:1px solid var(--line)">${hint}${!light && old && !(d.strN > 0) && !set ? ' Krafttraining ist ab 50 besonders wertvoll, weil es Muskelmasse und Kraft erhält. Du kannst es in der Planung dazunehmen.' : ''}</p>` : ''}${turn}
-    ${agMsg && (agPl() || !S.p) ? `<p class="mt-2 text-sm" style="color:#c0392b">⚠ <span>${esc(agMsg)}</span></p>` : ''}
+    ${agMsg && (agPl() || !S.p) ? `<p class="mt-2 text-sm" style="color:#c0392b">${icWarn()}<span>${esc(agMsg)}</span></p>` : ''}
     <p class="mt-2 text-xs" style="color:var(--mute)">Mit den Jahren braucht der Körper nach harten Einheiten meist länger, um sich zu erholen. Mit mehr Abstand legt die App harte Einheiten möglichst so, dass zwei lockere Tage dazwischen liegen. Die Studienlage dazu ist nicht eindeutig, darum entscheidest du selbst. Die Intensität der Einheiten bleibt gleich. Die Angabe bleibt nur auf deinem Gerät.</p></div>`;
 }
 /* Einstellungen → Training → Alter und Erholung */

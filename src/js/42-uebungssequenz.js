@@ -24,6 +24,9 @@ const IC_P = {
   half:'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/>',
   sound:'<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>'
 };
+/* Hinweis- und Schließen-Symbol als SVG statt der Textzeichen ⚠ und ✕ (SVG statt Emoji, gleich in hell und dunkel) */
+function icWarn(){ return ic('warn', 16, 'margin:-3px 4px 0 0'); }
+function icX(){ return ic('close', 18); }
 function ic(n, s = 22, st = ''){ return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="display:inline-block;vertical-align:middle;flex:none${st ? ';' + st : ''}">${IC_P[n] || ''}</svg>`; }
 const SQ_DEF = {snd:true, voice:true, hints:true, vol:'m', vib:true, tr:10, hideMute:false, hideNoVoice:false, vs:'nat'};
 function sqCfg(){ const c = S.sqCfg && typeof S.sqCfg === 'object' ? S.sqCfg : {}; const o = {...SQ_DEF, ...c};

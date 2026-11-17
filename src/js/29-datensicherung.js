@@ -138,7 +138,7 @@ function bkModal(){
 const bkWhen = t => { const d = new Date(t); return fmt(lstr(d)) + ', ' + d.toTimeString().slice(0, 5) + ' Uhr'; };
 function bkUndoBar(){
   if (!bkUndo || Date.now() - bkUndo.at > 10 * 60e3) return '';
-  return `<div class="flex items-center gap-2 text-sm" role="status" style="background:var(--tint);border:1px solid var(--ice);padding:8px 10px 8px 14px;margin:10px 16px 0;color:var(--ink)"><span class="min-w-0 flex-1">Vorheriger Stand gesichert (${esc(bkUndo.why.replace(/^Vor dem /, '').replace(/^Vor /, ''))}).</span><button class="ghost !px-3 !py-1 text-sm" onclick="bkUndoGo()">Rückgängig</button><button class="text-sm" style="color:var(--mute);padding:4px 6px;background:none;border:0" aria-label="Hinweis schließen" onclick="bkUndo=null;render()">✕</button></div>`;
+  return `<div class="flex items-center gap-2 text-sm" role="status" style="background:var(--tint);border:1px solid var(--ice);padding:8px 10px 8px 14px;margin:10px 16px 0;color:var(--ink)"><span class="min-w-0 flex-1">Vorheriger Stand gesichert (${esc(bkUndo.why.replace(/^Vor dem /, '').replace(/^Vor /, ''))}).</span><button class="ghost !px-3 !py-1 text-sm" onclick="bkUndoGo()">Rückgängig</button><button class="text-sm" style="min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--mute);padding:4px 6px;background:none;border:0" aria-label="Hinweis schließen" onclick="bkUndo=null;render()">${icX()}</button></div>`;
 }
 
 /* ---------- Automatische Sicherungen im Gerät (Liste unter „Meine Pläne“) ---------- */

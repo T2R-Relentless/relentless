@@ -119,7 +119,7 @@ function zxCard(){
     <p class="mt-3 text-sm font-semibold">Zeitraum</p><div class="mt-1.5 flex flex-wrap gap-2">${chip('Ganzer Plan ab heute', zxRange === 'all', "zxRange='all';zxMsg=null;render()")}${chip('Nächste 4 Wochen', zxRange === '4w', "zxRange='4w';zxMsg=null;render()")}</div>
     <p class="mt-3 text-sm">${items.length ? `<b>${items.length} Workouts</b> aus ${wk} ${wk === 1 ? 'Woche' : 'Wochen'}, zusammen ${hStd(mins / 60)} Std.` : 'Keine passenden Einheiten im Zeitraum.'}</p>
     ${zxCardNote()}<button class="btn mt-3" ${items.length ? '' : 'disabled'} onclick="zxExport()">Zwift-Workouts herunterladen (.zip)</button>${S.zxExp && !zxDiff() ? `<p class="mt-2 text-xs" style="color:var(--mute)">Zuletzt exportiert am ${fmt(lstr(new Date(S.zxExp.at)))}. Seitdem hat sich am Plan nichts geändert.</p>` : ''}
-    ${zxMsg ? `<p class="mt-2 text-sm" style="color:${esc(zxMsg.err ? '#c0392b' : 'var(--ok)')}">${zxMsg.err ? '⚠' : '✓'} ${esc(zxMsg.t)}</p>` : ''}
+    ${zxMsg ? `<p class="mt-2 text-sm" style="color:${esc(zxMsg.err ? '#c0392b' : 'var(--ok)')}">${zxMsg.err ? icWarn() : '✓'} ${esc(zxMsg.t)}</p>` : ''}
     <details class="mt-3 text-sm"><summary class="cursor-pointer" style="color:var(--teal)">So kommen die Workouts in Zwift</summary><ol class="mt-2 list-decimal space-y-1 pl-5" style="color:var(--mute)">
       <li>ZIP-Datei am Computer entpacken.</li>
       <li>Alle .zwo-Dateien in den Ordner <b>Dokumente/Zwift/Workouts/</b> und dort in den Unterordner mit deiner Zwift-Nummer kopieren (gibt es nur einen Unterordner, ist es dieser).</li>

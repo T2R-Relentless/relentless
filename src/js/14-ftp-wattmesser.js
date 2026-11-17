@@ -130,7 +130,7 @@ function anaWhy(a, d, planH){
   </div></details>`;
 }
 function anaBody(box = ''){
-  const a = anaCalc(), d = S.d, msgs = histMsg.map(([n, t, ok]) => `<p class="text-sm" style="color:${esc(ok ? 'var(--ok)' : '#c0392b')}">${ok ? '✓' : '⚠'} <b>${esc(n)}</b>: ${esc(t)}</p>`).join('');
+  const a = anaCalc(), d = S.d, msgs = histMsg.map(([n, t, ok]) => `<p class="text-sm" style="color:${esc(ok ? 'var(--ok)' : '#c0392b')}">${ok ? '✓' : icWarn()} <b>${esc(n)}</b>: ${esc(t)}</p>`).join('');
   let inner = `<p class="text-sm" style="color:var(--mute)">Lade Fahrten der letzten Monate hoch (FIT, GPX oder TCX, auch als ZIP oder GZ). Die App errechnet daraus deinen FTP und zusätzlich deinen aktuellen Trainingsumfang und deine Form, damit der Plan dort startet, wo du wirklich stehst. Für den FTP braucht es Leistungsdaten (Powermeter oder smarter Rollentrainer), ideal sind 6 bis 12 Wochen. Alles bleibt in deinem Browser.</p>
     <label class="btn mt-3 inline-block cursor-pointer">${histBusy ? 'Wird ausgewertet …' : 'Fahrten wählen'}<input type="file" multiple accept=".fit,.gpx,.tcx,.zip,.gz,.xml" style="display:none" onchange="uploadHist(this)"></label>
     <div class="mt-3 space-y-1">${msgs}</div>${box}`;
