@@ -1,0 +1,43 @@
+# Prüft jeden Pull Request und jeden Stand auf main: Build passt, Versionen stimmen, alle Browser-Tests laufen.
+# Netlify baut zusätzlich zu jedem Pull Request eine Vorschau (Deploy Preview), die man auf dem iPhone öffnen kann.
+name: Prüfungen
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Schnelle Prüfungen (Build, Versionen, Syntax, doppelte Funktionen, CSP)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python3 tools/check.py --gegen "origin/${{ github.base_ref }}"
+          else
+            python3 tools/check.py
+          fi
+
+      - name: Browser-Tests (Chrome ohne Fenster)
+        env:
+          TZ: Europe/Berlin
+        run: node tools/test.mjs

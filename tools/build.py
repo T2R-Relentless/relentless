@@ -83,12 +83,26 @@ def build():
     return INC.sub(lambda m: include(m.group(1)), tpl)
 
 
+BLOB = re.compile(r'(id="i18n-en">)([A-Za-z0-9+/=]+)(<)')
+
+
+def comparable(html):
+    """Für --check: eingebettete gzip-Daten entpackt vergleichen. Die komprimierten Bytes hängen von der zlib-Fassung
+    des Rechners ab (z. B. zlib-ng auf Linux), der Inhalt nicht. So meldet --check auf jedem Rechner dasselbe."""
+    def unpack(m):
+        try:
+            return m.group(1) + gzip.decompress(base64.b64decode(m.group(2))).decode('utf-8') + m.group(3)
+        except Exception:
+            return m.group(0)
+    return BLOB.sub(unpack, html)
+
+
 def main():
     html = build()
     if '--check' in sys.argv:
         with open(OUT, encoding='utf-8', newline='') as f:
             cur = f.read()
-        if cur != html:
+        if comparable(cur) != comparable(html):
             print('public/index.html passt nicht zu src/. Bitte "python3 tools/build.py" ausführen.')
             sys.exit(1)
         print('public/index.html ist aktuell.')

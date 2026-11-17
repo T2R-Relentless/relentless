@@ -23,15 +23,23 @@ Gerät. Gehostet auf Netlify, nutzbar auch als Claude-Artefakt.
 
 ## Arbeitsablauf
 
-1. In `src/` ändern.
+Ausführlich mit Rollen, Freigabe und Veröffentlichung: `docs/ENTWICKLUNG.md`.
+
+1. Eigenen Branch anlegen (`feature/f34-…` oder `fix/…`) und in `src/` ändern.
 2. Bauen:
    ```bash
    python3 tools/build.py
    ```
-3. Testen: `python3 tests/serve.py`, dann `http://localhost:8765/tests/` öffnen und **Tests starten**.
-   Die App selbst ist unter `http://localhost:8765/public/` erreichbar.
-4. Bei gewollten Textänderungen die Vergleichsstände neu schreiben und mit `git diff tests/snapshots` prüfen.
-5. `src/`, `public/index.html` und ggf. `tests/snapshots/` zusammen committen.
+3. Prüfen und testen:
+   ```bash
+   python3 tools/check.py --gegen origin/main   # Sekunden
+   node tools/test.mjs                          # alle Browser-Tests ohne Fenster, etwa 3 Minuten
+   ```
+   Zum Ansehen: `python3 tests/serve.py`, dann `http://localhost:8765/tests/` bzw. `/public/`.
+4. Bei gewollten Textänderungen die Vergleichsstände neu schreiben (`node tools/test.mjs --neu`) und mit
+   `git diff tests/snapshots` prüfen.
+5. Version hochzählen: `python3 tools/version.py fix` bzw. `neu`.
+6. `src/`, `public/` und ggf. `tests/snapshots/` zusammen committen, Pull Request, die CI prüft automatisch.
 
 `python3 tools/build.py --check` meldet, ob `public/index.html` zum Stand in `src/` passt. Netlify führt den Build beim
 Veröffentlichen selbst aus (`netlify.toml`).

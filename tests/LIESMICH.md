@@ -13,6 +13,9 @@ Dann im Browser `http://localhost:8765/tests/` öffnen und **Tests starten** kli
 - `?nur=plan` führt nur Tests aus, deren Datei oder Name zum Suchbegriff passt (z. B. `?nur=storage`, `?nur=Szenario event`).
 - `?auto` startet die Tests sofort beim Öffnen.
 
+Ohne Klicken (Terminal, Claude Code, GitHub-CI): `node tools/test.mjs` startet Server und Chrome ohne Fenster selbst.
+`--nur=plan` filtert wie `?nur=`, `--neu` schreibt die Vergleichsstände neu. Braucht Node ab 22 und Google Chrome.
+
 ## Was geprüft wird
 
 | Datei | Inhalt |

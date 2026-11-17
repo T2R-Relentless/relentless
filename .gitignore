@@ -24,3 +24,6 @@ tests/tmp-*.html
 * 2.*
 * 2
 claude/privat/
+
+# Python-Zwischendateien
+__pycache__/
