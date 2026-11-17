@@ -12,6 +12,26 @@ Regeln für die Arbeit am Code stehen in `CLAUDE.md`, die Ordner in `LIESMICH.md
 | **GitHub** `T2R-Relentless/relentless` | Einzige Quelle des Codes. Jede Änderung kommt als Pull Request, die CI prüft automatisch |
 | **Netlify** | Baut zu jedem Pull Request eine Vorschau-Adresse und veröffentlicht `main` auf `teamrelentlessriders.netlify.app` |
 
+## Agenten-Team: du entscheidest, das Team arbeitet
+
+| Agent | Aufgabe | Darf ändern |
+|---|---|---|
+| `trainingswissenschaftler` | fachliche Regeln mit Quellen vorab, fachliche Abnahme danach | nichts |
+| `entwickler` | Umsetzung in `src/`, Texte DE/EN, Hinweis, Neuigkeiten, Version | `src/`, `public/` |
+| `tester` | Tests schreiben, alle Tests ohne Fenster, Vergleichsstände bewerten | `tests/` |
+| `code-pruefer` | unabhängige Prüfung: Fehler, Daten, Sicherheit, Regeln | nichts |
+| `design-pruefer` | Bildschirmfotos hell/dunkel/Englisch, T2R-Design, 375 pt, 44 pt, Kontrast | nur Bilder |
+| `release-manager` | Push, Pull Request, CI, Vorschau, nach Merge Live-Version prüfen | Git/GitHub |
+
+**Deine drei Entscheidungspunkte:**
+1. **Starten:** Issue mit dem Label `umsetzen` versehen (Cloud, ohne Mac) oder in Claude Code `/aufgabe <Prompt>`.
+2. **Rückfragen:** Das Team setzt bei Wertungsfragen die Empfehlung um und legt sie dir vor. Anders entscheiden:
+   Kommentar `@claude B bitte` im Pull Request.
+3. **Veröffentlichen:** In der Vorschau ansehen, dann im Pull Request **Squash and merge**. Nicht gewollt: Pull Request schließen.
+
+Aus einer Idee wird eine Aufgabe mit `/idee <Text>` oder im T2R-Projekt in claude.ai; das Issue-Formular „Aufgabe“
+nimmt beides auf.
+
 ## Ablauf einer Änderung
 
 1. **Idee → Backlog:** Eintrag mit Nummer (`F` Funktion, `B` Fehler, `A` Prüfung), Beobachtung, Soll, Bezug.
@@ -47,9 +67,10 @@ Fehler in der veröffentlichten Version: in Netlify unter **Deploys** den letzte
 | `python3 tools/check.py [--gegen origin/main]` | schnelle Prüfungen (Sekunden) |
 | `node tools/test.mjs [--nur=plan] [--neu]` | alle bzw. gefilterte Browser-Tests ohne Fenster; `--neu` schreibt Vergleichsstände neu |
 | `python3 tools/version.py fix` / `neu` | Version an allen Stellen hochzählen (Fehlerkorrektur / neue Funktion) und neu bauen |
-| `python3 tests/serve.py` | Testseite und App im Browser (`/tests/`, `/public/`), z. B. zum Ansehen oder für Bildschirmfotos |
+| `node tools/test.mjs --skript=x.js` | eigenes Skript auf der Testseite, z. B. Bildschirmfotos mit `boot()` und `shot()` |
+| `python3 tests/serve.py` | Testseite und App im Browser (`/tests/`, `/public/`), z. B. zum Ansehen |
 
-In Claude Code: `/aufgabe`, `/pruefen`, `/freigabe` (Dateien in `.claude/commands/`).
+In Claude Code: `/idee`, `/aufgabe`, `/pruefen`, `/freigabe` (Dateien in `.claude/commands/`).
 
 ## Namen
 
@@ -69,8 +90,11 @@ In Claude Code: `/aufgabe`, `/pruefen`, `/freigabe` (Dateien in `.claude/command
 - **GitHub → Settings → Branches → Add rule für `main`:** „Require a pull request before merging“ und „Require status
   checks to pass“ mit der Prüfung **Prüfungen / pruefen**. Dann kommt nichts Ungeprüftes mehr auf `main`.
 - **Netlify → Site configuration → Build & deploy → Deploy Previews:** „Any pull request“ einschalten (Standard).
-- Damit Claude aus claude.ai heraus pushen kann: die Claude-GitHub-App für `T2R-Relentless` installieren.
-  Ohne sie pusht nur Claude Code auf dem Mac.
+- **Agenten in der Cloud** (`.github/workflows/claude.yml`): Claude-GitHub-App für `T2R-Relentless` installieren,
+  auf dem Mac `claude setup-token` ausführen und den Wert als Secret `CLAUDE_CODE_OAUTH_TOKEN` anlegen, Label `umsetzen`
+  anlegen. Läuft über das Claude-Abo (Pro/Max) und zählt zu dessen Nutzungsgrenzen. Die App erlaubt auch claude.ai das Pushen.
+- **Auf dem Mac** (für `/aufgabe` lokal): Node ab 22 (nodejs.org) und Google Chrome installieren, optional `gh` (GitHub CLI).
+- Repo nicht in iCloud Drive ablegen (Synchronisationskopien „… 2.js“), z. B. `~/Entwicklung/relentless`.
 
 ## Bekannte technische Schulden (bei Gelegenheit, nicht auf einmal)
 

@@ -5,11 +5,14 @@
 //   node tools/test.mjs              alle Tests
 //   node tools/test.mjs --nur=plan   nur Tests, deren Datei oder Name passt (wie ?nur= auf der Testseite)
 //   node tools/test.mjs --neu        Vergleichsstände neu schreiben (danach git diff tests/snapshots prüfen)
+//   node tools/test.mjs --skript=x.js  eigenes Skript auf der Testseite ausführen statt der Tests, z. B. für
+//                                      Bildschirmfotos: const a = await boot(); a.page('logbuch'); return await shot(a, 'f34-logbuch');
+//                                      (Helfer aus tests/lib/harness.js: boot, makePlan, shot …; Rückgabewert wird ausgegeben)
 //
 // Ohne Abhängigkeiten: Node ab 22 (eingebautes WebSocket) und Google Chrome oder Chromium.
 // Chrome wird gesucht unter $CHROME, im macOS-Programmordner und im Pfad (google-chrome, chromium).
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +22,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const only = (args.find(a => a.startsWith('--nur=')) || '').slice(6);
 const update = args.includes('--neu');
+const skript = (args.find(a => a.startsWith('--skript=')) || '').slice(9);
 const PORT = 8700 + Math.floor(Math.random() * 60);
 const DBG = PORT + 100;
 const TIMEOUT_MS = 10 * 60 * 1000;
@@ -77,6 +81,15 @@ async function main() {
 
   await send('Runtime.enable');
   await send('Page.enable');
+  if (skript) {
+    await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/tests/` });
+    await waitFor(async () => (await send('Runtime.evaluate', { expression: "typeof boot === 'function' && document.readyState === 'complete'", returnByValue: true })).result?.result?.value, 'Testseite lädt');
+    const code = readFileSync(skript, 'utf8');
+    const r = await send('Runtime.evaluate', { expression: `(async () => {\n${code}\n})().then(x => JSON.stringify(x ?? null))`, awaitPromise: true, returnByValue: true });
+    if (r.result?.exceptionDetails) { console.error('Skript-Fehler:', r.result.exceptionDetails.exception?.description || r.result.exceptionDetails.text); return 1; }
+    console.log(r.result.result.value);
+    return 0;
+  }
   const q = new URLSearchParams({ auto: update ? 'neu' : '' });
   if (only) q.set('nur', only);
   await send('Page.navigate', { url: `http://127.0.0.1:${PORT}/tests/?${q}` });

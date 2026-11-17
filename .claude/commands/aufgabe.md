@@ -1,23 +1,33 @@
 ---
-description: Eine Aufgabe (Prompt aus dem T2R-Projekt oder Backlog-Nummer) auf eigenem Branch umsetzen, prüfen und als Pull Request vorbereiten
-argument-hint: <Prompt-Text, Datei oder Backlog-Nummer>
+description: Aufgabe vollständig mit dem Agenten-Team umsetzen – der Nutzer bekommt am Ende nur eine Entscheidungsvorlage
+argument-hint: <Prompt-Text, Datei, Issue-Nummer oder Backlog-Nummer>
 ---
 
-Setze diese Aufgabe nach dem Ablauf in `docs/ENTWICKLUNG.md` um:
+Du leitest das Agenten-Team (`.claude/agents/`). Ziel: Der Nutzer muss nur noch entscheiden, nicht eingreifen.
+Arbeite selbstständig bis zur Entscheidungsvorlage; frag zwischendurch nur bei einer Entscheidung, die sich nicht
+rückgängig machen lässt.
 
-$ARGUMENTS
+Aufgabe: $ARGUMENTS
+(Issue-Nummer → `gh issue view <nr> --comments` lesen. Backlog-Nummer ohne Text → nachfragen, den Prompt einzufügen.)
 
-1. **Ausgangsstand:** `git switch main && git pull`, dann `python3 tools/check.py`. Ist main nicht grün, zuerst melden.
-2. **Branch:** `feature/<nummer>-<kurzname>` für Funktionen, `fix/<kurzname>` für Fehler.
-3. **Verstehen vor Bauen:** betroffene Dateien in `src/js/` suchen, bestehende Muster übernehmen. Unklare fachliche
-   Entscheidungen (Trainingslogik, Planänderungen) nicht raten: als Frage sammeln und am Ende melden.
-4. **Umsetzen** in kleinen Commits (Nachricht: `F34: was sich ändert`). Regeln aus `CLAUDE.md` gelten.
-5. **Tests:** neue Logik bekommt Tests in `tests/<thema>.test.js` (in `tests/index.html` eintragen).
-   `node tools/test.mjs --nur=<thema>` während der Arbeit, am Ende `node tools/test.mjs` komplett.
-   Gewollte Textänderungen: `node tools/test.mjs --neu`, dann `git diff tests/snapshots` prüfen.
-6. **Version:** `python3 tools/version.py neu` (neue Funktion, plus `WN_DATA` und `DYK`) oder `fix` (Fehlerkorrektur).
-7. **Prüfen:** `python3 tools/check.py --gegen origin/main` und `node tools/test.mjs` müssen grün sein.
-8. **Bericht** `claude/bericht-<nummer>-<kurzname>-<JJJJ-MM-TT>.md` nach `docs/vorlagen/bericht.md`.
-9. **Pull Request vorbereiten**, aber nicht pushen: Zusammenfassung, offene Fragen und die Zeile
-   „Zum Hochladen: ‚Ja, hochladen‘ antworten“ ausgeben. Erst nach dieser Freigabe `git push -u origin <branch>` und
-   `gh pr create --fill` (Vorlage `.github/pull_request_template.md`).
+## Ablauf
+1. **Start:** `git switch main && git pull`, `python3 tools/check.py`. Branch `feature/<nr>-<kurzname>` bzw. `fix/<kurzname>`.
+2. **Fachlich vorab** – nur wenn Trainingslogik, Zahlen oder Trainingstipps betroffen sind:
+   Agent `trainingswissenschaftler`, Auftrag A (Spezifikation). Blockierende Wertungsfragen sammeln, mit Empfehlung
+   weiterarbeiten (die Empfehlung umsetzen, die Frage in die Entscheidungsvorlage).
+3. **Umsetzen:** Agent `entwickler` mit Prompt + fachlichen Regeln.
+4. **Testen:** Agent `tester` (neue Tests, komplette Suite, Vergleichsstände bewerten).
+5. **Prüfen, parallel:** `code-pruefer`; `design-pruefer` bei sichtbaren Änderungen; `trainingswissenschaftler`
+   Auftrag B bei Trainingslogik.
+6. **Korrekturschleife:** Blockierende und wichtige Befunde an `entwickler`/`tester` zurück, danach nur die betroffenen
+   Prüfer erneut. Höchstens 3 Runden; bleibt etwas offen, kommt es als Risiko in die Vorlage.
+7. **Abschluss:** Version (`tools/version.py`), `python3 tools/check.py --gegen origin/main` und `node tools/test.mjs` grün.
+   Bericht `claude/bericht-<nr>-<kurzname>-<JJJJ-MM-TT>.md` (Vorlage `docs/vorlagen/bericht.md`, Bilder vom Design-Prüfer).
+8. **Entscheidungsvorlage** nach `docs/vorlagen/entscheidung.md` als letzte Ausgabe – nichts weiter davor oder danach.
+   Dann warten. Erst bei „Ja, hochladen“: Agent `release-manager` (Push, Pull Request, CI, Vorschau-Adresse).
+
+## Regeln
+- Agenten bekommen jeweils den vollen Prompt, die fachlichen Regeln und die Befunde der Vorrunde mit.
+- Den Nutzer nicht mit Zwischenständen behelligen. Fortschritt nur als kurze Statuszeile.
+- Läuft die Aufgabe in der GitHub-Automatik (Issue mit Label `umsetzen` oder `@claude`), gilt das Label bzw. der
+  Kommentar des Besitzers als „Ja, hochladen“ für Branch und Pull Request – nie für den Merge auf `main`.

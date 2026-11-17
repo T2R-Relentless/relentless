@@ -1,0 +1,27 @@
+name: Aufgabe
+description: Neue Funktion oder Fehler für Relentless. Mit dem Label „umsetzen“ setzt das Agenten-Team sie um.
+labels: [aufgabe]
+body:
+  - type: dropdown
+    id: art
+    attributes:
+      label: Art
+      options: [Neue Funktion, Fehler, Inhalt/Texte, Prüfung]
+    validations:
+      required: true
+  - type: textarea
+    id: ziel
+    attributes:
+      label: Was soll danach gehen?
+      description: In Alltagssprache. Screenshots gern hier hineinziehen.
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Umsetzungs-Prompt (optional)
+      description: Fertiger Prompt aus dem T2R-Projekt nach docs/vorlagen/prompt.md. Leer lassen, dann schreibt das Team ihn selbst.
+  - type: textarea
+    id: entschieden
+    attributes:
+      label: Schon entschieden / nicht gewünscht

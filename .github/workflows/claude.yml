@@ -1,0 +1,88 @@
+# Agenten-Team in der Cloud: setzt Aufgaben ohne Mac um.
+#  - Issue bekommt das Label „umsetzen“ → komplette Umsetzung nach .claude/commands/aufgabe.md, Ergebnis als Pull Request
+#  - Kommentar mit „@claude …“ in Issue oder Pull Request → Rückfrage beantworten, Änderung nachziehen, Fehler beheben
+# Nur Besitzer und Mitglieder können auslösen: Labels setzen dürfen nur sie, @claude zählt nur von ihnen (öffentliches Repo). Gemerged wird nie automatisch.
+#
+# Einmal einrichten:
+#  1. Claude-GitHub-App für T2R-Relentless installieren: https://github.com/apps/claude
+#  2. Auf dem Mac `claude setup-token` ausführen (Pro/Max-Abo) und den Wert als Secret CLAUDE_CODE_OAUTH_TOKEN anlegen:
+#     GitHub → Settings → Secrets and variables → Actions → New repository secret
+#  3. Label „umsetzen“ anlegen (Issues → Labels → New label)
+# Ohne Secret laufen die Jobs nicht los (Bedingung unten).
+name: Claude
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+concurrency:
+  group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+jobs:
+  umsetzen:
+    if: >-
+      github.event_name == 'issues' && github.event.label.name == 'umsetzen'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Agenten-Team
+        uses: anthropics/claude-code-action@v1
+        env:
+          TZ: Europe/Berlin
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: true
+          prompt: |
+            Setze Issue #${{ github.event.issue.number }} in ${{ github.repository }} um.
+            Folge exakt .claude/commands/aufgabe.md (Agenten-Team, Korrekturschleife, Bericht) und CLAUDE.md.
+            Das Label „umsetzen“ vom Besitzer gilt als „Ja, hochladen“ für Branch und Pull Request, nie für den Merge.
+            Zum Schluss mit dem Agenten release-manager pushen und einen Pull Request mit „Closes #${{ github.event.issue.number }}“
+            anlegen; die Entscheidungsvorlage (docs/vorlagen/entscheidung.md) ist die Beschreibung des Pull Requests und
+            zusätzlich ein Kommentar im Issue. Offene fachliche Fragen nicht raten: Empfehlung umsetzen, Frage in die Vorlage.
+          claude_args: >-
+            --max-turns 200
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Task,Agent,TodoWrite,Bash(python3:*),Bash(node:*),Bash(git:*),Bash(gh:*),Bash(ls:*),Bash(cat:*),Bash(mkdir:*),Bash(mv:*)"
+
+  rueckfrage:
+    if: >-
+      (github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
+      contains(github.event.comment.body, '@claude') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Agenten-Team
+        uses: anthropics/claude-code-action@v1
+        env:
+          TZ: Europe/Berlin
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: true
+          claude_args: >-
+            --max-turns 120
+            --append-system-prompt "Halte dich an CLAUDE.md und .claude/commands/aufgabe.md. Code-Änderungen: tester und code-pruefer danach laufen lassen, Version prüfen, nie auf main pushen oder mergen. Antworte knapp auf Deutsch."
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Task,Agent,TodoWrite,Bash(python3:*),Bash(node:*),Bash(git:*),Bash(gh:*),Bash(ls:*),Bash(cat:*),Bash(mkdir:*),Bash(mv:*)"

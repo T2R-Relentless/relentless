@@ -1,7 +1,13 @@
 # Relentless – Regeln für die Arbeit an der App
 
 Trainingsplan-PWA in Vanilla JS. Quellen in `src/`, Build mit `python3 tools/build.py` (erzeugt `public/index.html`).
-Ablauf, Namen und „Fertig heißt“: `docs/ENTWICKLUNG.md`. Befehle in Claude Code: `/aufgabe`, `/pruefen`, `/freigabe`.
+Ablauf, Namen und „Fertig heißt“: `docs/ENTWICKLUNG.md`. Befehle in Claude Code: `/idee`, `/aufgabe`, `/pruefen`, `/freigabe`.
+
+## Agenten-Team (`.claude/agents/`)
+Der Nutzer will nur entscheiden, nicht eingreifen. Aufgaben laufen über `/aufgabe` mit dem Team:
+`trainingswissenschaftler` (fachliche Regeln vorab, Abnahme danach) → `entwickler` → `tester` →
+`code-pruefer` + `design-pruefer` (+ Fachabnahme) → Korrekturschleife → Entscheidungsvorlage (`docs/vorlagen/entscheidung.md`)
+→ nach „Ja, hochladen“ `release-manager`. Zwischenstände nicht melden, Wertungsfragen mit Empfehlung in die Vorlage.
 
 ## Prüfen (vor jedem Commit, die CI prüft dasselbe)
 - `python3 tools/check.py --gegen origin/main` – Build aktuell, Versionen gleich, Syntax, doppelte Funktionen, kein eval, Version erhöht (Sekunden)
@@ -12,7 +18,9 @@ Ablauf, Namen und „Fertig heißt“: `docs/ENTWICKLUNG.md`. Befehle in Claude 
 ## Grundregeln
 - Keine Neuentwicklung von Grund auf. Bestehendes Design und Funktionen erhalten. Keine Dateien löschen oder unnötig überschreiben.
 - Keine größeren Änderungen ohne Zustimmung. Planänderungen für laufende Pläne nur mit Zustimmung der Nutzerin bzw. des Nutzers.
-- Kein Push, kein Merge, kein Deployment ohne ausdrückliche Freigabe („Ja, hochladen“).
+- Kein Push, kein Merge, kein Deployment ohne ausdrückliche Freigabe („Ja, hochladen“). In der GitHub-Automatik
+  (`.github/workflows/claude.yml`) gilt das Label `umsetzen` bzw. `@claude` des Besitzers als Freigabe für Branch und
+  Pull Request – der Merge auf `main` bleibt immer beim Nutzer.
 - Daten bleiben im Gerät.
 - Texte auf Deutsch und Englisch (`src/i18n/en.json`), SVG statt Emoji, hell und dunkel, ab 375 pt Breite, Tippflächen mindestens 44 pt.
 - Bei jeder ausgelieferten Änderung die Version hochzählen (`APP_VERSION`/`APP_SW` in `src/js/44-version-neuigkeiten.js`, `public/sw.js`, `public/version.json`) – mit `tools/version.py`.
