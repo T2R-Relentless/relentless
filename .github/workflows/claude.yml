@@ -50,6 +50,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
+          label_trigger: umsetzen
           prompt: |
             Setze Issue #${{ github.event.issue.number }} in ${{ github.repository }} um.
             Folge exakt .claude/commands/aufgabe.md (Agenten-Team, Korrekturschleife, Bericht) und CLAUDE.md.
