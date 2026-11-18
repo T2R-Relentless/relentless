@@ -63,17 +63,19 @@ function exLowest(w, id, k){
   const low = el => {
     const M = inv.multiply(el.getScreenCTM()), P = (x, y) => new w.DOMPoint(x, y).matrixTransform(M).y, cs = w.getComputedStyle(el), sw = cs.stroke !== 'none' ? parseFloat(cs.strokeWidth) / 2 : 0, A = n => +el.getAttribute(n) || 0;
     if (el.tagName === 'line') return Math.max(P(A('x1'), A('y1')), P(A('x2'), A('y2'))) + sw;
-    if (el.tagName === 'circle') return P(A('cx'), A('cy')) + A('r') + sw;
+    if (el.tagName === 'circle') return P(A('cx'), A('cy')) + A('r');
+    if (el.tagName === 'path') { const b = el.getBBox(); return Math.max(P(b.x, b.y + b.height), P(b.x + b.width, b.y + b.height), P(b.x, b.y), P(b.x + b.width, b.y)); }
     if (el.tagName === 'rect') return Math.max(P(A('x'), A('y') + A('height')), P(A('x') + A('width'), A('y') + A('height'))) + sw;
     return -1e9;
   };
-  const vis = [...svg.querySelectorAll('.exb line, .exb circle, .exb rect')].filter(el => !el.closest('.exbo, .exbpull') && !el.classList.contains('exbmat'));
+  /* Trennränder (exbol, Rand von Kreisen und Füßen) haben Hintergrundfarbe und zählen nicht */
+  const vis = [...svg.querySelectorAll('.exb line, .exb circle, .exb rect, .exb path.exbft')].filter(el => !el.closest('.exbpull') && !el.classList.contains('exbmat') && !el.classList.contains('exbol'));
   const sinks = vis.map(el => low(el) - fy).filter(d => d > .6).map(d => d.toFixed(1));
-  const parts = [...svg.querySelectorAll('[data-p]')].map(g => { const p = g.dataset.p, l = Math.max(...[...g.querySelectorAll('line, circle')].filter(el => !el.closest('.exbo')).map(low));
+  const parts = [...svg.querySelectorAll('[data-p]')].map(g => { const p = g.dataset.p, l = Math.max(...[...g.querySelectorAll('line, circle, path.exbft')].filter(el => !el.classList.contains('exbol')).map(low));
     return {p, gap:+((p === 'head' && cu ? cy : fy) - l).toFixed(1)}; });
   /* Kopf hängt am Rumpf: Abstand Kopfmitte zur nächsten Rumpflinie höchstens Kopfradius + halbe Rumpfbreite */
   const hc = svg.querySelector('.exbhd circle'), H = hc && new w.DOMPoint(0, 0).matrixTransform(inv.multiply(hc.getScreenCTM()));
-  const neck = !H ? 0 : Math.min(...[...svg.querySelectorAll('.exbt line')].map(el => { const M = inv.multiply(el.getScreenCTM()), A = n => +el.getAttribute(n) || 0,
+  const neck = !H ? 0 : Math.min(...[...svg.querySelectorAll('.exbt line:not(.exbol)')].map(el => { const M = inv.multiply(el.getScreenCTM()), A = n => +el.getAttribute(n) || 0,
     p = new w.DOMPoint(A('x1'), A('y1')).matrixTransform(M), q = new w.DOMPoint(A('x2'), A('y2')).matrixTransform(M), dx = q.x - p.x, dy = q.y - p.y,
     t = Math.max(0, Math.min(1, ((H.x - p.x) * dx + (H.y - p.y) * dy) / (dx * dx + dy * dy || 1))), d = Math.hypot(p.x + t * dx - H.x, p.y + t * dy - H.y);
     return d - +hc.getAttribute('r') - parseFloat(w.getComputedStyle(el).strokeWidth) / 2; }));
@@ -102,5 +104,8 @@ test('Animation mit Mittelbild: gleiche Struktur, Hälfte zeigt genau das Mittel
     ok(T.ok && Array.isArray(T.nm), `${id}: Mittelbild vorhanden und passend`);
     const re = /(?<![A-Za-z])-?\d+(?:\.\d+)?/g, h = (a.w.exFrameAt(T, .5).match(re) || []).map(Number);
     ok(h.length === T.nm.length && h.every((x, i) => Math.abs(x - T.nm[i]) < .06), `${id}: k = 0,5 ist das Mittelbild`); });
-  const T = a.w.exTpl('deadbug'); ok(T.ok && T.nm === null, 'ohne Mittelbild wie bisher'); a.noErrors();
+  const T = a.w.exTpl('deadbug'); ok(T.ok && T.nm === null, 'ohne Mittelbild wie bisher');
+  /* Zahlen direkt hinter einem Buchstaben oder Dezimalpunkt würden beim Überblenden zerlegt (z. B. "L9.0" → "L9.0.0") */
+  PILOT.forEach(id => { const h = a.w.exFrameAt(a.w.exTpl(id), .37); ok(!/\d\.\d+\.\d/.test(h), `${id}: Zahlen im Zwischenbild unversehrt`); });
+  a.noErrors();
 });

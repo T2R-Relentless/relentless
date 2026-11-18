@@ -50,18 +50,21 @@
   .cb{stroke:var(--teal);stroke-width:2;stroke-dasharray:4 3}
   /* Übungsfigur mit Körperform (exB…, 02a-uebungen-figur.js): nahe/bewegte Seite kräftig, ferne Seite gedeckt, Zielmuskel türkis */
   .exb line{stroke-linecap:round;fill:none}
-  .exb .exbn line,.exb .exbt line,.exb .exbhd line{stroke:var(--ink)}
-  .exb .exbn circle,.exb .exbhd circle{fill:var(--ink)}
+  .exb .exbn line,.exb .exbt line{stroke:var(--ink)}
+  .exb .exbn circle,.exb .exbhd circle,.exb .exbhd path,.exb .exbn path.exbft{fill:var(--ink)}
   .exb .exbn line{stroke-width:7.5}
   .exb .exbt line{stroke-width:13}
   .exb .exbt.exbw line{stroke-width:21}
-  .exb .exbhd line{stroke-width:3}
-  .exb .exbf{opacity:.42}
+  .exb .exbf{opacity:.55}
   .exb .exbf line{stroke:var(--mute);stroke-width:7}
-  .exb .exbf circle{fill:var(--mute)}
-  .exb .exbn line.exbft,.exb .exbf line.exbft{stroke-width:5}
-  .exb .exbo line,.exb .exbo line.exbft{stroke:var(--tint);stroke-width:12}
-  .exb .exbo circle,.exb .exbhh{fill:var(--tint)}
+  .exb .exbf circle,.exb .exbf path.exbft{fill:var(--mute)}
+  /* Trennrand: unter jedem Glied ein breiterer Strich in Hintergrundfarbe, Hände, Kopf und Füße mit Rand (paint-order) */
+  .exb line.exbol{stroke:var(--tint)}
+  .exb .exbn line.exbol{stroke-width:11}
+  .exb .exbt line.exbol{stroke-width:16.5}
+  .exb .exbt.exbw line.exbol{stroke-width:24.5}
+  .exb .exbf line.exbol{stroke-width:10.5}
+  .exb .exbn circle,.exb .exbf circle,.exb .exbhd circle{stroke:var(--tint);stroke-width:3.5;paint-order:stroke}
   .exb .exbz{fill:var(--teal);opacity:.55}
   .exb .exbmat{fill:var(--line)}
   .exb .exbcu{fill:var(--panel);stroke:var(--mute);stroke-width:1.5}
