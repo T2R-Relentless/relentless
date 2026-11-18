@@ -61,11 +61,16 @@
   .exb .exbf circle{fill:var(--mute)}
   .exb .exbn line.exbft,.exb .exbf line.exbft{stroke-width:5}
   .exb .exbo line,.exb .exbo line.exbft{stroke:var(--tint);stroke-width:12}
-  .exb .exbo circle{fill:var(--tint)}
+  .exb .exbo circle,.exb .exbhh{fill:var(--tint)}
   .exb .exbz{fill:var(--teal);opacity:.55}
   .exb .exbmat{fill:var(--line)}
   .exb .exbcu{fill:var(--panel);stroke:var(--mute);stroke-width:1.5}
-  .exb .exbband{stroke:var(--mute);stroke-width:2.5}
+  .exb .exbband{stroke:var(--mute);stroke-width:4}
+  .exb .exbin rect{fill:var(--panel);stroke:var(--line);stroke-width:3}
+  .exb .exbin line{stroke:var(--ink);stroke-width:7}
+  .exb .exbin line.exbit{stroke-width:11}
+  .exb .exbin circle{fill:var(--ink)}
+  .exb .exbin rect.exbic{fill:var(--panel);stroke:var(--mute);stroke-width:3}
   .exb .exbanc{fill:var(--mute)}
   .exb .exbpull line,.exb .exbpull polyline,.exb .exbpull path{stroke:var(--ice);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
   /* Übungsfenster mit gegliedertem Text: Merksatz, antippbare Bewegungsschritte (halten das Bild an), Legende */

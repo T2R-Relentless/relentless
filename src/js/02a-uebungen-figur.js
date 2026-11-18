@@ -1,7 +1,7 @@
 /* ---------- Übungsfigur mit Körperform (exB…): Pilot für 6 Übungen, wiederverwendbar für alle weiteren ----------
    Aufbau: Jede Gliedmaße ist eine Kette aus verschachtelten Gruppen (translate + rotate) mit dicken Strichen und runden
-   Enden. exBLimb rechnet aus Gelenkpunkten Längen und Winkel. Start- und Endbild (EXP[id][0] und [1]) haben dieselbe
-   Struktur, exTpl/exTick überführen nur die Zahlen: Winkel drehen, Gliedmaßen behalten ihre Länge, Bögen laufen als Bogen.
+   Enden. exBLimb rechnet aus Gelenkpunkten Längen und Winkel. Start-, End- und optional Mittelbild (EXP[id][0], [1], [2])
+   haben dieselbe Struktur, exTpl/exFrameAt überführen nur die Zahlen: Winkel drehen, Gliedmaßen behalten ihre Länge, Bögen laufen als Bogen.
    Ebenen von hinten nach vorn: Matte/Geräte → ferne Seite gedeckt (exbf) → Rumpf (exbt) → Zielmuskel (exbz) → Kopf →
    nahe bzw. bewegte Seite kräftig (exbn). Farben nur über Klassen in app.css (hell und dunkel). */
 const exBf = n => (Math.abs(n) < .05 ? 0 : n).toFixed(1);
@@ -17,13 +17,17 @@ function exBIK(P, T, l1, l2, dir){
 /* Gliedmaße aus Gelenkpunkten [Wurzel, Gelenk …, Ende]. o.end: 'h' Hand, 'f' Fuß (o.fa = Fußwinkel zum letzten Glied, o.fl Länge);
    o.w: Zusatzdrehung je Glied (±360 für lange Bögen, damit der Arm außen herum läuft); o.z: Inhalt im Rahmen des ersten Glieds
    (x entlang des Glieds), z. B. eine Zielzone, die sich mitdreht; o.halo: Rand in Hintergrundfarbe darunter, damit die
-   Gliedmaße vor Rumpf oder anderem Bein lesbar bleibt. */
+   Gliedmaße vor Rumpf oder anderem Bein lesbar bleibt; o.h0: Hand an der Wurzel (Stützarm, der an der Hand am Boden
+   verankert ist); o.p: Name des Körperteils (data-p) für die Bodenprüfung im Test.
+   Regel gegen schwebende Körperteile: Was am Boden liegt oder stützt, ist die Wurzel der Kette (Knie, Stützhand), dann
+   bleibt es auch in den Zwischenbildern genau am Boden. */
 function exBLimb(pts, o = {}){
-  if (o.halo) return `<g class="exbo">${exBLimb(pts, {...o, halo:0, z:''})}</g>` + exBLimb(pts, {...o, halo:0});
+  if (o.halo) return `<g class="exbo">${exBLimb(pts, {...o, halo:0, z:'', p:''})}</g>` + exBLimb(pts, {...o, halo:0});
+  if (o.p) return `<g data-p="${o.p}">${exBLimb(pts, {...o, p:''})}</g>`;
   let s = '', abs = 0, L0 = 0, n = 0; const w = o.w || [];
   for (let i = 0; i < pts.length - 1; i++) {
     const L = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]), a = exBAng(pts[i], pts[i + 1]), r = (i ? exBNorm(a - abs) : a) + (w[i] || 0);
-    s += `<g transform="translate(${i ? exBf(L0) + ' 0' : exBf(pts[0][0]) + ' ' + exBf(pts[0][1])}) rotate(${exBf(r)})"><line x2="${exBf(L)}" y2="0"/>${i === 0 && o.z ? o.z : ''}`;
+    s += `<g transform="translate(${i ? exBf(L0) + ' 0' : exBf(pts[0][0]) + ' ' + exBf(pts[0][1])}) rotate(${exBf(r)})"><line x2="${exBf(L)}" y2="0"/>${i === 0 && o.h0 ? '<circle r="4"/>' : ''}${i === 0 && o.z ? o.z : ''}`;
     abs = a; L0 = L; n++;
   }
   if (o.end === 'h') s += `<circle cx="${exBf(L0)}" cy="0" r="4"/>`;
@@ -46,6 +50,8 @@ const exBArc = (p0, c, p1) => { const h = (q, a) => { const u = exBPol(q, 5, a +
 const exBG = (cls, ...parts) => `<g class="${cls}">${parts.join('')}</g>`;
 const exBFig = (...parts) => `<g class="exb">${parts.join('')}</g>`;
 const exBPt = (p, d) => [p[0] + d[0], p[1] + d[1]];
+/* Körperteil benennen (data-p, nur Buchstaben) für die Bodenprüfung im Test */
+const exBP = (p, s) => `<g data-p="${p}">${s}</g>`;
 /* Übungen mit gegliedertem Text (q, a, b …): fehlendes s aus b ableiten; läuft nach allen EXI-Definitionen (Ende 43c),
    exModal ruft es zur Sicherheit noch einmal auf */
 function exBFillS(){ try { Object.values(EXI).forEach(e => { if (e && Array.isArray(e.b) && !Array.isArray(e.s)) e.s = e.b.map(x => x[0]); }); } catch (err) { elog(err); } }
@@ -60,60 +66,83 @@ function exBDeadbug(ph){
   return exBFig(exBMat(),
     exBG('exbf', exBLimb(leg(Hf, -90, 0), {end:'f', fa:-90}), exBLimb(arm(S, -90), {end:'h'})),
     exBG('exbn', exBLimb(arm(Sf, ph ? -170 : -90), {end:'h'})),
-    exBG('exbt', exBLimb([H, S])), exBZone([74, 140.5], 16, 5.5), exBHead([38, 144], -90),
+    exBG('exbt', exBLimb([H, S], {p:'back'})), exBZone([74, 140.5], 16, 5.5), exBP('head', exBHead([38, 143.5], -90)),
     exBG('exbn', exBLimb(ph ? leg(H, -15, -7) : leg(H, -90, 0), {end:'f', fa:-90, halo:1})));
 }
 /* Pallof Press, Seitenansicht: Band schräg nach hinten zur fernen Seite, Zugpfeil zeigt die Zugrichtung */
 function exBPallof(ph){
-  const H = [80, 89], S = [80, 49], d = [-4, 0], A = [98, 40];
-  const leg = P => { const K = exBPol(P, 34, 80); return [P, K, exBPol(K, 33, 98)]; };
+  const H = [80, 89], S = [80, 49], d = [-4, 0], A = [88, 42], Ft = [82, 154.2];
+  /* Bein vom Fußgelenk (am Boden) zur Hüfte, Fuß als kurzer Strich nach vorn: so steht die Figur genau auf der Linie */
+  const leg = (F, P) => exBP('foot', exBLimb([F, exBIK(F, P, 33, 34, 'r'), P]) + `<line x1="${exBf(F[0])}" y1="155.5" x2="${exBf(F[0] + 9)}" y2="155.5" class="exbft"/>`);
   const arm = P => { const E = exBPol(P, 19, ph ? 5 : 65); return [P, E, exBPol(E, 17, ph ? 5 : -52)]; };
   /* Befestigung auf der fernen Seite (gedeckt, etwas höher = in der Tiefe) etwa auf Höhe der Hände; Band kurz schräg in die Tiefe */
   const hd = arm(S)[2], a = exBAng(hd, A), L = Math.hypot(A[0] - hd[0], A[1] - hd[1]), p = exBPol(exBPol(hd, 3, a), 7, a + 90), q = exBPol(exBPol(hd, Math.max(9, L - 3), a), 7, a + 90);
   return exBFig(
-    exBG('exbf', `<line x1="98" y1="128" x2="98" y2="32"/><line x1="91" y1="128" x2="105" y2="128"/>`, exBLimb(leg(exBPt(H, d)), {end:'f', fa:-98}), exBLimb(arm(exBPt(S, d)), {end:'h'})),
+    exBG('exbf', exBP('post', `<line x1="88" y1="154.5" x2="88" y2="34"/><line x1="81" y1="154.5" x2="95" y2="154.5"/>`), leg(exBPt(Ft, d), exBPt(H, d)), exBLimb(arm(exBPt(S, d)), {end:'h'})),
     exBG('exbt', exBLimb([H, S])), exBZone([80, 72], 7.5, 12), exBHead([80, 36], 0),
-    exBG('exbn', exBLimb(leg(H), {end:'f', fa:-98}), exBLimb(arm(S), {end:'h'})),
-    `<line class="exbband" x1="${exBf(hd[0])}" y1="${exBf(hd[1])}" x2="${A[0]}" y2="${A[1]}"/><circle class="exbanc" cx="${A[0]}" cy="${A[1]}" r="3"/>`, exBPull(p, q));
+    exBG('exbn', leg(Ft, H), exBLimb(arm(S), {end:'h'})),
+    `<line class="exbband" x1="${exBf(hd[0])}" y1="${exBf(hd[1])}" x2="${A[0]}" y2="${A[1]}"/><circle class="exbanc" cx="${A[0]}" cy="${A[1]}" r="4"/>`, exBPull(p, q));
 }
 /* Clamshell, Ansicht von vorn auf die Seitlage: oberes Knie öffnet, Füße bleiben zusammen, Becken bleibt senkrecht */
 function exBClam(ph){
-  const Hb = [96, 147.5], Ht = [96, 136], Sb = [52, 147];
+  const Ht = [96, 136], Sb = [52, 147];
   return exBFig(exBMat(),
-    exBG('exbf', exBLimb([Hb, [120, 147.5], [143, 147.5]], {end:'f', fl:6}), exBLimb([Sb, [33, 148], [16, 146]], {end:'h'})),
-    exBG('exbt exbw', exBLimb([[94, 141], [54, 141]])), exBZone([97, 130.5], 10, 6), exBHead([31, 138.5], null),
+    exBG('exbf', exBLimb([[96, 148.5], [120, 148.5], [143, 148.5]], {end:'f', fl:6, p:'leg'}), exBLimb([Sb, [33, 148], [16, 146]], {end:'h'})),
+    exBG('exbt exbw', exBLimb([[94, 141], [54, 141]], {p:'trunk'})), exBZone([97, 130.5], 10, 6), exBHead([37, 138.5], null),
     exBG('exbn', exBLimb([[56, 130], [73, 130], [89, 131.5]], {end:'h', halo:1}), exBLimb([Ht, ph ? [120, 119] : [120, 140.5], [143, 141]], {end:'f', fl:6, halo:1})));
 }
 /* 90/90 Hüftwechsel, Ansicht von vorn: beide Knie kippen wie Scheibenwischer über oben zur anderen Seite (Knie nach
    rechts der Person = im Bild links). Die Oberschenkel drehen über oben (w), die Füße bleiben unten. */
 function exBHip9090(ph){
   /* R und L sind aus Bildsicht benannt (R = rechts im Bild = linkes Bein der Person). Bild 0: Knie nach rechts der Person,
-     also im Bild beide Knie links; Bild 1 spiegelbildlich. Der Bogenpfeil zeigt die Scheibenwischer-Bewegung. */
-  const R = [91, 144], L = [79, 144], w = ph ? [] : [-360, 360];
-  const r = ph ? [R, [130, 148], [104, 154]] : [R, [74, 150], [100, 148]], l = ph ? [L, [96, 150], [70, 148]] : [L, [40, 148], [66, 154]];
-  return exBFig(exBMat(), exBArc([34, 134], [85, 84], [136, 134]),
-    exBG('exbf', exBLimb([[76, 106], [67, 126.5], [58, 147]], {end:'h'}), exBLimb([[94, 106], [103, 126.5], [112, 147]], {end:'h'})),
-    exBG('exbt exbw', exBLimb([[85, 143], [85, 105]])), exBZone([85, 140], 17, 6.5), exBHead([85, 88], null),
-    exBG('exbn', exBLimb(l, {w, end:'f', fl:5, halo:1}), exBLimb(r, {w, end:'f', fl:5, halo:1})));
+     also im Bild beide Knie links; Mittelbild: beide Knie oben, Füße stehen; Bild 1 spiegelbildlich. Die Zusatzdrehungen w
+     lassen die Oberschenkel über oben wandern und die Knie gebeugt bleiben. */
+  const m = ph === .5, e = ph === 1, R = [91, 143], L = [79, 143], y = 148.3;
+  /* Ketten vom Fuß (Wurzel, bleibt in jedem Zwischenbild am Boden) über das Knie zur Hüfte; kurzer Fußstrich nach außen */
+  const r = e ? [[110, y], [130, y], R] : m ? [[110, y], [100, 112], R] : [[110, y], [74, y], R], wr = e || m ? [360, 360] : [0, 0];
+  const l = e ? [[60, y], [96, y], L] : m ? [[60, y], [70, 112], L] : [[60, y], [40, y], L], wl = e ? [360, 360] : m ? [360, 0] : [0, 0];
+  const leg = (c, w, fx) => exBP('leg', `<line x1="${exBf(c[0][0])}" y1="${y}" x2="${exBf(c[0][0] + fx)}" y2="${y}" class="exbft"/>` + exBLimb(c, {w}));
+  return exBFig(exBMat(), exBArc([34, 132], [85, 82], [136, 132]),
+    exBG('exbf', exBLimb([[76, 106], [67, 126.5], [58, 148]], {end:'h', p:'hand'}), exBLimb([[94, 106], [103, 126.5], [112, 148]], {end:'h', p:'hand'})),
+    exBG('exbt exbw', exBLimb([[85, 141.5], [85, 105]], {p:'seat'})), exBHead([85, 90], null),
+    exBG('exbo', exBLimb(l, {w:wl}), exBLimb(r, {w:wr})), exBG('exbn', leg(l, wl, e || m ? -5 : 5), leg(r, wr, e ? -5 : 5)), exBZone([85, 138.5], 17, 6.5));
 }
-/* Open Book, Blick vom Kopfende: oberer Arm läuft im Halbkreis über oben zur anderen Seite, der Brustkorb dreht mit,
-   Knie (gedeckt, dahinter) bleiben übereinander am Boden */
+/* Kette aus Längen und rohen Winkeln [[L, a] …]: liefert Punkte und Zusatzdrehung w für exBLimb, damit die Animation den
+   gewollten Drehweg nimmt (z. B. -90 → -250 → -338: Arm von oben über außen nach unten und weiter am Boden entlang) */
+function exBRaw(P, segs){
+  const pts = [P], w = []; let pa = 0, pn = 0;
+  segs.forEach(([L, a], i) => { const q = exBPol(pts[i], L, a), an = exBAng(pts[i], q); pts.push(q); w.push(i ? (a - pa) - exBNorm(an - pn) : a - an); pa = a; pn = an; });
+  return {pts, w};
+}
+/* Open Book, Blick vom Kopfende: Rücken links, Brust rechts. Untere Schulter und unterer Arm liegen am Boden, der Kopf auf
+   dem Kissen. Der obere Arm liegt zu Beginn auf dem unteren, läuft über oben (Mittelbild: zur Decke) und liegt am Ende auf
+   der anderen Seite am Boden; der Brustkorb dreht mit. Der Kopf ist der Kamera am nächsten und liegt
+   deshalb mit hellem Rand vorn.
+   ph: 0 Start, .5 Arm zur Decke, 1 offen */
 function exBOpenbook(ph){
-  const c = p => [86 + (p[0] - 86) * 1.35, 152 + (p[1] - 152) * 1.35], Sb = c([86, 142]), St = ph ? exBPol(Sb, 28, -160) : c([86, 121]), hd = ph ? exBPol(St, 47, 182) : c([116, 139]);
-  return exBFig(exBMat(),
-    exBG('exbf', exBLimb([c([88, 141]), c([113, 143])]), exBLimb([c([88, 129]), c([113, 136])]), exBLimb([Sb, [(Sb[0] + 134) / 2, (Sb[1] + 147.5) / 2], [134, 147.5]], {end:'h'})),
-    exBG('exbt', exBLimb([Sb, St], {z:exBZoneL(17, 6, 12, 8)})), exBCush(70, 143, 32, 9), exBHead(ph ? [81, 134.5] : [86, 134.5], ph ? -170 : 0),
-    exBG('exbn', exBLimb([St, exBPt(St, [(hd[0] - St[0]) / 2, (hd[1] - St[1]) / 2]), hd], {end:'h', halo:1})));
+  const m = ph === .5, e = ph === 1, Sb = [80, 145.5], St = exBPol(Sb, 24, e ? -150 : m ? -118 : -90), aa = e ? -203.8 : m ? -90 : 32.4, ar = exBRaw(St, [[19, aa], [17, aa]]);
+  return exBFig(exBMat(), exBArc([118, 118], [70, 38], [22, 126]), exBSide(),
+    exBG('exbf', exBP('bot', exBLimb([[86, 148.5], [98, 148.5], [110, 148.5]], {end:'h'}))),
+    exBG('exbt', exBLimb([Sb, St], {z:exBZoneL(14, 0, 8, 5)})), exBCush(72, 142.2, 32, 9),
+    exBG('exbn', exBLimb(ar.pts, {w:ar.w, end:'h', halo:1, p:'hand'})), `<circle class="exbhh" cx="86" cy="133.7" r="10"/>`, exBP('head', exBHead([86, 133.7], e ? -180 : m ? -90 : 0)));
 }
-/* Thread the Needle, Seitenansicht: naher Arm dreht zur Decke (Bild 1) und fädelt unter dem Körper durch (Bild 2),
-   der ferne Arm stützt und beugt sich, die Hüfte bleibt über den Knien */
+/* Zusatzbild Open Book (ruht, oben rechts): Ausgangsposition von oben gesehen. Matte, Kopf auf dem Kissen, Rumpf, Hüfte und
+   Knie 90° gebeugt und übereinander, beide Arme nach vorn. Klein und fein umrandet, damit es nicht mit der Animation verwechselt wird. */
+const exBSide = () => `<g class="exbin" transform="translate(126 70) scale(0.36)"><rect x="0" y="0" width="100" height="72" rx="6"/><rect class="exbic" x="6" y="22" width="18" height="20" rx="3"/>
+  <line x1="27" y1="32" x2="62" y2="32" class="exbit"/><line x1="62" y1="32" x2="62" y2="58"/><line x1="62" y1="58" x2="90" y2="58"/><line x1="28" y1="34" x2="28" y2="60"/><line x1="31" y1="34" x2="31" y2="60"/><circle cx="15" cy="32" r="8"/></g>`;
+/* Thread the Needle, Seitenansicht: Knie, Unterschenkel und Stützhand am Boden, Hüfte bleibt über den
+   Knien; am Ende liegen Schulter und Kopf auf der Matte, der Arm verschwindet unter dem Körper. */
 function exBThread(ph){
-  const H = [112, 114.5], K = [112, 148.5], A = [145, 148.5], d = [-4, -2], Hs = [66, 148];
-  const Sm = ph ? [72, 128] : [70, 113], Sn = ph ? [70, 146] : [70, 104], Sf = ph ? [74, 123] : [66, 112];
-  /* Bild 2: der Arm geht in die Tiefe unter den Stützarm durch, deshalb stark verkürzt nahe der Schulter */
-  const arm = ph ? [Sn, [66.5, 147], [62, 148]] : [Sn, [70, 85], [70, 68]];
+  const m = ph === .5, e = ph === 1, K = [112, 148.3], H = [112, 114.5], Kf = [107, 148.5], Hf = [107, 114.5];
+  const Sm = e ? [76, 138.5] : m ? [71, 121] : [70, 110], Sn = e ? [76, 140] : m ? [73, 127] : [70, 104], Fs = e ? [80, 133] : m ? [72, 121] : [66, 112], Fh = [64, 148];
+  let segs; if (e) segs = [[10, 55], [9, 0]];
+  else if (m) segs = [[2, -90], [2, -90]];
+  else segs = [[19, -90], [17, -90]];
+  /* Der Arm bewegt sich quer zur Blickrichtung: von der Seite wird er beim Absenken kurz (Mittelbild, zeigt zur Kamera)
+     und liegt am Ende blass unter der Brust (ferne Ebene, unter dem Körper durchgefädelt) */
+  const ar = exBRaw(Sn, segs), hd = e ? [62, 143.5] : m ? [57, 122] : [56, 108];
   return exBFig(exBMat(),
-    exBG('exbf', exBLimb([exBPt(H, d), exBPt(K, d), exBPt(A, d)], {end:'f', fl:6}), exBLimb([Sf, ph ? exBIK(Sf, Hs, 19, 17, 'r') : [66, 131], Hs], {end:'h'})),
-    exBG('exbt', exBLimb([H, Sm], {w:ph ? [-360] : [], z:exBZoneL(31, 5.5, 10, 5)})), exBHead(ph ? [51, 143.5] : [57, 112], ph ? -340 : -90),
-    exBG('exbn', exBLimb([H, K, A], {end:'f', fl:6}), exBLimb(arm, {w:ph ? [-360] : [], end:'h', halo:1, z:exBZoneL(1, 0, 6, 6)})));
+    exBG('exbf', exBP('knee', exBLimb([Kf, Hf])), exBLimb([Kf, [140, 148.5]], {end:'f', fl:6}), exBLimb([Fh, [(Fh[0] + Fs[0]) / 2, (Fh[1] + Fs[1]) / 2], Fs], {h0:1, p:'hand'})),
+    exBG('exbt', exBLimb([H, Sm], {w:[e || m ? 0 : 360], z:exBZoneL(30, 0, 9, 5)})), exBP('head', exBHead(hd, null)),
+    exBG('exbn', exBP('knee', exBLimb([K, H])), exBLimb([K, [145, 148.3]], {end:'f', fl:6}), `<g opacity="${e ? '0.45' : '1.0'}">${exBLimb(ar.pts, {w:ar.w, end:'h', halo:1, p:'arm'})}</g>`));
 }

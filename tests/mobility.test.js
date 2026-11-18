@@ -7,7 +7,7 @@ test('Mindestens 20 neue Übungen, jede vollständig (Texte, Ansage, Grafik, Ani
   NEW.forEach(id => { const e = a.$(`EXI['${id}']`);
     if (!e || !e.t || !e.m || !e.r || !Array.isArray(e.cap) || e.cap.length !== 2 || !(e.s.length >= 3) || !(e.f.length >= 1)) bad.push(id + ': Texte');
     if (!Array.isArray(e.say) || e.say.length !== 4 || e.say.some(x => !x)) bad.push(id + ': Ansage/Merksatz de+en');
-    if (!a.$(`Array.isArray(EXP['${id}']) && EXP['${id}'].length === 2`)) bad.push(id + ': zwei Positionen');
+    if (!a.$(`Array.isArray(EXP['${id}']) && [2, 3].includes(EXP['${id}'].length)`)) bad.push(id + ': zwei Positionen (optional Mittelbild)');
     if (!a.$(`exTpl('${id}').ok`)) bad.push(id + ': Animation'); });
   eq(bad, []); a.noErrors();
 });
