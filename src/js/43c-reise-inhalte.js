@@ -93,3 +93,5 @@ TIPS.push(
   ['r27', 'rz', 'rz:post', 'Zurück von der Reise: Steig mit ein bis zwei lockeren Tagen wieder ein. Die Form ist nach wenigen Tagen Pause nicht weg.', 'Back from your trip: ease back in with one or two easy days. Your form is not gone after a few days off.', 'muj00', 'w-train'],
   ['r28', 'rz', 'rz:post', 'Nach der Rückkehr hilft ein fester Rhythmus: zur gewohnten Zeit aufstehen, essen und ins Bett gehen.', 'After returning a fixed rhythm helps: get up, eat and go to bed at your usual times.', 'jvr21', 'w-erh']
 );
+/* Nach allen EXI-Definitionen (02, 03, 43c): Kurzanleitung s für ältere Stellen aus den Bewegungsschritten b ableiten */
+exBFillS();

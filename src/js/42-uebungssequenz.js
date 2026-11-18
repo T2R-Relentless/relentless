@@ -347,7 +347,7 @@ document.addEventListener('visibilitychange', () => {
 const sqReduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { elog(e); return false; } };
 function sqFig(id, big){
   const w = big ? 'width:min(78vw,360px)' : 'width:min(34vw,150px)';
-  if (sqReduced()) return `<div style="${w};margin:0 auto" class="exf"><svg viewBox="0 0 170 165" role="img" aria-label="${esc(EXI[id].t)}"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/>${exTpl(id).A}</svg></div>`;
+  if (sqReduced()) return `<div style="${w};margin:0 auto" class="exf"><svg viewBox="${exVB(id)}" role="img" aria-label="${esc(EXI[id].t)}"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/>${exTpl(id).A}</svg></div>`;
   return `<div style="${w};margin:0 auto" class="exf">${exAnimSvg(id)}</div>`;
 }
 const sqDur = s => { const t = Math.round(s); return t >= 60 ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')} Min.` : `${t} Sek.`; };

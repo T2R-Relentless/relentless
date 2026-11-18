@@ -21,7 +21,7 @@ const exPlate = (x, y, r = 8) => `<circle cx="${x}" cy="${y}" r="${r}" class="pl
 const exArrow = (x1, y1, x2, y2) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 5; return `<g class="ar"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><polyline points="${x2 - h * Math.cos(a - .5)},${y2 - h * Math.sin(a - .5)} ${x2},${y2} ${x2 - h * Math.cos(a + .5)},${y2 - h * Math.sin(a + .5)}" fill="none"/></g>`; };
 /* liegende/freie Figuren mit Punkten: Linien aus Punktlisten, Kopf als Kreis */
 const exLines = (lines, head, extra = '') => `<g class="ln">${lines.map(l => `<polyline points="${l.map(p => p.join(',')).join(' ')}" fill="none"/>`).join('')}</g><circle cx="${head[0]}" cy="${head[1]}" r="8" class="hd2"/>${extra}`;
-const exFrame = (inner, cap) => `<div class="exf"><svg viewBox="0 0 170 165" role="img" aria-label="${esc(cap)}"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/>${inner}</svg><div class="exc">${esc(cap)}</div></div>`;
+const exFrame = (inner, cap, vb) => `<div class="exf"><svg viewBox="${vb || '0 0 170 165'}" role="img" aria-label="${esc(cap)}"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/>${inner}</svg><div class="exc">${esc(cap)}</div></div>`;
 const EXP = {
   squat:[() => { const f = exStand({ax:78, th:0, sh:0, tr:0, arm:[[10, 16], [4, 0]]}); return f.svg + exPlate(f.S[0] - 6, f.S[1] + 3, 8); },
          () => { const f = exStand({ax:70, th:84, sh:-36, tr:36, arm:[[10, 14], [3, 0]]}); return f.svg + exPlate(f.S[0] - 6, f.S[1] + 3, 8) + exArrow(150, 60, 150, 100); }],
@@ -79,7 +79,7 @@ const EXI = {
     s:['Rückenlage, ein Fuß steht nah am Gesäß, das andere Bein ist gestreckt in der Luft.', 'Drücke dich über die Ferse des Standbeins nach oben, bis Schulter, Hüfte und Knie eine Linie bilden.', 'Oben das Gesäß 1 Sekunde fest anspannen, die Hüfte bleibt waagerecht.', 'Langsam absenken, ohne ganz abzulegen. Dann Seite wechseln.'],
     f:['Hohlkreuz oben. Rippen unten, Bauch leicht angespannt.', 'Die Hüfte dreht ab. Beide Beckenknochen auf gleicher Höhe halten.', 'Der Druck kommt aus dem Fußballen. Die Ferse schiebt.'],
     v:'Einfacher: Beide Füße am Boden. Schwerer: Gewicht (Rucksack) auf der Hüfte.', r:'Aktiviert das Gesäß, das beim Treten oft zu wenig mitarbeitet.'},
-  deadbug:{t:'Dead Bug', cap:['Start: Knie über der Hüfte, Arme nach oben', 'Gegenarm und Gegenbein strecken'], m:'Tiefe Bauchmuskulatur, Rumpfstabilität',
+  deadbug:{t:'Dead Bug', vb:'2 84 166 80', cap:['Start: Knie über der Hüfte, Arme nach oben', 'Gegenarm und Gegenbein strecken'], m:'Tiefe Bauchmuskulatur, Rumpfstabilität',
     q:"Der untere Rücken bleibt die ganze Zeit am Boden.", a:["Leg dich auf den Rücken, der Kopf bleibt auf dem Boden.", "Heb die Beine an: Knie über der Hüfte, Hüfte und Knie je 90° gebeugt.", "Streck beide Arme senkrecht zur Decke, die Hände sind über den Schultern.", "Drück den unteren Rücken sanft in den Boden. Die Rippen ziehen nach unten."], b:[["Spann den Bauch an, als ob du gleich husten würdest.", 0], ["Streck langsam den rechten Arm nach hinten über den Kopf und das linke Bein nach vorn, beides knapp über dem Boden.", 1], ["Komm langsam in die Mitte zurück.", 0], ["Jetzt die andere Seite: linker Arm und rechtes Bein.", 1]], atm:"Atme beim Strecken lang aus und in der Mitte ein.", sp:"Du spürst es im ganzen Bauch, vor allem unten. Nicht im unteren Rücken und nicht im Nacken.",
     f:["Der untere Rücken hebt ab. Streck Arm und Bein weniger weit oder höher über dem Boden.", "Zu schnell. Nimm dir etwa 3 Sekunden für jede Seite.", "Du hältst die Luft an. Atme beim Strecken hörbar aus."], ez:"Streck nur das Bein und tipp die Ferse kurz auf, die Arme bleiben oben.", hd:"Halte die gestreckte Position 3 Sekunden, bevor du zurückkommst.", k:"Spürst du den unteren Rücken, bewege dich weniger weit. Wenn es weiter wehtut, lass die Übung weg.", v:"", r:"Ein stabiler Rumpf hilft, die Kraft aus den Beinen aufs Pedal zu übertragen, und kann den unteren Rücken auf langen Etappen entlasten."},
   pallof:{t:'Pallof Press', cap:['Start: Griff vor der Brust', 'Ende: Arme gestreckt, Rumpf dreht nicht'], m:'Seitliche Bauchmuskeln und Rumpf (Anti-Rotation)',
@@ -103,7 +103,7 @@ function exTpl(id){
   const na = (A.match(re) || []).map(Number), nb = (B.match(re) || []).map(Number), pa = A.split(re), pb = B.split(re);
   return _exT[id] = {A, B, na, nb, pa, ok:na.length === nb.length && pa.join('#') === pb.join('#')};
 }
-const exAnimSvg = id => `<svg viewBox="0 0 170 165" role="img" aria-label="${esc(EXI[id].t)}: Bewegungsablauf als Animation"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/><g data-ex="${esc(id)}">${exTpl(id).A}</g></svg>`;
+const exAnimSvg = id => `<svg viewBox="${exVB(id)}" role="img" aria-label="${esc(EXI[id].t)}: Bewegungsablauf als Animation"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/><g data-ex="${esc(id)}">${exTpl(id).A}</g></svg>`;
 let _exRaf = 0;
 const _ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
 function exTick(ts){
@@ -148,7 +148,7 @@ function exBText(e){
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && exOpen) closeEx(); });
 function exModal(){
-  if (!exOpen || !EXI[exOpen]) return ''; const e = EXI[exOpen], p = EXP[exOpen];
+  if (!exOpen || !EXI[exOpen]) return ''; if (EXI[exOpen].b && !EXI[exOpen].s) exBFillS(); const e = EXI[exOpen], p = EXP[exOpen];
   return `<div class="exov" onclick="if(event.target===this)closeEx()" role="dialog" aria-modal="true" aria-label="${esc(e.t)}"><div class="exbox"><div class="flex items-start gap-3"><h3 class="hd flex-1 text-2xl font-semibold">${esc(e.t)}</h3><button class="ghost !px-3 !py-1.5" onclick="closeEx()" aria-label="Schließen">Schließen</button></div>
     <p class="mt-1 text-sm" style="color:var(--mute)">Trainiert: ${esc(e.m)}</p>
     ${e.q ? `<div class="exbq mt-3"><p class="eyebrow">Merksatz</p><p class="mt-1">${esc(e.q)}</p></div>` : ''}

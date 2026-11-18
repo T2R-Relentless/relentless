@@ -66,9 +66,8 @@
   .exb .exbmat{fill:var(--line)}
   .exb .exbcu{fill:var(--panel);stroke:var(--mute);stroke-width:1.5}
   .exb .exbband{stroke:var(--mute);stroke-width:2.5}
-  .exb .exbpost{opacity:.5}
-  .exb .exbpost line{stroke:var(--mute);stroke-width:5}
-  .exb .exbpull line,.exb .exbpull polyline{stroke:var(--ice);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+  .exb .exbanc{fill:var(--mute)}
+  .exb .exbpull line,.exb .exbpull polyline,.exb .exbpull path{stroke:var(--ice);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
   /* Übungsfenster mit gegliedertem Text: Merksatz, antippbare Bewegungsschritte (halten das Bild an), Legende */
   .exbq{border-left:3px solid var(--teal);background:var(--tint);padding:10px 12px;font-weight:600}
   .exbleg{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.75rem;color:var(--mute)}
