@@ -109,3 +109,26 @@ test('Animation mit Mittelbild: gleiche Struktur, Hälfte zeigt genau das Mittel
   PILOT.forEach(id => { const h = a.w.exFrameAt(a.w.exTpl(id), .37); ok(!/\d\.\d+\.\d/.test(h), `${id}: Zahlen im Zwischenbild unversehrt`); });
   a.noErrors();
 });
+
+/* Übungsvideos: gerenderte 3D-Figur für die Pilotübungen, gezeichnete Figur als Rückfall */
+test('Übungsvideos: Dateien vorhanden, Fenster zeigt Video, Schritt hält es an, Rückfall auf die gezeichnete Figur', async () => {
+  const a = await boot(), ids = a.$('Object.keys(EXVID)');
+  eq(ids.slice().sort(), PILOT.slice().sort(), 'Videos für genau die Pilotübungen');
+  for (const id of ids) for (const ext of ['mp4', 'jpg']) {
+    const r = await fetch(`../public/img/uebungen/${id}.${ext}`, {cache:'no-store'}), n = r.ok ? (await r.blob()).size : 0;
+    ok(r.ok && n > 5000 && n < 400000, `${id}.${ext} vorhanden und klein genug (${n} Bytes)`);
+    const c = a.$(`EXVID['${id}']`); ok(c.h > c.p[0] && c.h < c.p[1], `${id}: Endposition liegt im Fenster der Phase 1`);
+  }
+  a.$(`openEx('deadbug')`);
+  ok(a.$(`!!document.querySelector('.exov video[data-exv="deadbug"][muted][playsinline][loop]')`), 'Video im Übungsfenster, stumm und ohne Vollbild');
+  ok(a.$(`!document.querySelector('.exov .exbleg')`) && /Bewegungsablauf vereinfacht/.test(a.text()), 'keine Zonen-Legende, passender Hinweistext');
+  a.$('exHoldTap(1)'); a.$('exVidSync()');
+  ok(a.$(`document.querySelector('.exov video').paused`) && a.$(`[...document.querySelectorAll('.exov .exph')].map(x => x.classList.contains('on')).join()`) === 'false,true', 'Schritt hält das Video in Phase 1 an');
+  a.$(`exVidFail(document.querySelector('.exov video'))`);
+  ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="deadbug"]')`) && a.$(`exVidOk('deadbug')`) === false, 'fällt das Video aus, erscheint die gezeichnete Figur');
+  a.$(`delete exVidBad.deadbug; closeEx()`);
+  ok(a.$(`(exLibrary().match(/<img class="exvid"/g) || []).length`) === ids.length, 'Übungsübersicht zeigt die Startbilder');
+  a.$(`openEx('squat')`); ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="squat"]')`), 'andere Übungen unverändert'); a.$('closeEx()');
+  await a.w.i18nLoad(); ok(a.$(`I18N[iNorm('Die Animation zeigt den Bewegungsablauf vereinfacht.').k] != null`), 'Englisch für den Hinweistext');
+  a.noErrors();
+});

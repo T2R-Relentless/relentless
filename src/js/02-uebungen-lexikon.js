@@ -117,7 +117,8 @@ const exAnimSvg = id => `<svg viewBox="${exVB(id)}" role="img" aria-label="${esc
 let _exRaf = 0;
 const _ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
 function exTick(ts){
-  const els = document.querySelectorAll('g[data-ex]'); if (!els.length) { _exRaf = 0; return; }
+  const els = document.querySelectorAll('g[data-ex]'); if (!els.length && !document.querySelector('video[data-exv]')) { _exRaf = 0; return; }
+  exVidSync();
   const ph = ts % 4400, red = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   let k0 = ph < 700 ? 0 : ph < 1900 ? _ease((ph - 700) / 1200) : ph < 2900 ? 1 : ph < 4100 ? 1 - _ease((ph - 2900) / 1200) : 0;
   if (red) k0 = ph < 2200 ? 0 : 1;
@@ -128,7 +129,7 @@ function exTick(ts){
   });
   _exRaf = requestAnimationFrame(exTick);
 }
-function exAnimStart(){ if (!_exRaf && document.querySelector('g[data-ex]')) _exRaf = requestAnimationFrame(exTick); }
+function exAnimStart(){ if (!_exRaf && document.querySelector('g[data-ex], video[data-exv]')) _exRaf = requestAnimationFrame(exTick); }
 let exOpen = null;
 /* Angetippter Bewegungsschritt im Übungsfenster: {id, i, ph} hält die Animation in der Phase dieses Schritts an */
 let exHold = null;
@@ -159,12 +160,12 @@ function exModal(){
   return `<div class="exov" onclick="if(event.target===this)closeEx()" role="dialog" aria-modal="true" aria-label="${esc(e.t)}"><div class="exbox"><div class="flex items-start gap-3"><h3 class="hd flex-1 text-2xl font-semibold">${esc(e.t)}</h3><button class="ghost !px-3 !py-1.5" onclick="closeEx()" aria-label="Schließen">Schließen</button></div>
     <p class="mt-1 text-sm" style="color:var(--mute)">Trainiert: ${esc(e.m)}</p>
     ${e.q ? `<div class="exbq mt-3"><p class="eyebrow">Merksatz</p><p class="mt-1">${esc(e.q)}</p></div>` : ''}
-    <div class="exanim mt-3"><div class="exf">${exAnimSvg(exOpen)}</div><div class="mt-2 flex gap-2"><span class="exph" data-ph="0">${esc(e.cap[0])}</span><span class="exph" data-ph="1">${esc(e.cap[1])}</span></div>${e.q ? '<p class="exbleg"><i aria-hidden="true"></i>Hier spürst du es</p>' : ''}</div>
+    <div class="exanim mt-3"><div class="exf">${exMedia(exOpen)}</div><div class="mt-2 flex gap-2"><span class="exph" data-ph="0">${esc(e.cap[0])}</span><span class="exph" data-ph="1">${esc(e.cap[1])}</span></div>${e.q && !exVidOk(exOpen) ? '<p class="exbleg"><i aria-hidden="true"></i>Hier spürst du es</p>' : ''}</div>
     ${e.q ? exBText(e) : `<p class="mt-3 font-semibold">So geht's</p><ol class="mt-1 list-decimal space-y-1 pl-5 text-sm">${e.s.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
     <p class="mt-3 font-semibold">Häufige Fehler</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm">${e.f.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
     ${e.v ? `<p class="mt-3 font-semibold">Variante</p><p class="mt-1 text-sm">${esc(e.v)}</p>` : ''}`}
     <p class="mt-3 font-semibold">Warum für Radfahrer</p><p class="mt-1 text-sm">${esc(e.r)}</p>
     ${e.k ? `<p class="mt-3 font-semibold">Hinweis</p><p class="mt-1 text-sm">${esc(e.k)}</p>` : ''}
-    <p class="mt-3 text-xs" style="color:var(--mute)">Die Animation zeigt den Bewegungsablauf als vereinfachte Strichfigur. Technik vor Gewicht. Bei Schmerzen abbrechen. Lass dir die Übung bei Unsicherheit einmal von einer Trainerin oder einem Trainer zeigen.</p></div></div>`;
+    <p class="mt-3 text-xs" style="color:var(--mute)">${exVidOk(exOpen) ? 'Die Animation zeigt den Bewegungsablauf vereinfacht.' : 'Die Animation zeigt den Bewegungsablauf als vereinfachte Strichfigur.'} Technik vor Gewicht. Bei Schmerzen abbrechen. Lass dir die Übung bei Unsicherheit einmal von einer Trainerin oder einem Trainer zeigen.</p></div></div>`;
 }
 

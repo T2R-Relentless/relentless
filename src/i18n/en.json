@@ -7083,7 +7083,6 @@
 "Mach es ohne Hände, die Arme sind vor der Brust verschränkt.": "Do it without hands, arms crossed in front of your chest.",
 "Verbessert Innen- und Außenrotation der Hüfte, die auf dem Rad kaum genutzt wird. Das kann Knie und unteren Rücken entlasten.": "Improves internal and external hip rotation, which the bike hardly uses. This can take strain off your knees and lower back.",
 "Setz dich auf den Boden, die Füße stehen etwas weiter als hüftbreit auseinander.": "Sit on the floor with your feet a bit wider than hip-width apart.",
-"Kipp beide Knie nach rechts. Das vordere Bein liegt mit der Außenseite am Boden, das hintere mit der Innenseite, beide Knie etwa {0}°.": "Drop both knees to the right. The front leg rests on its outer side, the back leg on its inner side, both knees at about {0}°.",
 "Der Oberkörper ist aufrecht. Die Hände stützen hinter dir, wenn nötig.": "Your upper body is upright. Support yourself with your hands behind you if needed.",
 "Der Rücken wird rund. Stütz die Hände weiter hinten ab und bleib aufrecht.": "Your back rounds. Put your hands further back and stay tall.",
 "Du kippst mit Schwung. Bewege dich langsam und kontrolliert.": "You swing over with momentum. Move slowly and with control.",
@@ -7136,5 +7135,10 @@
 "Hier spürst du es": "This is where you feel it",
 "Tippe auf einen Schritt, um das Bild in dieser Position anzuhalten. Nochmal tippen läuft weiter.": "Tap a step to hold the picture in that position. Tap again to keep it moving.",
 "Beide Knie {0}°, zu deiner rechten Seite gekippt": "Both knees at {0}°, tipped to your right",
-"Start: Seitlage, Füße aufeinander": "Start: side-lying, feet stacked"
+"Start: Seitlage, Füße aufeinander": "Start: side-lying, feet stacked",
+"Kipp beide Knie nach rechts. Das rechte Bein liegt mit der Außenseite am Boden, das linke mit der Innenseite, beide Knie etwa {0}°.": "Drop both knees to the right. The right leg rests on its outer side, the left leg on its inner side, both knees at about {0}°.",
+"Die Animation zeigt den Bewegungsablauf vereinfacht.": "The animation shows the movement in simplified form.",
+"{0}/{1} Hüftwechsel: Bewegungsablauf als Animation": "{0}/{1} hip switch: movement as animation",
+"Open Book: Bewegungsablauf als Animation": "Open book: movement as animation",
+"Thread the Needle: Bewegungsablauf als Animation": "Thread the needle: movement as animation"
 }

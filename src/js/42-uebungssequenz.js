@@ -1,7 +1,7 @@
 /* ---------- F11: Kraft- und Stabilitätsübungen als Sequenz mit Tonsignalen ----------
    Baut auf dem bestehenden Modell auf: MOB (Mobilität/Stabilität: [id, Name, Dosis-Text]) und strSession (Kraft:
    Zeilen mit „Sätze × Wdh.“ plus Rumpfübungen). Der Dosis-Text wird in Sätze, Sekunden oder Wiederholungen und
-   „pro Seite“ zerlegt (sqDose). Die Strichfiguren kommen aus EXP/exAnimSvg.
+   „pro Seite“ zerlegt (sqDose). Die Bilder kommen aus exMedia (Video der Pilotübungen) bzw. EXP/exAnimSvg (Strichfiguren).
    Ablauf: Vorlauf 5 s → Übung → Übergang → … → Ende. Runden, wenn alle Übungen dieselbe Satzzahl haben (Zirkel),
    sonst nacheinander mit Satzpausen. Die Zeit wird über Zeitstempel gemessen (Start der Phase + Pausen), nicht über
    gezählte Ticks. Signale stehen als fester Zeitplan je Phase (sqSched) und werden beim Überschreiten ausgelöst. */
@@ -347,6 +347,7 @@ document.addEventListener('visibilitychange', () => {
 const sqReduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { elog(e); return false; } };
 function sqFig(id, big){
   const w = big ? 'width:min(78vw,360px)' : 'width:min(34vw,150px)';
+  if (exVidOk(id)) return `<div style="${w};margin:0 auto" class="exf">${sqReduced() ? exStill(id) : exMedia(id)}</div>`;
   if (sqReduced()) return `<div style="${w};margin:0 auto" class="exf"><svg viewBox="${exVB(id)}" role="img" aria-label="${esc(EXI[id].t)}"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/>${exTpl(id).A}</svg></div>`;
   return `<div style="${w};margin:0 auto" class="exf">${exAnimSvg(id)}</div>`;
 }
