@@ -429,6 +429,10 @@ function exeBody(e, w, i, modal, part){
       <p class="mt-2 text-xs" style="color:var(--mute)">Dein Empfinden sagt oft mehr als die Messwerte und fließt in die Anpassung ein.</p></div>` : ''}
     ${e.adj && !part ? `<p class="mt-3 p-2.5 text-sm ${esc(modal ? 'text-left' : '')}" style="background:var(--tint);border:1px solid var(--line)"><b>Plan:</b> ${esc(e.adj)}</p>` : ''}`;
 }
+/* Garmin Connect verbunden und zuletzt erfolgreich: Fahrten kommen von selbst, Hochladen nur noch als kleiner Link */
+const exeGmOn = () => typeof gmMode === 'function' && !!gmMode() && !!(S.gm && S.gm.ok);
+const exeUpSm = (i, l, p) => `<label class="cursor-pointer text-sm underline" style="color:var(--mute);display:inline-flex;align-items:center;min-height:44px">${exeBusy === i ? 'Wird ausgewertet …' : l}<input type="file" accept=".fit,.gpx,.tcx,.zip,.gz,.xml" style="display:none" onchange="exeUpload(this, ${ja(i)}${p == null ? '' : ', ' + ja(p)})"></label>`;
+const exeGmLine = (i, n, ups) => `<div class="px-3 pt-2" style="border:1px solid var(--line)"><p class="text-sm" style="color:var(--mute)">${gmBusy ? 'Garmin wird abgerufen …' : n > 1 ? 'Deine Fahrten kommen automatisch aus Garmin Connect.' : 'Deine Fahrt kommt automatisch aus Garmin Connect.'}</p><div style="display:flex;flex-wrap:wrap;column-gap:20px">${gmBusy ? '' : `<button class="text-sm underline" style="color:var(--teal);min-height:44px" onclick="gmSync('man')">Jetzt abrufen</button>`}${ups}</div></div>`;
 function exeBlock(x, i, cur){
   if (!S.p || !x.m || x.t === 'rest') return '';
   const w = exeWk(), e = exeGet(w, i), can = !!S.plan && (cur || (!hasStarted(S.p) && w === S.wk));
@@ -437,14 +441,17 @@ function exeBlock(x, i, cur){
   if (x.parts) {
     const arr = exePArr(w, i), upP = (l, p) => `<label class="ghost inline-block cursor-pointer !py-1.5 text-sm">${exeBusy === i ? 'Wird ausgewertet …' : l}<input type="file" accept=".fit,.gpx,.tcx,.zip,.gz,.xml" style="display:none" onchange="exeUpload(this, ${ja(i)}, ${ja(p)})"></label>`;
     if (!e && !can) return '';
-    const rows = x.parts.map((q, p) => { const pe = arr[p]; return `<div class="flex flex-wrap items-center gap-2 py-2" style="border-top:1px solid var(--line)"><span class="min-w-0 flex-1 text-sm"><b>${q.lbl}</b> <span style="color:var(--mute)">${mm(q.m)}</span></span>${pe ? `<button class="ghost !px-3 !py-1.5 text-sm" style="color:${esc(exeCol(pe.score))};border-color:${esc(exeCol(pe.score))}" onclick="exeShow='${ja(w)}-${ja(i)}-${ja(p)}';render()">${pe.score}/100 ansehen</button><button class="text-xs underline" style="color:var(--mute)" onclick="exePDel(${ja(w)}, ${ja(i)}, ${ja(p)})">entfernen</button>` : can ? upP(q.lbl + ' hochladen', p) : '<span class="text-sm" style="color:var(--mute)">offen</span>'}</div>`; }).join('');
+    const gm = exeGmOn();
+    if (!e && gm) return exeGmLine(i, x.parts.length, x.parts.map((q, p) => arr[p] ? '' : exeUpSm(i, q.lbl + ' als Datei', p)).join('')) + err;
+    const rows = x.parts.map((q, p) => { const pe = arr[p]; return `<div class="flex flex-wrap items-center gap-2 py-2" style="border-top:1px solid var(--line)"><span class="min-w-0 flex-1 text-sm"><b>${q.lbl}</b> <span style="color:var(--mute)">${mm(q.m)}</span></span>${pe ? `<button class="ghost !px-3 !py-1.5 text-sm" style="color:${esc(exeCol(pe.score))};border-color:${esc(exeCol(pe.score))}" onclick="exeShow='${ja(w)}-${ja(i)}-${ja(p)}';render()">${pe.score}/100 ansehen</button><button class="text-xs underline" style="color:var(--mute)" onclick="exePDel(${ja(w)}, ${ja(i)}, ${ja(p)})">entfernen</button>` : can ? (gm ? exeUpSm(i, 'als Datei hochladen', p) : upP(q.lbl + ' hochladen', p)) : '<span class="text-sm" style="color:var(--mute)">offen</span>'}</div>`; }).join('');
     return `<div class="p-3" style="border:1px ${esc(e ? 'solid' : 'dashed')} var(--line)"><p class="${esc(e ? 'eyebrow mb-2' : 'font-semibold')}">${e ? 'Bewertung deiner Fahrten' : 'Wie liefen deine Fahrten?'}</p><p class="text-xs" style="color:var(--mute)">An Pendeltagen fährst du zwei Fahrten. Lade Hin- und Rückweg einzeln hoch (FIT, GPX oder TCX). Die App bewertet jede gegen ihre Vorgabe und fasst den Tag zusammen.</p>
       ${e ? `<div class="mt-3">${exeBody(e, w, i)}</div>` : ''}${e && e.acts.length ? `<div class="mt-3 flex flex-wrap gap-2">${e.acts.map(a => `<button class="${esc(a[2] ? 'btn !w-auto' : 'ghost')} lbl !py-1.5" onclick="${exeAct(a[1])}">${a[0]}</button>`).join('')}</div>` : ''}<div class="mt-3">${rows}</div>${err}</div>`;
   }
   if (e) return `<div class="p-3" style="border:1px solid var(--line)"><p class="eyebrow mb-2">Bewertung deiner Fahrt</p>${exeBody(e, w, i)}
     ${e.acts.length ? `<div class="mt-3 flex flex-wrap gap-2">${e.acts.map(a => `<button class="${esc(a[2] ? 'btn !w-auto' : 'ghost')} lbl !py-1.5" onclick="${exeAct(a[1])}">${a[0]}</button>`).join('')}</div>` : ''}
-    <div class="mt-3 flex flex-wrap gap-2">${can ? up('Andere Fahrt hochladen') : ''}<button class="ghost !py-2 text-sm" onclick="exeDel(${ja(w)}, ${ja(i)})">Bewertung entfernen</button></div>${err}</div>`;
+    <div class="mt-3 flex flex-wrap gap-2">${can ? (exeGmOn() ? exeUpSm(i, 'Andere Fahrt hochladen') : up('Andere Fahrt hochladen')) : ''}<button class="ghost !py-2 text-sm" onclick="exeDel(${ja(w)}, ${ja(i)})">Bewertung entfernen</button></div>${err}</div>`;
   if (!can) return '';
+  if (exeGmOn()) return exeGmLine(i, 1, exeUpSm(i, 'Datei hochladen')) + err;
   return `<div class="p-3" style="border:1px dashed var(--line)"><p class="font-semibold">Wie lief die Einheit?</p><p class="mt-1 text-xs" style="color:var(--mute)">Lade deine aufgezeichnete Fahrt hoch (FIT, GPX oder TCX, z. B. aus Strava, Garmin Connect, Wahoo oder Zwift). Die App vergleicht sie mit der Vorgabe, gibt dir eine Rückmeldung und passt den Plan bei Bedarf an.</p><div class="mt-2">${up('Fahrt hochladen und bewerten')}</div>${err}</div>`;
 }
 function exeModal(){

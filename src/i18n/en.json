@@ -7013,5 +7013,13 @@
 "Geschlecht, Alter und Erholung. Ohne Angabe plant die App mit Standardwerten.": "Sex, age and recovery. If you leave them out, the app plans with standard values.",
 "Du hättest Zeit, der Plan setzt hier bewusst eine Pause. Erholung gehört zum Training.": "You'd have time, but the plan deliberately puts a break here. Recovery is part of training.",
 "Einheit anpassen": "Adjust session",
-"Zeit, Tag oder Befinden passen nicht? Hier änderst du die Einheit.": "Short on time, wrong day or not feeling well? Change the session here."
+"Zeit, Tag oder Befinden passen nicht? Hier änderst du die Einheit.": "Short on time, wrong day or not feeling well? Change the session here.",
+"Garmin wird abgerufen …": "Fetching from Garmin …",
+"Deine Fahrten kommen automatisch aus Garmin Connect.": "Your rides arrive automatically from Garmin Connect.",
+"Deine Fahrt kommt automatisch aus Garmin Connect.": "Your ride arrives automatically from Garmin Connect.",
+"Jetzt abrufen": "Fetch now",
+"Datei hochladen": "Upload file",
+"als Datei hochladen": "upload as file",
+"Hinweg als Datei": "Outbound as file",
+"Rückweg als Datei": "Return as file"
 }
