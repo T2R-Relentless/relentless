@@ -14,8 +14,7 @@ Object.assign(EXP, {
         () => exLines([[[32, 152], [80, 152], [92, 112], [120, 116]], [[80, 152], [80, 112], [108, 118]]], [20, 148], `<g class="ln"><polyline points="32,152 60,124 86,116" fill="none" class="ln2"/></g>`) + exArrow(130, 112, 114, 112)],
   birddog:[() => exQuad({extra:`<g class="ln"><polyline points="50,118 50,158" fill="none" class="ln2"/><polyline points="104,118 104,158" fill="none" class="ln2"/></g>`}),
            () => exQuad({extra:`<g class="ln"><polyline points="50,118 14,114" fill="none" class="ln2"/><polyline points="104,118 166,116" fill="none" class="ln2"/></g>`})],
-  clam:[() => exLines([[[30, 152], [86, 152]], [[86, 152], [118, 136], [104, 154]], [[86, 152], [118, 136], [104, 154]]], [18, 146], `<g class="ln"><polyline points="86,152 118,136" fill="none" class="ln2"/></g><line x1="118" y1="136" x2="118" y2="136" class="cb"/>`),
-        () => exLines([[[30, 152], [86, 152]], [[86, 152], [118, 136], [104, 154]], [[86, 152], [112, 112], [104, 152]]], [18, 146], `<g class="ln"><polyline points="86,152 112,112" fill="none" class="ln2"/></g><line x1="118" y1="136" x2="112" y2="112" class="cb"/>`) + exArrow(130, 132, 126, 112)]
+  clam:[() => exBClam(0), () => exBClam(1)]
 });
 Object.assign(EXI, {
   hipflex:{t:'Hüftbeuger-Dehnung im Kniestand', cap:['Start: Halbkniestand, Becken aufgerichtet', 'Hüfte nach vorn, Arm nach oben'], m:'Hüftbeuger (Iliopsoas), Oberschenkelvorderseite',
@@ -43,9 +42,8 @@ Object.assign(EXI, {
     f:['Das Becken dreht auf. Stell dir ein Glas Wasser auf dem unteren Rücken vor.', 'Hohlkreuz, weil das Bein zu hoch geht. Nur bis zur Waagerechten.'],
     v:'Schwerer: Ellbogen und Knie unter dem Körper zusammenführen, dann wieder strecken.', r:'Trainiert die Rumpfspannung, die das Becken auf dem Sattel ruhig hält.'},
   clam:{t:'Clamshell (Muschel)', cap:['Start: Seitlage, Knie gebeugt', 'Oberes Knie öffnen'], m:'Seitliche Gesäßmuskulatur (Gluteus medius)',
-    s:['Seitlage, Hüfte und Knie etwa 45° gebeugt, Füße übereinander. Optional ein Miniband über den Knien.', 'Die Füße bleiben zusammen, das obere Knie öffnet sich nach oben.', 'Kurz halten, langsam schließen. Das Becken kippt nicht nach hinten.', '15 Wiederholungen, dann Seite wechseln.'],
-    f:['Das Becken rollt mit nach hinten. Weniger weit öffnen.', 'Zu schnell. Langsam und kontrolliert.'],
-    v:'Schwerer: mit Miniband oder mit gehobenen Füßen.', r:'Ein starker seitlicher Gesäßmuskel hält das Knie beim Treten in der Spur und beugt Knieschmerzen vor.'}
+    q:"Füße bleiben zusammen, nur das obere Knie öffnet.", a:["Leg dich auf die Seite, der Kopf liegt auf dem unteren Arm.", "Beuge die Hüfte etwa 45° und die Knie etwa 90°. Die Füße liegen übereinander, ungefähr in einer Linie mit Gesäß und Kopf.", "Die Hüften liegen genau übereinander. Die obere Hand liegt vorn am Becken.", "Der Blick geht nach vorn."], b:[["Spann den Bauch leicht an, die Füße bleiben aufeinander.", 0], ["Öffne das obere Knie langsam nach oben, so weit es geht, ohne dass das Becken nach hinten kippt.", 1], ["Halte oben kurz an.", 1], ["Schließ das Knie langsam wieder.", 0]], atm:"Atme beim Öffnen aus und beim Schließen ein.", sp:"Du spürst es seitlich am Gesäß, hinter dem Hüftknochen. Nicht im unteren Rücken und nicht vorn an der Leiste.",
+    f:["Das Becken rollt nach hinten mit. Öffne weniger weit, die Hand am Becken kontrolliert.", "Das Hohlkreuz wird stärker. Zieh den Bauchnabel leicht ein.", "Die Füße lösen sich. Drück die Fersen aneinander."], ez:"Öffne nur halb so weit, ohne Band.", hd:"Leg ein Miniband über die Knie.", k:"Bei Schmerz in der Hüfte nur so weit öffnen, wie es schmerzfrei geht.", v:"", r:"Ein starker seitlicher Gesäßmuskel kann helfen, das Knie beim Treten in der Spur zu halten."}
 });
 const MOB = {
   mob:{n:'Mobilität', m:15, intro:'Ruhige Dehn- und Mobilisationsübungen. Gut nach der Radeinheit, am Abend oder an Ruhetagen. Nicht direkt vor harten Intervallen statisch dehnen.', ex:[['catcow', 'Katze-Kuh', '10 langsame Wiederholungen'], ['tspine', 'Brustwirbelsäule öffnen', '8 pro Seite'], ['hipflex', 'Hüftbeuger-Dehnung', '2 × 45 Sek. pro Seite'], ['ham', 'Beinrückseite mit Band', '2 × 45 Sek. pro Bein'], ['fig4', 'Gesäß-Dehnung (Figur 4)', '45 Sek. pro Seite']]},

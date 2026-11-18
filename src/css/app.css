@@ -48,6 +48,37 @@
   .gr{stroke:var(--line);stroke-width:2}
   .ar line,.ar polyline{stroke:var(--ice);stroke-width:2.5;stroke-linecap:round;fill:none}
   .cb{stroke:var(--teal);stroke-width:2;stroke-dasharray:4 3}
+  /* Übungsfigur mit Körperform (exB…, 02a-uebungen-figur.js): nahe/bewegte Seite kräftig, ferne Seite gedeckt, Zielmuskel türkis */
+  .exb line{stroke-linecap:round;fill:none}
+  .exb .exbn line,.exb .exbt line,.exb .exbhd line{stroke:var(--ink)}
+  .exb .exbn circle,.exb .exbhd circle{fill:var(--ink)}
+  .exb .exbn line{stroke-width:7.5}
+  .exb .exbt line{stroke-width:13}
+  .exb .exbt.exbw line{stroke-width:21}
+  .exb .exbhd line{stroke-width:3}
+  .exb .exbf{opacity:.42}
+  .exb .exbf line{stroke:var(--mute);stroke-width:7}
+  .exb .exbf circle{fill:var(--mute)}
+  .exb .exbn line.exbft,.exb .exbf line.exbft{stroke-width:5}
+  .exb .exbo line,.exb .exbo line.exbft{stroke:var(--tint);stroke-width:12}
+  .exb .exbo circle{fill:var(--tint)}
+  .exb .exbz{fill:var(--teal);opacity:.55}
+  .exb .exbmat{fill:var(--line)}
+  .exb .exbcu{fill:var(--panel);stroke:var(--mute);stroke-width:1.5}
+  .exb .exbband{stroke:var(--mute);stroke-width:2.5}
+  .exb .exbpost{opacity:.5}
+  .exb .exbpost line{stroke:var(--mute);stroke-width:5}
+  .exb .exbpull line,.exb .exbpull polyline{stroke:var(--ice);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
+  /* Übungsfenster mit gegliedertem Text: Merksatz, antippbare Bewegungsschritte (halten das Bild an), Legende */
+  .exbq{border-left:3px solid var(--teal);background:var(--tint);padding:10px 12px;font-weight:600}
+  .exbleg{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.75rem;color:var(--mute)}
+  .exbleg i{flex:none;display:inline-block;width:16px;height:10px;border-radius:50%;background:var(--teal);opacity:.55}
+  .exbstep{display:flex;gap:10px;align-items:flex-start;width:100%;min-height:44px;padding:9px 10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-align:left;font-size:.875rem;line-height:1.4}
+  .exbstep[aria-pressed=true]{border-color:var(--teal);background:var(--tint);box-shadow:inset 3px 0 0 var(--teal)}
+  .exbnum{flex:none;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);font-weight:700;font-size:.75rem}
+  .exbstep[aria-pressed=true] .exbnum{background:var(--teal);border-color:var(--teal);color:var(--panel)}
+  .exbsub{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media (max-width:420px){.exbsub{grid-template-columns:1fr}}
   .exl{color:var(--teal);text-decoration:underline;text-underline-offset:3px;font-weight:600;text-align:left}
 
   .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}

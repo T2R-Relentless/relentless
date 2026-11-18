@@ -39,10 +39,8 @@ const EXP = {
           () => { const f = exStand({ax:100, th:10, sh:-2, tr:84, arm:[[0, 17], [0, 34]]}); const dx = -Math.sin(84 * Math.PI / 180), dy = Math.cos(84 * Math.PI / 180); return f.svg + `<g class="ln">${exLimb(f.H, [f.H[0] + dx * 34, f.H[1] + dy * 34 + .5], [f.H[0] + dx * 68, f.H[1] + dy * 68 + 1])}</g>` + exPlate(f.S[0], f.S[1] + 34, 6) + exArrow(150, 60, 150, 100); }],
   bridge:[() => exLines([[[24, 152], [62, 152]], [[62, 152], [90, 128]], [[90, 128], [98, 158]]], [12, 148], `<g class="ln"><polyline points="62,152 124,118" fill="none"/></g>`),
           () => exLines([[[24, 152], [64, 134]], [[64, 134], [94, 122]], [[94, 122], [100, 158]]], [12, 148], `<g class="ln"><polyline points="64,134 126,108" fill="none"/></g>`) + exArrow(60, 112, 60, 82)],
-  deadbug:[() => exLines([[[44, 152], [86, 152]], [[86, 152], [86, 118]], [[86, 118], [122, 118]]], [32, 148], `<g class="ln"><polyline points="44,152 44,116" fill="none"/><polyline points="44,152 44,116" fill="none" class="ln2"/><polyline points="86,152 104,118" fill="none" class="ln2"/></g>`),
-           () => exLines([[[44, 152], [86, 152]], [[86, 152], [86, 118]], [[86, 118], [122, 118]]], [32, 148], `<g class="ln"><polyline points="44,152 44,116" fill="none"/><polyline points="44,152 10,150" fill="none" class="ln2"/><polyline points="86,152 154,146" fill="none" class="ln2"/></g>`) + exArrow(24, 134, 12, 142)],
-  pallof:[() => { const f = exStand({ax:80, th:0, sh:0, tr:0, arm:[[10, 14], [18, 4]]}); return f.svg + `<line x1="0" y1="${f.S[1] + 4}" x2="${f.S[0] + 18}" y2="${f.S[1] + 4}" class="cb"/>`; },
-          () => { const f = exStand({ax:80, th:0, sh:0, tr:0, arm:[[20, 3], [38, 3]]}); return f.svg + `<line x1="0" y1="${f.S[1] + 3}" x2="${f.S[0] + 38}" y2="${f.S[1] + 3}" class="cb"/>`; }],
+  deadbug:[() => exBDeadbug(0), () => exBDeadbug(1)],
+  pallof:[() => exBPallof(0), () => exBPallof(1)],
   sidep:[() => exLines([[[40, 150], [40, 128]], [[40, 128], [90, 140]], [[90, 140], [140, 152]]], [24, 112], `<g class="ln"><polyline points="40,152 66,152" fill="none"/><polyline points="40,128 40,96" fill="none" class="ln2"/></g>`),
          () => exLines([[[40, 150], [40, 128]], [[40, 128], [90, 150]], [[90, 150], [140, 152]]], [24, 112], `<g class="ln"><polyline points="40,152 66,152" fill="none"/><polyline points="40,128 40,96" fill="none" class="ln2"/></g>`)],
   plank:[() => exLines([[[30, 152], [30, 130]], [[30, 130], [88, 141]], [[88, 141], [142, 152]]], [20, 122], `<g class="ln"><polyline points="30,152 60,152" fill="none"/></g>`),
@@ -82,13 +80,11 @@ const EXI = {
     f:['Hohlkreuz oben. Rippen unten, Bauch leicht angespannt.', 'Die Hüfte dreht ab. Beide Beckenknochen auf gleicher Höhe halten.', 'Der Druck kommt aus dem Fußballen. Die Ferse schiebt.'],
     v:'Einfacher: Beide Füße am Boden. Schwerer: Gewicht (Rucksack) auf der Hüfte.', r:'Aktiviert das Gesäß, das beim Treten oft zu wenig mitarbeitet.'},
   deadbug:{t:'Dead Bug', cap:['Start: Knie über der Hüfte, Arme nach oben', 'Gegenarm und Gegenbein strecken'], m:'Tiefe Bauchmuskulatur, Rumpfstabilität',
-    s:['Rückenlage, Arme zeigen senkrecht nach oben, Knie sind 90° gebeugt über der Hüfte.', 'Drücke den unteren Rücken leicht in den Boden und halte ihn dort.', 'Strecke den rechten Arm nach hinten über den Kopf und das linke Bein nach vorn, beides knapp über dem Boden.', 'Zurück in die Mitte, dann die andere Seite. Atme beim Strecken aus.'],
-    f:['Der untere Rücken hebt ab (Hohlkreuz). Weniger weit strecken.', 'Zu schnell. Langsam, etwa 3 Sekunden pro Seite.', 'Atem anhalten. Beim Ausatmen strecken.'],
-    v:'', r:'Ein stabiler Rumpf überträgt die Kraft aus den Beinen aufs Pedal und entlastet den unteren Rücken auf langen Etappen.'},
+    q:"Der untere Rücken bleibt die ganze Zeit am Boden.", a:["Leg dich auf den Rücken, der Kopf bleibt auf dem Boden.", "Heb die Beine an: Knie über der Hüfte, Hüfte und Knie je 90° gebeugt.", "Streck beide Arme senkrecht zur Decke, die Hände sind über den Schultern.", "Drück den unteren Rücken sanft in den Boden. Die Rippen ziehen nach unten."], b:[["Spann den Bauch an, als ob du gleich husten würdest.", 0], ["Streck langsam den rechten Arm nach hinten über den Kopf und das linke Bein nach vorn, beides knapp über dem Boden.", 1], ["Komm langsam in die Mitte zurück.", 0], ["Jetzt die andere Seite: linker Arm und rechtes Bein.", 1]], atm:"Atme beim Strecken lang aus und in der Mitte ein.", sp:"Du spürst es im ganzen Bauch, vor allem unten. Nicht im unteren Rücken und nicht im Nacken.",
+    f:["Der untere Rücken hebt ab. Streck Arm und Bein weniger weit oder höher über dem Boden.", "Zu schnell. Nimm dir etwa 3 Sekunden für jede Seite.", "Du hältst die Luft an. Atme beim Strecken hörbar aus."], ez:"Streck nur das Bein und tipp die Ferse kurz auf, die Arme bleiben oben.", hd:"Halte die gestreckte Position 3 Sekunden, bevor du zurückkommst.", k:"Spürst du den unteren Rücken, bewege dich weniger weit. Wenn es weiter wehtut, lass die Übung weg.", v:"", r:"Ein stabiler Rumpf hilft, die Kraft aus den Beinen aufs Pedal zu übertragen, und kann den unteren Rücken auf langen Etappen entlasten."},
   pallof:{t:'Pallof Press', cap:['Start: Griff vor der Brust', 'Ende: Arme gestreckt, Rumpf dreht nicht'], m:'Seitliche Bauchmuskeln und Rumpf (Anti-Rotation)',
-    s:['Befestige ein Band oder Kabel auf Brusthöhe seitlich neben dir. Steh seitlich dazu, schulterbreit, Knie leicht gebeugt.', 'Halte den Griff mit beiden Händen vor der Brust.', 'Drücke die Arme langsam gerade nach vorn und halte 2 Sekunden. Der Zug will dich drehen, dein Rumpf bleibt gerade.', 'Zurück zur Brust. Nach allen Wiederholungen die Seite wechseln.'],
-    f:['Der Oberkörper dreht mit. Weniger Zug oder näher an die Befestigung.', 'Das Becken schwingt. Gesäß und Bauch anspannen.', 'Schultern hochgezogen. Entspannt lassen.'],
-    v:'Ohne Gerät: Seitstütz oder Plank üben.', r:'Rumpfspannung verhindert Energieverlust beim Treten, vor allem im Wiegetritt.'},
+    q:"Das Band zieht dich zur Seite, du bleibst gerade.", a:["Befestige ein Band oder Kabel auf Brusthöhe. Stell dich seitlich dazu, etwa einen großen Schritt entfernt.", "Füße schulterbreit, Knie leicht gebeugt, Becken und Brust zeigen nach vorn.", "Halte den Griff mit beiden Händen vor der Brustmitte, die Ellbogen sind gebeugt.", "Der Blick geht geradeaus."], b:[["Spann Bauch und Gesäß an, das Band ist schon leicht gespannt.", 0], ["Drück die Arme langsam gerade nach vorn, bis sie gestreckt sind.", 1], ["Halte 2 Sekunden. Die Hände bleiben genau vor der Brustmitte.", 1], ["Führ den Griff langsam zur Brust zurück. Nach allen Wiederholungen dreh dich um und mach die andere Seite.", 0]], atm:"Atme beim Vordrücken aus und atme beim Halten ruhig weiter.", sp:"Du spürst es seitlich am Bauch und in der Taille, vor allem auf der Seite weg vom Band. Nicht in den Schultern und nicht im unteren Rücken.",
+    f:["Der Oberkörper dreht zum Band. Geh einen Schritt näher an die Befestigung oder nimm ein leichteres Band.", "Die Hände wandern zur Seite. Drück genau geradeaus.", "Die Schultern ziehen hoch. Lass sie locker nach unten sinken."], ez:"Stell dich näher an die Befestigung, dann zieht das Band weniger.", hd:"Stell die Füße eng zusammen oder halte die gestreckten Arme 5 Sekunden.", k:"Prüf vorher, dass das Band fest sitzt und nicht beschädigt ist.", v:"Ohne Gerät: Seitstütz oder Plank üben.", r:"Rumpfspannung kann helfen, Energieverlust beim Treten zu verringern, vor allem im Wiegetritt."},
   sidep:{t:'Seitstütz', cap:['Richtig: Körper bildet eine Linie', 'Falsch: Hüfte sinkt ab'], m:'Seitliche Bauchmuskeln, Hüfte, Schulter',
     s:['Seitlich auf den Unterarm legen, der Ellbogen steht genau unter der Schulter.', 'Hebe die Hüfte, bis Kopf, Rumpf und Beine eine gerade Linie bilden. Füße übereinander oder leicht versetzt.', 'Halte die Position 20 bis 40 Sekunden, ruhig atmen.', 'Seite wechseln. Steigerung durch längere Zeit, nicht durch Wackeln.'],
     f:['Die Hüfte sackt ab. Schiebe sie aktiv nach oben.', 'Der Körper kippt nach vorn oder hinten. Brust bleibt offen, Becken zeigt nach vorn.', 'Schulter hochgezogen. Wegdrücken vom Boden.'],
@@ -113,10 +109,10 @@ const _ease = x => x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
 function exTick(ts){
   const els = document.querySelectorAll('g[data-ex]'); if (!els.length) { _exRaf = 0; return; }
   const ph = ts % 4400, red = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let k = ph < 700 ? 0 : ph < 1900 ? _ease((ph - 700) / 1200) : ph < 2900 ? 1 : ph < 4100 ? 1 - _ease((ph - 2900) / 1200) : 0;
-  if (red) k = ph < 2200 ? 0 : 1;
+  let k0 = ph < 700 ? 0 : ph < 1900 ? _ease((ph - 700) / 1200) : ph < 2900 ? 1 : ph < 4100 ? 1 - _ease((ph - 2900) / 1200) : 0;
+  if (red) k0 = ph < 2200 ? 0 : 1;
   els.forEach(el => {
-    const T = exTpl(el.dataset.ex);
+    const T = exTpl(el.dataset.ex), k = exHold && exHold.id === el.dataset.ex && el.closest('.exov') ? exHold.ph : k0;
     if (el._k !== k) {
       let h; if (T.ok) { h = T.pa[0]; for (let i = 0; i < T.na.length; i++) h += (T.na[i] + (T.nb[i] - T.na[i]) * k).toFixed(1) + T.pa[i + 1]; } else h = k < .5 ? T.A : T.B;
       el.innerHTML = h; el._k = k;
@@ -127,17 +123,39 @@ function exTick(ts){
 }
 function exAnimStart(){ if (!_exRaf && document.querySelector('g[data-ex]')) _exRaf = requestAnimationFrame(exTick); }
 let exOpen = null;
-function openEx(id){ if (EXI[id]) { exOpen = id; render(); } }
-function closeEx(){ exOpen = null; render(); }
+/* Angetippter Bewegungsschritt im Übungsfenster: {id, i, ph} hält die Animation in der Phase dieses Schritts an */
+let exHold = null;
+function openEx(id){ if (EXI[id]) { exOpen = id; exHold = null; render(); } }
+function closeEx(){ exOpen = null; exHold = null; render(); }
+function exHoldTap(i){
+  const e = EXI[exOpen]; if (!e || !e.b || !e.b[i]) return;
+  exHold = exHold && exHold.i === i ? null : {id:exOpen, i, ph:e.b[i][1] ? 1 : 0};
+  document.querySelectorAll('.exbstep').forEach(b => b.setAttribute('aria-pressed', String(!!exHold && +b.dataset.st === exHold.i)));
+  /* Bild sichtbar machen, wenn es oben aus dem Fenster gescrollt ist (die Schritte bleiben darunter im Blick) */
+  try { const an = document.querySelector('.exov .exanim'), bx = an && an.closest('.exbox'); if (exHold && bx && an.getBoundingClientRect().top < bx.getBoundingClientRect().top) an.scrollIntoView({block:'start', behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); } catch (err) { elog(err); }
+  exAnimStart();
+}
+/* Gegliederter Text (Übungen mit Merksatz q): Ausgangsposition, Bewegung (antippbar), Atmung, Spüren, Fehler, Leichter/Schwerer */
+function exBText(e){
+  const H = t => `<p class="mt-3 font-semibold">${t}</p>`, P = x => `<p class="mt-1 text-sm">${esc(x)}</p>`, UL = l => `<ul class="mt-1 list-disc space-y-1 pl-5 text-sm">${l.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  return `${H('Ausgangsposition')}${UL(e.a || [])}
+    ${H('Bewegung')}<p class="mt-1 text-xs" style="color:var(--mute)">Tippe auf einen Schritt, um das Bild in dieser Position anzuhalten. Nochmal tippen läuft weiter.</p>
+    <ol class="mt-2 space-y-2">${(e.b || []).map((x, i) => `<li><button type="button" class="exbstep" data-st="${i}" aria-pressed="${exHold && exHold.i === i ? 'true' : 'false'}" onclick="exHoldTap(${i})"><span class="exbnum" aria-hidden="true">${i + 1}</span><span>${esc(x[0])}</span></button></li>`).join('')}</ol>
+    ${e.atm ? H('Atmung') + P(e.atm) : ''}${e.sp ? H('Das solltest du spüren') + P(e.sp) : ''}
+    ${e.f && e.f.length ? H('Häufige Fehler') + UL(e.f) : ''}
+    ${e.ez || e.hd ? `<div class="exbsub mt-1">${e.ez ? `<div>${H('Leichter')}${P(e.ez)}</div>` : ''}${e.hd ? `<div>${H('Schwerer')}${P(e.hd)}</div>` : ''}</div>` : ''}
+    ${e.v ? H('Variante') + P(e.v) : ''}`;
+}
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && exOpen) closeEx(); });
 function exModal(){
   if (!exOpen || !EXI[exOpen]) return ''; const e = EXI[exOpen], p = EXP[exOpen];
   return `<div class="exov" onclick="if(event.target===this)closeEx()" role="dialog" aria-modal="true" aria-label="${esc(e.t)}"><div class="exbox"><div class="flex items-start gap-3"><h3 class="hd flex-1 text-2xl font-semibold">${esc(e.t)}</h3><button class="ghost !px-3 !py-1.5" onclick="closeEx()" aria-label="Schließen">Schließen</button></div>
     <p class="mt-1 text-sm" style="color:var(--mute)">Trainiert: ${esc(e.m)}</p>
-    <div class="exanim mt-3"><div class="exf">${exAnimSvg(exOpen)}</div><div class="mt-2 flex gap-2"><span class="exph" data-ph="0">${esc(e.cap[0])}</span><span class="exph" data-ph="1">${esc(e.cap[1])}</span></div></div>
-    <p class="mt-3 font-semibold">So geht's</p><ol class="mt-1 list-decimal space-y-1 pl-5 text-sm">${e.s.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+    ${e.q ? `<div class="exbq mt-3"><p class="eyebrow">Merksatz</p><p class="mt-1">${esc(e.q)}</p></div>` : ''}
+    <div class="exanim mt-3"><div class="exf">${exAnimSvg(exOpen)}</div><div class="mt-2 flex gap-2"><span class="exph" data-ph="0">${esc(e.cap[0])}</span><span class="exph" data-ph="1">${esc(e.cap[1])}</span></div>${e.q ? '<p class="exbleg"><i aria-hidden="true"></i>Hier spürst du es</p>' : ''}</div>
+    ${e.q ? exBText(e) : `<p class="mt-3 font-semibold">So geht's</p><ol class="mt-1 list-decimal space-y-1 pl-5 text-sm">${e.s.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
     <p class="mt-3 font-semibold">Häufige Fehler</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm">${e.f.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-    ${e.v ? `<p class="mt-3 font-semibold">Variante</p><p class="mt-1 text-sm">${esc(e.v)}</p>` : ''}
+    ${e.v ? `<p class="mt-3 font-semibold">Variante</p><p class="mt-1 text-sm">${esc(e.v)}</p>` : ''}`}
     <p class="mt-3 font-semibold">Warum für Radfahrer</p><p class="mt-1 text-sm">${esc(e.r)}</p>
     ${e.k ? `<p class="mt-3 font-semibold">Hinweis</p><p class="mt-1 text-sm">${esc(e.k)}</p>` : ''}
     <p class="mt-3 text-xs" style="color:var(--mute)">Die Animation zeigt den Bewegungsablauf als vereinfachte Strichfigur. Technik vor Gewicht. Bei Schmerzen abbrechen. Lass dir die Übung bei Unsicherheit einmal von einer Trainerin oder einem Trainer zeigen.</p></div></div>`;
