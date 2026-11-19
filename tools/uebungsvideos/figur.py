@@ -71,8 +71,16 @@ if shoes:
     g = _bm.new(); g.from_mesh(shoes.data); dl = [f for f in g.faces if sum(v.co.z for v in f.verts) / len(f.verts) > cut]
     _bm.ops.delete(g, geom=dl, context='FACES')
     # Schuhöffnung schließen: kein Blick ins Innere, die Kontur bleibt durchgehend
-    _bm.ops.holes_fill(g, edges=[e for e in g.edges if e.is_boundary], sides=0)
+    _nf0 = len(g.faces); _bm.ops.holes_fill(g, edges=[e for e in g.edges if e.is_boundary], sides=0); g.faces.ensure_lookup_table()
+    # Deckel der Schuhöffnung in Hosenfarbe: Von vorn sieht man sonst ein weißes Feld zwischen Hosensaum und Schuh
+    for f_ in list(g.faces)[_nf0:]: f_.material_index = 4 if f_.calc_center_median().x < 0 else 3
     g.to_mesh(shoes.data); g.free(); print('SOCKEN_GELOESCHT', len(dl))
+    shoes.data.materials.append(toon('sohle', srgb('#5b6f80'), srgb('#44566a'))); shoes.data.materials.append(M['pants']); shoes.data.materials.append(M['pantsF'])   # Plätze 2, 3, 4
+    # Sohle farbig absetzen: Der Schuh ist dadurch in jeder Ansicht als Schuh lesbar (sonst wirkt er von vorn wie ein Klotz)
+    SOHLE = float(next((a.split('=')[1] for a in args if a.startswith('sohle=')), .02))
+    if SOHLE > 0:
+        for p in shoes.data.polygons:
+            if p.center.z < z0 + SOHLE and p.material_index < 3: p.material_index = 2
 # Anzug: T-Shirt und Hose sind getrennte Netzteile. Teile über verbundene Kanten bestimmen; jedes Teil bekommt als Ganzes
 # Shirt- oder Hosenfarbe (nach mittlerer Höhe), so entsteht am Saum keine Treppe
 if shirt:

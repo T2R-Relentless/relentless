@@ -77,6 +77,16 @@ def clam(ph):
         aim('LeftUpLeg', best - H); aim('LeftLeg', A - best); aim('LeftFoot', V(-.6, -.8, 0))
 EXS['clam'] = dict(pose=clam, keys=((1, 0), (12, 0), (36, 1), (52, 1), (76, 0), (88, 0)), cam=V(-.55, -.35, 1), zone=None)
 
+def fwd(name):
+    """Richtung, in die die Vorderseite des Knochens gerade zeigt (in der Ruhelage −Y, die Blickrichtung der Figur)"""
+    pb = B(name); loc = pb.bone.matrix_local.to_3x3().inverted() @ Vector((0, -1, 0))
+    return ((rig.matrix_world @ pb.matrix).to_3x3() @ loc).normalized()
+def roll_to(name, target):
+    """Knochen um seine Längsachse rollen, bis seine Vorderseite in Richtung target zeigt (z. B. Kniescheibe aus der Beugung heraus)"""
+    bpy.context.view_layer.update(); ax = ((rig.matrix_world @ B(name).matrix).to_3x3() @ Vector((0, 1, 0))).normalized()
+    c = fwd(name); c = c - ax * c.dot(ax); t = Vector(target) - ax * Vector(target).dot(ax)
+    if c.length < 1e-5 or t.length < 1e-5: return
+    c.normalize(); t.normalize(); twist(name, math.degrees(math.atan2(ax.dot(c.cross(t)), c.dot(t))), ax)
 def ik2(upper, lower, T, pole):
     """Zwei-Gelenk-Kette (Ober-/Unterarm bzw. -schenkel) so ausrichten, dass das Ende bei T liegt; das mittlere Gelenk
     zeigt in Richtung pole (Weltrichtung)"""
@@ -110,6 +120,8 @@ EXS['pallof'] = dict(pose=pallof, keys=((1, 0), (12, 0), (36, 1), (52, 1), (76, 
 # ---------------- 90/90 Hüftwechsel: Sitz, Hände hinten aufgestützt; Knie kippen über oben zur anderen Seite ----------------
 # Person schaut nach −Y; rechts der Person = −X. Bild 0: Knie zur rechten Seite (linkes Bein vorn in Außenrotation,
 # rechtes Bein hinten in Innenrotation), Mittelbild: beide Knie oben, Füße stehen; Bild 1 spiegelbildlich.
+FLIE = float(next((a.split('=')[1] for a in args if a.startswith('flie=')), 1.3)); FREL = float(next((a.split('=')[1] for a in args if a.startswith('frel=')), 30))
+FVOR = float(next((a.split('=')[1] for a in args if a.startswith('fvor=')), .56))
 P['hip9090'] = {'lz': .07, 'root': -.8, 'hz': .035, 'az': .09}
 def hip9090(ph):
     """Scheibenwischer: Füße stehen fest (etwa 1,5-mal hüftbreit vor dem Becken), die Knie schwenken gemeinsam über oben
@@ -119,18 +131,34 @@ def hip9090(ph):
     t = max(0, min(1, ph)); th = math.radians(180 - 180 * t)
     pole = Vector((math.cos(th), -.15, math.sin(th) * 1.2 + .05))
     for side, sx in (('Left', 1), ('Right', -1)):
-        h = wpos(side + 'UpLeg'); A = Vector((h.x + sx * .2, h.y - .42, P['hip9090']['az']))
+        h = wpos(side + 'UpLeg'); A = Vector((h.x + sx * .2, h.y - FVOR, P['hip9090']['az']))   # Füße so weit vor der Hüfte, dass die Knie etwa 90° gebeugt sind
         # Knie nie durch die Matte: Kniebeugung so weit nach oben drehen, bis Ober- und Unterschenkel über der Matte bleiben
         lift = 0.0
         for _ in range(24):
-            ik2(side + 'UpLeg', side + 'Leg', A, pole + Vector((0, 0, lift))); aim(side + 'Foot', V(sx * .35, -1, -.15))
+            ik2(side + 'UpLeg', side + 'Leg', A, pole + Vector((0, 0, lift)))
+            # Bein anatomisch ausrichten: Kniescheibe zeigt aus der Beugung heraus, der Unterschenkel beugt nur im Kniegelenk.
+            # Der Fuß bewegt sich nur im Sprunggelenk (heben/strecken): steht das Knie oben, steht er flach; kippt das Knie zur
+            # Seite, rollt er mit dem Unterschenkel auf seine Kante und liegt entspannt, leicht gestreckt.
+            K_ = wpos(side + 'Leg'); t_ = (K_ - h).normalized(); s_ = (A - K_).normalized()
+            roll_to(side + 'UpLeg', -(s_ - t_ * s_.dot(t_))); aim(side + 'Leg', A - wpos(side + 'Leg'))
+            f_ = (t_ - s_ * t_.dot(s_)).normalized(); roll_to(side + 'Leg', f_)
+            lie = min(1.0, abs(t_.cross(s_).normalized().z) * FLIE)
+            # Winkel a in der Beinebene (0° = rechtwinklig zum Unterschenkel, 90° = in seiner Verlängerung)
+            R_ = math.hypot(f_.z, s_.z); ph_ = math.atan2(s_.z, f_.z)
+            if R_ > .42:
+                c_ = [ph_ + sg * math.acos(-.42 / R_) for sg in (1, -1)]; c_ = [(x + math.pi) % (2 * math.pi) - math.pi for x in c_]
+                af = min(c_, key=lambda x: abs(x - math.radians(28)))
+            else: af = math.radians(28)
+            a_ = max(math.radians(8), min(math.radians(73), af)) * (1 - lie) + math.radians(28 + FREL) * lie
+            aim(side + 'Foot', f_ * math.cos(a_) + s_ * math.sin(a_))
+            if P['hip9090'].get('dbgk'): print('KNIEWINKEL', side, round(math.degrees(math.acos(max(-1, min(1, (-t_).dot(s_))))), 1))
             if not P['hip9090'].get('check'): break
             gl = lowg([side + 'UpLeg', side + 'Leg'], .5); gs = lowpts(lambda co, ob: co.x * sx > 0, [shoes])
-            # bis 2 cm Einsinken der Weichteile ist erlaubt (die 3,5 cm dicke Matte deckt das ab)
+            # Beine: bis 2 cm Einsinken der Weichteile ist erlaubt (die 3,5 cm dicke Matte deckt das ab); Schuh liegt genau auf
             if P['hip9090'].get('dbg'): print('DBGLEG', side, round(lift, 2), round(gl, 3), round(gs, 3), round(A.z, 3))
-            if gl > -.034 and gs > -.03: break
+            if gl > -.034 and abs(gs) < .004: break
             if gl <= -.034: lift += .12
-            if gs <= -.03: A.z -= gs + .03
+            if abs(gs) >= .004: A.z -= gs
     # Hände flach hinter dem Gesäß, Finger nach hinten; Handgelenk in der Ebene des Unterarms gebeugt (kein seitlicher Knick)
     for side, sx in (('Left', 1), ('Right', -1)):
         ik2(side + 'Arm', side + 'ForeArm', Vector((sx * .2, .4, P['hip9090']['hz'])), (sx * .4, 1, .1))
@@ -173,8 +201,8 @@ if EX == 'pallof':
     _fm = bm.data.attributes['freestyle_face']
     for f in bm.data.polygons:
         if any(i in _fv for i in f.vertices): _fm.data[f.index].value = True
-if EX == 'thread' and TRIKOT:
-    # Die Brust zeigt hier zur Matte: Vom Logo wären nur helle Splitter am Rand zu sehen, deshalb ohne Logo
+if EX in ('thread', 'clam') and TRIKOT:
+    # Thread: Die Brust zeigt zur Matte. Clamshell: Der obere Arm verdeckt die Brust. Vom Logo wären nur helle Splitter zu sehen, deshalb ohne Logo
     for d_ in bm.data.uv_layers['logo'].data: d_.uv = (-1.0, -1.0)
 if EX == 'thread':
     # Kamera steht auf der rechten Seite der Person: abgedunkelt wird hier die linke (abgewandte) Seite
@@ -182,7 +210,7 @@ if EX == 'thread':
     _sl = [sum(g.weight for g in v.groups if g.group in _gl) / (sum(g.weight for g in v.groups if g.group in _ga) or 1) for v in bm.data.vertices]
     for p_ in bm.data.polygons:      # Haut und Trikot: Kopf und Rumpf bleiben hell, nur linke Glieder dunkler
         if p_.material_index in (0, 1): p_.material_index = 1 if sum(_sl[i] for i in p_.vertices) / len(p_.vertices) > .5 else 0
-    for ob_, pairs_ in ((bm, ((3, 4), (5, 6))), (shirt, ((1, 2),)), (shoes, ((0, 1),))):
+    for ob_, pairs_ in ((bm, ((3, 4), (5, 6))), (shirt, ((1, 2),)), (shoes, ((0, 1), (3, 4)))):
         ms_ = ob_.data.materials
         for a_, b_ in pairs_:
             if len(ms_) > b_: ma_, mb_ = ms_[a_], ms_[b_]; ms_[a_] = mb_; ms_[b_] = ma_
@@ -298,6 +326,9 @@ def lowg(groups, wmin=.3):
     return m
 # ------------------------------------------------ Ablauf ------------------------------------------------
 cfg = EXS[EX]
+if any(a == 'schuhlinie=1' for a in args) and shoes:
+    for c in list(shoes.users_collection): c.objects.unlink(shoes)
+    sc.collection.objects.link(shoes)
 _cv = next((a.split('=')[1] for a in args if a.startswith('cam=')), None)        # Kamerarichtung zum Ausprobieren: cam=x,y,z
 if _cv: cfg['cam'] = V(*[float(x) for x in _cv.split(',')])
 def pose(ph):
@@ -347,11 +378,11 @@ if EX == 'openbook':
     print('KISSEN unter', [round(c, 3) for c in hp])
     pil = bpy.data.objects.new('kissen', bpy.data.meshes.new('kissen')); sc.collection.objects.link(pil)
     # Kissen: Quader mit je einem Zwischenschnitt, dann geglättet → weiche, kissenartige Form ohne Kantenartefakte
-    g = bmesh.new(); bmesh.ops.create_cube(g, size=1); bmesh.ops.scale(g, vec=(.48, .4, hz * 1.08), verts=g.verts[:])
+    g = bmesh.new(); bmesh.ops.create_cube(g, size=1); bmesh.ops.scale(g, vec=(.46, .26, hz * 1.08), verts=g.verts[:])
     bmesh.ops.subdivide_edges(g, edges=g.edges[:], cuts=2, use_grid_fill=True); g.to_mesh(pil.data); g.free()
     for f in pil.data.polygons: f.use_smooth = True
     sp_ = pil.modifiers.new('weich', 'SUBSURF'); sp_.levels = 2; sp_.render_levels = 2
-    pil.location = (hp.x + .12, hp.y - .12, hz * 1.08 / 2); setmat(pil, toon('kissen', srgb('#f4f7f8'), srgb('#c6d3d8')))
+    pil.location = (hp.x + .10, hp.y + .02, hz * 1.08 / 2)      # Kissen mittig unter dem Kopf, Rand zum Körper etwa 11 cm unter der Schläfe: Hals und untere Schulter bleiben frei; setmat(pil, toon('kissen', srgb('#f4f7f8'), srgb('#c6d3d8')))
     print('KISSEN Hoehe', round(hz, 3))
 if EX == 'clam':
     # Kopf in Verlängerung der Wirbelsäule; nur so weit zur Matte neigen, bis die Schläfe auf dem unteren Oberarm liegt
