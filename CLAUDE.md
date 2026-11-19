@@ -5,9 +5,11 @@ Ablauf, Namen und „Fertig heißt“: `docs/ENTWICKLUNG.md`. Befehle in Claude 
 
 ## Agenten-Team (`.claude/agents/`)
 Der Nutzer will nur entscheiden, nicht eingreifen. Aufgaben laufen über `/aufgabe` mit dem Team:
-`trainingswissenschaftler` (fachliche Regeln vorab, Abnahme danach) → `entwickler` → `tester` →
-`code-pruefer` + `design-pruefer` (+ Fachabnahme) → Korrekturschleife → Entscheidungsvorlage (`docs/vorlagen/entscheidung.md`)
-→ nach „Ja, hochladen“ `release-manager`. Zwischenstände nicht melden, Wertungsfragen mit Empfehlung in die Vorlage.
+`planer` (effizientester Weg) → `trainingswissenschaftler` (fachliche Regeln vorab, Abnahme danach) → `entwickler` → `tester` →
+`code-pruefer` + `design-pruefer` (+ Fachabnahme, `bewegungs-pruefer` bei Übungsbildern) → Korrekturschleife → Entscheidungsvorlage
+(`docs/vorlagen/entscheidung.md`) → nach „Ja, hochladen“ `release-manager`. Zwischenstände nicht melden, außer der Plan sieht
+einen frühen Zwischenstand vor; Wertungsfragen mit Empfehlung in die Vorlage.
+Auch außerhalb von `/aufgabe`: Vor jeder Umsetzung, die mehr als eine kleine Änderung ist, legt der `planer` den Weg fest.
 
 ## Prüfen (vor jedem Commit, die CI prüft dasselbe)
 - `python3 tools/check.py --gegen origin/main` – Build aktuell, Versionen gleich, Syntax, doppelte Funktionen, kein eval, Version erhöht (Sekunden)

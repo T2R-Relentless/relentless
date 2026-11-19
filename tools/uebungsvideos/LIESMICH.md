@@ -1,0 +1,26 @@
+# Übungsvideos erzeugen
+
+Die Videos in `public/img/uebungen/` zeigen eine 3D-Figur, die mit Blender gerendert wird. Die App braucht davon nichts außer den fertigen Dateien (`<id>.mp4`, `<id>.jpg`).
+
+- **Werkzeuge (kostenlos, nicht Teil des Repos):** Blender 5.2, Erweiterung MPFB (MakeHuman) und das Paket „makehuman system assets“ (Lizenz CC0). Auf dem Entwicklungsrechner liegen sie unter `~/Documents/Relentless-3D/`.
+- **Skripte:** `figur.py` (Dead Bug, Seitenansicht), `uebungen.py` mit `basis_teil.py` (übrige Übungen, freie Kamera), `trikot_teil.py` (eng anliegendes Trikot mit T2R-Logo auf der Brust, für beide), `schuh_teil.py` (Turnschuhe, für beide). Zum Rendern liegen die Skripte in `~/Documents/Relentless-3D/work/`. `render_review.sh <id> <bilder…>` rendert Video und Prüfbilder, `assets.sh <id>` kopiert das freigegebene Video samt Startbild in die App.
+## Ablauf (seit 19.11.2026)
+1. **Figur einmal abnehmen.** `haltungstest.sh` rendert neun Testhaltungen aus je vier Richtungen (`review/figur/figur_haltungstest_*.jpg`). Der Bewegungs-Prüfer (`.claude/agents/bewegungs-pruefer.md`) prüft, der Nutzer gibt die Figur frei. Danach bleiben `basis_teil.py`, `trikot_teil.py` und `schuh_teil.py` unverändert; jede Änderung daran braucht einen neuen Haltungstest.
+2. **Erst Standbilder, dann Video.** `blatt.sh <id>` rendert Start, Mitte und Ende auf ein Blatt (`review/<id>/<id>_blatt.jpg`). `blatt.sh <id> pruef` erzeugt zusätzlich das Prüfpaket: drei weitere Blickrichtungen, Nahaufnahmen von Becken, Füßen, Händen und Kopf, einen Bildstreifen der Bewegung und das Messprotokoll (`<id>_mess.txt`).
+3. **Prüfen.** Der Bewegungs-Prüfer bekommt das Prüfpaket und den Übungstext. Erst nach „FREIGABE: ja“ sieht der Nutzer das Blatt.
+4. **Nach dem Ja des Nutzers:** `render_review.sh <id>` rendert das Video, der Design-Prüfer sieht es an, `assets.sh <id>` baut es ein, dann Tests und Commit.
+
+- **Messen statt beurteilen (`mess_teil.py`):** Auflage auf der Matte, grobe Gelenkgrenzen (Knie, Hüfte, Sprunggelenk, Ellbogen, Handgelenk, Rumpf, Kopf), Durchdringung der Glieder, verdeckte oder abgeschnittene Hände, Füße und Kopf. Die Hinweise stehen im Messprotokoll; der Prüfer bewertet jeden einzeln.
+- **Zeiten (gemessen):** Standbild-Blatt 15–45 Sekunden, Prüfpaket etwa 2 Minuten, Haltungstest etwa 1,5 Minuten. Nie mehr als drei Läufe gleichzeitig, mehr bremst sich gegenseitig aus. `schnell=1` stellt nur die gezeigten Bilder (zum Ausprobieren, Bildausschnitt dann nur ungefähr).
+- **Rückfalltest:** `vergleich.py` vergleicht Bilder Pixel für Pixel. Nach einem Umbau der Skripte müssen die Standbilder freigegebener Übungen unverändert sein.
+- **Figur (koerper_teil.py):** Gesäß hängt in allen Übungen am Becken; Glättung der Hautverformung an Hüfte, Schulter, Nacken und Knie; Hände entspannt; Fingerkonturen mit halber Strichstärke; Haarumriss; Kinnkante nur bei Blick von vorn ohne Linie. Dead Bug läuft über `uebungen.py` (`figur.py` ist nur noch der alte Stand).
+- **Probe:** `probe.sh <name> "<haltung bild> …" [Angaben]` rendert wenige Haltungen aus drei Richtungen auf ein Blatt (etwa 30 Sekunden für drei Haltungen), z. B. zum Vergleich von Einstellungen der Figur.
+- **Bekannte Grenzen:** Keine Übung mit Kniebeugung über etwa 130° (Fersensitz, Kindhaltung, Hocke mit Gesäß auf den Fersen): Die Wade schiebt sich in den Oberschenkel, an der Durchdringung entsteht keine Linie. Wo Körperteile aufeinander liegen (Kopf auf dem Arm), fehlt dort ebenfalls die Linie.
+- **Geprüft und verworfen:** andere Skelette der Grundfigur (verformen die Hüfte gleich), SMPL-X (nur gegen Lizenzgebühr gewerblich nutzbar), OpenSim (rechnet Muskelkräfte, verbessert die Darstellung nicht).
+
+- **Regeln:** Was aufliegen soll, wird im Skript gemessen und automatisch auf die Matte gesetzt. Jede Übung geht vor dem Zeigen durch die Prüfung des Bewegungs-Prüfers (`.claude/agents/bewegungs-pruefer.md`), bis sie freigegeben ist.
+- **In der App:** Eintrag in `EXVID` (`src/js/02a-uebungen-figur.js`) mit `h` (Zeitpunkt der Endposition in Sekunden) und `p` (Zeitfenster der Phase 1). Ohne Video zeigt die App die gezeichnete Figur.
+- **Figur:** schlanker, sportlicher Körperbau (`muscle` 0,45, `weight` 0,38). Das Trikot ist kein eigenes Netz: Der Körper trägt die Trikotfarbe, Halsausschnitt, Ärmelenden und Hosenbund sind glatte Linien im Material. Das Logo stammt aus `assets/t2r-logo-1254.png` (nur der Schriftzug „T2R“); bei Thread the Needle entfällt es, weil die Brust zur Matte zeigt.
+- **Schuhe:** Turnschuh mit gebauter Sohle (Rand, senkrechte Wand, ebene graue Lauffläche), Schaft in Trikotfarbe, helles Schnürfeld. Der Schuh folgt starr dem Fuß, nur die Zehenkappe dem Zehenknochen; mit den übernommenen Gewichten knickte er in der Mitte ein.
+- **Sitzen (90/90):** Gesäß und seitliche Hüfte hängen in der Grundfigur am Oberschenkel und wandern bei gebeugter Hüfte nach vorn. `uebungen.py` hängt sie für diese Übung an das Becken um, sonst sitzt die Figur ohne Gesäß. Den Übergang zum Oberschenkel glättet ein „Corrective Smooth“ rund um die Hüftgelenke. Die Kamera steht schräg von vorn, die Hände stützen seitlich-hinten, damit Becken und beide Arme zu sehen sind.
+- **Prüfung:** Bewegungs-Prüfer am Standbild-Blatt (vor dem Nutzer), Design-Prüfer am fertigen Video (vor dem Einbau).

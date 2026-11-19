@@ -33,6 +33,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         super().end_headers()
 
+    def do_GET(self):
+        # Teilabrufe (Range) für Videos: Browser spulen nur, wenn der Server Bereiche liefert (wie die echte Website)
+        m = re.match(r'^bytes=(\d*)-(\d*)$', self.headers.get('Range') or '')
+        path = self.translate_path(self.path)
+        if not m or not path.endswith('.mp4') or not os.path.isfile(path):
+            return super().do_GET()
+        size = os.path.getsize(path)
+        a = int(m.group(1)) if m.group(1) else max(0, size - int(m.group(2) or 0))
+        b = min(int(m.group(2)), size - 1) if m.group(1) and m.group(2) else size - 1
+        if a > b or a >= size:
+            self.send_response(416); self.send_header('Content-Range', f'bytes */{size}'); self.end_headers(); return
+        self.send_response(206)
+        self.send_header('Content-Type', 'video/mp4'); self.send_header('Accept-Ranges', 'bytes')
+        self.send_header('Content-Range', f'bytes {a}-{b}/{size}'); self.send_header('Content-Length', str(b - a + 1))
+        self.end_headers()
+        with open(path, 'rb') as f:
+            f.seek(a); self.wfile.write(f.read(b - a + 1))
+
     def do_PUT(self):
         shot = SHOT_RE.match(self.path)
         if shot and self.client_address[0] in ('127.0.0.1', '::1'):

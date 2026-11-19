@@ -50,22 +50,30 @@
   .cb{stroke:var(--teal);stroke-width:2;stroke-dasharray:4 3}
   /* Übungsfigur mit Körperform (exB…, 02a-uebungen-figur.js): nahe/bewegte Seite kräftig, ferne Seite gedeckt, Zielmuskel türkis */
   .exb line{stroke-linecap:round;fill:none}
-  .exb .exbn line,.exb .exbt line,.exb .exbhd line{stroke:var(--ink)}
-  .exb .exbn circle,.exb .exbhd circle{fill:var(--ink)}
+  .exb .exbn line,.exb .exbt line{stroke:var(--ink)}
+  .exb .exbn circle,.exb .exbhd circle,.exb .exbhd path,.exb .exbn path.exbft{fill:var(--ink)}
   .exb .exbn line{stroke-width:7.5}
   .exb .exbt line{stroke-width:13}
   .exb .exbt.exbw line{stroke-width:21}
-  .exb .exbhd line{stroke-width:3}
-  .exb .exbf{opacity:.42}
+  .exb .exbf{opacity:.55}
   .exb .exbf line{stroke:var(--mute);stroke-width:7}
-  .exb .exbf circle{fill:var(--mute)}
-  .exb .exbn line.exbft,.exb .exbf line.exbft{stroke-width:5}
-  .exb .exbo line,.exb .exbo line.exbft{stroke:var(--tint);stroke-width:12}
-  .exb .exbo circle{fill:var(--tint)}
+  .exb .exbf circle,.exb .exbf path.exbft{fill:var(--mute)}
+  /* Trennrand: unter jedem Glied ein breiterer Strich in Hintergrundfarbe, Hände, Kopf und Füße mit Rand (paint-order) */
+  .exb line.exbol{stroke:var(--tint)}
+  .exb .exbn line.exbol{stroke-width:11}
+  .exb .exbt line.exbol{stroke-width:16.5}
+  .exb .exbt.exbw line.exbol{stroke-width:24.5}
+  .exb .exbf line.exbol{stroke-width:10.5}
+  .exb .exbn circle,.exb .exbf circle,.exb .exbhd circle{stroke:var(--tint);stroke-width:3.5;paint-order:stroke}
   .exb .exbz{fill:var(--teal);opacity:.55}
   .exb .exbmat{fill:var(--line)}
   .exb .exbcu{fill:var(--panel);stroke:var(--mute);stroke-width:1.5}
-  .exb .exbband{stroke:var(--mute);stroke-width:2.5}
+  .exb .exbband{stroke:var(--mute);stroke-width:4}
+  .exb .exbin rect{fill:var(--panel);stroke:var(--line);stroke-width:3}
+  .exb .exbin line{stroke:var(--ink);stroke-width:7}
+  .exb .exbin line.exbit{stroke-width:11}
+  .exb .exbin circle{fill:var(--ink)}
+  .exb .exbin rect.exbic{fill:var(--panel);stroke:var(--mute);stroke-width:3}
   .exb .exbanc{fill:var(--mute)}
   .exb .exbpull line,.exb .exbpull polyline,.exb .exbpull path{stroke:var(--ice);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;fill:none}
   /* Übungsfenster mit gegliedertem Text: Merksatz, antippbare Bewegungsschritte (halten das Bild an), Legende */
@@ -103,6 +111,9 @@
   .hbtn2{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5)}
 
   .exanim .exf svg{max-width:360px;margin:0 auto}
+  /* gerenderte Übungsvideos und ihre Startbilder (heller Bildgrund wie ein Foto, in beiden Farbschemata) */
+  .exf .exvid{width:100%;height:auto;aspect-ratio:8/5;object-fit:cover;display:block;background:#eaf3f5;border:1px solid var(--line)}
+  .exanim .exf .exvid{max-width:360px;margin:0 auto}
   .exph{flex:1;padding:5px 8px;border:1px solid var(--line);color:var(--mute);font-size:.75rem;line-height:1.3;transition:all .2s}
   .exph.on{border-color:var(--ice);color:var(--ink);background:#e6f7f6}
 
