@@ -121,12 +121,14 @@ EXS['pallof'] = dict(pose=pallof, keys=((1, 0), (12, 0), (36, 1), (52, 1), (76, 
 # Person schaut nach −Y; rechts der Person = −X. Bild 0: Knie zur rechten Seite (linkes Bein vorn in Außenrotation,
 # rechtes Bein hinten in Innenrotation), Mittelbild: beide Knie oben, Füße stehen; Bild 1 spiegelbildlich.
 FLIE = float(next((a.split('=')[1] for a in args if a.startswith('flie=')), 1.3)); FREL = float(next((a.split('=')[1] for a in args if a.startswith('frel=')), 30))
+BKIPP = float(next((a.split('=')[1] for a in args if a.startswith('bkipp=')), 0)); HX90 = float(next((a.split('=')[1] for a in args if a.startswith('hx=')), .29)); HY90 = float(next((a.split('=')[1] for a in args if a.startswith('hy=')), .19))   # Hände seitlich hinter dem Becken: nah genug, dass sie flach die Matte erreichen, und so weit außen, dass auch der abgewandte Arm neben dem Rumpf zu sehen ist
 FVOR = float(next((a.split('=')[1] for a in args if a.startswith('fvor=')), .56))
 P['hip9090'] = {'lz': .07, 'root': -.8, 'hz': .035, 'az': .09}
 def hip9090(ph):
     """Scheibenwischer: Füße stehen fest (etwa 1,5-mal hüftbreit vor dem Becken), die Knie schwenken gemeinsam über oben
     von rechts (ph 0) nach links (ph 1). Beine je Bild per IK zum festen Fußgelenk, Kniebeugung zeigt in Richtung pole."""
     reset(); rig.rotation_euler = (0, 0, 0); rig.location = (0, 0, P['hip9090']['root']); bpy.context.view_layer.update()
+    if BKIPP: twist('Hips', -BKIPP, (1, 0, 0))   # Becken leicht nach hinten gekippt, wie man mit aufgestützten Händen sitzt: Das Gesäß rollt rund unter
     aim('Spine', V(0, .12, 1)); aim('Spine1', V(0, .08, 1)); aim('Spine2', V(0, .04, 1)); aim('Neck', V(0, 0, 1)); aim('Head', V(0, -.05, 1))
     t = max(0, min(1, ph)); th = math.radians(180 - 180 * t)
     pole = Vector((math.cos(th), -.15, math.sin(th) * 1.2 + .05))
@@ -161,9 +163,9 @@ def hip9090(ph):
             if abs(gs) >= .004: A.z -= gs
     # Hände flach hinter dem Gesäß, Finger nach hinten; Handgelenk in der Ebene des Unterarms gebeugt (kein seitlicher Knick)
     for side, sx in (('Left', 1), ('Right', -1)):
-        ik2(side + 'Arm', side + 'ForeArm', Vector((sx * .2, .4, P['hip9090']['hz'])), (sx * .4, 1, .1))
+        ik2(side + 'Arm', side + 'ForeArm', Vector((sx * HX90, HY90, P['hip9090']['hz'])), (sx * .4, 1, .1))
         fa = (wpos(side + 'ForeArm', True) - wpos(side + 'ForeArm')); aim(side + 'Hand', Vector((fa.x, fa.y, 0)).normalized() + Vector((0, 0, -.05)))
-EXS['hip9090'] = dict(pose=hip9090, keys=((1, 0), (10, 0), (46, 1), (58, 1), (94, 0), (104, 0)), perframe=True, cam=V(.12, -1, .32), zone=None)
+EXS['hip9090'] = dict(pose=hip9090, keys=((1, 0), (10, 0), (46, 1), (58, 1), (94, 0), (104, 0)), perframe=True, cam=V(.55, -1, .42), zone=None)   # schräg von vorn: Becken und Gesäß sind zu sehen, von ganz vorn verdeckt der Rumpf sie
 
 # ---------------- Open Book: Seitenlage rechts, Kopf auf Kissen, Hüfte/Knie 90°; oberer Arm im Bogen nach hinten ----------------
 P['openbook'] = {'open': 160.0, 'th0': 0.0, 'root': 0.0}
@@ -215,6 +217,41 @@ if EX == 'thread':
         for a_, b_ in pairs_:
             if len(ms_) > b_: ma_, mb_ = ms_[a_], ms_[b_]; ms_[a_] = mb_; ms_[b_] = ma_
 if EX == 'hip9090' and TRIKOT: bm.data.materials[1] = bm.data.materials[0]   # Sicht von vorn: beide Arme im selben Hautton
+GZ, GY0, GY, GCS, GCI, GCR = float(next((a.split('=')[1] for a in args if a.startswith('gz=')), .14)), float(next((a.split('=')[1] for a in args if a.startswith('gy0=')), .08)), float(next((a.split('=')[1] for a in args if a.startswith('gy=')), .12)), float(next((a.split('=')[1] for a in args if a.startswith('gcs=')), 0.7)), float(next((a.split('=')[1] for a in args if a.startswith('gci=')), 30)), float(next((a.split('=')[1] for a in args if a.startswith('gcr=')), 0.2))
+GES = float(next((a.split('=')[1] for a in args if a.startswith('ges=')), 1)); GFALTE = float(next((a.split('=')[1] for a in args if a.startswith('gfalte=')), .09)); SITZ = float(next((a.split('=')[1] for a in args if a.startswith('sitz=')), .006))
+if EX == 'hip9090' and GES > 0:
+    # Gesäß bleibt am Becken: In der Grundfigur hängen Gesäß und seitliche Hüfte am Oberschenkelknochen. Beugt die Hüfte auf 90°,
+    # wandern sie mit dem Bein nach vorn und das Becken fällt in sich zusammen (die Figur sitzt ohne Gesäß). Deshalb oberhalb der
+    # Gesäßfalte und hinter dem Hüftgelenk das Gewicht weich vom Oberschenkel auf das Becken umhängen.
+    for ob_ in (bm, shirt):
+        if not ob_: continue
+        co_ = BCO if ob_ is bm else [v.co for v in ob_.data.vertices]; gh_ = ob_.vertex_groups.get('mixamorig:Hips'); n_ = 0
+        for sd_ in ('Left', 'Right'):
+            gu_ = ob_.vertex_groups.get(f'mixamorig:{sd_}UpLeg'); hj_ = rig.data.bones[f'mixamorig:{sd_}UpLeg'].head_local
+            if not gu_ or not gh_: continue
+            if ob_ is bm and sd_ == 'Left':
+                print('HUEFTE', [round(x, 3) for x in hj_], 'PROFIL', [(round(dz, 2), round(max((c.y for c in co_ if abs(c.x - hj_.x) < .03 and abs(c.z - hj_.z - dz) < .012), default=0) - hj_.y, 3)) for dz in (-.2, -.16, -.13, -.1, -.08, -.06, -.03, 0, .05, .1)])
+            for v in ob_.data.vertices:
+                w_ = next((g.weight for g in v.groups if g.group == gu_.index), 0)
+                if w_ <= 0: continue
+                c_ = co_[v.index]; f_ = sm((c_.z - (hj_.z - GFALTE - GZ / 2)) / GZ) * sm((c_.y - (hj_.y - GY0)) / GY) * GES
+                if f_ <= 0: continue
+                gu_.add([v.index], w_ * (1 - f_), 'REPLACE'); gh_.add([v.index], w_ * f_, 'ADD'); n_ += 1
+        print('GESAESS', ob_.name, n_)
+        if GCS > 0:
+            # Übergang Oberschenkel–Gesäß glätten: Zwischen dem am Becken bleibenden Gesäß und dem gedrehten Oberschenkel entsteht
+            # sonst eine Kerbe. Die Glättung zieht die verformte Fläche rund um die Hüftgelenke auf ihre ursprüngliche Form zurück.
+            vg_ = ob_.vertex_groups.new(name='ges_glatt'); hjs_ = [rig.data.bones[f'mixamorig:{sd_}UpLeg'].head_local for sd_ in ('Left', 'Right')]
+            for v in ob_.data.vertices:
+                c_ = co_[v.index]; d_ = min((c_ - h_).length for h_ in hjs_); w_ = 1 - sm((d_ - GCR) / .08)
+                if w_ > 0: vg_.add([v.index], w_, 'REPLACE')
+            reset(); cs_ = ob_.modifiers.new('ges_glatt', 'CORRECTIVE_SMOOTH'); cs_.factor = GCS; cs_.iterations = int(GCI); cs_.smooth_type = 'LENGTH_WEIGHTED'
+            cs_.vertex_group = 'ges_glatt'; cs_.use_only_smooth = False; cs_.use_pin_boundary = True; cs_.rest_source = 'BIND'
+            bpy.context.view_layer.objects.active = ob_
+            while ob_.modifiers.find('ges_glatt') > 0 and ob_.modifiers[ob_.modifiers.find('ges_glatt') - 1].type != 'ARMATURE':
+                bpy.ops.object.modifier_move_up(modifier='ges_glatt')
+            bpy.context.view_layer.update(); bpy.ops.object.correctivesmooth_bind(modifier='ges_glatt'); print('GLATT', ob_.name, cs_.is_bind, [m.type for m in ob_.modifiers])
+    bpy.context.view_layer.objects.active = rig
 if EX in ('hip9090',) and not TRIKOT:
     zs_ = [shirt.data.vertices[i].co.z for p_ in shirt.data.polygons if p_.material_index == 0 for i in p_.vertices]; zc = min(zs_) + .07
     top_ = {i for p_ in shirt.data.polygons if p_.material_index == 0 for i in p_.vertices}
@@ -287,7 +324,7 @@ EXS['thread'] = dict(pose=thread, keys=((1, 0), (14, 0), (62, 1), (78, 1), (126,
 # Schuhe hier wieder mit Silhouette (stehende und kniende Übungen), ferner Schuh etwas dunkler als die Matte
 for c in list(shoes.users_collection): c.objects.unlink(shoes)
 sc.collection.objects.link(shoes)
-shoes.data.materials[1] = toon('shoeF2', srgb('#b4c3cb'), srgb('#93a6b0'))
+if not SCHUHNEU: shoes.data.materials[1] = toon('shoeF2', srgb('#b4c3cb'), srgb('#93a6b0'))
 # Messungen (tiefster Punkt je Knochengruppe) brauchen die ursprüngliche Punktreihenfolge: Glättung und Hilfsgeometrie-
 # Maske nur beim Rendern; Hilfsgeometrie (Würfel an Gelenken, Kleidungshilfen) wird beim Messen übersprungen
 for ob_ in MESHES:
@@ -358,6 +395,7 @@ elif EX == 'hip9090':
     for _ in range(20):
         pose(0); g = lowg(['Hips', 'LeftUpLeg', 'RightUpLeg']); gh = lowg(HAND('Left') + HAND('Right')); gs = lowpts(lambda co, ob: True, [shoes])
         print('SITZ', round(P['hip9090']['root'], 3), round(g, 3), 'Hände', round(gh, 3), 'Füße', round(gs, 3))
+        g += SITZ if GES > 0 else 0   # Gesäß gibt beim Sitzen nach: Es sinkt einige Millimeter in die Matte und wirkt dadurch aufliegend statt aufgesetzt
         if abs(g) < .003 and abs(gh) < .004 and abs(gs) < .004: break
         P['hip9090']['root'] -= g; P['hip9090']['hz'] -= gh * .8; P['hip9090']['az'] -= gs * .8
 else:

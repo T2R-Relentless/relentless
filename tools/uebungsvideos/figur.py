@@ -81,6 +81,7 @@ if shoes:
     if SOHLE > 0:
         for p in shoes.data.polygons:
             if p.center.z < z0 + SOHLE and p.material_index < 3: p.material_index = 2
+exec(open(os.path.expanduser('~/Documents/Relentless-3D/work/schuh_teil.py')).read())   # Turnschuh: Sohle, Schaftfarbe, Schnürfeld
 # Anzug: T-Shirt und Hose sind getrennte Netzteile. Teile über verbundene Kanten bestimmen; jedes Teil bekommt als Ganzes
 # Shirt- oder Hosenfarbe (nach mittlerer Höhe), so entsteht am Saum keine Treppe
 if shirt:
