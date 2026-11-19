@@ -345,11 +345,11 @@ document.addEventListener('visibilitychange', () => {
 });
 /* ---- Ansichten ---- */
 const sqReduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { elog(e); return false; } };
-function sqFig(id, big){
-  const w = big ? 'width:min(78vw,360px)' : 'width:min(34vw,150px)';
-  if (exVidOk(id)) return `<div style="${w};margin:0 auto" class="exf">${sqReduced() ? exStill(id) : exMedia(id)}</div>`;
-  if (sqReduced()) return `<div style="${w};margin:0 auto" class="exf"><svg viewBox="${exVB(id)}" role="img" aria-label="${esc(EXI[id].t)}"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/>${exTpl(id).A}</svg></div>`;
-  return `<div style="${w};margin:0 auto" class="exf">${exAnimSvg(id)}</div>`;
+/* B: Bild in einem festen Rahmen (8:5 wie die Videos), damit Uhr und Knöpfe bei jedem Schritt an derselben Stelle stehen */
+function sqFig(id){
+  const inner = exVidOk(id) ? (sqReduced() ? exStill(id) : exMedia(id))
+    : sqReduced() ? `<svg viewBox="${exVB(id)}" role="img" aria-label="${esc(EXI[id].t)}"><line x1="4" y1="${EXG.GY}" x2="166" y2="${EXG.GY}" class="gr"/>${exTpl(id).A}</svg>` : exAnimSvg(id);
+  return `<div class="exf sqfig mt-2">${inner}</div>`;
 }
 const sqDur = s => { const t = Math.round(s); return t >= 60 ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')} Min.` : `${t} Sek.`; };
 function sqTotal(se, cfg){ const st = sqSteps(se, cfg); let s = 0, est = false; st.forEach(x => { if (x.t === 'ex' && !x.dur) { s += sqEst(x.d); est = true; } else s += (x.dur || 0) / 1000; }); return {s, est, n:st.filter(x => x.t === 'ex').length}; }
@@ -394,15 +394,17 @@ function sqView(){
   const ring = s.dur ? `<div style="position:relative;width:min(44vw,190px);margin:0 auto" aria-hidden="true"><svg viewBox="0 0 100 100" style="width:100%;transform:rotate(-90deg)"><circle cx="50" cy="50" r="46" fill="none" stroke="var(--line)" stroke-width="6"/><circle id="sqRing" cx="50" cy="50" r="46" fill="none" stroke="${s.t === 'ex' ? 'var(--teal)' : 'var(--ice)'}" stroke-width="6" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="${(289 * (1 - rem / s.dur)).toFixed(1)}"/></svg><span id="sqNum" class="hd" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(20vw,88px);font-weight:700">${sec}</span></div>` : '';
   const ctl = `<div class="mt-4 flex items-center justify-center gap-4"><button class="ghost sqcb" aria-label="Vorherige Übung" onclick="sqBack()">${ic('prev', 26)}</button><button class="btn sqpb" aria-label="${sq.paused ? 'Weiter' : 'Pause'}" onclick="sqToggle()">${ic(sq.paused ? 'play' : 'pause', 36)}</button><button class="ghost sqcb" aria-label="Nächste Übung" onclick="sqSkip()">${ic('next', 26)}</button></div>`;
   const top = `<div class="flex items-center gap-2"><p class="flex-1 text-sm font-semibold" style="color:var(--mute)">${s.t === 'ex' ? `Übung ${s.no} von ${s.of}${s.sets > 1 ? ` · Satz ${s.set} von ${s.sets}` : ''}${s.rds > 1 ? ` · Runde ${s.rd} von ${s.rds}` : ''}` : s.nx && s.nx.rds > 1 ? `Runde ${s.nx.rd} von ${s.nx.rds}` : ''}</p><button class="ghost !px-3" style="min-width:48px;min-height:48px" aria-label="Abbrechen" onclick="sqAbortAsk()">${ic('close', 22)}</button></div>`;
+  /* B: feste Bereiche – Kopf (Titel und Zusatzzeile), Bild, Uhr bzw. Wiederholungen, Hinweis, Knöpfe */
+  const head = (h, sub, n) => `<div class="sqhd"><p class="sqh${n > 28 ? ' sqh-lang' : ''}">${h}</p>${sub}</div>`;   /* lange Namen kleiner, damit sie in zwei Zeilen passen */
+  const slot = x => `<div class="sqclk mt-2">${x}</div>`, cap = x => `<p class="sqcap mt-2 text-center text-base">${x}</p>`;
   let body;
   if (s.t === 'ex') {
     const side = s.d.side ? (s.dur ? sqSideTxt(el < s.dur / 2) : sqSideTxt(sq.rep === 0)) : '';
-    body = `${top}<p class="sqh mt-1">${esc(s.n)}</p>${side ? `<p id="sqSide" class="mt-1 text-center text-2xl font-semibold" style="color:var(--teal)" data-noi18n>${side}</p>` : ''}
-      <div class="mt-2">${sqFig(s.id, true)}</div>
-      ${s.dur ? ring : `<p class="sqbig mt-2">${esc(s.d.reps)}</p><p class="text-center text-xl font-semibold">${s.d.side ? 'Wiederholungen pro Seite' : 'Wiederholungen'}</p><button class="btn mx-auto mt-4 block w-full text-2xl font-semibold" style="min-height:72px;max-width:420px" onclick="sqRepDone()">${s.d.side && sq.rep === 0 ? 'Fertig, Seite wechseln' : 'Fertig'}</button>`}
-      <p class="mt-3 text-center text-base">${(EXI[s.id].cap || []).length > 1 ? `<span>${esc(EXI[s.id].cap[0])}</span> → <span>${esc(EXI[s.id].cap[1])}</span>` : ''}${s.d.hint ? ` · <span>${esc(s.d.hint)}</span>` : ''}</p>`;
-  } else if (s.t === 'pre') body = `${top}<p class="sqh mt-6">Gleich geht's los</p><p class="mt-1 text-center text-lg"><span>Erste Übung:</span> <span>${esc(s.nx.n)}</span></p><div class="mt-3">${sqFig(s.nx.id, true)}</div>${ring}`;
-  else body = `${top}<p class="sqh mt-6">${s.t === 'rr' ? 'Rundenpause' : s.set ? 'Satzpause' : 'Pause'}</p><p class="mt-1 text-center text-lg">als Nächstes: <b>${esc(s.nx.n)}</b>${s.nx.sets > 1 ? ` (Satz ${s.nx.set} von ${s.nx.sets})` : ''}</p><div class="mt-3">${sqFig(s.nx.id, false)}</div><div class="mt-3">${ring}</div>`;
+    body = `${top}${head(esc(s.n), side ? `<p id="sqSide" class="mt-1 text-center text-2xl font-semibold" style="color:var(--teal)" data-noi18n>${side}</p>` : '', String(s.n).length)}${sqFig(s.id)}
+      ${slot(s.dur ? ring : `<p class="sqbig">${esc(s.d.reps)}</p><p class="text-center text-xl font-semibold">${s.d.side ? 'Wiederholungen pro Seite' : 'Wiederholungen'}</p><button class="btn mx-auto mt-3 block w-full text-2xl font-semibold" style="min-height:72px;max-width:420px" onclick="sqRepDone()">${s.d.side && sq.rep === 0 ? 'Fertig, Seite wechseln' : 'Fertig'}</button>`)}
+      ${cap(`${(EXI[s.id].cap || []).length > 1 ? `<span>${esc(EXI[s.id].cap[0])}</span> → <span>${esc(EXI[s.id].cap[1])}</span>` : ''}${s.d.hint ? ` · <span>${esc(s.d.hint)}</span>` : ''}`)}`;
+  } else if (s.t === 'pre') body = `${top}${head("Gleich geht's los", `<p class="mt-1 text-center text-lg"><span>Erste Übung:</span> <span>${esc(s.nx.n)}</span></p>`)}${sqFig(s.nx.id)}${slot(ring)}${cap('')}`;
+  else body = `${top}${head(s.t === 'rr' ? 'Rundenpause' : s.set ? 'Satzpause' : 'Pause', `<p class="mt-1 text-center ${String(s.nx.n).length > 28 ? 'text-base' : 'text-lg'}">als Nächstes: <b>${esc(s.nx.n)}</b>${s.nx.sets > 1 ? ` (Satz ${s.nx.set} von ${s.nx.sets})` : ''}</p>`)}${sqFig(s.nx.id)}${slot(ring)}${cap('')}`;
   const ov = sq.ask ? `<div class="sqask" role="alertdialog" aria-label="Sequenz abbrechen?"><div class="exbox" style="max-width:420px"><p class="hd text-2xl font-semibold">Sequenz abbrechen?</p><p class="mt-2 text-sm">Soll die Einheit als teilweise erledigt gelten?</p><div class="mt-4 space-y-2"><button class="btn w-full" style="min-height:56px" onclick="sqAbort(true)">Ja, als teilweise erledigt speichern</button><button class="ghost w-full" style="min-height:56px" onclick="sqAbort(false)">Nein, ohne Speichern beenden</button><button class="ghost w-full" style="min-height:56px" onclick="sqAbortNo()">Weitermachen</button></div></div></div>`
     : sq.paused ? `<p class="mt-3 text-center text-lg font-semibold" style="color:var(--teal)">${sq.bg ? 'Unterbrochen. Tippe auf Weiter, um an derselben Stelle fortzusetzen.' : 'Pausiert. Tippe irgendwo, um weiterzumachen.'}</p>${sq.bg ? '<button class="btn mx-auto mt-2 block w-full text-xl" style="min-height:64px;max-width:420px" onclick="sqResume()">Weiter</button>' : ''}` : '';
   return wrap(body + ctl + ov, true);
