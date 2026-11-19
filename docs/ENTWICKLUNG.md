@@ -16,11 +16,13 @@ Regeln für die Arbeit am Code stehen in `CLAUDE.md`, die Ordner in `LIESMICH.md
 
 | Agent | Aufgabe | Darf ändern |
 |---|---|---|
+| `planer` | legt vor der Umsetzung den effizientesten Weg fest: Ursache, kürzester Weg, Agenten, früher Zwischenstand, Grenzen | nichts |
 | `trainingswissenschaftler` | fachliche Regeln mit Quellen vorab, fachliche Abnahme danach | nichts |
 | `entwickler` | Umsetzung in `src/`, Texte DE/EN, Hinweis, Neuigkeiten, Version | `src/`, `public/` |
 | `tester` | Tests schreiben, alle Tests ohne Fenster, Vergleichsstände bewerten | `tests/` |
 | `code-pruefer` | unabhängige Prüfung: Fehler, Daten, Sicherheit, Regeln | nichts |
 | `design-pruefer` | Bildschirmfotos hell/dunkel/Englisch, T2R-Design, 375 pt, 44 pt, Kontrast | nur Bilder |
+| `bewegungs-pruefer` | Übungsbilder und -videos: Anatomie, Biomechanik, Haltung passend zum Übungstext | nichts |
 | `release-manager` | Push, Pull Request, CI, Vorschau, nach Merge Live-Version prüfen | Git/GitHub |
 
 **Deine drei Entscheidungspunkte:**
