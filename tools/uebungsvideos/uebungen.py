@@ -361,8 +361,15 @@ def lowg(groups, wmin=.3):
         for v, v0 in zip(e.data.vertices, ob.data.vertices):
             if v0.index not in sk and any(g.group in gi and g.weight > wmin for g in v0.groups): m = min(m, (mw @ v.co).z)
     return m
+# Blattbilder je Übung: Start, Mitte, Ende (für das Standbild-Blatt, das vor dem Video abgenommen wird)
+for _k, _b in (('clam', (1, 24, 36)), ('pallof', (1, 24, 36)), ('hip9090', (1, 28, 46)), ('openbook', (1, 30, 48)), ('thread', (1, 38, 62))): EXS[_k]['blatt'] = _b
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mess_teil.py')).read())           # schnelle Messung, Gelenkgrenzen, Sichtbarkeit
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'haltungstest_teil.py')).read())   # Testhaltungen der Figur (t_…)
 # ------------------------------------------------ Ablauf ------------------------------------------------
 cfg = EXS[EX]
+if STILL == 0: STILLS = list(cfg.get('blatt') or sorted({f for f, _ in cfg['keys']}))[:6]; STILL = STILLS[0]
+ANSICHTEN = [float(x) for x in next((a.split('=')[1] for a in args if a.startswith('ansichten=')), '').split(',') if x]   # weitere Blickrichtungen: Drehung um die Hochachse in Grad
+NAH = any(a == 'nah=1' for a in args); STREIFEN = int(next((a.split('=')[1] for a in args if a.startswith('streifen=')), 0)); SCHNELL = any(a == 'schnell=1' for a in args)
 if any(a == 'schuhlinie=1' for a in args) and shoes:
     for c in list(shoes.users_collection): c.objects.unlink(shoes)
     sc.collection.objects.link(shoes)
@@ -442,7 +449,8 @@ if cfg.get('perframe'):
                 u = 0 if f1 == f0 else (fr - f0) / (f1 - f0); u = u * u * (3 - 2 * u); return p0 + (p1 - p0) * u
         return K[-1][1]
     P.setdefault(EX, {})['check'] = True
-    for fr in range(1, K[-1][0] + 1): pose(ph_at(fr)); key(fr)
+    # schnell=1: nur die gezeigten Bilder und die Eckbilder stellen (Bildausschnitt dann nur ungefähr wie im Video)
+    for fr in (sorted(set(STILLS) | {f for f, _ in K}) if SCHNELL and STILLS else range(1, K[-1][0] + 1)): pose(ph_at(fr)); key(fr)
     P[EX]['check'] = False
 else:
     for fr, ph in cfg['keys']: pose(ph); key(fr)
@@ -507,12 +515,47 @@ if cfg.get('zoom'):
         cam.keyframe_insert('location', frame=fr); cam.data.keyframe_insert('ortho_scale', frame=fr)
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
+MESS = []
+def _bild(pfad, kamera=None, rx=None, ry=None):
+    r0 = (sc.render.resolution_x, sc.render.resolution_y, sc.camera)
+    if kamera: sc.camera = kamera
+    if rx: sc.render.resolution_x, sc.render.resolution_y = rx, ry
+    sc.render.filepath = pfad; bpy.ops.render.render(write_still=True); sc.render.resolution_x, sc.render.resolution_y, sc.camera = r0
+def _figurpunkte():
+    deps = bpy.context.evaluated_depsgraph_get(); out = []
+    for ob in MESHES:
+        e = ob.evaluated_get(deps); mw = e.matrix_world; sk = _SKIP[ob.name]
+        out += [mw @ v.co for v, v0 in list(zip(e.data.vertices, ob.data.vertices))[::6] if v0.index not in sk]
+    return out
+cam2 = bpy.data.objects.new('cam2', bpy.data.cameras.new('cam2')); sc.collection.objects.link(cam2); cam2.data.type = 'ORTHO'
+def _richte(d_, punkte, rand=1.1, breite=None):
+    """zweite Kamera aus Richtung d_ auf die Punkte richten (breite: fester Bildausschnitt in Metern, sonst passend zu den Punkten)"""
+    d_ = Vector(d_).normalized(); c_ = sum(punkte, Vector()) / len(punkte); cam2.rotation_euler = (-d_).to_track_quat('-Z', 'Y').to_euler(); cam2.location = c_ + d_ * 8
+    bpy.context.view_layer.update(); Mi_ = cam2.matrix_world.inverted(); l_ = [Mi_ @ p for p in punkte]; X_ = [q.x for q in l_]; Y_ = [q.y for q in l_]
+    cam2.location = cam2.matrix_world @ Vector(((max(X_) + min(X_)) / 2, (max(Y_) + min(Y_)) / 2, 0))
+    cam2.data.ortho_scale = breite or max(max(X_) - min(X_), (max(Y_) - min(Y_)) * sc.render.resolution_x / sc.render.resolution_y) * rand; bpy.context.view_layer.update()
 if STILL is not None:
-    sc.frame_set(STILL); sc.render.filepath = OUT + f'_{STILL:03d}.png'; bpy.ops.render.render(write_still=True)
+    import json
+    for fr_ in STILLS:
+        sc.frame_set(fr_); bpy.context.view_layer.update(); _bild(OUT + f'_{fr_:03d}.png'); MESS += messen(fr_)
+        d0_ = (sc.camera.matrix_world.to_3x3() @ Vector((0, 0, 1))).normalized(); fp_ = _figurpunkte()
+        for w_ in ANSICHTEN:      # weitere Blickrichtungen: Fehler, die die Hauptkamera verdeckt, fallen hier auf
+            dd_ = Matrix.Rotation(math.radians(w_), 3, 'Z') @ d0_; _richte(dd_, fp_, 1.25); _bild(OUT + f'_{fr_:03d}_a{int(w_):03d}.png', cam2)
+        if NAH:                   # Nahaufnahmen der heiklen Stellen: Becken, Füße, beide Hände, Kopf und Schultern
+            for nm_, pk_, br_ in (('becken', [wpos('Hips'), wpos('LeftUpLeg'), wpos('RightUpLeg')], .85), ('fuesse', [wpos('LeftFoot'), wpos('RightFoot'), wpos('LeftToeBase'), wpos('RightToeBase')], None),
+                                  ('hand_l', [wpos('LeftHand'), wpos('LeftHandMiddle1')], .5), ('hand_r', [wpos('RightHand'), wpos('RightHandMiddle1')], .5), ('kopf', [wpos('Head'), wpos('LeftArm'), wpos('RightArm')], .8)):
+                _richte(d0_, pk_, 1.0, br_)
+                if br_ is None: cam2.data.ortho_scale = max(.6, cam2.data.ortho_scale + .4)
+                _bild(OUT + f'_{fr_:03d}_n_{nm_}.png', cam2, 720, 450)
+    if STREIFEN:                  # Bildstreifen der Bewegung in klein
+        for fr_ in range(1, cfg['keys'][-1][0], STREIFEN): sc.frame_set(fr_); _bild(OUT + f'_s{fr_:03d}.png', None, 480, 300)
 else:
     sc.render.resolution_x, sc.render.resolution_y = 720, 450
     sc.render.filepath = OUT + '.mp4'; sc.render.image_settings.media_type = 'VIDEO'; sc.render.image_settings.file_format = 'FFMPEG'; sc.render.ffmpeg.format = 'MPEG4'
     sc.render.ffmpeg.codec = 'H264'; sc.render.ffmpeg.constant_rate_factor = 'MEDIUM'; sc.render.ffmpeg.gopsize = 24
+    for fr_ in range(1, cfg['keys'][-1][0], 6): sc.frame_set(fr_); bpy.context.view_layer.update(); MESS += messen(fr_)
     bpy.ops.render.render(animation=True)
+open(OUT + '_mess.txt', 'w').write('\n'.join(MESS or ['keine Hinweise']) + '\n'); print('MESS', len(MESS), 'Hinweise')
+for z_ in MESS: print('MESS', z_)
 bpy.ops.wm.save_as_mainfile(filepath=OUT + '.blend')
 print('FERTIG', OUT)

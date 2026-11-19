@@ -12,7 +12,8 @@ HEM = float(next((a.split('=')[1] for a in args if a.startswith('hem=')), .03));
 FS = float(next((a.split('=')[1] for a in args if a.startswith('fs=')), -7))
 FAX = next((a.split('=')[1] for a in args if a.startswith('fax=')), 'z')
 _th = next((a.split('=')[1] for a in args if a.startswith('th=')), 'x25'); TH = (_th[0], float(_th[1:]))
-STILL = next((int(a.split('=')[1]) for a in args if a.startswith('still=')), None)
+_st = next((a.split('=')[1] for a in args if a.startswith('still=')), None)   # ein Bild oder mehrere (still=1,28,46); still=blatt nimmt die Blattbilder der Übung
+STILLS = [int(x) for x in _st.split(',')] if _st and _st != 'blatt' else []; STILL = STILLS[0] if STILLS else (0 if _st == 'blatt' else None)
 LMIN = float(next((a.split('=')[1] for a in args if a.startswith('lmin=')), 4))
 _arg = lambda k, d: float(next((a.split('=')[1] for a in args if a.startswith(k + '=')), d))
 MUS, WT = _arg('mus', .45), _arg('wt', .38)   # schlanker, sportlicher Körperbau
