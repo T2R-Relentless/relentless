@@ -40,6 +40,9 @@ Berichte (`claude/bericht-*.md`), `git log --oneline -30` zum Thema, bei Übungs
   mehreren Blickrichtungen und Nahaufnahmen.
 - Eine Laufzeit wurde geschätzt statt gemessen (drei Minuten statt tatsächlich 10 bis 41 Sekunden) und hat den Vorschlag
   verfälscht. Zahlen im Plan sind gemessen oder als Schätzung gekennzeichnet.
+- Figur-Korrektur 19.11.2026: Eine Änderung an den Linien (Strichstärke über Material) nahm Matte und Geräten die Kontur,
+  weil sie erst später angelegt werden. Gefunden hat es nur der Prüfer der ganzen Übungen, nicht der Haltungstest.
+  Folge: Nach jeder Änderung an Linien oder Materialien die ganze Szene prüfen lassen, nicht nur die Figur.
 - Ergänze diese Liste nicht selbst; neue Erfahrungen nennst du unter „Offene Risiken“, der Leiter trägt sie nach.
 
 ## Ausgabe (auf Deutsch, höchstens 400 Wörter)

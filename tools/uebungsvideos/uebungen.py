@@ -55,6 +55,20 @@ EXS = {}
 HAND = lambda side: [side + 'Hand'] + [f'{side}Hand{f}{i}' for f in ('Index', 'Middle', 'Ring', 'Pinky', 'Thumb') for i in (1, 2, 3)]
 P = {}   # automatisch bestimmte Feinwerte je Übung
 
+# ---------------- Dead Bug: Rückenlage, Kopf nach +Y, Gesicht nach oben; reine Seitenansicht ----------------
+# Bisher in figur.py (eigene Kopie der Figur). Hier, damit Korrekturen der Figur auch den Dead Bug erreichen.
+DB = {'leg': -4.0, 'arm': -5.0, 't': 0.0, 'n': 0.0}   # Grad über der Waagerechten: gestrecktes Bein und Arm; Neigung Brustwirbelsäule t und Hals n
+def deadbug(ph):
+    reset(); rig.rotation_euler = (math.radians(-90), 0, 0); bpy.context.view_layer.update()
+    aim('Spine', dirv(0)); aim('Spine1', dirv(-DB['t'] / 2)); aim('Spine2', dirv(-DB['t'])); aim('Neck', dirv(-DB['n'])); aim('Head', dirv(-DB['n']))
+    # Beine: Hüfte 90° (Oberschenkel zur Decke), Knie 90° (Unterschenkel waagerecht zum Fußende), Fuß zur Decke
+    for side in ('Left', 'Right'):
+        ext = ph and side == 'Left'
+        aim(side + 'UpLeg', dirv(180 - DB['leg'] if ext else 90)); aim(side + 'Leg', dirv(180 - DB['leg'] + 1 if ext else 180)); aim(side + 'Foot', dirv(80 if ext else 90))
+        armx = ph and side == 'Right'
+        aim(side + 'Arm', dirv(DB['arm'] if armx else 90)); aim(side + 'ForeArm', dirv(DB['arm'] if armx else 90)); aim(side + 'Hand', dirv(DB['arm'] if armx else 90))
+EXS['deadbug'] = dict(pose=deadbug, keys=((1, 0), (12, 0), (38, 1), (54, 1), (80, 0), (96, 0)), cam=V(1, 0, 0), zone=None, blatt=(1, 20, 38))
+
 # ---------------- Clamshell: Seitenlage auf der rechten Seite, Blick von vorn-oben; oberes (linkes) Knie öffnet ----------------
 P['clam'] = {'arm': 0.0, 'open': 52.0, 'head': 0.0}
 def clam(ph):
@@ -121,14 +135,14 @@ EXS['pallof'] = dict(pose=pallof, keys=((1, 0), (12, 0), (36, 1), (52, 1), (76, 
 # Person schaut nach −Y; rechts der Person = −X. Bild 0: Knie zur rechten Seite (linkes Bein vorn in Außenrotation,
 # rechtes Bein hinten in Innenrotation), Mittelbild: beide Knie oben, Füße stehen; Bild 1 spiegelbildlich.
 FLIE = float(next((a.split('=')[1] for a in args if a.startswith('flie=')), 1.3)); FREL = float(next((a.split('=')[1] for a in args if a.startswith('frel=')), 30))
-BKIPP = float(next((a.split('=')[1] for a in args if a.startswith('bkipp=')), 0)); HX90 = float(next((a.split('=')[1] for a in args if a.startswith('hx=')), .29)); HY90 = float(next((a.split('=')[1] for a in args if a.startswith('hy=')), .19))   # Hände seitlich hinter dem Becken: nah genug, dass sie flach die Matte erreichen, und so weit außen, dass auch der abgewandte Arm neben dem Rumpf zu sehen ist
+BKIPP = float(next((a.split('=')[1] for a in args if a.startswith('bkipp=')), 17)); HX90 = float(next((a.split('=')[1] for a in args if a.startswith('hx=')), .29)); HY90 = float(next((a.split('=')[1] for a in args if a.startswith('hy=')), .19))   # Hände seitlich hinter dem Becken: nah genug, dass sie flach die Matte erreichen, und so weit außen, dass auch der abgewandte Arm neben dem Rumpf zu sehen ist
 FVOR = float(next((a.split('=')[1] for a in args if a.startswith('fvor=')), .56))
 P['hip9090'] = {'lz': .07, 'root': -.8, 'hz': .035, 'az': .09}
 def hip9090(ph):
     """Scheibenwischer: Füße stehen fest (etwa 1,5-mal hüftbreit vor dem Becken), die Knie schwenken gemeinsam über oben
     von rechts (ph 0) nach links (ph 1). Beine je Bild per IK zum festen Fußgelenk, Kniebeugung zeigt in Richtung pole."""
     reset(); rig.rotation_euler = (0, 0, 0); rig.location = (0, 0, P['hip9090']['root']); bpy.context.view_layer.update()
-    if BKIPP: twist('Hips', -BKIPP, (1, 0, 0))   # Becken leicht nach hinten gekippt, wie man mit aufgestützten Händen sitzt: Das Gesäß rollt rund unter
+    if BKIPP: twist('Hips', -BKIPP, (1, 0, 0))   # Becken 17° nach hinten gekippt, wie man mit aufgestützten Händen sitzt: Hüftbeugung im Mittelbild etwa 124° statt 141°
     aim('Spine', V(0, .12, 1)); aim('Spine1', V(0, .08, 1)); aim('Spine2', V(0, .04, 1)); aim('Neck', V(0, 0, 1)); aim('Head', V(0, -.05, 1))
     t = max(0, min(1, ph)); th = math.radians(180 - 180 * t)
     pole = Vector((math.cos(th), -.15, math.sin(th) * 1.2 + .05))
@@ -217,41 +231,27 @@ if EX == 'thread':
         for a_, b_ in pairs_:
             if len(ms_) > b_: ma_, mb_ = ms_[a_], ms_[b_]; ms_[a_] = mb_; ms_[b_] = ma_
 if EX == 'hip9090' and TRIKOT: bm.data.materials[1] = bm.data.materials[0]   # Sicht von vorn: beide Arme im selben Hautton
-GZ, GY0, GY, GCS, GCI, GCR = float(next((a.split('=')[1] for a in args if a.startswith('gz=')), .14)), float(next((a.split('=')[1] for a in args if a.startswith('gy0=')), .08)), float(next((a.split('=')[1] for a in args if a.startswith('gy=')), .12)), float(next((a.split('=')[1] for a in args if a.startswith('gcs=')), 0.7)), float(next((a.split('=')[1] for a in args if a.startswith('gci=')), 30)), float(next((a.split('=')[1] for a in args if a.startswith('gcr=')), 0.2))
-GES = float(next((a.split('=')[1] for a in args if a.startswith('ges=')), 1)); GFALTE = float(next((a.split('=')[1] for a in args if a.startswith('gfalte=')), .09)); SITZ = float(next((a.split('=')[1] for a in args if a.startswith('sitz=')), .006))
-if EX == 'hip9090' and GES > 0:
-    # Gesäß bleibt am Becken: In der Grundfigur hängen Gesäß und seitliche Hüfte am Oberschenkelknochen. Beugt die Hüfte auf 90°,
-    # wandern sie mit dem Bein nach vorn und das Becken fällt in sich zusammen (die Figur sitzt ohne Gesäß). Deshalb oberhalb der
-    # Gesäßfalte und hinter dem Hüftgelenk das Gewicht weich vom Oberschenkel auf das Becken umhängen.
-    for ob_ in (bm, shirt):
-        if not ob_: continue
-        co_ = BCO if ob_ is bm else [v.co for v in ob_.data.vertices]; gh_ = ob_.vertex_groups.get('mixamorig:Hips'); n_ = 0
-        for sd_ in ('Left', 'Right'):
-            gu_ = ob_.vertex_groups.get(f'mixamorig:{sd_}UpLeg'); hj_ = rig.data.bones[f'mixamorig:{sd_}UpLeg'].head_local
-            if not gu_ or not gh_: continue
-            if ob_ is bm and sd_ == 'Left':
-                print('HUEFTE', [round(x, 3) for x in hj_], 'PROFIL', [(round(dz, 2), round(max((c.y for c in co_ if abs(c.x - hj_.x) < .03 and abs(c.z - hj_.z - dz) < .012), default=0) - hj_.y, 3)) for dz in (-.2, -.16, -.13, -.1, -.08, -.06, -.03, 0, .05, .1)])
-            for v in ob_.data.vertices:
-                w_ = next((g.weight for g in v.groups if g.group == gu_.index), 0)
-                if w_ <= 0: continue
-                c_ = co_[v.index]; f_ = sm((c_.z - (hj_.z - GFALTE - GZ / 2)) / GZ) * sm((c_.y - (hj_.y - GY0)) / GY) * GES
-                if f_ <= 0: continue
-                gu_.add([v.index], w_ * (1 - f_), 'REPLACE'); gh_.add([v.index], w_ * f_, 'ADD'); n_ += 1
-        print('GESAESS', ob_.name, n_)
-        if GCS > 0:
-            # Übergang Oberschenkel–Gesäß glätten: Zwischen dem am Becken bleibenden Gesäß und dem gedrehten Oberschenkel entsteht
-            # sonst eine Kerbe. Die Glättung zieht die verformte Fläche rund um die Hüftgelenke auf ihre ursprüngliche Form zurück.
-            vg_ = ob_.vertex_groups.new(name='ges_glatt'); hjs_ = [rig.data.bones[f'mixamorig:{sd_}UpLeg'].head_local for sd_ in ('Left', 'Right')]
-            for v in ob_.data.vertices:
-                c_ = co_[v.index]; d_ = min((c_ - h_).length for h_ in hjs_); w_ = 1 - sm((d_ - GCR) / .08)
-                if w_ > 0: vg_.add([v.index], w_, 'REPLACE')
-            reset(); cs_ = ob_.modifiers.new('ges_glatt', 'CORRECTIVE_SMOOTH'); cs_.factor = GCS; cs_.iterations = int(GCI); cs_.smooth_type = 'LENGTH_WEIGHTED'
-            cs_.vertex_group = 'ges_glatt'; cs_.use_only_smooth = False; cs_.use_pin_boundary = True; cs_.rest_source = 'BIND'
-            bpy.context.view_layer.objects.active = ob_
-            while ob_.modifiers.find('ges_glatt') > 0 and ob_.modifiers[ob_.modifiers.find('ges_glatt') - 1].type != 'ARMATURE':
-                bpy.ops.object.modifier_move_up(modifier='ges_glatt')
-            bpy.context.view_layer.update(); bpy.ops.object.correctivesmooth_bind(modifier='ges_glatt'); print('GLATT', ob_.name, cs_.is_bind, [m.type for m in ob_.modifiers])
-    bpy.context.view_layer.objects.active = rig
+FINGERLINIE = float(next((a.split('=')[1] for a in args if a.startswith('fingerlinie=')), .5))
+if FINGERLINIE < 1:
+    # Finger mit dünnerer Linie: Bei kleiner Darstellung laufen die vielen Fingerkonturen sonst zu dunklen Klumpen zusammen.
+    # Die Fingerflächen bekommen Kopien ihres Materials mit Linienfarbe-Alpha FINGERLINIE; ein Dickenregler der Linienstile
+    # multipliziert die Strichstärke mit diesem Wert (alle anderen Materialien: 1).
+    _fg2 = {g.index for g in bm.vertex_groups if any(k in g.name for k in ('HandIndex', 'HandMiddle', 'HandRing', 'HandPinky', 'HandThumb'))}
+    _mx2 = {g.index for g in bm.vertex_groups if g.name.startswith('mixamorig:')}
+    _fv2 = {v.index for v in bm.data.vertices if sum(g.weight for g in v.groups if g.group in _fg2) > .5 * (sum(g.weight for g in v.groups if g.group in _mx2) or 1)}
+    for m_ in bpy.data.materials: m_.line_color = (*m_.line_color[:3], 1.0)
+    _neu = {}
+    for p_ in bm.data.polygons:
+        if sum(i in _fv2 for i in p_.vertices) * 2 > len(p_.vertices):
+            i_ = p_.material_index
+            if i_ not in _neu:
+                m_ = bm.data.materials[i_].copy(); m_.name = bm.data.materials[i_].name + '_finger'; m_.line_color = (*m_.line_color[:3], FINGERLINIE)
+                bm.data.materials.append(m_); _neu[i_] = len(bm.data.materials) - 1
+            p_.material_index = _neu[i_]
+    for ls_ in {l.linestyle for l in sc.view_layers[0].freestyle_settings.linesets}:
+        md_ = ls_.thickness_modifiers.new('finger', 'MATERIAL'); md_.material_attribute = 'LINE_A'; md_.blend = 'MULTIPLY'; md_.mapping = 'LINEAR'; md_.value_min = 0; md_.value_max = 1
+    print('FINGERLINIE', FINGERLINIE, len(_neu), 'Materialien')
+SITZ = float(next((a.split('=')[1] for a in args if a.startswith('sitz=')), .006))   # Gesäß und Glättung: koerper_teil.py
 if EX in ('hip9090',) and not TRIKOT:
     zs_ = [shirt.data.vertices[i].co.z for p_ in shirt.data.polygons if p_.material_index == 0 for i in p_.vertices]; zc = min(zs_) + .07
     top_ = {i for p_ in shirt.data.polygons if p_.material_index == 0 for i in p_.vertices}
@@ -397,6 +397,30 @@ if EX == 'thread':
         print('FAEDELN s1', round(q['s1'], 3), 'Kopf/Schulter', round(g_, 3))
         if g_ < .012 or q['s1'] > 1.3: break
         q['s1'] += max(.03, g_ * 1.4)
+elif EX == 'deadbug':
+    UP = ['mixamorig:Spine2', 'mixamorig:LeftShoulder', 'mixamorig:RightShoulder']; HD = ['mixamorig:Head']; PEL = ['mixamorig:Hips']
+    def _db_score():
+        rig.location.z = 0; pose(0); m0 = min(low(UP), low(PEL), low(HD))
+        if not (-5 < m0 < 5): return 99, (9, 9, 9, 9)
+        rig.location.z = -m0; bpy.context.view_layer.update(); gu, gp, gh, gl = low(UP), low(PEL), low(HD), lowg(['Spine'], .6)
+        return max(gu, gp, gh) + max(0, gl - .015) * .5, (gu, gp, gh, gl)
+    # Rastersuche: Schulterblätter, Becken und Hinterkopf liegen auf, Hohlkreuz höchstens 1,5 cm
+    best = None
+    for tt in range(4, 14):
+        for nn in range(0, 12, 2):
+            DB['t'], DB['n'] = tt, nn; sc_, g_ = _db_score()
+            if best is None or sc_ < best[0]: best = (sc_, tt, nn, g_)
+    DB['t'], DB['n'] = best[1], best[2]; _db_score(); rig.location.z -= .004; bpy.context.view_layer.update()   # Weichteile drücken sich 4 mm ein
+    print('AUFLAGE_BEST t', best[1], 'n', best[2], '| Schultern %.3f Becken %.3f Kopf %.3f Lende %.3f' % best[3])
+    _ARM = ['RightHand', 'RightForeArm'] + [f'RightHand{f}{i}' for f in ('Index', 'Middle', 'Ring', 'Pinky', 'Thumb') for i in (1, 2, 3)]
+    for _ in range(30):
+        pose(1); la = lowg(_ARM); lg = lowpts(lambda co, ob: co.x > .02 and (ob is shoes or .05 < co.z < .55), [shirt, shoes])
+        print('SCHWEBT', round(DB['leg'], 1), round(lg, 3), round(DB['arm'], 1), round(la, 3))
+        if lg >= .04 and la >= .004: break
+        # Wade und Ferse etwa 4–5 cm über der Matte (Fachvorgabe), Arm knapp darüber
+        if lg < .04 and DB['leg'] < 15: DB['leg'] += 1
+        if la < .004 and DB['arm'] < 2: DB['arm'] += 1
+        if (lg >= .04 or DB['leg'] >= 15) and (la >= .004 or DB['arm'] >= 2): break
 elif EX == 'hip9090':
     # Sitzhöhe: Becken so tief, dass das Gesäß auf der Matte sitzt (Beine und Hände werden danach je Bild neu gesetzt)
     for _ in range(20):
@@ -516,6 +540,10 @@ if cfg.get('zoom'):
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 MESS = []
+# Strichstärke: Alle Materialien außer den Fingern haben Linien-Alpha 1, auch die später angelegten (Matte, Geräte, Kissen).
+# Sonst setzt der Dickenregler der Fingerlinie ihre Kontur auf 0.
+for m_ in bpy.data.materials:
+    if not m_.name.endswith('_finger'): m_.line_color = (*m_.line_color[:3], 1.0)
 def _bild(pfad, kamera=None, rx=None, ry=None):
     r0 = (sc.render.resolution_x, sc.render.resolution_y, sc.camera)
     if kamera: sc.camera = kamera

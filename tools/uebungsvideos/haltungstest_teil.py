@@ -18,11 +18,13 @@ def t_ueberkopf(ph):
     _arme((.16, 0, 1), (.1, -.03, 1))
 def t_hocke(ph):
     reset(); rig.rotation_euler = (0, 0, 0); bpy.context.view_layer.update()
-    aim('Spine', V(0, -.3, 1)); aim('Spine1', V(0, -.32, 1)); aim('Spine2', V(0, -.3, 1)); aim('Neck', V(0, -.1, 1)); aim('Head', V(0, -.25, 1))
-    _beine((.38, -.85, .22), (-.06, .42, -1), (.2, -1, -.45)); _arme((.12, -1, -.25), (.02, -1, .1))
+    # volle Hocke: Gesäß knapp über den Fersen, Knie etwa 140° gebeugt, Rumpf weit vorgeneigt
+    aim('Spine', V(0, -.5, 1)); aim('Spine1', V(0, -.5, 1)); aim('Spine2', V(0, -.45, 1)); aim('Neck', V(0, -.15, 1)); aim('Head', V(0, -.3, 1))
+    _beine((.36, -.75, .55), (-.05, .55, -.84), (.2, -1, -.45)); _arme((.12, -1, -.2), (.02, -1, .1))
 def t_langsitz(ph):
     reset(); rig.rotation_euler = (0, 0, 0); bpy.context.view_layer.update()
     aim('Spine', V(0, .04, 1)); _beine((.08, -1, 0), (.08, -1, -.02), (.05, -.41, .91)); _arme((.2, .25, -1), (.08, -.1, -1))
+    for side, sx in (('Left', 1), ('Right', -1)): aim(side + 'Hand', Vector((sx * .25, 1, -.08))); flat(side + 'Hand')   # Stützhände flach, Finger nach hinten
 def t_fersensitz(ph):
     reset(); rig.rotation_euler = (0, 0, 0); bpy.context.view_layer.update()
     _beine((.07, -1, -.5), (.0, 1, -.06), (0, 1, -.12)); _arme((.12, -.25, -1), (-.05, -1, -.35))

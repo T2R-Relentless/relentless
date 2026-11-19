@@ -9,12 +9,12 @@ args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 EX = args[0] if args else 'deadbug'
 OUT = os.path.expanduser(args[1] if len(args) > 1 else '~/Documents/Relentless-3D/out/' + EX)
 HEM = float(next((a.split('=')[1] for a in args if a.startswith('hem=')), .03)); SHOE = float(next((a.split('=')[1] for a in args if a.startswith('shoe=')), .095))
-FS = float(next((a.split('=')[1] for a in args if a.startswith('fs=')), -7))
+FS = float(next((a.split('=')[1] for a in args if a.startswith('fs=')), -3)); FK = float(next((a.split('=')[1] for a in args if a.startswith('fk=')), 3))   # Fingerspreizung, Fingerbeugung (Vielfaches)
 FAX = next((a.split('=')[1] for a in args if a.startswith('fax=')), 'z')
 _th = next((a.split('=')[1] for a in args if a.startswith('th=')), 'x25'); TH = (_th[0], float(_th[1:]))
 _st = next((a.split('=')[1] for a in args if a.startswith('still=')), None)   # ein Bild oder mehrere (still=1,28,46); still=blatt nimmt die Blattbilder der Übung
 STILLS = [int(x) for x in _st.split(',')] if _st and _st != 'blatt' else []; STILL = STILLS[0] if STILLS else (0 if _st == 'blatt' else None)
-LMIN = float(next((a.split('=')[1] for a in args if a.startswith('lmin=')), 4))
+LMIN = float(next((a.split('=')[1] for a in args if a.startswith('lmin=')), 6))
 _arg = lambda k, d: float(next((a.split('=')[1] for a in args if a.startswith(k + '=')), d))
 MUS, WT = _arg('mus', .45), _arg('wt', .38)   # schlanker, sportlicher Körperbau
 
@@ -115,6 +115,7 @@ if shirt:
         if p.material_index == 1 and p.center.x < 0: p.material_index = 2
 
 exec(open(os.path.expanduser('~/Documents/Relentless-3D/work/trikot_teil.py')).read())   # eng anliegendes Trikot
+exec(open(os.path.expanduser('~/Documents/Relentless-3D/work/koerper_teil.py')).read())   # Gesäß am Becken, Glättung an Hüfte, Schulter, Knie
 
 # Haut unter der Kleidung in Kleidungsfarbe: Sticht bei starker Beugung Haut durch Shirt oder Hose, fällt das nicht auf.
 # Unter dem Hosensaum läuft die Hosenfarbe bis zum Schuh weiter (kein Hautstreifen am Knöchel).
@@ -202,7 +203,7 @@ def relax_hands():
             for i in (1, 2, 3):
                 # entspannte Hand: Finger fast gestreckt, leicht gebeugt und eng beieinander (nicht gespreizt)
                 sp = {'Index': FS, 'Middle': 0, 'Ring': -FS, 'Pinky': -2 * FS}[f] if i == 1 else 0
-                pb = B(f'{side}Hand{f}{i}'); pb.rotation_mode = 'XYZ'; c = math.radians((2, 4, 3)[i - 1]); a = math.radians(sp); pb.rotation_euler = (a, 0, c) if FAX == 'z' else (c, 0, a) if FAX == 'x' else (0, c, a); pb.rotation_mode = 'QUATERNION'
+                pb = B(f'{side}Hand{f}{i}'); pb.rotation_mode = 'XYZ'; c = math.radians((2, 4, 3)[i - 1] * FK); a = math.radians(sp); pb.rotation_euler = (a, 0, c) if FAX == 'z' else (c, 0, a) if FAX == 'x' else (0, c, a); pb.rotation_mode = 'QUATERNION'
 
 
 
@@ -233,9 +234,13 @@ _ez = sum(v.z for v in _ey) / len(_ey); _ex = max(abs(v.x) for v in _ey); _eyf =
 _hdi = bm.vertex_groups['mixamorig:Head'].index
 _chz = min(v.co.z for v in bm.data.vertices if abs(v.co.x) < .03 and v.co.y < _eyf + .05 and any(g.group == _hdi and g.weight > .5 for g in v.groups))   # Kinnspitze
 # Gesichtsfeld samt Kinn und Kieferunterseite: Die Kinnkante vor dem Hals würde von vorn wie ein aufgemalter Mund wirken
-_face = lambda c: (abs(c.x) < _ex + .03 and _lz - .015 < c.z < _ez + .04 and c.y < _eyf + .035) or (abs(c.x) < _ex + .05 and _chz - .012 < c.z <= _lz and c.y < _eyf + .11)
+GENG = _arg('geng', 1)   # 1: nur Augen, Nase, Mund und Kinnmitte ohne Linien; Wange und Kiefer behalten ihre Kontur (sonst fehlt sie vor Matte oder Arm)
+# Kinnmitte ohne Linie nur, wo das Gesicht von vorn zu sehen ist (dort wirkt die Kinnkante wie ein Mund); liegt der Kopf, braucht das Kinn seine Kontur
+KINN = _arg('kinn', 1 if EX in ('hip9090', 'pallof', 't_stand', 't_ueberkopf', 't_hocke', 't_langsitz', 't_fersensitz') else 0)
+_face = (lambda c: (abs(c.x) < _ex + .005 and _lz - .015 < c.z < _ez + .03 and c.y < _eyf + .03) or (KINN and abs(c.x) < .035 and _chz - .012 < c.z <= _lz and c.y < _eyf + .11)) if GENG else \
+        (lambda c: (abs(c.x) < _ex + .03 and _lz - .015 < c.z < _ez + .04 and c.y < _eyf + .035) or (abs(c.x) < _ex + .05 and _chz - .012 < c.z <= _lz and c.y < _eyf + .11))
 for f in bm.data.polygons:
-    fm.data[f.index].value = _face(f.center) or any(any(g.group == hidx and g.weight > .5 for g in bm.data.vertices[i].groups) for i in f.vertices)
+    fm.data[f.index].value = GENG < 2 and (_face(f.center) or any(any(g.group == hidx and g.weight > .5 for g in bm.data.vertices[i].groups) for i in f.vertices))   # geng=2: Prüfhilfe ohne Markierung
 ls.select_by_face_marks = True; ls.face_mark_negation = 'EXCLUSIVE'; ls.face_mark_condition = 'ONE'
 # Punktförmige Strichreste (unter 4 Pixel) bei den Innenlinien weglassen; längere Stücke bleiben, sonst reißt der Umriss auf
 _lsA = ls.linestyle.copy(); ls.linestyle.use_length_min = True; ls.linestyle.length_min = LMIN
@@ -251,6 +256,14 @@ for ob in (shirt,):
 ls3 = sc.view_layers[0].freestyle_settings.linesets.new('saeume'); ls3.linestyle = _lsA
 ls3.select_by_visibility = True; ls3.select_by_edge_types = True; ls3.select_silhouette = False; ls3.select_border = True; ls3.select_crease = False
 ls3.select_by_collection = True; ls3.collection = kl; ls3.collection_negation = 'INCLUSIVE'
+HAARLINIE = _arg('haarlinie', 30)   # Umriss der Haare: nur lange Striche (Pixel), damit vor Matte oder Arm eine Kontur bleibt, ohne Strähnen-Gekritzel
+if hair and HAARLINIE > 0:
+    hk_ = bpy.data.collections.new('haar'); sc.collection.children.link(hk_)
+    for c in list(hair.users_collection): c.objects.unlink(hair)
+    hk_.objects.link(hair)
+    ls5 = sc.view_layers[0].freestyle_settings.linesets.new('haar'); ls5.linestyle = _lsA.copy(); ls5.linestyle.use_length_min = True; ls5.linestyle.length_min = HAARLINIE
+    ls5.select_by_visibility = True; ls5.select_by_edge_types = True; ls5.select_silhouette = True; ls5.select_border = False; ls5.select_crease = False
+    ls5.select_by_collection = True; ls5.collection = hk_; ls5.collection_negation = 'INCLUSIVE'
 cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam')); sc.collection.objects.link(cam); sc.camera = cam
 cam.data.type = 'ORTHO'; cam.location = (6, 0, .6); cam.rotation_euler = (math.radians(90), 0, math.radians(90))
 sc.render.resolution_x, sc.render.resolution_y = 960, 600

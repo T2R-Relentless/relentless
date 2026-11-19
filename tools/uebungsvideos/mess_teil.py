@@ -40,7 +40,7 @@ def lowg(groups, wmin=.3):
 
 # ---------------- grobe Gelenkgrenzen (gesunde Erwachsene, großzügig gerundet) ----------------
 # Die Zerlegung in Einzelwinkel ist bei kombinierten Bewegungen nur eine Näherung: Überschreitungen sind Hinweise zum Nachsehen.
-GRENZEN = {'Knie Beugung': 155, 'Knie Überstreckung': 8, 'Knie verdreht': 35, 'Sprunggelenk hochgezogen': 28, 'Sprunggelenk gestreckt': 72,
+GRENZEN = {'Knie Beugung': 155, 'Knie Überstreckung': 8, 'Knie verdreht': 35, 'Sprunggelenk hochgezogen': 28, 'Sprunggelenk gestreckt': 90,
            'Fuß verkantet': 35, 'Hüfte Beugung': 135, 'Hüfte Streckung': 30, 'Hüfte Abspreizen': 60, 'Hüfte Heranführen': 35,
            'Ellbogen Beugung': 155, 'Ellbogen Überstreckung': 10, 'Handgelenk': 85, 'Arm nach hinten': 65, 'Kopf geneigt': 60,
            'Kopf gedreht': 85, 'Rumpf gebeugt': 75, 'Rumpf gedreht': 60}
@@ -147,6 +147,7 @@ def sichtbar(kamera=None):
     bpy.context.view_layer.update(); return out
 def messen(fr, kamera=None):
     """alle Hinweise für das aktuelle Bild als Textzeilen"""
+    if any(a_ == 'winkel=1' for a_ in args): print('WINKEL', fr, {k: round(v) for k, v in gelenke().items()})   # Prüfhilfe: alle Winkel
     z = [f'Gelenk – {h}' for h in gelenk_hinweise(gelenke())] + [f'Durchdringung – {h}' for h in durchdringung()]
     for nm, (a, drin) in sichtbar(kamera).items():
         if not drin: z.append(f'Bild – {nm} liegt außerhalb des Bildausschnitts')
