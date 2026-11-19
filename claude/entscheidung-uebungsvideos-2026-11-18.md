@@ -1,14 +1,17 @@
 # Übungsvideos für die 6 Pilotübungen · Version 215
 
-**Ergebnis:** Clamshell, Dead Bug, Pallof Press, 90/90 Hüftwechsel, Open Book und Thread the Needle zeigen im Übungsfenster ein Video mit einer 3D-Figur in Relentless-Farben statt der Strichfigur. Stand 19.11.: schlankere Figur, eng anliegendes Trikot, T2R-Logo auf der Brust, Turnschuhe, 90/90 mit Gesäß.
-**Ansehen:** `claude/uebungsvideos-uebersicht.jpg` und die 6 Videos in `public/img/uebungen/` · **Branch:** `fix/uebungen-figuren-boden` (lokal, nicht hochgeladen)
-**Prüfungen:** check.py ✓ · Browser-Tests ✓ · Fachlich ✓ (jede Übung freigegeben) · Design ✓ (jede Übung freigegeben)
+**Ergebnis:** Clamshell, Dead Bug, Pallof Press, 90/90 Hüftwechsel, Open Book und Thread the Needle zeigen im Übungsfenster ein Video mit einer 3D-Figur in Relentless-Farben statt der Strichfigur. Stand 19.11. nachmittags: Grundfigur korrigiert und von dir freigegeben, alle sechs Videos damit neu erzeugt.
+**Ansehen:** `claude/uebungsvideos-uebersicht.jpg`, `claude/uebungsvideos-figur-vorher-nachher.jpg`, Haltungstest `claude/uebungsvideos-haltungstest-1.jpg` und `-2.jpg`, die 6 Videos in `public/img/uebungen/` · **Branch:** `fix/uebungen-figuren-boden` (lokal, nicht hochgeladen)
+**Prüfungen:** check.py ✓ · Browser-Tests ✓ (313) · Bewegungs-Prüfer ✓ (jede Übung freigegeben, Figur mit drei Grenzen) · Design ✓ (jede Übung freigegeben)
 
 ## Deine Entscheidungen
 1. **Hochladen?** – A: Ja, hochladen · B: Erst weiter nachbessern → **Empfehlung A**, wenn dir die 6 Videos gefallen.
 2. **Als was ausliefern?** – A: Fehlerkorrektur ohne „Neu in dieser Version“ (wie beim Pilot entschieden) · B: neue Funktion mit Hinweis und Pop-up → **Empfehlung A**, solange nur 6 von 45 Übungen ein Video haben.
 
 ## Was sich seit der ersten Fassung geändert hat
+- **Grundfigur (19.11.):** Haut an Hüfte, Schulter, Nacken und Knie geglättet, Gesäß in allen Übungen am Becken, Hände entspannter mit feineren Fingerlinien, Haare mit Umriss, Kinnkante in liegenden Übungen mit Linie.
+- **90/90, Becken:** leicht nach hinten gekippt, Hüftbeugung im Mittelbild 124° statt 141° (mit aufrechtem Rücken waren 141° nicht haltbar).
+- **Dead Bug:** läuft über dasselbe Skript wie die anderen fünf, Bildausschnitt wie bisher.
 - **Körperbau:** schlanker und sportlicher. Das weite T-Shirt saß im Mittel 3 cm vom Körper ab und machte den Oberkörper dick, vor allem beim Clamshell.
 - **Trikot:** liegt jetzt eng an. Halsausschnitt, Ärmelenden und Hosenbund sind glatte Linien.
 - **Logo:** weißer Schriftzug „T2R“ mittig auf der Brust, auf der von dir bestätigten Höhe. Bei Thread the Needle und beim Clamshell fehlt es, weil die Brust dort nicht zu sehen ist.
@@ -27,6 +30,8 @@
 - **Größe:** 6 Videos und 6 Startbilder, zusammen etwa 880 KB.
 
 ## Offen
+- **Bekannte Grenzen der Figur (von dir freigegeben):** Kerbe an der Schulter bei Armen über Kopf; keine Übung mit Kniebeugung über etwa 130° (Fersensitz, Kindhaltung); keine Linie, wo das Gesicht auf dem Arm liegt (Clamshell).
+- **90/90, Bild 36 (Übergang):** Wo das dunkle hintere Bein auf die Hüfte trifft, franst die Farbkante kurz aus. Drei Versuche haben es nicht behoben; nicht blockierend.
 - **Feinschliff Design (nicht blockierend):**
   - Thread the Needle: Von hinten wirken die Schuhsohlen wie zwei lange helle Flächen, den Fingerspitzen der durchgefädelten Hand fehlt stellenweise die Kontur.
   - 90/90: In der Endposition verdeckt das Knie das Handgelenk der Stützhand, die abgewandte Hand ist nur als kleiner Stummel zu sehen. Im Mittelbild schaut zwischen Oberschenkel und Rumpf ein kleiner Rest der abgewandten Hand hervor.

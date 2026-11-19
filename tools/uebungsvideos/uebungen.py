@@ -67,7 +67,7 @@ def deadbug(ph):
         aim(side + 'UpLeg', dirv(180 - DB['leg'] if ext else 90)); aim(side + 'Leg', dirv(180 - DB['leg'] + 1 if ext else 180)); aim(side + 'Foot', dirv(80 if ext else 90))
         armx = ph and side == 'Right'
         aim(side + 'Arm', dirv(DB['arm'] if armx else 90)); aim(side + 'ForeArm', dirv(DB['arm'] if armx else 90)); aim(side + 'Hand', dirv(DB['arm'] if armx else 90))
-EXS['deadbug'] = dict(pose=deadbug, keys=((1, 0), (12, 0), (38, 1), (54, 1), (80, 0), (96, 0)), cam=V(1, 0, 0), zone=None, blatt=(1, 20, 38))
+EXS['deadbug'] = dict(pose=deadbug, keys=((1, 0), (12, 0), (38, 1), (54, 1), (80, 0), (96, 0)), cam=V(1, 0, 0), zone=None, blatt=(1, 20, 38), seitlich=True)
 
 # ---------------- Clamshell: Seitenlage auf der rechten Seite, Blick von vorn-oben; oberes (linkes) Knie öffnet ----------------
 P['clam'] = {'arm': 0.0, 'open': 52.0, 'head': 0.0}
@@ -523,6 +523,11 @@ Mi = cam.matrix_world.inverted(); fl = [floor.matrix_world @ Vector((sx * .5, sy
 loc = [Mi @ p for p in pts + ([] if cfg.get('tight') else fl)]; X = [q.x for q in loc]; Y = [q.y for q in loc]   # tight: eng um die Figur, die Matte darf angeschnitten sein
 asp = sc.render.resolution_x / sc.render.resolution_y; cx, cy = (max(X) + min(X)) / 2, (max(Y) + min(Y)) / 2
 cam.location = cam.matrix_world @ Vector((cx, cy, 0)); cam.data.ortho_scale = max(max(X) - min(X), (max(Y) - min(Y)) * asp) * (1.16 if cfg.get('tight') else 1.08)
+if cfg.get('seitlich'):
+    # Reine Seitenansicht wie im früheren figur.py: Ausschnitt nach Länge und Höhe der Figur, Matte als schmaler Streifen darunter
+    ys_ = [p.y for p in pts]; zs_ = [p.z for p in pts]; span_ = max(max(ys_) - min(ys_), max(zs_) * 1.6) * 1.12; yc_ = (min(ys_) + max(ys_)) / 2
+    floor.scale = (1.4, span_ * .86, .035); floor.location = (0, yc_, -.0175)
+    cam.location = (cen.x + 8, yc_, max(zs_) / 2 + .02); cam.data.ortho_scale = span_
 if cfg.get('zoom'):
     # Die Kamera fährt weich näher heran, sobald der Arm unten ist (sonst wäre die Figur in der Endposition zu klein)
     K_ = cfg['keys']; locA, scA = cam.location.copy(), cam.data.ortho_scale; pB = []
