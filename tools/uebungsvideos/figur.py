@@ -13,13 +13,14 @@ FS = float(next((a.split('=')[1] for a in args if a.startswith('fs=')), -7))
 FAX = next((a.split('=')[1] for a in args if a.startswith('fax=')), 'z')
 _th = next((a.split('=')[1] for a in args if a.startswith('th=')), 'x25'); TH = (_th[0], float(_th[1:]))
 STILL = next((int(a.split('=')[1]) for a in args if a.startswith('still=')), None)
+LMIN = float(next((a.split('=')[1] for a in args if a.startswith('lmin=')), 4))
 
 mp = 'bl_ext.user_default.mpfb.services.'
 HS = importlib.import_module(mp + 'humanservice').HumanService
 DATA = os.path.expanduser('~/Library/Application Support/Blender/5.2/extensions/.user/user_default/mpfb/data/')
 
 for o in list(bpy.data.objects): bpy.data.objects.remove(o, do_unlink=True)
-macro = {"gender": 1.0, "age": 0.45, "muscle": 0.7, "weight": 0.45, "height": 0.55, "proportions": 0.85,
+macro = {"gender": 1.0, "age": 0.45, "muscle": 0.45, "weight": 0.38, "height": 0.55, "proportions": 0.85,
          "cupsize": 0.5, "firmness": 0.5, "race": {"african": 0.15, "asian": 0.15, "caucasian": 0.7}}
 bm = HS.create_human(macro_detail_dict=macro)
 rig = HS.add_builtin_rig(bm, "mixamo")
@@ -101,6 +102,8 @@ if shirt:
     for p in me.polygons:
         if p.material_index == 1 and p.center.x < 0: p.material_index = 2
 
+exec(open(os.path.expanduser('~/Documents/Relentless-3D/work/trikot_teil.py')).read())   # eng anliegendes Trikot
+
 # Glättung: eine Unterteilungsstufe nach der Verformung, damit Säume und Umrisse rund werden
 for ob in (bm, shirt, shoes):
     if ob:
@@ -179,11 +182,16 @@ def _gv(name):
     gi_ = bm.vertex_groups[name].index; return [v.co for v in bm.data.vertices if any(g.group == gi_ and g.weight > .5 for g in v.groups)]
 _ey = _gv('helper-l-eye') + _gv('helper-r-eye'); _lp = _gv('lips')
 _ez = sum(v.z for v in _ey) / len(_ey); _ex = max(abs(v.x) for v in _ey); _eyf = min(v.y for v in _ey); _lz = min(v.z for v in _lp)
-_face = lambda c: abs(c.x) < _ex + .03 and _lz - .015 < c.z < _ez + .04 and c.y < _eyf + .035
+_hdi = bm.vertex_groups['mixamorig:Head'].index
+_chz = min(v.co.z for v in bm.data.vertices if abs(v.co.x) < .03 and v.co.y < _eyf + .05 and any(g.group == _hdi and g.weight > .5 for g in v.groups))   # Kinnspitze
+# Gesichtsfeld samt Kinn und Kieferunterseite: Die Kinnkante vor dem Hals würde von vorn wie ein aufgemalter Mund wirken
+_face = lambda c: (abs(c.x) < _ex + .03 and _lz - .015 < c.z < _ez + .04 and c.y < _eyf + .035) or (abs(c.x) < _ex + .05 and _chz - .012 < c.z <= _lz and c.y < _eyf + .11)
 for f in bm.data.polygons:
     fm.data[f.index].value = _face(f.center) or any(any(g.group == hidx and g.weight > .5 for g in bm.data.vertices[i].groups) for i in f.vertices)
 ls.select_by_face_marks = True; ls.face_mark_negation = 'EXCLUSIVE'; ls.face_mark_condition = 'ONE'
-ls2 = sc.view_layers[0].freestyle_settings.linesets.new('aussen'); ls2.linestyle = ls.linestyle
+# Punktförmige Strichreste (unter 4 Pixel) bei den Innenlinien weglassen; längere Stücke bleiben, sonst reißt der Umriss auf
+_lsA = ls.linestyle.copy(); ls.linestyle.use_length_min = True; ls.linestyle.length_min = LMIN
+ls2 = sc.view_layers[0].freestyle_settings.linesets.new('aussen'); ls2.linestyle = _lsA
 ls2.select_by_visibility = True; ls2.select_by_edge_types = True; ls2.select_silhouette = False; ls2.select_border = False; ls2.select_crease = False
 ls2.select_external_contour = True
 # Säume (Ärmel, Hosenbein, Shirtrand, Schuhrand): offene Kanten der Kleidung als durchgehende Linie
@@ -192,7 +200,7 @@ for ob in (shirt,):
     if ob:
         for c in list(ob.users_collection): c.objects.unlink(ob)
         kl.objects.link(ob)
-ls3 = sc.view_layers[0].freestyle_settings.linesets.new('saeume'); ls3.linestyle = ls.linestyle
+ls3 = sc.view_layers[0].freestyle_settings.linesets.new('saeume'); ls3.linestyle = _lsA
 ls3.select_by_visibility = True; ls3.select_by_edge_types = True; ls3.select_silhouette = False; ls3.select_border = True; ls3.select_crease = False
 ls3.select_by_collection = True; ls3.collection = kl; ls3.collection_negation = 'INCLUSIVE'
 cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam')); sc.collection.objects.link(cam); sc.camera = cam

@@ -13,13 +13,16 @@ FS = float(next((a.split('=')[1] for a in args if a.startswith('fs=')), -7))
 FAX = next((a.split('=')[1] for a in args if a.startswith('fax=')), 'z')
 _th = next((a.split('=')[1] for a in args if a.startswith('th=')), 'x25'); TH = (_th[0], float(_th[1:]))
 STILL = next((int(a.split('=')[1]) for a in args if a.startswith('still=')), None)
+LMIN = float(next((a.split('=')[1] for a in args if a.startswith('lmin=')), 4))
+_arg = lambda k, d: float(next((a.split('=')[1] for a in args if a.startswith(k + '=')), d))
+MUS, WT = _arg('mus', .45), _arg('wt', .38)   # schlanker, sportlicher Körperbau
 
 mp = 'bl_ext.user_default.mpfb.services.'
 HS = importlib.import_module(mp + 'humanservice').HumanService
 DATA = os.path.expanduser('~/Library/Application Support/Blender/5.2/extensions/.user/user_default/mpfb/data/')
 
 for o in list(bpy.data.objects): bpy.data.objects.remove(o, do_unlink=True)
-macro = {"gender": 1.0, "age": 0.45, "muscle": 0.7, "weight": 0.45, "height": 0.55, "proportions": 0.85,
+macro = {"gender": 1.0, "age": 0.45, "muscle": MUS, "weight": WT, "height": 0.55, "proportions": 0.85,
          "cupsize": 0.5, "firmness": 0.5, "race": {"african": 0.15, "asian": 0.15, "caucasian": 0.7}}
 bm = HS.create_human(macro_detail_dict=macro)
 rig = HS.add_builtin_rig(bm, "mixamo")
@@ -101,6 +104,8 @@ if shirt:
     for p in me.polygons:
         if p.material_index == 1 and p.center.x < 0: p.material_index = 2
 
+exec(open(os.path.expanduser('~/Documents/Relentless-3D/work/trikot_teil.py')).read())   # eng anliegendes Trikot
+
 # Haut unter der Kleidung in Kleidungsfarbe: Sticht bei starker Beugung Haut durch Shirt oder Hose, fällt das nicht auf.
 # Unter dem Hosensaum läuft die Hosenfarbe bis zum Schuh weiter (kein Hautstreifen am Knöchel).
 if shirt:
@@ -127,11 +132,11 @@ if shirt:
     legs_ = {bm.vertex_groups[n_].index for n_ in ('mixamorig:LeftUpLeg', 'mixamorig:RightUpLeg', 'mixamorig:LeftLeg', 'mixamorig:RightLeg', 'mixamorig:LeftFoot', 'mixamorig:RightFoot', 'mixamorig:LeftToeBase', 'mixamorig:RightToeBase') if n_ in bm.vertex_groups}
     flag = {}
     for v in bm.data.vertices:
-        co, idx, dist = kd.find(v.co)
+        vc_ = BCO[v.index]; co, idx, dist = kd.find(vc_)
         if dist < .03 and idx not in ring:
             if vmat.get(idx, 0) != 0: flag[v.index] = 'pants'
-            elif v.co.z < colz: flag[v.index] = 'shirt'
-        elif dist < .03 and vmat.get(idx, 0) in (1, 2) and v.co.z < hemz + .06: flag[v.index] = 'pants'
+            elif vc_.z < colz: flag[v.index] = 'shirt'
+        elif dist < .03 and vmat.get(idx, 0) in (1, 2) and vc_.z < hemz + .06: flag[v.index] = 'pants'
         elif sum(g.weight for g in v.groups if g.group in legs_) > .5: flag[v.index] = 'pants'   # ganzes Bein: auch im weiten Hosenbein und am Knöchel keine Haut
     bm.data.materials.append(M['shirt']); bm.data.materials.append(M['pants']); bm.data.materials.append(M['pantsF'])   # Plätze 2, 3, 4
     n_s = n_p = 0
@@ -144,7 +149,7 @@ if shirt:
         # Fuß im Schuh in Schuhfarbe (kein Hautstreifen, falls der Fuß durch das Obermaterial sticht)
         ks = KDTree(len(shoes.data.vertices))
         for v in shoes.data.vertices: ks.insert(v.co, v.index)
-        ks.balance(); inshoe = {v.index for v in bm.data.vertices if ks.find(v.co)[2] < .028 and v.co.z < min(x.co.z for x in shoes.data.vertices) + SHOE - .01}
+        ks.balance(); zsh_ = min(x.co.z for x in shoes.data.vertices) + SHOE - .01; inshoe = {i for i, c in enumerate(BCO) if c.z < zsh_ and ks.find(c)[2] < .028}
         bm.data.materials.append(M['shoe']); bm.data.materials.append(M['shoeF'])   # Plätze 5, 6
         for p_ in bm.data.polygons:
             if any(i in inshoe for i in p_.vertices) and all(i in inshoe or flag.get(i) == 'pants' for i in p_.vertices): p_.material_index = 6 if p_.center.x < 0 else 5
@@ -215,11 +220,16 @@ def _gv(name):
     gi_ = bm.vertex_groups[name].index; return [v.co for v in bm.data.vertices if any(g.group == gi_ and g.weight > .5 for g in v.groups)]
 _ey = _gv('helper-l-eye') + _gv('helper-r-eye'); _lp = _gv('lips')
 _ez = sum(v.z for v in _ey) / len(_ey); _ex = max(abs(v.x) for v in _ey); _eyf = min(v.y for v in _ey); _lz = min(v.z for v in _lp)
-_face = lambda c: abs(c.x) < _ex + .03 and _lz - .015 < c.z < _ez + .04 and c.y < _eyf + .035
+_hdi = bm.vertex_groups['mixamorig:Head'].index
+_chz = min(v.co.z for v in bm.data.vertices if abs(v.co.x) < .03 and v.co.y < _eyf + .05 and any(g.group == _hdi and g.weight > .5 for g in v.groups))   # Kinnspitze
+# Gesichtsfeld samt Kinn und Kieferunterseite: Die Kinnkante vor dem Hals würde von vorn wie ein aufgemalter Mund wirken
+_face = lambda c: (abs(c.x) < _ex + .03 and _lz - .015 < c.z < _ez + .04 and c.y < _eyf + .035) or (abs(c.x) < _ex + .05 and _chz - .012 < c.z <= _lz and c.y < _eyf + .11)
 for f in bm.data.polygons:
     fm.data[f.index].value = _face(f.center) or any(any(g.group == hidx and g.weight > .5 for g in bm.data.vertices[i].groups) for i in f.vertices)
 ls.select_by_face_marks = True; ls.face_mark_negation = 'EXCLUSIVE'; ls.face_mark_condition = 'ONE'
-ls2 = sc.view_layers[0].freestyle_settings.linesets.new('aussen'); ls2.linestyle = ls.linestyle
+# Punktförmige Strichreste (unter 4 Pixel) bei den Innenlinien weglassen; längere Stücke bleiben, sonst reißt der Umriss auf
+_lsA = ls.linestyle.copy(); ls.linestyle.use_length_min = True; ls.linestyle.length_min = LMIN
+ls2 = sc.view_layers[0].freestyle_settings.linesets.new('aussen'); ls2.linestyle = _lsA
 ls2.select_by_visibility = True; ls2.select_by_edge_types = True; ls2.select_silhouette = False; ls2.select_border = False; ls2.select_crease = False
 ls2.select_external_contour = True
 # Säume (Ärmel, Hosenbein, Shirtrand, Schuhrand): offene Kanten der Kleidung als durchgehende Linie
@@ -228,7 +238,7 @@ for ob in (shirt,):
     if ob:
         for c in list(ob.users_collection): c.objects.unlink(ob)
         kl.objects.link(ob)
-ls3 = sc.view_layers[0].freestyle_settings.linesets.new('saeume'); ls3.linestyle = ls.linestyle
+ls3 = sc.view_layers[0].freestyle_settings.linesets.new('saeume'); ls3.linestyle = _lsA
 ls3.select_by_visibility = True; ls3.select_by_edge_types = True; ls3.select_silhouette = False; ls3.select_border = True; ls3.select_crease = False
 ls3.select_by_collection = True; ls3.collection = kl; ls3.collection_negation = 'INCLUSIVE'
 cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam')); sc.collection.objects.link(cam); sc.camera = cam

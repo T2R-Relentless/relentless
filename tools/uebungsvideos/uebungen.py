@@ -101,7 +101,7 @@ def pallof(ph):
     for side, sx in (('Left', 1), ('Right', -1)):
         aim(side + 'UpLeg', V(sx * .19, -.2, -1)); aim(side + 'Leg', V(sx * .03, .1, -1)); aim(side + 'Foot', V(sx * .12, -1, -.45))
     st = wpos('Spine2', True); cx = st.x
-    T = Vector((cx, st.y - .2 - .42 * ph, st.z - .17))      # Griff vor dem Brustbein, dann gestreckt nach vorn
+    T = Vector((cx, st.y - .24 - .38 * ph, st.z - .17))      # Griff vor dem Brustbein, dann gestreckt nach vorn
     for side, sx in (('Left', 1), ('Right', -1)):
         ik2(side + 'Arm', side + 'ForeArm', T + Vector((sx * .035, 0, 0)), (sx * .7, .3, -1)); aim(side + 'Hand', V(-sx * .35, -1, .05))
     if ph == 1: print('PRUEF Haende x', round((wpos('LeftHand') + wpos('RightHand')).x / 2, 3), 'Brust x', round(cx, 3), 'Schultern x', round(wpos('LeftArm').x, 3), round(wpos('RightArm').x, 3))
@@ -166,13 +166,34 @@ def openbook(ph):
     aim('LeftArm', d); aim('LeftForeArm', d); aim('LeftHand', V(-1, .05, 0).lerp(d, sm(t * 5)))
 EXS['openbook'] = dict(pose=openbook, keys=((1, 0), (12, 0), (48, 1), (62, 1), (98, 0), (108, 0)), perframe=True, cam=V(-.35, .85, .6), zone=None)
 
-if EX in ('hip9090',):
+if EX == 'pallof':
+    # Griff mit beiden Händen: Linien zwischen den Fingern weglassen (sonst wird der Griff ein dunkles Strichknäuel)
+    _fg = {g.index for g in bm.vertex_groups if any(k in g.name for k in ('HandIndex', 'HandMiddle', 'HandRing', 'HandPinky', 'HandThumb'))}
+    _fv = {v.index for v in bm.data.vertices if sum(g.weight for g in v.groups if g.group in _fg) > .5 * (sum(g.weight for g in v.groups if bm.vertex_groups[g.group].name.startswith('mixamorig:')) or 1)}
+    _fm = bm.data.attributes['freestyle_face']
+    for f in bm.data.polygons:
+        if any(i in _fv for i in f.vertices): _fm.data[f.index].value = True
+if EX == 'thread' and TRIKOT:
+    # Die Brust zeigt hier zur Matte: Vom Logo wären nur helle Splitter am Rand zu sehen, deshalb ohne Logo
+    for d_ in bm.data.uv_layers['logo'].data: d_.uv = (-1.0, -1.0)
+if EX == 'thread':
+    # Kamera steht auf der rechten Seite der Person: abgedunkelt wird hier die linke (abgewandte) Seite
+    _gl = {g.index for g in bm.vertex_groups if g.name.startswith('mixamorig:Left')}; _ga = {g.index for g in bm.vertex_groups if g.name.startswith('mixamorig:')}
+    _sl = [sum(g.weight for g in v.groups if g.group in _gl) / (sum(g.weight for g in v.groups if g.group in _ga) or 1) for v in bm.data.vertices]
+    for p_ in bm.data.polygons:      # Haut und Trikot: Kopf und Rumpf bleiben hell, nur linke Glieder dunkler
+        if p_.material_index in (0, 1): p_.material_index = 1 if sum(_sl[i] for i in p_.vertices) / len(p_.vertices) > .5 else 0
+    for ob_, pairs_ in ((bm, ((3, 4), (5, 6))), (shirt, ((1, 2),)), (shoes, ((0, 1),))):
+        ms_ = ob_.data.materials
+        for a_, b_ in pairs_:
+            if len(ms_) > b_: ma_, mb_ = ms_[a_], ms_[b_]; ms_[a_] = mb_; ms_[b_] = ma_
+if EX == 'hip9090' and TRIKOT: bm.data.materials[1] = bm.data.materials[0]   # Sicht von vorn: beide Arme im selben Hautton
+if EX in ('hip9090',) and not TRIKOT:
     zs_ = [shirt.data.vertices[i].co.z for p_ in shirt.data.polygons if p_.material_index == 0 for i in p_.vertices]; zc = min(zs_) + .07
     top_ = {i for p_ in shirt.data.polygons if p_.material_index == 0 for i in p_.vertices}
     for i in top_:
         v_ = shirt.data.vertices[i]
         if v_.co.z < zc: v_.co.z = zc - (zc - v_.co.z) * .15
-if EX in ('hip9090', 'openbook', 'thread'):
+if EX in ('hip9090', 'openbook', 'thread') and not TRIKOT:
     so_ = shirt.modifiers.new('kragen', 'SOLIDIFY'); so_.thickness = .014; so_.offset = 1; so_.use_rim = False
     # nur am Halsausschnitt verdicken (sonst blähen sich die Ärmel auf)
     vk_ = shirt.vertex_groups.new(name='kragen'); zt_ = max(v.co.z for v in shirt.data.vertices)
@@ -212,7 +233,11 @@ def thread(ph):
     # bewegter Arm (links)
     S_ = wpos('LeftArm'); La = (wpos('LeftArm', True) - S_).length + (wpos('LeftForeArm', True) - wpos('LeftForeArm')).length
     Tup = S_ + V(.15, -.05, 1) * La * .985; Tthr = Vector((q['HR'].x - .3, q['HR'].y + .13, q['hz']))
-    if t < .5: w_ = sm(t / .5); T = Tup.lerp(q['HL'], w_); pole = Vector((1, 0, .2))
+    if t < .5:
+        # Arm schwingt im seitlichen Bogen zwischen Decke und Matte, dabei fast gestreckt (kein eingeknickter Ellbogen)
+        w_ = sm(t / .5); d0_ = (Tup - S_); d1_ = (q['HL'] - S_); dm_ = V(1, -.1, .1)
+        dd_ = (d0_.normalized() * (1 - w_) ** 2 + dm_ * 2 * w_ * (1 - w_) + d1_.normalized() * w_ ** 2).normalized()
+        T = S_ + dd_ * (d0_.length + (d1_.length - d0_.length) * w_) * (1 - .03 * math.sin(math.pi * w_)); pole = Vector((1, 0, .2))
     else: w_ = dr; T = q['HL'].lerp(Tthr, w_); T.z = q['hz'] + .075 * math.sin(math.pi * sm(w_ * 2)) + .02 * sm(w_ * 2); pole = Vector((1, 0, .2)).lerp(Vector((.1, .7, .7)), w_)   # beim Umdrehen der Hand kurz anheben
     ik2('LeftArm', 'LeftForeArm', T, pole)
     fa = wpos('LeftForeArm', True) - wpos('LeftForeArm')
@@ -229,7 +254,7 @@ def thread(ph):
                 return -((wpos('LeftHandIndex1') - wpos('LeftHandPinky1')).cross(d_)).normalized()
             twist('LeftHand', 42 * wu)
             if pn().y > -.1: twist('LeftHand', -84 * wu)
-EXS['thread'] = dict(pose=thread, keys=((1, 0), (14, 0), (62, 1), (78, 1), (126, 0), (138, 0)), perframe=True, tight=True, zoom=True, cam=V(-.48, -1, .52), zone=None)
+EXS['thread'] = dict(pose=thread, keys=((1, 0), (14, 0), (62, 1), (78, 1), (126, 0), (138, 0)), perframe=True, tight=True, zoom=True, cam=V(-1, -.55, .4), zone=None)   # seitliche Sicht: Rumpf im Profil statt als breite Fläche
 
 # Schuhe hier wieder mit Silhouette (stehende und kniende Übungen), ferner Schuh etwas dunkler als die Matte
 for c in list(shoes.users_collection): c.objects.unlink(shoes)
@@ -273,6 +298,8 @@ def lowg(groups, wmin=.3):
     return m
 # ------------------------------------------------ Ablauf ------------------------------------------------
 cfg = EXS[EX]
+_cv = next((a.split('=')[1] for a in args if a.startswith('cam=')), None)        # Kamerarichtung zum Ausprobieren: cam=x,y,z
+if _cv: cfg['cam'] = V(*[float(x) for x in _cv.split(',')])
 def pose(ph):
     cfg['pose'](ph); relax_hands()
     if EX == 'pallof': grip('Left'); grip('Right')
@@ -363,7 +390,7 @@ for fr in range(1, cfg['keys'][-1][0], 3):
 print('TIEFSTER_PUNKT', round(worst, 4))
 for fr in range(1, cfg['keys'][-1][0], 3):
     sc.frame_set(fr); lw = low()
-    if lw < -.01: print('PRUEF unter Matte Bild', fr, round(lw, 3))
+    if lw < -.01: print('PRUEF unter Matte Bild', fr, round(lw, 3), {n: round(lowpts(lambda co, ob: True, [o]), 3) for n, o in (('Körper', bm), ('Hose', shirt), ('Schuhe', shoes))}, 'Hände', round(lowg(HAND('Left') + HAND('Right')), 3), 'Becken', round(lowg(['Hips', 'LeftUpLeg', 'RightUpLeg']), 3), 'Unterschenkel', round(lowg(['LeftLeg', 'RightLeg']), 3))
 if EX == 'pallof':
     def cyl(name, r, mat):
         ob = bpy.data.objects.new(name, bpy.data.meshes.new(name)); sc.collection.objects.link(ob)
@@ -378,7 +405,7 @@ if EX == 'pallof':
     band = cyl('band', .011, bandm); handle = cyl('griff', .018, dark)
     for fr in range(1, cfg['keys'][-1][0] + 1):
         sc.frame_set(fr); L, R = wpos('LeftHand'), wpos('RightHand'); hc = (L + R) / 2 + (L - wpos('LeftForeArm')).normalized() * .045
-        handle.location = hc; handle.rotation_euler = (L - R).to_track_quat('Z', 'Y').to_euler(); handle.scale = (1, 1, max(.12, (L - R).length + .06))
+        handle.location = hc; handle.rotation_euler = (L - R).to_track_quat('Z', 'Y').to_euler(); handle.scale = (1, 1, max(.05, (L - R).length - .01))   # Griff kaum länger als die Hände breit: kein Klotz am Handgelenk
         v = hc - AX; band.location = (hc + AX) / 2; band.rotation_euler = v.to_track_quat('Z', 'Y').to_euler(); band.scale = (1, 1, v.length)
         for ob in (handle, band): ob.keyframe_insert('location', frame=fr); ob.keyframe_insert('rotation_euler', frame=fr); ob.keyframe_insert('scale', frame=fr)
     pts += [Vector((AX.x - .2, AX.y, 0)), Vector((AX.x, AX.y, 1.75))]
@@ -394,7 +421,7 @@ cam.rotation_euler = (-d).to_track_quat('-Z', 'Y').to_euler(); cam.location = ce
 Mi = cam.matrix_world.inverted(); fl = [floor.matrix_world @ Vector((sx * .5, sy * .5, .5)) for sx in (-1, 1) for sy in (-1, 1)]
 loc = [Mi @ p for p in pts + ([] if cfg.get('tight') else fl)]; X = [q.x for q in loc]; Y = [q.y for q in loc]   # tight: eng um die Figur, die Matte darf angeschnitten sein
 asp = sc.render.resolution_x / sc.render.resolution_y; cx, cy = (max(X) + min(X)) / 2, (max(Y) + min(Y)) / 2
-cam.location = cam.matrix_world @ Vector((cx, cy, 0)); cam.data.ortho_scale = max(max(X) - min(X), (max(Y) - min(Y)) * asp) * 1.08
+cam.location = cam.matrix_world @ Vector((cx, cy, 0)); cam.data.ortho_scale = max(max(X) - min(X), (max(Y) - min(Y)) * asp) * (1.16 if cfg.get('tight') else 1.08)
 if cfg.get('zoom'):
     # Die Kamera fährt weich näher heran, sobald der Arm unten ist (sonst wäre die Figur in der Endposition zu klein)
     K_ = cfg['keys']; locA, scA = cam.location.copy(), cam.data.ortho_scale; pB = []
