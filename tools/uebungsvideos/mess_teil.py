@@ -145,6 +145,141 @@ def sichtbar(kamera=None):
         out[nm] = (frei / len(P_), drin / len(P_) > .9)
     for m in mm: m.show_viewport = False
     bpy.context.view_layer.update(); return out
+# ---------------- Geräte (Kraftübungen): tragende Flächen, Auflage und Durchdringung ----------------
+# Die Quader stehen in KR_GERAET[EX] (kraft_teil.py). Ohne Geräte ändert sich an den Messungen nichts.
+def _kr_quader(): return globals().get('KR_GERAET', {}).get(EX, [])
+def _kr_alle():
+    return np.concatenate([_welt(ob)[_maske(ob, ('alle',), lambda v: True)] for ob in MESHES])
+def kr_stuetze(P_):
+    """Höhe der tragenden Fläche unter jedem Punkt (n, 3): Oberseite eines Kastens oder Bankpolsters, wenn der Punkt über dessen
+    Grundfläche und über dessen Unterkante liegt (unter dem Bankpolster ist frei), sonst die Matte (0)"""
+    s = np.zeros(len(P_))
+    for g in _kr_quader():
+        if not g['traegt']: continue
+        x0, x1, y0, y1, z0, z1 = g['b']
+        m = (P_[:, 0] >= x0) & (P_[:, 0] <= x1) & (P_[:, 1] >= y0) & (P_[:, 1] <= y1) & (P_[:, 2] > z0)
+        s = np.where(m, np.maximum(s, z1), s)
+    return s
+def kr_abstand():
+    """kleinster Abstand der Figur zur tragenden Fläche darunter (Matte oder Gerät); < 0: sinkt ein"""
+    P_ = _kr_alle(); return float((P_[:, 2] - kr_stuetze(P_)).min())
+def _kr_gruppe(ob, groups, wmin=.5):
+    gi = frozenset(ob.vertex_groups['mixamorig:' + g].index for g in groups if 'mixamorig:' + g in ob.vertex_groups)
+    return _maske(ob, ('lowg', gi, wmin), lambda v: any(g.group in gi and g.weight > wmin for g in v.groups)) if gi else None
+def kr_hoechst(groups, wmin=.5):
+    """höchster Punkt (z) der Punkte in den Knochengruppen"""
+    m = -9
+    for ob in MESHES:
+        mk = _kr_gruppe(ob, groups, wmin)
+        if mk is not None and mk.any(): m = max(m, float(_welt(ob)[mk, 2].max()))
+    return m
+def kr_luecke(name, groups=None, voll=False):
+    """Abstand der Figur (oder der Knochengruppen) zur Oberseite des Geräts name, nur über dessen Grundfläche; 9: nichts darüber.
+    voll: das Gerät gilt bis zum Boden als massiv (auch Punkte unter dem Polster zählen, z. B. der Rücken an der Bankkante)"""
+    g = next((g for g in _kr_quader() if g['name'] == name), None)
+    if g is None: return 9
+    x0, x1, y0, y1, z0, z1 = g['b']; m = 9
+    for ob in MESHES:
+        mk = _maske(ob, ('alle',), lambda v: True) if groups is None else _kr_gruppe(ob, groups, .3)
+        if mk is None or not mk.any(): continue
+        P_ = _welt(ob)[mk]; s = (P_[:, 0] >= x0) & (P_[:, 0] <= x1) & (P_[:, 1] >= y0) & (P_[:, 1] <= y1) & (P_[:, 2] > (0 if voll else z0))
+        if s.any(): m = min(m, float((P_[s, 2] - z1).min()))
+    return m
+def kr_eindringen():
+    """je Gerät und Netz (Körper, Hose, Schuhe, Haare): größte Eindringtiefe (m), Zahl der Punkte mehr als 1 cm im Quader, tiefster Punkt"""
+    out = []
+    for ob in MESHES:
+        P_ = _welt(ob)[_maske(ob, ('alle',), lambda v: True)]
+        for g in _kr_quader():
+            x0, x1, y0, y1, z0, z1 = g['b']
+            t = np.minimum.reduce([P_[:, 0] - x0, x1 - P_[:, 0], P_[:, 1] - y0, y1 - P_[:, 1], P_[:, 2] - z0, z1 - P_[:, 2]])
+            if (t > .01).any(): k = int(t.argmax()); out.append((g['name'], ob.name, float(t[k]), int((t > .01).sum()), P_[k]))
+    return out
+def kr_hinweise():
+    z = [f'Gerät – {o} steckt bis {d * 100:.1f} cm in {n} ({k} Punkte, tiefster bei {p[0]:.2f} {p[1]:.2f} {p[2]:.2f})' for n, o, d, k, p in kr_eindringen()]
+    for n in globals().get('cfg', {}).get('auflage', ()):
+        l_ = kr_luecke(n)
+        if l_ > .012: z.append(f'Auflage – {n}: Figur {"liegt nicht darüber" if l_ >= 9 else f"{l_ * 100:.1f} cm über der Fläche"} (soll aufliegen)')
+    return z
+# ---------------- Kopf in Verlängerung des Rumpfs (Kraftübungen) ----------------
+def kopf_linie():
+    """Kopf in Verlängerung des Rumpfs: Winkel (Grad) der Linie Schulter → Ohr gegen die Rumpflinie Hüfte → Schulter, in
+    Weltkoordinaten (Schulter, Hüfte: Mitte der Gelenke; Ohr: Mitte der Ohrpunkte). 0 = Ohr, Schulter und Hüfte auf einer Linie,
+    + Kopf nach vorn bzw. zum Boden gesenkt, − Kopf in den Nacken gelegt."""
+    eg = bm.vertex_groups.get('ears')
+    mk = _maske(bm, ('ohr',), lambda v: any(g.group == eg.index and g.weight > .5 for g in v.groups))
+    O = Vector(_welt(bm)[mk].mean(axis=0)); S = (wpos('LeftArm') + wpos('RightArm')) / 2; H = (wpos('LeftUpLeg') + wpos('RightUpLeg')) / 2
+    t = (S - H).normalized(); k = O - S; vorn = _ach('Spine2', (0, -1, 0)); vorn = (vorn - t * vorn.dot(t)).normalized()
+    w = math.degrees(math.atan2(k.dot(vorn), k.dot(t)))
+    if any(a_ == 'kopfdbg=1' for a_ in args): print('KOPFDBG Ohr', [round(c, 3) for c in O], 'Schulter', [round(c, 3) for c in S], 'Hüfte', [round(c, 3) for c in H], 'w', round(w, 1))
+    return w
+def kr_blickwinkel():
+    """Höhenwinkel (Grad) der Linie Ohr → Auge in der Körpermittelebene (Person schaut nach −Y): + nach oben, − nach unten"""
+    eg = bm.vertex_groups.get('ears'); mk = _maske(bm, ('ohr',), lambda v: any(g.group == eg.index and g.weight > .5 for g in v.groups))
+    f = Vector(_welt(eyes).mean(axis=0)) - Vector(_welt(bm)[mk].mean(axis=0)); return math.degrees(math.atan2(f.z, -f.y)), Vector(_welt(eyes).mean(axis=0))
+def kopf_hinweise():
+    w = kopf_linie(); z = []
+    if abs(w) >= 10: z.append(f'Kopf – Ohr {abs(w):.0f}° {"vor bzw. unter" if w > 0 else "hinter bzw. über"} der Linie Hüfte–Schulter (soll in Verlängerung des Rumpfs liegen)')
+    return z
+    return []
+
+# ---------------- Hanteln: Hand am Gerät, Durchdringung mit dem Körper ----------------
+def _kr_hanteln(): return globals().get('KR_HANTELN', [])
+def _kr_hantel_sd(ob, P_):
+    """vorzeichenbehafteter Abstand (m) der Punkte P_ (n, 3) zur Hantel ob (Griff und Scheiben als Zylinder; < 0: im Gerät)"""
+    p = dict(ob['kr']); M = np.array(ob.matrix_world.inverted(), dtype=np.float64); L = P_ @ M[:3, :3].T + M[:3, 3]
+    rq = np.hypot(L[:, 0], L[:, 1]); z = L[:, 2]
+    def zyl(R, zc, hh):
+        qx = rq - R; qy = np.abs(z - zc) - hh
+        return np.minimum(np.maximum(qx, qy), 0) + np.hypot(np.maximum(qx, 0), np.maximum(qy, 0))
+    rs = p['r'] * .93          # Sechseck als Zylinder mit mittlerem Radius
+    d = zyl(.016, 0.0, (p['griff'] + p['dicke']) / 2)
+    for sg in (-1, 1): d = np.minimum(d, zyl(rs, sg * (p['griff'] + p['dicke']) / 2, p['dicke'] / 2))
+    return d
+def _kr_punkte(groups, wmin=.5):
+    gi = frozenset(bm.vertex_groups['mixamorig:' + g].index for g in groups if 'mixamorig:' + g in bm.vertex_groups)
+    mk = _maske(bm, ('lowg', gi, wmin), lambda v: any(g.group in gi and g.weight > wmin for g in v.groups)); return _welt(bm)[mk]
+def hand_geraet():
+    """je Hantel und greifender Hand: Abstand der Handfläche zur Hantel, Abstand und Eindringen der Fingerspitzen (m)"""
+    out = []
+    for ob, sides in _kr_hanteln():
+        for sd in sides:
+            pa = _kr_hantel_sd(ob, _kr_punkte([sd + 'Hand'], .05))   # Handfläche: Gewichte der Hand sind in dieser Figur höchstens 0,2
+            sp = {}; sp = {}
+            for f in ('Thumb', 'Index', 'Middle', 'Ring', 'Pinky'):
+                d = _kr_hantel_sd(ob, _kr_punkte([sd + 'Hand' + f + '3'], .5))
+                if len(d): sp[f] = (float(d.min()), float(d.max()))
+            out.append((ob.name, sd, float(pa.min()) if len(pa) else 9, sp))
+    return out
+_FINGER = {'Thumb': 'Daumen', 'Index': 'Zeigefinger', 'Middle': 'Mittelfinger', 'Ring': 'Ringfinger', 'Pinky': 'kleiner Finger'}
+def hand_hinweise():
+    z = []
+    for nm, sd, pa, sp in hand_geraet():
+        hd = 'linke' if sd == 'Left' else 'rechte'
+        if pa > .015: z.append(f'Griff – {hd} Hand: Handfläche {pa * 100:.1f} cm von {nm} entfernt (soll anliegen)')
+        if pa < -.01: z.append(f'Griff – {hd} Hand: Handfläche steckt {-pa * 100:.1f} cm in {nm}')
+        tief = [f'{_FINGER[f]} {-a * 100:.1f} cm' for f, (a, b) in sp.items() if a < -.005]
+        weg = [f'{_FINGER[f]} {a * 100:.1f} cm' for f, (a, b) in sp.items() if a > .015 and f != 'Thumb']
+        if tief: z.append(f'Griff – {hd} Hand: Fingerspitzen stecken in {nm}: ' + ', '.join(tief))
+        if len(weg) >= 2: z.append(f'Griff – {hd} Hand: Finger liegen nicht an {nm} an (Abstand {", ".join(weg)})')
+    return z
+_KR_TEIL = [('Oberschenkel links', ['LeftUpLeg']), ('Oberschenkel rechts', ['RightUpLeg']), ('Unterschenkel links', ['LeftLeg']), ('Unterschenkel rechts', ['RightLeg']),
+            ('Rumpf', ['Hips', 'Spine', 'Spine1', 'Spine2']), ('Unterarm links', ['LeftForeArm']), ('Unterarm rechts', ['RightForeArm']), ('Oberarm links', ['LeftArm']), ('Oberarm rechts', ['RightArm']), ('Kopf', ['Head'])]
+def hantel_durchdringung():
+    """Hantel gegen Körper (ohne die greifenden Hände): größte Eindringtiefe je Körperteil; Kleidung zählt mit"""
+    z = []
+    for ob, sides in _kr_hanteln():
+        for nm, gr in _KR_TEIL:
+            pk = [_kr_punkte(gr)]
+            if shirt:
+                gi = frozenset(shirt.vertex_groups['mixamorig:' + g].index for g in gr if 'mixamorig:' + g in shirt.vertex_groups)
+                if gi: pk.append(_welt(shirt)[_maske(shirt, ('lowg', gi, .5), lambda v: any(g.group in gi and g.weight > .5 for g in v.groups))])
+            P_ = np.concatenate([x for x in pk if len(x)]) if any(len(x) for x in pk) else None
+            if P_ is None: continue
+            d = _kr_hantel_sd(ob, P_)
+            if d.min() < -.005: z.append(f'Durchdringung – {ob.name} steckt bis {-d.min() * 100:.1f} cm in {nm}')
+            elif d.min() < globals().get('cfg', {}).get('hantel_abstand', .02) and nm.startswith(('Oberschenkel', 'Unterschenkel')): z.append(f'Abstand – {ob.name} nur {d.min() * 100:.1f} cm von {nm}')
+    return z
 def messen(fr, kamera=None):
     """alle Hinweise für das aktuelle Bild als Textzeilen"""
     if any(a_ == 'winkel=1' for a_ in args): print('WINKEL', fr, {k: round(v) for k, v in gelenke().items()})   # Prüfhilfe: alle Winkel
@@ -152,6 +287,9 @@ def messen(fr, kamera=None):
     for nm, (a, drin) in sichtbar(kamera).items():
         if not drin: z.append(f'Bild – {nm} liegt außerhalb des Bildausschnitts')
         elif a < .06: z.append(f'Bild – {nm} ist verdeckt ({a * 100:.0f} % sichtbar)')
+    if _kr_quader(): z += kr_hinweise()
+    if _kr_hanteln(): z += hand_hinweise() + hantel_durchdringung()
+    if globals().get('cfg', {}).get('kopf_linie'): z += kopf_hinweise()
     lw = low()
     if lw < -.02: z.append(f'Auflage – tiefster Punkt {lw * 100:.1f} cm unter der Matte')
     return [f'Bild {fr}: {x}' for x in z]
