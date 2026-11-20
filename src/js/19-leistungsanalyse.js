@@ -1,4 +1,28 @@
 /* ---------- Leistungsanalyse aus mehreren Fahrten: Critical Power, Effizienz und Entkopplung, Ermüdungsresistenz, Belastung aus Empfinden, Morgenwerte ---------- */
+/* Rampentest erkennen (Stufen von etwa 1 Min., steigend bis zur Ausbelastung). Alle Bedingungen müssen gelten:
+   a) beste Minute, die 8 Minuten davor ohne Pause (kein Wert unter 20 W länger als 5 s am Stück);
+   b) die 8 Minutenmittel davor steigen treppenartig: höchstens eine Minute nicht höher als die vorige, keine fällt mehr als 10 W,
+      kein Sprung über 50 % des Gesamtanstiegs, Anstieg 8–40 W pro Minute;
+   c) beste Minute mindestens 40 W über der Minute 5 Min. davor;
+   d) danach fällt die Leistung innerhalb von 30 s unter 60 % der besten Minute (5-s-Mittel) oder die Fahrt endet.
+   Puls: h 1 = Ausbelastung bestätigt, 0 = nicht bestätigt, null = nicht prüfbar (Kriterium aus vo2HrOk, 27d-vo2max.js).
+   Intervalle mit Pausen und 20-Min-Tests mit Schlusssprint fallen an b) heraus. */
+function rmpDetect(v, hr1){
+  const n = v.length; if (n < 540) return null;
+  let q = 0, b = -1, bi = -1; for (let i = 0; i < n; i++) { q += v[i]; if (i >= 60) q -= v[i - 60]; if (i >= 59 && q > b) { b = q; bi = i - 59; } }
+  const w = b / 60, e = bi + 60; if (bi < 480 || !(w > 0)) return null;
+  for (let i = bi - 480, z = 0; i < e; i++) { z = v[i] < 20 ? z + 1 : 0; if (z > 5) return null; }
+  const avg = (a, c) => { let s = 0; for (let i = a; i < c; i++) s += v[i]; return s / (c - a); };
+  const m = []; for (let k = 8; k >= 1; k--) m.push(avg(bi - 60 * k, bi - 60 * (k - 1))); m.push(w);
+  const rise = w - m[0]; if (rise < 64 || rise > 320) return null;
+  let flat = 0; for (let k = 1; k < m.length; k++) { const d = m[k] - m[k - 1]; if (d < -10 || d > rise * .5) return null; if (d <= 0) flat++; }
+  if (flat > 1) return null;
+  if (!(w >= avg(bi - 300, bi - 240) + 40)) return null;
+  let drop = e + 5 > n; for (let j = e; !drop && j < e + 30 && j + 5 <= n; j++) { if (avg(j, j + 5) < .6 * w || j + 5 === n) drop = true; }
+  if (!drop) return null;
+  let h = null; if (hr1 && typeof vo2HrOk === 'function') { try { const r = vo2HrOk(hr1, bi - 120, e); h = r.ok === true ? 1 : r.ok === false ? 0 : null; } catch (er) { elog(er); } }
+  return {w:Math.round(w), h};
+}
 function perfExt(sec1, hr1, tc1, np){
   const o = {}, n = sec1.length, nP = sec1.filter(v => v != null).length, nH = hr1.filter(v => v != null).length;
   const tcs = tc1.filter(v => v != null && v > -30 && v < 60); if (tcs.length > 60) o.tAvg = Math.round(tcs.reduce((a, b) => a + b, 0) / tcs.length);
@@ -15,7 +39,9 @@ function perfExt(sec1, hr1, tc1, np){
   /* Struktur: bester 20-Min.-Abschnitt am Stück? Anteil der Sekunden unter 70 % des Abschnittsmittels. Dazu harte Blöcke über 95 % FTP (60-s-Mittel, mindestens 2,5 Min.) */
   { const ftp0 = (S.p && S.p.ftp) || (S.d && S.d.ftp) || 0;
     if (n >= 1200) { let q = 0, b = 0, bi = 0; for (let i = 0; i < n; i++) { q += v[i]; if (i >= 1200) q -= v[i - 1200]; if (i >= 1199 && q > b) { b = q; bi = i - 1199; } } const av = b / 1200; let lo = 0; for (let i = bi; i < bi + 1200; i++) if (v[i] < av * .7) lo++; o.c20 = Math.round(lo / 12); }
-    if (ftp0 > 0) { const blk = []; let q = 0, st = -1; for (let i = 0; i <= n; i++) { if (i < n) { q += v[i]; if (i >= 60) q -= v[i - 60]; } const on = i < n && i >= 59 && q / 60 > ftp0 * .95; if (on && st < 0) st = i - 59; if (!on && st >= 0) { if (i - st >= 150) blk.push(Math.round((i - st - 40) / 10) * 10); st = -1; } } if (blk.length) o.hb = blk.slice(0, 20).join(','); } }
+    if (ftp0 > 0) { const blk = []; let q = 0, st = -1; for (let i = 0; i <= n; i++) { if (i < n) { q += v[i]; if (i >= 60) q -= v[i - 60]; } const on = i < n && i >= 59 && q / 60 > ftp0 * .95; if (on && st < 0) st = i - 59; if (!on && st >= 0) { if (i - st >= 150) blk.push(Math.round((i - st - 40) / 10) * 10); st = -1; } } if (blk.length) o.hb = blk.slice(0, 20).join(','); }
+    /* Rampentest: beste Minute (rmp), Puls bestätigt die Ausbelastung (rmpH 1) oder nicht (0); ohne Puls kein rmpH */
+    try { const r = rmpDetect(v, hr1); if (r) { o.rmp = r.w; if (r.h != null) o.rmpH = r.h; } } catch (e) { elog(e); } }
   const sum = v.reduce((a, b) => a + b, 0), avgP = sum / n; o.vi = avgP > 0 && np ? Math.round(np / avgP * 100) / 100 : null; o.kj = Math.round(sum / 1000);
   const kg = (S.p && S.p.weight) || (S.d && S.d.weight) || 75; o.kjkg = Math.round(o.kj / kg * 10) / 10;
   if (n >= 3600 && nH > .8 * n && o.vi && o.vi <= 1.15 && o.hrAvg) {

@@ -53,10 +53,21 @@ function exeHrCheck(x, a, hr, pwOk){
 }
 /* Fitness-Check: Wurde wirklich ein durchgehender Test gefahren? */
 const hbList = a => String(a.hb || '').split(',').filter(Boolean).map(Number);
+/* Rampentest statt 20-Min-Test? Gilt nur mit Leistungsdaten, ab 10 Min. Fahrt (die Erkennung verlangt ohnehin 9 Minuten Rampe) und wenn es keinen sauberen 20-Min-Block gibt (der hat Vorrang, wenn sein Schnitt mindestens 85 % der besten Minute erreicht; beim Rampentest liegt er weit darunter) */
+function exeRampOk(a, hasP){
+  const np = typeof noPwr === 'function' && noPwr(), am = Math.round(a.sec / 60);
+  return !!(hasP && !np && a.rmp > 0 && am >= 10 && !(a.c20 != null && a.c20 <= 15 && am >= 25 && a.m20 >= a.rmp * .85));
+}
 function exeTest(x, a, hasP, ftp, hs){
   const msgs = [], hb = hbList(a), np = typeof noPwr === 'function' && noPwr(), need = np ? 30 : 20, am = Math.round(a.sec / 60);
   const ivTxt = hb.length >= 2 ? ` Stattdessen stecken ${hb.length} harte Abschnitte von je etwa ${Math.round(hb.reduce((q, z) => q + z, 0) / hb.length / 60)} Minuten mit Pausen dazwischen in der Fahrt. Das sieht nach Intervalltraining aus.` : '';
   const out = (wrong, sInt) => ({msgs, sInt, wrong});
+  if (exeRampOk(a, hasP)) {
+    msgs.push(`Als Rampentest erkannt: beste Minute ${a.rmp} W. Daraus ergibt sich ein FTP von etwa ${r5(a.rmp * .75)} W (Schätzung). Trag beim Fitness-Check unter Rampentest die beste Minute ein, dann wertet die App sie aus.`);
+    if (a.rmpH === 0) { msgs.push('Dein Puls bestätigt nicht, dass du bis zur Ausbelastung gefahren bist: Er blieb unter 95 % deiner maximalen Herzfrequenz oder stieg zum Schluss nicht mehr an. Der FTP ist deshalb eher zu niedrig geschätzt.'); return out(false, .6); }
+    if (a.rmpH == null) msgs.push('Ohne Pulsdaten ist die Ausbelastung nicht prüfbar.');
+    return out(false, 1);
+  }
   if (am < need + 5) { msgs.push(`Geplant war ein Fitness-Check mit ${need} Minuten am Stück. Die Fahrt dauerte nur ${mm(am)}, ein vollständiger Test passt da nicht hinein.`); return out(true, .2); }
   if (hasP && !np && a.c20 != null) {
     if (a.c20 > 15) { msgs.push(`Geplant war ein Fitness-Check mit 20 Minuten am Stück so hart wie möglich. In deiner Fahrt gibt es keinen durchgehenden 20-Minuten-Abschnitt: Im stärksten 20-Minuten-Fenster lagen ${a.c20} % der Zeit deutlich unter dem Schnitt.${ivTxt}`); msgs.push('Als Fitness-Check zählt die Fahrt deshalb nicht. Der beste 20-Minuten-Wert enthält Pausen und würde deinen FTP zu niedrig schätzen. Hol den Test an einem anderen Tag nach.'); return out(true, .2); }
@@ -91,12 +102,14 @@ function findIv(v, W, N, gap, brk){
   return res.sort((a, b) => a.s - b.s);
 }
 function exeEval(x, a, w, ftp, hr){
-  const pm = x.m || 1, am = Math.round(a.sec / 60), dr = am / pm, steady = ['base', 'long', 'rec', 'com'].includes(x.t);
+  const pm = x.m || 1, am = Math.round(a.sec / 60), steady = ['base', 'long', 'rec', 'com'].includes(x.t);
   const nP = w ? w.filter(q => q != null).length : 0, hasP = ftp > 0 && w && w.length > 120 && nP > .5 * w.length, v = hasP ? w.map(q => q || 0) : null;
+  /* Rampentest: dauert kürzer als der geplante 20-Min-Test, die Dauer gilt deshalb als passend */
+  const rmpT = x.t === 'test' && exeRampOk(a, hasP), dr = rmpT ? Math.max(1, am / pm) : am / pm;
   const msgs = [], acts = []; let sInt = null, verdict = 'ok', iv = null, ftpEst = null, hc = null, mis = false; const hs = hr ? hrStat(hr) : null, hrMax = S.p && S.p.hrMax > 0 ? S.p.hrMax : 0;
   const f = hasP ? exeFeat(x, v, ftp, a) : {};
   const sDur = dr >= .9 && dr <= 1.3 ? 1 : dr >= .75 ? .8 : dr > 1.3 ? (steady ? .9 : .8) : dr >= .5 ? .5 : .2;
-  msgs.push(dr < .75 ? `Mit ${mm(am)} statt ${mm(pm)} war die Fahrt deutlich kürzer als geplant.` : dr < .9 ? `Mit ${mm(am)} statt ${mm(pm)} war die Fahrt etwas kürzer als geplant.` : dr > 1.3 ? `Mit ${mm(am)} statt ${mm(pm)} warst du deutlich länger unterwegs als geplant.` : `Die Dauer passt (${mm(am)} von geplanten ${mm(pm)}).`);
+  msgs.push(rmpT && am / pm < 1 ? `Für einen Rampentest passt die Dauer (${mm(am)}).` : dr < .75 ? `Mit ${mm(am)} statt ${mm(pm)} war die Fahrt deutlich kürzer als geplant.` : dr < .9 ? `Mit ${mm(am)} statt ${mm(pm)} war die Fahrt etwas kürzer als geplant.` : dr > 1.3 ? `Mit ${mm(am)} statt ${mm(pm)} warst du deutlich länger unterwegs als geplant.` : `Die Dauer passt (${mm(am)} von geplanten ${mm(pm)}).`);
   if (hasP && x.iv && x.iv.work >= .5 && x.t !== 'test') {
     const q = x.iv, N = (q.sets || 1) * q.reps, W = Math.round(q.work * 60), found = findIv(v, W, N, Math.round(Math.min(q.rest * 60, W) * .5), a.brk);
     iv = found.map(f => { const pct = f.p / ftp * 100; return {w:Math.round(f.p), pct:Math.round(pct), st:pct < q.lo * .85 ? 'miss' : pct < q.lo * .97 ? 'under' : pct > q.hi * 1.03 ? 'over' : 'in', s:f.s, d:W}; });
@@ -130,11 +143,11 @@ function exeEval(x, a, w, ftp, hr){
   else if (!hasP && hs && x.iv) msgs.push(`Ohne Leistungsdaten lassen sich Intervalle nur grob beurteilen. Dein Puls erreichte maximal ${hs.max}${hrMax ? ` (${Math.round(hs.max / hrMax * 100)} % deiner maximalen Herzfrequenz)` : ''}.`);
   else if (!hasP && x.iv && !hs) { verdict = 'nodata'; msgs.push('Die Datei enthält weder Leistungs- noch Pulsdaten. Ob du die Intervalle gefahren hast, lässt sich daraus nicht erkennen, deshalb vergibt die App keine Punkte. Mit Pulsgurt, Powermeter oder smartem Rollentrainer gibt es eine Auswertung.'); }
   else if (!hasP) msgs.push('Die Datei enthält keine Leistungsdaten. Deshalb bewertet die App nur die Dauer. Mit Powermeter oder smartem Rollentrainer gibt es eine genaue Auswertung der Intervalle.');
-  const ah = {dec:a.dec, hrW:a.hrW, tAvg:a.tAvg, c20:a.c20, c30h:a.c30h, hb:a.hb};
+  const ah = {dec:a.dec, hrW:a.hrW, tAvg:a.tAvg, c20:a.c20, c30h:a.c30h, hb:a.hb, rmp:a.rmp, rmpH:a.rmpH};
   const hrk = hasP ? null : exeHrKurz(x, a, hs, hc, hasP, steady);
   const score = verdict === 'nodata' ? null : Math.min(verdict === 'wrong' ? 35 : mis ? 40 : 100, dr < .5 ? 45 : dr < .75 ? 60 : 100, Math.round(100 * (sInt == null ? sDur : .35 * sDur + .65 * sInt)));
   const grade = verdict === 'nodata' ? 'Nicht bewertbar' : verdict === 'wrong' || mis ? 'Anderes Training als geplant' : score >= 85 ? 'Sehr gut umgesetzt' : score >= 70 ? 'Gut umgesetzt' : score >= 50 ? 'Teilweise umgesetzt' : 'Deutlich anders als geplant';
-  const res = {f, ivT:hasP && x.iv && x.iv.lo ? {lo:x.iv.lo, hi:x.iv.hi} : null, n:a.n, day:a.day, km:a.km, sec:a.sec, tss:a.tss, np:a.np, hasP, dr, iv, score, grade, verdict, msgs, acts, plan:x.n, pm, at:Date.now(), ftpEst, hr, hrAvg:hs ? hs.avg : 0, hrNeed:!hasP && steady && !!hs && !hrCeil(x, a), ah, hrk, hrc:hc ? {flag:hc.flag, ceil:hc.ceil, dec:a.dec != null ? a.dec : null} : null, a:{n:a.n, day:a.day, km:a.km, sec:a.sec, tss:a.tss, np:a.np, m20:a.m20, tAvg:a.tAvg}, rid:a.id, x:{t:x.t, n:x.n, m:x.m, lo:x.lo, hi:x.hi, iv:x.iv || null}};
+  const res = {f, ivT:hasP && x.iv && x.iv.lo ? {lo:x.iv.lo, hi:x.iv.hi} : null, n:a.n, day:a.day, km:a.km, sec:a.sec, tss:a.tss, np:a.np, hasP, dr, iv, score, grade, verdict, msgs, acts, plan:x.n, pm, at:Date.now(), ftpEst, hr, hrAvg:hs ? hs.avg : 0, hrNeed:!hasP && steady && !!hs && !hrCeil(x, a), ah, rmpT:rmpT ? 1 : 0, hrk, hrc:hc ? {flag:hc.flag, ceil:hc.ceil, dec:a.dec != null ? a.dec : null} : null, a:{n:a.n, day:a.day, km:a.km, sec:a.sec, tss:a.tss, np:a.np, m20:a.m20, tAvg:a.tAvg}, rid:a.id, x:{t:x.t, n:x.n, m:x.m, lo:x.lo, hi:x.hi, iv:x.iv || null}};
   if (hasP) exeHrApply(res, a);
   return res;
 }
@@ -394,11 +407,11 @@ function exeRows(e, w, i){
     const arr = exePArr(w, i); (x.parts || arr).forEach((q, p) => { const pe = arr[p], lbl = (pe && pe.lbl) || (q && q.lbl) || (p ? 'Rückweg' : 'Hinweg');
       r.push(pe ? [pe.score >= 85 ? 'ok' : pe.score >= 50 ? 'mid' : 'warn', lbl, `${pe.score}/100`] : ['info', lbl, 'noch nicht hochgeladen']); });
   } else {
-    const am = Math.round(e.sec / 60); r.push([e.dr >= .9 && e.dr <= 1.3 ? 'ok' : e.dr >= .75 ? 'mid' : 'warn', 'Dauer', `${mm(am)} von ${mm(e.pm)}`]);
+    const am = Math.round(e.sec / 60); r.push([e.dr >= .9 && e.dr <= 1.3 ? 'ok' : e.dr >= .75 ? 'mid' : 'warn', 'Dauer', e.rmpT ? `${mm(am)}, Rampentest` : `${mm(am)} von ${mm(e.pm)}`]);
     if (e.iv && e.iv.length) { const n = e.iv.filter(q => q.st === 'in').length; r.push([e.verdict === 'ok' ? (n === e.iv.length ? 'ok' : 'mid') : 'warn', 'Intervalle', `${n} von ${e.iv.length} im Ziel${e.verdict === 'over' ? ' · zu hart' : e.verdict === 'under' ? ' · zu schwach' : ''}`]); }
     else if (e.hasP && steady && e.np && ftp) r.push([e.verdict === 'ok' ? 'ok' : 'warn', 'Leistung', `${e.np} W · ${Math.round(e.np / ftp * 100)} % FTP${e.verdict === 'over' ? ' · zu hoch' : ''}`]);
     else if (!e.hasP && x.t !== 'race' && x.t !== 'test') r.push(['info', 'Leistung', 'keine Leistungsdaten']);
-    if (x.t === 'test') { const hb = hbList(A); r.push(e.verdict === 'wrong' ? ['warn', 'Test am Stück', hb.length >= 2 ? `nein, ${hb.length} Intervalle erkannt` : 'nein, mit Pausen'] : (A.c20 != null || A.c30h != null) ? ['ok', 'Test am Stück', 'ja'] : ['info', 'Test am Stück', 'nicht prüfbar']); }
+    if (x.t === 'test') { const hb = hbList(A); r.push(e.verdict === 'wrong' ? ['warn', 'Test am Stück', hb.length >= 2 ? `nein, ${hb.length} Intervalle erkannt` : 'nein, mit Pausen'] : e.rmpT ? [A.rmpH === 0 ? 'mid' : 'ok', 'Testart', A.rmpH === 0 ? 'Rampentest, Ausbelastung unsicher' : 'Rampentest'] : (A.c20 != null || A.c30h != null) ? ['ok', 'Test am Stück', 'ja'] : ['info', 'Test am Stück', 'nicht prüfbar']); }
   }
   const k = e.hrk, c = e.hrc;
   if (k) { let v;
@@ -419,7 +432,7 @@ function exeBody(e, w, i, modal, part){
   const ivs = e.iv ? `<div class="mt-3"><p class="text-xs font-semibold" style="color:var(--mute)">Deine Intervalle (Ø Watt)</p><div class="mt-1.5 flex flex-wrap gap-1.5">${e.iv.map((f, k) => `<span class="px-2 py-1 text-xs font-semibold" style="background:${esc(ST[f.st][2])};color:${esc(ST[f.st][1])};border:1px solid ${esc(ST[f.st][1])}33">${k + 1}: ${f.w ? f.w + ' W' : '–'} ${ST[f.st][0]}</span>`).join('')}</div></div>` : '';
   return `<div class="flex items-center gap-3"><div class="flex shrink-0 items-center justify-center" style="width:58px;height:58px;border-radius:50%;border:4px solid ${esc(col)};color:${esc(col)}"><span class="hd text-xl font-semibold">${e.score == null ? '–' : e.score}</span></div>
     <div class="min-w-0 ${esc(modal ? 'text-left' : '')}"><p class="hd text-xl font-semibold" style="color:${esc(col)}">${e.grade}</p><p class="text-xs" style="color:var(--mute)"><span data-noi18n>${esc(e.n)}</span> · ${e.hrAvg ? 'Ø ' + e.hrAvg + ' bpm · ' : ''}${e.km > 0 ? e.km.toLocaleString(lang() === 'en' ? 'en-GB' : 'de-DE') + ' km · ' : ''}${mm(Math.round(e.sec / 60))} · TSS ${e.tss}</p></div></div>
-    ${(() => { const m = e.grade === 'Anderes Training als geplant' ? e.msgs.find(z => z.startsWith('Geplant war') || z.startsWith('In der Fahrt steckt kein')) : e.verdict === 'nodata' ? e.msgs.find(z => z.startsWith('Die Datei enthält weder')) : null; return m ? `<p class="mt-3 p-2.5 text-sm ${esc(modal ? 'text-left' : '')}" style="border:1px solid var(--line);border-left:3px solid ${esc(e.verdict === 'nodata' ? 'var(--mute)' : '#c0392b')}">${esc(m)}</p>` : ''; })()}
+    ${(() => { const m = e.grade === 'Anderes Training als geplant' ? e.msgs.find(z => z.startsWith('Geplant war') || z.startsWith('In der Fahrt steckt kein')) : e.verdict === 'nodata' ? e.msgs.find(z => z.startsWith('Die Datei enthält weder')) : e.rmpT ? e.msgs.find(z => z.startsWith('Als Rampentest erkannt')) : null; return m ? `<p class="mt-3 p-2.5 text-sm ${esc(modal ? 'text-left' : '')}" style="border:1px solid var(--line);border-left:3px solid ${esc(e.verdict === 'nodata' ? 'var(--mute)' : e.rmpT && e.grade !== 'Anderes Training als geplant' ? 'var(--ok)' : '#c0392b')}">${esc(m)}</p>` : ''; })()}
     ${typeof vzPrBadge === 'function' ? vzPrBadge(e) : ''}${exeRowsHtml(exeRows(e, w, i), modal)}${ivs}${typeof vzRide === 'function' ? vzRide(e) : ''}${exeFbHtml(exeFbOf(e, w, i), modal)}
     <details class="mt-3 text-sm ${esc(modal ? 'text-left' : '')}"><summary class="cursor-pointer text-sm font-semibold" style="color:var(--teal)">Details zur Bewertung</summary><ul class="mt-2 space-y-1.5" style="list-style:disc;padding-left:1.1rem">${[...e.msgs, ...(e.hm || [])].map(m => `<li>${esc(m)}</li>`).join('')}</ul>${e.hrc ? exeHrInfo(modal) : ''}</details>
     ${e.hrNeed && !hrCeil(e.x || {}, e.a || {}) ? `<div class="mt-3 flex flex-wrap items-end gap-2 ${esc(modal ? 'text-left' : '')}"><label class="block"><span class="mb-1 block text-xs" style="color:var(--mute)">Maximale Herzfrequenz</span><input type="number" inputmode="numeric" class="inp !w-28 !py-2" placeholder="185"></label><button class="ghost !py-2 text-sm" onclick="exeHr(${ja(w)}, ${ja(i)}, this)">Puls auswerten</button></div>` : ''}

@@ -81,6 +81,9 @@ function mfCand(ids, gid){
       np:Math.round(npG), IF:Math.round(IF * 100) / 100, est:rs.some(r => r.est), hrA, hrW:mfHistAdd(rs.map(r => r.hrW)), hb:rs.map(r => r.hb).filter(Boolean).join(','), brk, grp:ids.slice(),
       tAvg:rs.some(r => r.tAvg != null) ? Math.round(rs.reduce((q, r) => q + (r.tAvg || 0) * r.sec, 0) / sec) : undefined, in:rs.every(r => r.in) ? 1 : undefined, src:a0.src};
     ['m1', 'm5', 'm20', 'm60'].forEach(k => { const v = Math.max(0, ...rs.map(r => r[k] || 0)); if (v) a[k] = v; });
+    /* Rampentest aus einer der Fahrten mitnehmen, außer eine Fahrt enthält einen sauberen 20-Min-Block (der hat Vorrang) */
+    const rr = rs.filter(r => r.rmp > 0).sort((p, q) => q.rmp - p.rmp)[0];
+    if (rr && !rs.some(r => r.c20 != null && r.c20 <= 15 && r.sec >= 1500 && r.m20 >= rr.rmp * .85)) { a.rmp = rr.rmp; if (rr.rmpH != null) a.rmpH = rr.rmpH; }
   }
   const Pn = okP && P.length ? P : null, Hn = okH && H.length ? H : null;
   return {id:one ? a0.id : gid, ids:rs.map(r => r.id), rs, st, P:Pn, H:Hn, brk:one ? [] : brk, a, hist:mfHist(Hn) || (one ? a0.hrW || null : a.hrW), approx:st.some(s => s && s.approx)};

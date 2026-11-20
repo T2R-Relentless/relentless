@@ -7142,5 +7142,21 @@
 "Die Animation zeigt den Bewegungsablauf vereinfacht.": "The animation shows the movement in simplified form.",
 "{0}/{1} Hüftwechsel: Bewegungsablauf als Animation": "{0}/{1} hip switch: movement as animation",
 "Open Book: Bewegungsablauf als Animation": "Open book: movement as animation",
-"Thread the Needle: Bewegungsablauf als Animation": "Thread the needle: movement as animation"
+"Thread the Needle: Bewegungsablauf als Animation": "Thread the needle: movement as animation",
+"Als Rampentest erkannt: beste Minute {0} W. Daraus ergibt sich ein FTP von etwa {1} W (Schätzung). Trag beim Fitness-Check unter Rampentest die beste Minute ein, dann wertet die App sie aus.": "Detected as a ramp test: best minute {0} W. This gives an FTP of about {1} W (estimate). Enter the best minute under Ramp test in the fitness check and the app will evaluate it.",
+"Als Rampentest erkannt: beste Minute {0} W.": "Detected as a ramp test: best minute {0} W.",
+"Daraus ergibt sich ein FTP von etwa {0} W (Schätzung).": "This gives an FTP of about {0} W (estimate).",
+"Trag beim Fitness-Check unter Rampentest die beste Minute ein, dann wertet die App sie aus.": "Enter the best minute under Ramp test in the fitness check and the app will evaluate it.",
+"Dein Puls bestätigt nicht, dass du bis zur Ausbelastung gefahren bist: Er blieb unter {0} % deiner maximalen Herzfrequenz oder stieg zum Schluss nicht mehr an. Der FTP ist deshalb eher zu niedrig geschätzt.": "Your heart rate does not confirm that you rode to exhaustion: it stayed below {0}% of your max heart rate or stopped rising at the end. The FTP is therefore more likely underestimated.",
+"Dein Puls bestätigt nicht, dass du bis zur Ausbelastung gefahren bist: Er blieb unter {0} % deiner maximalen Herzfrequenz oder stieg zum Schluss nicht mehr an.": "Your heart rate does not confirm that you rode to exhaustion: it stayed below {0}% of your max heart rate or stopped rising at the end.",
+"Der FTP ist deshalb eher zu niedrig geschätzt.": "The FTP is therefore more likely underestimated.",
+"Ohne Pulsdaten ist die Ausbelastung nicht prüfbar.": "Without heart-rate data, exhaustion can't be checked.",
+"Für einen Rampentest passt die Dauer ({0} Min.).": "The duration fits a ramp test ({0} min).",
+"Für einen Rampentest passt die Dauer ({0} Std.).": "The duration fits a ramp test ({0} h).",
+"{0} Min., Rampentest": "{0} min, ramp test",
+"{0} Std., Rampentest": "{0} h, ramp test",
+"Testart": "Test type",
+"Rampentest, Ausbelastung unsicher": "Ramp test, exhaustion uncertain",
+"Rampe erkannt, beste Minute {0} W.": "Ramp detected, best minute {0} W.",
+"Aus deiner hochgeladenen Fahrt {0} erkannt: beste {1} Min. {2} W, beste Minute {3} W. Rampe erkannt, beste Minute {4} W.": "Detected from your uploaded ride {0}: best {1} min {2} W, best minute {3} W. Ramp detected, best minute {4} W."
 }
