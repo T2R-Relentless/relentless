@@ -3,6 +3,15 @@ Aufruf: Blender -b --python uebungen.py -- <uebung> <ausgabe> [still=<frame>] [p
 Gemeinsame Figur, Kleidung, Linien und Messfunktionen kommen aus basis_teil.py."""
 import os, sys, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Kraftübungen: Bilder dürfen auch mit Namen angegeben werden (still=tief, still=oben …, z. B. aus probe.sh). basis_teil.py
+# kennt nur Bildnummern: Der Name wird hier gemerkt, durch still=1 ersetzt und weiter unten in die Bildnummer der Übung übersetzt.
+KR_BILDNAME = None
+for _kr_i, _kr_a in enumerate(sys.argv):
+    if _kr_a.startswith('still=') and '--' in sys.argv and _kr_i > sys.argv.index('--'):
+        _kr_v = _kr_a[6:]
+        if _kr_v and _kr_v != 'blatt' and not all(_kr_t.isdigit() for _kr_t in _kr_v.split(',')): KR_BILDNAME = _kr_v.split(','); sys.argv[_kr_i] = 'still=1'
+_kr_args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+if _kr_args and _kr_args[0] in ('squat', 'stepup') and not any(_kr_a.startswith('kinn=') for _kr_a in _kr_args): sys.argv.append('kinn=1')   # Blick schräg von vorn: Kinnmitte ohne Linie wie bei pallof
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'basis_teil.py')).read())
 from mathutils import Vector, Matrix
 import bmesh
@@ -217,8 +226,8 @@ if EX == 'pallof':
     _fm = bm.data.attributes['freestyle_face']
     for f in bm.data.polygons:
         if any(i in _fv for i in f.vertices): _fm.data[f.index].value = True
-if EX in ('thread', 'clam') and TRIKOT:
-    # Thread: Die Brust zeigt zur Matte. Clamshell: Der obere Arm verdeckt die Brust. Vom Logo wären nur helle Splitter zu sehen, deshalb ohne Logo
+if EX in ('thread', 'clam', 'squat') and TRIKOT:
+    # Thread: Die Brust zeigt zur Matte. Clamshell: Der obere Arm verdeckt die Brust. Goblet Squat: Hantel und Hände verdecken sie. Vom Logo wären nur helle Splitter zu sehen, deshalb ohne Logo
     for d_ in bm.data.uv_layers['logo'].data: d_.uv = (-1.0, -1.0)
 if EX == 'thread':
     # Kamera steht auf der rechten Seite der Person: abgedunkelt wird hier die linke (abgewandte) Seite
@@ -320,6 +329,7 @@ def thread(ph):
             twist('LeftHand', 42 * wu)
             if pn().y > -.1: twist('LeftHand', -84 * wu)
 EXS['thread'] = dict(pose=thread, keys=((1, 0), (14, 0), (62, 1), (78, 1), (126, 0), (138, 0)), perframe=True, tight=True, zoom=True, cam=V(-1, -.55, .4), zone=None)   # seitliche Sicht: Rumpf im Profil statt als breite Fläche
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kraft_teil.py')).read())   # Kraftübungen: Geräte, Kurzhantel, Stand mit festen Füßen
 
 # Schuhe hier wieder mit Silhouette (stehende und kniende Übungen), ferner Schuh etwas dunkler als die Matte
 for c in list(shoes.users_collection): c.objects.unlink(shoes)
@@ -364,9 +374,17 @@ def lowg(groups, wmin=.3):
 # Blattbilder je Übung: Start, Mitte, Ende (für das Standbild-Blatt, das vor dem Video abgenommen wird)
 for _k, _b in (('clam', (1, 24, 36)), ('pallof', (1, 24, 36)), ('hip9090', (1, 28, 46)), ('openbook', (1, 30, 48)), ('thread', (1, 38, 62))): EXS[_k]['blatt'] = _b
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mess_teil.py')).read())           # schnelle Messung, Gelenkgrenzen, Sichtbarkeit
+GRENZEN.update(EXS[EX].get('grenzen', {}) if EX in EXS else {})   # Kraftübungen: eigene Grenzen laut Fachvorgabe (z. B. Sprunggelenk beim Goblet Squat)
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'haltungstest_teil.py')).read())   # Testhaltungen der Figur (t_…)
 # ------------------------------------------------ Ablauf ------------------------------------------------
 cfg = EXS[EX]
+if KR_BILDNAME:   # Bild als Name (still=tief): in die Bildnummer der Übung übersetzen
+    _kr_nm = cfg.get('bilder') or {'start': 0, 'mitte': .5, 'ende': 1}; _kr_K = cfg['keys']; STILLS = []
+    _kr_f1 = next((f for f, p_ in _kr_K if p_ == 1), _kr_K[-1][0]); _kr_f0 = max((f for f, p_ in _kr_K if p_ == 0 and f < _kr_f1), default=1)
+    for _kr_bn in KR_BILDNAME:
+        if _kr_bn not in _kr_nm: raise SystemExit(f'Bildname {_kr_bn} unbekannt für {EX}: {sorted(_kr_nm)}')
+        _kr_p = _kr_nm[_kr_bn]; STILLS.append(_kr_f0 if _kr_p == 0 else _kr_f1 if _kr_p == 1 else round(_kr_f0 + (_kr_f1 - _kr_f0) * _kr_p))
+    STILL = STILLS[0]; print('BILDNAME', KR_BILDNAME, '→', STILLS)
 if STILL == 0: STILLS = list(cfg.get('blatt') or sorted({f for f, _ in cfg['keys']}))[:6]; STILL = STILLS[0]
 ANSICHTEN = [float(x) for x in next((a.split('=')[1] for a in args if a.startswith('ansichten=')), '').split(',') if x]   # weitere Blickrichtungen: Drehung um die Hochachse in Grad
 NAH = any(a == 'nah=1' for a in args); STREIFEN = int(next((a.split('=')[1] for a in args if a.startswith('streifen=')), 0)); SCHNELL = any(a == 'schnell=1' for a in args)
@@ -375,11 +393,21 @@ if any(a == 'schuhlinie=1' for a in args) and shoes:
     sc.collection.objects.link(shoes)
 _cv = next((a.split('=')[1] for a in args if a.startswith('cam=')), None)        # Kamerarichtung zum Ausprobieren: cam=x,y,z
 if _cv: cfg['cam'] = V(*[float(x) for x in _cv.split(',')])
+def kr_wurzel(fr):
+    # Kraftübungen: Lage und Drehung des Skeletts ändern sich je Bild (Becken sinkt) und werden mitgespeichert
+    if cfg.get('wurzel'): rig.keyframe_insert('location', frame=fr); rig.keyframe_insert('rotation_euler', frame=fr)
 def pose(ph):
     cfg['pose'](ph); relax_hands()
     if EX == 'pallof': grip('Left'); grip('Right')
+    for _kr_gs, _kr_gc in cfg.get('griff', ()): kr_griff(_kr_gs, _kr_gc)
+    if cfg.get('griff_kontakt'): cfg['griff_kontakt']()
     bpy.context.view_layer.update()
 def ground():
+    if KR_GERAET.get(EX):   # mit Geräten: auf die tragende Fläche darunter setzen (Matte, Kasten oder Bank)
+        for _ in range(4):
+            dz = kr_abstand(); rig.location.z -= dz; bpy.context.view_layer.update()
+            if abs(dz) < .001: break
+        return
     rig.location.z = 0; bpy.context.view_layer.update(); m = low(); rig.location.z = -m; bpy.context.view_layer.update()
 if EX == 'thread':
     q = P['thread']
@@ -474,10 +502,10 @@ if cfg.get('perframe'):
         return K[-1][1]
     P.setdefault(EX, {})['check'] = True
     # schnell=1: nur die gezeigten Bilder und die Eckbilder stellen (Bildausschnitt dann nur ungefähr wie im Video)
-    for fr in (sorted(set(STILLS) | {f for f, _ in K}) if SCHNELL and STILLS else range(1, K[-1][0] + 1)): pose(ph_at(fr)); key(fr)
+    for fr in (sorted(set(STILLS) | {f for f, _ in K}) if SCHNELL and STILLS else range(1, K[-1][0] + 1)): pose(ph_at(fr)); key(fr); kr_wurzel(fr)
     P[EX]['check'] = False
 else:
-    for fr, ph in cfg['keys']: pose(ph); key(fr)
+    for fr, ph in cfg['keys']: pose(ph); key(fr); kr_wurzel(fr)
 sc.frame_start, sc.frame_end = 1, cfg['keys'][-1][0] - 1; sc.render.fps = 24
 # Prüfung aller Bilder: tiefster Punkt; Punkte für Ausschnitt sammeln
 pts, worst = [], 9
@@ -510,12 +538,19 @@ if EX == 'pallof':
         v = hc - AX; band.location = (hc + AX) / 2; band.rotation_euler = v.to_track_quat('Z', 'Y').to_euler(); band.scale = (1, 1, v.length)
         for ob in (handle, band): ob.keyframe_insert('location', frame=fr); ob.keyframe_insert('rotation_euler', frame=fr); ob.keyframe_insert('scale', frame=fr)
     pts += [Vector((AX.x - .2, AX.y, 0)), Vector((AX.x, AX.y, 1.75))]
+if KR_GERAET.get(EX) or cfg.get('hanteln'):
+    # Geräte und Kurzhanteln (vor dem Festlegen der Strichstärke, sonst fehlt ihre Kontur)
+    pts += kr_bauen(); kr_hanteln_anlegen()
 # Matte unter der Figur (Oberkante z = 0, 3,5 cm dick)
 xs = [p.x for p in pts]; ys = [p.y for p in pts]
 floor = bpy.data.objects.new('mat', bpy.data.meshes.new('mat')); sc.collection.objects.link(floor)
 g = bmesh.new(); bmesh.ops.create_cube(g, size=1); g.to_mesh(floor.data); g.free()
 floor.scale = (max(xs) - min(xs) + .24, max(ys) - min(ys) + .3, .035); floor.location = ((max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, -.0175)
 setmat(floor, toon('mat', srgb('#cfdde2'), srgb('#b9cbd1')))
+for _kr_g in KR_GERAET.get(EX, ()):
+    if _kr_g['art'] == 'wand':   # Matte endet an der Wandfläche (die Person steht auf der +Y-Seite der Wand)
+        _kr_y0 = _kr_g['b'][3]; _kr_y1 = floor.location.y + floor.scale.y / 2
+        if floor.location.y - floor.scale.y / 2 < _kr_y0: floor.scale.y = _kr_y1 - _kr_y0; floor.location.y = (_kr_y0 + _kr_y1) / 2
 # Kamera: orthografisch aus Richtung cfg['cam'], Ausschnitt eng um Figur und Matte
 d = cfg['cam']; cen = sum(pts, Vector()) / len(pts)
 cam.rotation_euler = (-d).to_track_quat('-Z', 'Y').to_euler(); cam.location = cen + d * 8; bpy.context.view_layer.update()
@@ -552,6 +587,7 @@ for m_ in bpy.data.materials:
 def _bild(pfad, kamera=None, rx=None, ry=None):
     r0 = (sc.render.resolution_x, sc.render.resolution_y, sc.camera)
     if kamera: sc.camera = kamera
+    if KR_OBJ: kr_wand_sicht(sc.camera)
     if rx: sc.render.resolution_x, sc.render.resolution_y = rx, ry
     sc.render.filepath = pfad; bpy.ops.render.render(write_still=True); sc.render.resolution_x, sc.render.resolution_y, sc.camera = r0
 def _figurpunkte():

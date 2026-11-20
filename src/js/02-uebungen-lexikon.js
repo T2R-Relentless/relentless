@@ -31,8 +31,8 @@ const EXP = {
        () => { const f = exStand({ax:104, th:78, sh:-12, tr:14, arm:[[6, 15], [10, 28]]}), r = exIK(f.H, [34, 112], 34, 34, 'low'); return exBox(12, 112, 36, 46) + `<g class="ln">${exLimb(f.H, r.K, r.T)}</g>` + f.svg + exArrow(150, 60, 150, 100); }],
   thrust:[() => exBox(4, 118, 40, 40) + exLines([[[22, 114], [64, 112]], [[64, 112], [100, 124]], [[100, 124], [100, 158]]], [8, 108]) + exPlate(66, 103, 9) + exArrow(150, 130, 150, 94),
           () => exBox(4, 118, 40, 40) + exLines([[[22, 114], [58, 146]], [[58, 146], [92, 126]], [[92, 126], [98, 158]]], [8, 108]) + exPlate(60, 136, 9)],
-  calf:[() => exBox(76, 144, 84, 14) + exStand({ax:76, ay:132, th:0, sh:0, tr:0, nofoot:1, arm:[[0, 17], [0, 34]]}).svg + `<g class="ln"><polyline points="76,132 90,144" fill="none"/></g>` + exArrow(150, 124, 150, 90),
-        () => exBox(76, 144, 84, 14) + exStand({ax:76, ay:146, th:0, sh:0, tr:0, nofoot:1, arm:[[0, 17], [0, 34]]}).svg + `<g class="ln"><polyline points="76,146 90,144" fill="none"/></g>`],
+  calf:[() => exBox(76, 144, 84, 14) + exStand({ax:76, ay:146, th:0, sh:0, tr:0, nofoot:1, arm:[[0, 17], [0, 34]]}).svg + `<g class="ln"><polyline points="76,146 90,144" fill="none"/></g>`,
+        () => exBox(76, 144, 84, 14) + exStand({ax:76, ay:132, th:0, sh:0, tr:0, nofoot:1, arm:[[0, 17], [0, 34]]}).svg + `<g class="ln"><polyline points="76,132 90,144" fill="none"/></g>` + exArrow(150, 124, 150, 90)],
   stepup:[() => { const f = exStand({ax:100, ay:136, th:72, sh:-4, tr:12, arm:[[0, 17], [0, 34]]}), r = exIK(f.H, [56, 158], 34, 34, 'low'); return exBox(84, 136, 56, 22) + `<g class="ln">${exLimb(f.H, r.K, r.T)}</g>` + f.svg; },
           () => { const f = exStand({ax:100, ay:136, th:0, sh:0, tr:0, arm:[[0, 17], [0, 34]]}); return exBox(84, 136, 56, 22) + `<g class="ln"><polyline points="${f.H[0]},${f.H[1]} ${f.H[0] + 22},${f.H[1] + 28} ${f.H[0] + 14},${f.H[1] + 60}" fill="none"/></g>` + f.svg + exArrow(150, 110, 150, 70); }],
   slrdl:[() => { const f = exStand({ax:80, th:6, sh:-2, tr:0, arm:[[0, 17], [0, 34]]}); const rk = [f.H[0] - 6, f.H[1] + 33], rf = [rk[0] - 33, rk[1] + 12]; return f.svg + `<g class="ln">${exLimb(f.H, rk, rf)}</g>` + exPlate(f.S[0], f.S[1] + 34, 6); },
@@ -43,8 +43,9 @@ const EXP = {
   pallof:[() => exBPallof(0), () => exBPallof(1)],
   sidep:[() => exLines([[[40, 150], [40, 128]], [[40, 128], [90, 140]], [[90, 140], [140, 152]]], [24, 112], `<g class="ln"><polyline points="40,152 66,152" fill="none"/><polyline points="40,128 40,96" fill="none" class="ln2"/></g>`),
          () => exLines([[[40, 150], [40, 128]], [[40, 128], [90, 150]], [[90, 150], [140, 152]]], [24, 112], `<g class="ln"><polyline points="40,152 66,152" fill="none"/><polyline points="40,128 40,96" fill="none" class="ln2"/></g>`)],
-  plank:[() => exLines([[[30, 152], [30, 130]], [[30, 130], [88, 141]], [[88, 141], [142, 152]]], [20, 122], `<g class="ln"><polyline points="30,152 60,152" fill="none"/></g>`),
-         () => exLines([[[30, 152], [30, 130]], [[30, 130], [88, 152]], [[88, 152], [142, 152]]], [20, 122], `<g class="ln"><polyline points="30,152 60,152" fill="none"/></g>`)]
+  /* plank: Bild 0 Bauchlage auf den Unterarmen (Hüfte und Beine am Boden), Bild 1 gerader Stütz */
+  plank:[() => exLines([[[30, 152], [30, 130]], [[30, 130], [88, 150]], [[88, 150], [142, 152]]], [20, 122], `<g class="ln"><polyline points="30,152 60,152" fill="none"/></g>`),
+         () => exLines([[[30, 152], [30, 130]], [[30, 130], [88, 141]], [[88, 141], [142, 152]]], [20, 122], `<g class="ln"><polyline points="30,152 60,152" fill="none"/></g>`)]
 };
 const EXI = {
   squat:{t:'Kniebeuge oder Beinpresse', cap:['Start: aufrecht, Füße schulterbreit', 'Tiefste Position: Oberschenkel waagerecht'], m:'Oberschenkelvorderseite, Gesäß, Rumpf',
@@ -63,7 +64,7 @@ const EXI = {
     s:['Obere Schulterblätter liegen an einer Bank oder einem Sofa, Füße stehen hüftbreit, Knie gebeugt.', 'Gewicht (Hantel, Rucksack) liegt auf der Hüfte.', 'Drücke die Hüfte nach oben, bis Schultern, Hüfte und Knie eine Linie bilden. Oben das Gesäß 1 Sekunde fest anspannen.', 'Kontrolliert wieder absenken.'],
     f:['Hohlkreuz oben. Rippen unten halten, Kinn leicht zur Brust.', 'Die Füße stehen zu weit weg (Zug hinten am Oberschenkel) oder zu nah (Knie). Die Unterschenkel stehen oben etwa senkrecht.', 'Schwung statt Spannung. Langsamer, mit Pause oben.'],
     v:'', r:'Das Gesäß ist der größte Kraftgeber im Tritt, besonders beim Antritt und im Wiegetritt.'},
-  calf:{t:'Wadenheben', cap:['Oben: auf den Zehen', 'Unten: Ferse tief, Wade gedehnt'], m:'Waden (Gastrocnemius und Soleus)',
+  calf:{t:'Wadenheben', cap:['Unten: Ferse tief, Wade gedehnt', 'Oben: auf den Zehen'], m:'Waden (Gastrocnemius und Soleus)',
     s:['Ballen eines Fußes (oder beider) stehen auf einer Stufe, die Ferse hängt frei.', 'Halte dich zur Sicherheit an einer Wand oder einem Geländer fest.', 'Hebe die Ferse so hoch wie möglich, oben kurz halten.', 'Langsam bis unter Stufenhöhe absenken, die Wade dehnt sich. Bei einbeiniger Variante Seite wechseln.'],
     f:['Zu schnell und mit Schwung. 2 Sekunden hoch, 3 Sekunden runter.', 'Nicht tief genug runter. Der volle Bewegungsradius bringt die Wirkung.', 'Knie knicken ein. Die Beine bleiben fast gestreckt, ein wenig Beugung für den Soleus ist erlaubt.'],
     v:'Einbeinig: Nur ein Fuß auf der Stufe, der andere Fuß ist angehoben. Zusatzlast in der Hand, sobald 12 saubere Wiederholungen gelingen.', r:'Starke Waden stabilisieren den Fuß im Pedal und schonen die Achillessehne bei langen Distanzen.'},
@@ -89,7 +90,7 @@ const EXI = {
     s:['Seitlich auf den Unterarm legen, der Ellbogen steht genau unter der Schulter.', 'Hebe die Hüfte, bis Kopf, Rumpf und Beine eine gerade Linie bilden. Füße übereinander oder leicht versetzt.', 'Halte die Position 20 bis 40 Sekunden, ruhig atmen.', 'Seite wechseln. Steigerung durch längere Zeit, nicht durch Wackeln.'],
     f:['Die Hüfte sackt ab. Schiebe sie aktiv nach oben.', 'Der Körper kippt nach vorn oder hinten. Brust bleibt offen, Becken zeigt nach vorn.', 'Schulter hochgezogen. Wegdrücken vom Boden.'],
     v:'Einfacher: Knie am Boden lassen. Schwerer: oberes Bein anheben.', r:'Stärkt die seitliche Rumpfkette, die das Becken auf dem Sattel ruhig hält.'},
-  plank:{t:'Plank (Unterarmstütz)', cap:['Richtig: gerade Linie von Kopf bis Ferse', 'Falsch: Hüfte hängt durch'], m:'Gesamter Rumpf, Schultern',
+  plank:{t:'Plank (Unterarmstütz)', cap:['Start: auf den Unterarmen am Boden liegen', 'Körper heben: gerade Linie von Kopf bis Ferse'], m:'Gesamter Rumpf, Schultern',
     s:['Unterarme parallel am Boden, Ellbogen unter den Schultern, Füße hüftbreit.', 'Spanne Bauch und Gesäß an, der Körper bildet eine gerade Linie.', 'Blick zum Boden, Nacken lang. Halte 20 bis 45 Sekunden, ruhig atmen.', 'Abbrechen, sobald die Hüfte durchhängt. Dann kurz pausieren und neu starten.'],
     f:['Die Hüfte hängt durch (Hohlkreuz). Becken leicht kippen, Gesäß anspannen.', 'Das Becken ragt hoch. Die Linie muss gerade sein.', 'Atem anhalten. Weiteratmen.'],
     v:'Einfacher: Knie am Boden. Schwerer: abwechselnd ein Bein anheben.', r:'Rumpfausdauer hält die Sitzposition stabil, besonders in langen Rennen mit Aero-Haltung.'}
