@@ -57,8 +57,9 @@ function expAt(p, w){
   const pj = ftpProj({...p, ftp:b0.ftp}, h, Math.max(0, w - b0.w)), tol = b0.ftp * .02;
   return {lo:Math.round(pj.lo - tol), mid:pj.mid, hi:Math.round(pj.hi + tol), base:b0.ftp, from:b0.w};
 }
-let testKind = '20', testMsg = '';
-function setTestKind(k){ testKind = k; render(); }
+let testKind = '20', testMsg = '', testKindOwn = false, testKindAuto = false;
+/* testKindOwn: Testart selbst gewählt, dann bleibt sie, auch wenn eine Fahrt als Rampentest erkannt ist */
+function setTestKind(k){ testKind = k; testKindOwn = true; testKindAuto = false; render(); }
 const testDay = (p, w) => { const pl = w === S.wk && S.plan ? S.plan : genWeek(p, w), i = pl.findIndex(x => x.t === 'test'); return i < 0 ? null : {i, date:addD(p.start, (w - 1) * 7 + i)}; };
 function saveTest(w, i){
   const el = document.getElementById('tv' + w), v = Math.round(Number(el && el.value) || 0); if (v < 50) { testMsg = 'Bitte einen Wattwert eintragen.'; return render(); }
@@ -98,13 +99,16 @@ function testBox(w, i, cur){
   if ((p.res || {})[w]) return testRes(w);
   if (noPwr() || (p.hrRes || {})[w]) return npTestBox(w, i, cur);
   const e = expAt(p, w), day = addD(p.start, (w - 1) * 7 + i), due = cur && day <= iso(0);
-  const auto = allActs().filter(a => a.day === day && (a.m20 || a.m1) && !(a.c20 > 15)).sort((a, b) => (b.m20 || 0) - (a.m20 || 0))[0];
-  const pre = auto ? (testKind === '20' ? auto.m20 : testKind === 'ramp' ? auto.m1 : '') : '';
+  const auto = allActs().filter(a => a.day === day && (a.m20 || a.m1) && (!(a.c20 > 15) || a.rmp)).sort((a, b) => (b.m20 || 0) - (a.m20 || 0))[0];
+  /* Als Rampentest erkannt und kein sauberer 20-Min-Block: Rampentest vorwählen, solange du die Testart nicht selbst gewählt hast */
+  const isRmp = !!(auto && exeRampOk(auto, true));
+  if (!testKindOwn) { if (isRmp) { testKind = 'ramp'; testKindAuto = true; } else if (testKindAuto) { testKind = '20'; testKindAuto = false; } }
+  const pre = auto ? (testKind === '20' ? auto.m20 : testKind === 'ramp' ? (auto.rmp || auto.m1) : '') : '';
   return `<div class="p-3" style="background:#fdf2f8;border:1px solid #e11d74"><p class="font-semibold">Fitness-Check – bist du auf Kurs?</p>
     <p class="mt-1 text-sm">Erwartet für diese Woche: <b>${e.lo} bis ${e.hi} W</b> FTP (aktuell im Plan: ${p.ftp} W). Liegt dein Ergebnis darin oder darüber, bist du auf Kurs.</p>
     ${due ? `<div class="mt-2 flex flex-wrap gap-2">${chip('20-Min-Test', testKind === '20', "setTestKind('20')")}${chip('Rampentest', testKind === 'ramp', "setTestKind('ramp')")}${chip('FTP direkt', testKind === 'ftp', "setTestKind('ftp')")}</div>
       <div class="mt-2 flex items-end gap-2"><label class="flex-1 text-xs" style="color:var(--mute)">${testKind === '20' ? 'Durchschnittsleistung der 20 Minuten' : testKind === 'ramp' ? 'Beste Minute im Rampentest' : 'FTP aus Zwift, Garmin oder Labor'} (W)<input id="tv${esc(w)}" type="number" inputmode="numeric" class="inp mt-1" value="${esc(pre || '')}"></label><button class="btn !w-auto" onclick="saveTest(${ja(w)}, ${ja(i)})">Auswerten</button></div>
-      ${auto ? `<p class="mt-1 text-xs" style="color:var(--ok)">Aus deiner hochgeladenen Fahrt „${esc(auto.n)}“ erkannt: beste 20 Min. ${auto.m20 || '–'} W, beste Minute ${auto.m1 || '–'} W.</p>` : ''}
+      ${auto ? `<p class="mt-1 text-xs" style="color:var(--ok)">Aus deiner hochgeladenen Fahrt „${esc(auto.n)}“ erkannt: beste 20 Min. ${auto.m20 || '–'} W, beste Minute ${auto.m1 || '–'} W.${auto.rmp ? ` Rampe erkannt, beste Minute ${auto.rmp} W.` : ''}</p>` : ''}
       ${testMsg ? `<p class="mt-1 text-sm" style="color:#c0392b">${icWarn()}${esc(testMsg)}</p>` : ''}` : '<p class="mt-2 text-xs" style="color:var(--mute)">Das Ergebnis kannst du am Testtag hier eintragen. Die App rechnet daraus deinen FTP und vergleicht ihn mit dem erwarteten Korridor.</p>'}</div>`;
 }
 function msChart(p){

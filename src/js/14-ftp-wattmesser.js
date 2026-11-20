@@ -176,7 +176,7 @@ function analyze(){
     const sec = as.reduce((q, a) => q + a.sec, 0), ts = as.reduce((q, a) => q + a.tss, 0);
     /* F30: Pendelfahrten zählen zur Belastung, aber nicht zur Planerfüllung; „Einheit nicht gefahren“ bleibt offen */
     const secP = as.filter(a => !mfIsCommute(a.id)).reduce((q, a) => q + a.sec, 0), noneU = !!(S.p.mf && S.p.mf.none && Object.keys(S.p.mf.none).some(k => k === S.wk + '-' + i || k.startsWith(S.wk + '-' + i + '-')));
-    if (i >= 0) { S.actual[i] = {sec, tss:ts, ids:as.map(a => a.id)}; if (pl.m > 0 && !noneU && secP >= pl.m * 60 * .6 && !(pl.parts && as.length < pl.parts.length) && !(v0 => v0.verdict === 'wrong' || (v0.verdict === 'nodata' && pl.t === 'test'))((S.p.exe || {})[S.wk + '-' + i] || {})) { S.done[i] = true; res.done++; } }
+    if (i >= 0) { S.actual[i] = {sec, tss:ts, ids:as.map(a => a.id)}; if (pl.m > 0 && !noneU && (secP >= pl.m * 60 * .6 || (pl.t === 'test' && ((S.p.exe || {})[S.wk + '-' + i] || {}).rmpT)) && !(pl.parts && as.length < pl.parts.length) && !(v0 => v0.verdict === 'wrong' || (v0.verdict === 'nodata' && pl.t === 'test'))((S.p.exe || {})[S.wk + '-' + i] || {})) { S.done[i] = true; res.done++; } }
     const pt = pl && pl.m ? tss(pl) : 0, key = as.map(a => a.id).join('-');
     if (i >= t - 1 && ts >= 100 && ts >= 1.5 * Math.max(pt, 40) && !S.handled.includes(key)) {
       const top = as.reduce((a, b) => b.tss > a.tss ? b : a);

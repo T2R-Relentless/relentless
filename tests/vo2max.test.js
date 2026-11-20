@@ -119,3 +119,91 @@ test('F27: Seite mit Verlauf, Einordnung, Trainer-Hinweis, Englisch, Hinweise', 
   ok(a.$("WN_DATA['194'].length") === 1 && a.$('APP_VERSION') >= 194 && a.$('APP_BUILD') >= '20261117090000');
   a.noErrors();
 });
+
+/* ---------- Rampentest am geplanten Fitness-Check erkennen (rmpDetect, exeRampOk, exeTest, analyze, testBox) ---------- */
+/* Rampe: wu s Einfahren mit 150 W, k Stufen zu 60 s ab 100 W (+20 W), s Sekunden der nächsten Stufe, cd s Ausfahren; hTop null = ohne Puls */
+function rmpRide(wu, k, s, cd, hTop, t0){
+  const H = h => hTop == null ? null : h, parts = [[wu, 150, H(110), H(125)]];
+  for (let j = 0; j < k; j++) parts.push([60, 100 + 20 * j, H(125 + (hTop - 125) * j / k), H(125 + (hTop - 125) * (j + 1) / k)]);
+  if (s) parts.push([s, 100 + 20 * k, H(hTop), H(hTop)]); parts.push([cd, 100, H(150), H(110)]); return v2Ride(parts, t0);
+}
+/* Plan mit Fitness-Check heute; Fahrt einlesen und wie beim Hochladen zur Einheit bewerten */
+async function rmpSetup(d){
+  const a = await boot(); makePlan(a, v2Dat(d)); const i = a.$('todayIdx()'), day = a.$(`dstr(${i})`), t0 = Math.round(Date.parse(day + 'T08:00:00') / 1000);
+  a.$(`S.plan[${i}] = TESTX0(); S.done = {}; save()`); return {a, i, t0};
+}
+const rmpUp = (a, i, r, nm = 'fahrt.fit') => { a.w.__r = r; return a.$(`(() => { const x = summarize(__r, '${nm}'); S.man = [x]; exeStore(${i}, x, streamOf(__r), hrHist(__r)); save(); return {a:x, e:S.p.exe[S.wk + '-' + ${i}]}; })()`); };
+const rmpFtp = v => Math.round(v * .75 / 5) * 5;
+/* testBox in die Seite legen (für das Eingabefeld und saveTest) */
+const rmpBox = (a, i) => a.$(`(() => { const h = testBox(S.wk, ${i}, true); let b = document.getElementById('rmpbx'); if (!b) { b = document.createElement('div'); b.id = 'rmpbx'; document.body.appendChild(b); } b.innerHTML = h; return h; })()`);
+const rmpVal = a => a.$("(() => { const el = document.querySelector('#rmpbx input[id^=tv]'); return el ? el.value : null; })()");
+
+test('Rampentest am Fitness-Check: lange Rampe (15 Min. Einfahren, über 25 Min.) erkannt, Urteil, erledigt, Vorbelegung, Auswerten', async () => {
+  const {a, i, t0} = await rmpSetup();
+  /* 15 Min. Einfahren, Stufen 100 bis 360 W, 30 s bei 380 W, 5 Min. Ausfahren: 34,5 Min., beste Minute 370 W */
+  const {a:x, e} = rmpUp(a, i, rmpRide(900, 14, 30, 300, 186, t0), 'rampe.fit');
+  ok(Math.round(x.sec / 60) > 25, 'Fahrt länger als 25 Min.');
+  near(x.rmp, 370, 3, 'a.rmp ≈ beste Minute'); near(x.rmp, x.m1, 3, 'rmp entspricht der besten Minute'); eq(x.rmpH, 1, 'Puls 186 von 190: Ausbelastung bestätigt');
+  ok(e.verdict !== 'wrong', 'Rampe am Testtag ist kein falsches Training: ' + e.verdict + ' · ' + e.msgs.join(' | ')); eq(e.rmpT, 1, 'als Rampentest bewertet');
+  ok(e.msgs.some(m => m.includes(`Als Rampentest erkannt: beste Minute ${x.rmp} W`) && m.includes(`FTP von etwa ${rmpFtp(x.rmp)} W`)), 'Meldung mit FTP ≈ 0,75 × beste Minute: ' + e.msgs.join(' | '));
+  ok(e.score >= 85, 'Dauer und Test passen: ' + e.score); eq(a.$(`S.done[${i}]`), true, 'Einheit erledigt');
+  a.$('S.done = {}; analyze()'); eq(a.$(`S.done[${i}]`), true, 'auch die Wochenauswertung hakt den Test ab');
+  /* Fitness-Check-Kasten: Rampentest vorgewählt, beste Minute im Feld; Auswerten ergibt FTP 0,75 × beste Minute */
+  const h = rmpBox(a, i); eq(a.$('testKind'), 'ramp', 'Rampentest vorgewählt'); ok(/Beste Minute im Rampentest/.test(h), 'Feld für die beste Minute'); eq(rmpVal(a), String(x.rmp), 'beste Minute vorbelegt');
+  ok(h.includes(`Rampe erkannt, beste Minute ${x.rmp} W.`), 'Hinweis im Kasten');
+  a.w.saveTest(a.$('S.wk'), i); const res = a.$('S.p.res[S.wk]'); eq(res.kind, 'ramp'); eq(res.val, x.rmp); near(res.ftp, rmpFtp(x.rmp), 3, 'FTP aus dem Rampentest');
+  /* Anzeige der Bewertung */
+  a.$(`exeShow = S.wk + '-' + ${i}; render()`); await a.tick(30); const t = a.text(); ok(/Als Rampentest erkannt/.test(t), 'Meldung im Fenster'); ok(/Rampentest/.test(t) && !/Test am Stück\s*nein/.test(t), 'Zeile Testart statt „nicht am Stück“');
+  a.noErrors();
+});
+
+test('Rampentest am Fitness-Check: kurze Rampe (unter 25 Min.) zählt, obwohl kürzer als die 60 geplanten Minuten', async () => {
+  const {a, i, t0} = await rmpSetup();
+  /* 5 Min. Einfahren, Stufen 100 bis 320 W, 30 s bei 340 W, 3 Min. Ausfahren: 20,5 Min., beste Minute 330 W */
+  const {a:x, e} = rmpUp(a, i, rmpRide(300, 12, 30, 180, 186, t0), 'kurz.fit');
+  ok(Math.round(x.sec / 60) < 25 && Math.round(x.sec / 60) >= 15, 'zwischen 15 und 25 Min.: ' + Math.round(x.sec / 60));
+  near(x.rmp, 330, 3, 'a.rmp ≈ beste Minute'); ok(e.verdict !== 'wrong', 'nicht falsch: ' + e.msgs.join(' | ')); eq(e.rmpT, 1);
+  ok(e.msgs.some(m => /Für einen Rampentest passt die Dauer/.test(m)), 'Dauer gilt als passend'); ok(!e.msgs.some(m => /deutlich kürzer als geplant|nur .* ein vollständiger Test passt/.test(m)), 'kein Hinweis auf zu kurz');
+  ok(e.msgs.some(m => m.includes(`FTP von etwa ${rmpFtp(x.rmp)} W`)), 'FTP-Schätzung in der Meldung'); eq(a.$(`S.done[${i}]`), true, 'erledigt');
+  /* Wochenauswertung: 20 Min. sind weniger als 60 % von 60 Min., zählt trotzdem als Rampentest */
+  a.$('S.done = {}; analyze()'); eq(a.$(`S.done[${i}]`), true, 'analyze hakt die kurze Rampe ab');
+  rmpBox(a, i); eq(a.$('testKind'), 'ramp'); eq(rmpVal(a), String(x.rmp), 'beste Minute vorbelegt');
+  /* Eigene Wahl bleibt: 20-Min-Test gewählt, dann kein automatisches Zurückspringen */
+  a.w.setTestKind('20'); rmpBox(a, i); eq(a.$('testKind'), '20', 'selbst gewählte Testart bleibt'); eq(rmpVal(a), String(x.m20 || ''), '20-Min-Wert im Feld');
+  a.noErrors();
+});
+
+test('Rampentest: Puls bestätigt Ausbelastung nicht / keine Pulsdaten / ohne Leistungsmesser', async () => {
+  { const {a, i, t0} = await rmpSetup(); const {a:x, e} = rmpUp(a, i, rmpRide(300, 12, 30, 180, 160, t0));
+    ok(x.rmp > 0, 'Rampe erkannt'); eq(x.rmpH, 0, 'Spitzenpuls 160 von 190: nicht bestätigt'); ok(e.verdict !== 'wrong'); eq(a.$(`S.done[${i}]`), true);
+    ok(e.msgs.some(m => /Dein Puls bestätigt nicht/.test(m) && /eher zu niedrig/.test(m)), 'Hinweis auf fehlende Ausbelastung'); ok(e.score < 100, 'Abzug: ' + e.score); a.noErrors(); }
+  { const {a, i, t0} = await rmpSetup(); const {a:x, e} = rmpUp(a, i, rmpRide(300, 12, 30, 180, null, t0));
+    ok(x.rmp > 0, 'Rampe ohne Puls erkannt'); ok(x.rmpH == null, 'Ausbelastung nicht prüfbar'); ok(e.verdict !== 'wrong'); ok(e.msgs.some(m => /Ohne Pulsdaten ist die Ausbelastung nicht prüfbar/.test(m))); a.noErrors(); }
+  { const {a, i, t0} = await rmpSetup({noPwr:true}); a.$('S.p.noPwr = true; S.d.noPwr = true'); const {a:x, e} = rmpUp(a, i, rmpRide(300, 12, 30, 180, 186, t0));
+    ok(a.$('noPwr()'), 'Modus ohne Wattmesser'); ok(!e.rmpT, 'ohne Wattmesser keine Rampenbewertung'); ok(!e.msgs.some(m => /Als Rampentest erkannt/.test(m)), 'keine Rampenmeldung');
+    ok(!/Rampe erkannt/.test(rmpBox(a, i)), 'Kasten ohne Wattmesser ohne Rampenhinweis'); a.noErrors(); }
+});
+
+test('Rampentest-Gegenproben: 20-Min-Test mit Schlusssprint, 5×3-Min.-Intervalle, Altdaten ohne rmp', async () => {
+  { const {a, i, t0} = await rmpSetup();
+    const {a:x, e} = rmpUp(a, i, v2Ride([[900, 150, 110, 130], [1200, 300, 150, 175], [60, 450, 175, 185], [600, 120, 150, 110]], t0), 't20.fit');
+    ok(!x.rmp, '20-Min-Test: keine Rampe'); ok(e.verdict !== 'wrong', '20-Min-Test zählt wie bisher: ' + e.msgs.join(' | ')); ok(!e.rmpT); eq(a.$(`S.done[${i}]`), true);
+    ok(!e.msgs.some(m => /Rampentest/.test(m)), 'keine Rampenmeldung'); rmpBox(a, i); eq(a.$('testKind'), '20', '20-Min-Test vorgewählt'); eq(rmpVal(a), String(x.m20), 'beste 20 Min. im Feld'); a.noErrors(); }
+  { const {a, i, t0} = await rmpSetup(); const P = [[900, 150, 110, 130]]; for (let k = 0; k < 5; k++) P.push([180, 330, 150, 175], [180, 120, 150, 130]); P.push([600, 110, 130, 110]);
+    const {a:x, e} = rmpUp(a, i, v2Ride(P, t0), 'iv.fit');
+    ok(!x.rmp, 'Intervalle: keine Rampe'); eq(e.verdict, 'wrong', 'Intervalle am Testtag bleiben falsches Training'); ok(!e.rmpT); ok(!a.$(`S.done[${i}]`), 'nicht erledigt'); a.noErrors(); }
+  /* Altdaten: gespeicherte Fahrt und Bewertung von vor der Änderung (ohne rmp, rmpH, rmpT) */
+  { const {a, i, t0} = await rmpSetup(); rmpUp(a, i, rmpRide(900, 14, 30, 300, 186, t0));
+    a.$(`S.man.forEach(m => { delete m.rmp; delete m.rmpH; }); const e = S.p.exe[S.wk + '-' + ${i}]; delete e.rmpT; delete e.ah.rmp; delete e.ah.rmpH; save()`);
+    const b = await boot({store:a.store()}); b.$(`exeShow = S.wk + '-' + ${i}; render()`); await b.tick(30); ok(b.text().length > 0);
+    rmpBox(b, i); eq(b.$('testKind'), '20', 'ohne rmp bleibt der 20-Min-Test vorgewählt'); b.$('S.done = {}; analyze()'); b.noErrors(); }
+});
+
+test('Rampentest: englische Texte', async () => {
+  const {a, i, t0} = await rmpSetup(); const {a:x} = rmpUp(a, i, rmpRide(300, 12, 30, 180, 160, t0));
+  a.w.__iMiss = new Map(); await a.en(); a.$(`exeShow = S.wk + '-' + ${i}; render()`); await a.tick(30); a.$(`document.querySelectorAll('details').forEach(d => { d.open = true; })`); const t = a.text();
+  ok(t.includes(`Detected as a ramp test: best minute ${x.rmp} W`), 'Meldung auf Englisch'); ok(/Your heart rate does not confirm/.test(t), 'Pulshinweis auf Englisch'); ok(/ramp test/i.test(t), 'Zeile Testart');
+  a.w.navGo('week'); await a.tick(30);
+  eq([...a.w.__iMiss.keys()].filter(k => /Rampe|Ausbelastung|beste Minute|Testart/.test(k)), [], 'keine fehlenden Übersetzungen');
+  a.noErrors();
+});
