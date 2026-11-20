@@ -152,13 +152,14 @@ function exBThread(ph){
     exBG('exbn', exBP('knee', exBLimb([K, H])), exBLimb([K, [145, 148.3]], {end:'f', fl:6, fs:-1}), `<g opacity="${e ? '0.45' : '1.0'}">${exBLimb(ar.pts, {w:ar.w, end:'h', p:'arm'})}</g>`));
 }
 
-/* ---------- Übungsvideos: gerenderte 3D-Figur (MakeHuman, CC0; in Blender animiert) für die Pilotübungen ----------
+/* ---------- Übungsvideos: gerenderte 3D-Figur (MakeHuman, CC0; in Blender animiert) für Rumpf-, Mobilitäts- und Kraftübungen ----------
    Dateien: public/img/uebungen/<id>.mp4 (Endlosschleife) und <id>.jpg (Startbild für Kacheln und als Vorschaubild).
    h = Zeitpunkt (s) der Endposition, p = Zeitfenster (s), in dem das Video Phase 1 zeigt (für die Beschriftung unter dem Bild).
    Lässt sich ein Video oder Bild nicht laden (z. B. offline: der Service Worker speichert Videos nicht), erscheint die
    gezeichnete Figur. Blockiert das Gerät das automatische Abspielen (z. B. Stromsparmodus), bekommt das Video Bedienelemente. */
 const EXVID = {deadbug:{h:1.92, p:[1.04, 2.79]}, clam:{h:1.83, p:[1, 2.67]}, pallof:{h:1.83, p:[1, 2.67]},
-  hip9090:{h:2.17, p:[1.17, 3.17]}, openbook:{h:2.29, p:[1.25, 3.33]}, thread:{h:2.92, p:[1.58, 4.25]}};
+  hip9090:{h:2.17, p:[1.17, 3.17]}, openbook:{h:2.29, p:[1.25, 3.33]}, thread:{h:2.92, p:[1.58, 4.25]},
+  squat:{h:3, p:[1.5, 4.5]}, bss:{h:3, p:[1.5, 4.5]}, calf:{h:3, p:[1.5, 4.5]}, plank:{h:3.92, p:[1.42, 5.92]}};
 const exVidBad = {};
 const exVidOk = id => !!EXVID[id] && !exVidBad[id];
 const exRed = () => sqReduced();

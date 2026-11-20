@@ -1,6 +1,8 @@
 /* Übungen-Pilot: neue Figur (exB…) und gegliederter Text im Übungsfenster für 6 Übungen */
 R.file = 'uebungen-pilot';
 const PILOT = ['clam', 'deadbug', 'pallof', 'hip9090', 'openbook', 'thread'];
+/* Kraftübungen mit Video, aber ohne gegliederte Felder (q, a, b …) */
+const KRAFT = ['squat', 'bss', 'calf', 'plank'];
 
 test('Pilotübungen: Animation, gegliederte Felder, s aus b abgeleitet, Ausschnitt', async () => {
   const a = await boot(), bad = [];
@@ -48,7 +50,7 @@ test('Übungsfenster: Schritt antippen hält das Bild an, Öffnen und Schließen
   ok(a.$(`document.querySelectorAll('.exov .exbstep').length`) === 4, 'pallof: vier Schritte');
   ok(a.$(`[...document.querySelectorAll('.exov .exbstep')].every(b => b.getBoundingClientRect().height >= 44 || b.getBoundingClientRect().height === 0)`), 'Tippfläche mindestens 44 pt');
   a.$('closeEx()');
-  a.$(`openEx('squat')`); ok(a.$(`document.querySelectorAll('.exov .exbstep').length`) === 0 && /So geht's/.test(a.text()), 'andere Übungen: alte Darstellung');
+  a.$(`openEx('rdl')`); ok(a.$(`document.querySelectorAll('.exov .exbstep').length`) === 0 && /So geht's/.test(a.text()), 'andere Übungen: alte Darstellung');
   a.$('closeEx()'); a.noErrors();
 });
 
@@ -110,10 +112,10 @@ test('Animation mit Mittelbild: gleiche Struktur, Hälfte zeigt genau das Mittel
   a.noErrors();
 });
 
-/* Übungsvideos: gerenderte 3D-Figur für die Pilotübungen, gezeichnete Figur als Rückfall */
+/* Übungsvideos: gerenderte 3D-Figur für die Pilot- und Kraftübungen, gezeichnete Figur als Rückfall */
 test('Übungsvideos: Dateien vorhanden, Fenster zeigt Video, Schritt hält es an, Rückfall auf die gezeichnete Figur', async () => {
   const a = await boot(), ids = a.$('Object.keys(EXVID)');
-  eq(ids.slice().sort(), PILOT.slice().sort(), 'Videos für genau die Pilotübungen');
+  eq(ids.slice().sort(), [...PILOT, ...KRAFT].sort(), 'Videos für genau die Pilot- und Kraftübungen');
   for (const id of ids) for (const ext of ['mp4', 'jpg']) {
     const r = await fetch(`../public/img/uebungen/${id}.${ext}`, {cache:'no-store'}), n = r.ok ? (await r.blob()).size : 0;
     ok(r.ok && n > 5000 && n < 400000, `${id}.${ext} vorhanden und klein genug (${n} Bytes)`);
@@ -128,7 +130,38 @@ test('Übungsvideos: Dateien vorhanden, Fenster zeigt Video, Schritt hält es an
   ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="deadbug"]')`) && a.$(`exVidOk('deadbug')`) === false, 'fällt das Video aus, erscheint die gezeichnete Figur');
   a.$(`delete exVidBad.deadbug; closeEx()`);
   ok(a.$(`(exLibrary().match(/<img class="exvid"/g) || []).length`) === ids.length, 'Übungsübersicht zeigt die Startbilder');
-  a.$(`openEx('squat')`); ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="squat"]')`), 'andere Übungen unverändert'); a.$('closeEx()');
+  a.$(`openEx('rdl')`); ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="rdl"]')`), 'andere Übungen unverändert'); a.$('closeEx()');
   await a.w.i18nLoad(); ok(a.$(`I18N[iNorm('Die Animation zeigt den Bewegungsablauf vereinfacht.').k] != null`), 'Englisch für den Hinweistext');
+  a.noErrors();
+});
+
+/* Rückfall bei den Kraftübungen: Bild 0 der gezeichneten Figur gehört zu cap[0], Bild 1 zu cap[1] (calf und plank wurden umgestellt) */
+test('Kraftvideos: fällt das Video aus, passt die gezeichnete Figur zur Bildunterschrift', async () => {
+  const a = await boot();
+  const CAP0 = {calf:/^Unten: Ferse tief/, plank:/^Start: auf den Unterarmen/}, CAP1 = {calf:/^Oben: auf den Zehen/, plank:/^Körper heben: gerade Linie/};
+  for (const id of ['calf', 'plank']) {
+    const cap = a.$(`EXI['${id}'].cap`);
+    ok(CAP0[id].test(cap[0]) && CAP1[id].test(cap[1]), `${id}: Reihenfolge der Bildunterschrift (${cap.join(' | ')})`);
+    a.$(`openEx('${id}')`);
+    ok(a.$(`!!document.querySelector('.exov video[data-exv="${id}"]')`), `${id}: zuerst das Video`);
+    a.$(`exVidFail(document.querySelector('.exov video'))`);
+    ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="${id}"]')`) && a.$(`exVidOk('${id}')`) === false, `${id}: gezeichnete Figur nach Ausfall`);
+    const st = ts => { a.$(`cancelAnimationFrame(_exRaf); _exRaf = 0; exTick(${ts})`);
+      return {g:a.$(`document.querySelector('.exov g[data-ex="${id}"]').innerHTML`),
+        on:a.$(`[...document.querySelectorAll('.exov .exph')].filter(x => x.classList.contains('on')).map(x => x.dataset.ph + ':' + x.textContent)`)}; };
+    const T = a.w.exTpl(id), s0 = st(100), s1 = st(2400);
+    ok(T.ok, `${id}: Animation (exTpl.ok)`);
+    eq(s0.on, ['0:' + cap[0]], `${id}: Bild 0 zeigt cap[0]`);
+    eq(s1.on, ['1:' + cap[1]], `${id}: Bild 1 zeigt cap[1]`);
+    /* gleiche Serialisierung wie im Fenster: Bild als SVG-Gruppe einlesen und wieder auslesen */
+    const ser = k => a.$(`(() => { const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.innerHTML = exFrameAt(exTpl('${id}'), ${k}); return g.innerHTML; })()`);
+    ok(s0.g === ser(0) && s1.g === ser(1) && s0.g !== s1.g, `${id}: Figur wechselt zwischen Bild 0 und Bild 1`);
+    a.$(`delete exVidBad['${id}']; closeEx()`);
+  }
+  /* Inhalt der Bilder: calf Bild 0 Ferse unten (Knöchel y 146), Bild 1 auf den Zehen (y 132); plank Bild 0 Hüfte nah am Boden (y 150), Bild 1 gerader Stütz (y 141) */
+  const c = a.w.exTpl('calf'), p = a.w.exTpl('plank');
+  ok(c.A.includes('76,146 90,144') && c.B.includes('76,132 90,144'), 'calf: zuerst unten, dann oben');
+  const hip = h => { const m = h.match(/(?<![\d.])88,(\d+(?:\.\d+)?)/); return m ? +m[1] : NaN; };
+  ok(hip(p.A) > hip(p.B), `plank: Bild 0 Hüfte tiefer als Bild 1 (${hip(p.A)} / ${hip(p.B)})`);
   a.noErrors();
 });
