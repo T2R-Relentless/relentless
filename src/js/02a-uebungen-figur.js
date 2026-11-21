@@ -159,7 +159,8 @@ function exBThread(ph){
    gezeichnete Figur. Blockiert das Gerät das automatische Abspielen (z. B. Stromsparmodus), bekommt das Video Bedienelemente. */
 const EXVID = {deadbug:{h:1.92, p:[1.04, 2.79]}, clam:{h:1.83, p:[1, 2.67]}, pallof:{h:1.83, p:[1, 2.67]},
   hip9090:{h:2.17, p:[1.17, 3.17]}, openbook:{h:2.29, p:[1.25, 3.33]}, thread:{h:2.92, p:[1.58, 4.25]},
-  squat:{h:3, p:[1.5, 4.5]}, bss:{h:3, p:[1.5, 4.5]}, calf:{h:3, p:[1.5, 4.5]}, plank:{h:3.92, p:[1.42, 5.92]}};
+  squat:{h:3, p:[1.5, 4.5]}, bss:{h:3, p:[1.5, 4.5]}, calf:{h:3, p:[1.5, 4.5]}, plank:{h:3.92, p:[1.42, 5.92]},
+  rdl:{h:3, p:[1.5, 4.5]}, slrdl:{h:3, p:[1.5, 4.5]}, stepup:{h:3, p:[1.5, 4.5]}, bridge:{h:3, p:[1.5, 4.5]}, sidep:{h:3.92, p:[1.42, 5.92]}};
 const exVidBad = {};
 const exVidOk = id => !!EXVID[id] && !exVidBad[id];
 const exRed = () => sqReduced();
