@@ -46,8 +46,8 @@ Object.assign(EXI, {
     f:["Das Becken rollt nach hinten mit. Öffne weniger weit, die Hand am Becken kontrolliert.", "Das Hohlkreuz wird stärker. Zieh den Bauchnabel leicht ein.", "Die Füße lösen sich. Drück die Fersen aneinander."], ez:"Öffne nur halb so weit, ohne Band.", hd:"Leg ein Miniband über die Knie.", k:"Bei Schmerz in der Hüfte nur so weit öffnen, wie es schmerzfrei geht.", v:"", r:"Ein starker seitlicher Gesäßmuskel kann helfen, das Knie beim Treten in der Spur zu halten."}
 });
 const MOB = {
-  mob:{n:'Mobilität', m:15, intro:'Ruhige Dehn- und Mobilisationsübungen. Gut nach der Radeinheit, am Abend oder an Ruhetagen. Nicht direkt vor harten Intervallen statisch dehnen.', ex:[['catcow', 'Katze-Kuh', '10 langsame Wiederholungen'], ['tspine', 'Brustwirbelsäule öffnen', '8 pro Seite'], ['hipflex', 'Hüftbeuger-Dehnung', '2 × 45 Sek. pro Seite'], ['ham', 'Beinrückseite mit Band', '2 × 45 Sek. pro Bein'], ['fig4', 'Gesäß-Dehnung (Figur 4)', '45 Sek. pro Seite']]},
-  stab:{n:'Stabilität', m:15, intro:'Kurze Rumpf- und Hüftstabilität ohne Geräte. Kontrolliert und sauber, nicht bis zur Erschöpfung.', ex:[['birddog', 'Bird Dog', '2 × 8 pro Seite, 3 Sek. halten'], ['deadbug', 'Dead Bug', '2 × 8 pro Seite'], ['sidep', 'Seitstütz', '2 × 30 Sek. pro Seite'], ['clam', 'Clamshell', '2 × 15 pro Seite'], ['bridge', 'Einbeinige Glute Bridge', '2 × 10 pro Seite']]}
+  mob:{n:'Mobilität', get m(){ return sqMin(this, 15); }, intro:'Ruhige Dehn- und Mobilisationsübungen. Gut nach der Radeinheit, am Abend oder an Ruhetagen. Nicht direkt vor harten Intervallen statisch dehnen.', ex:[['catcow', 'Katze-Kuh', '10 langsame Wiederholungen'], ['tspine', 'Brustwirbelsäule öffnen', '8 pro Seite'], ['hipflex', 'Hüftbeuger-Dehnung', '2 × 45 Sek. pro Seite'], ['ham', 'Beinrückseite mit Band', '2 × 45 Sek. pro Bein'], ['fig4', 'Gesäß-Dehnung (Figur 4)', '45 Sek. pro Seite']]},
+  stab:{n:'Stabilität', get m(){ return sqMin(this, 15); }, intro:'Kurze Rumpf- und Hüftstabilität ohne Geräte. Kontrolliert und sauber, nicht bis zur Erschöpfung.', ex:[['birddog', 'Bird Dog', '2 × 8 pro Seite, 3 Sek. halten'], ['deadbug', 'Dead Bug', '2 × 8 pro Seite'], ['sidep', 'Seitstütz', '2 × 30 Sek. pro Seite'], ['clam', 'Clamshell', '2 × 15 pro Seite'], ['bridge', 'Einbeinige Glute Bridge', '2 × 10 pro Seite']]}
 };
 let mobMap = {};
 function mobOf(p, w, plan, sm){
@@ -92,7 +92,7 @@ function strSession(p, kind){
     leicht:{n:'Krafttraining: leichte Woche', m:30, ne:3, sets:'2', reps:home ? '8 Wdh. pro Bein' : '8 Wdh.', rir:'4 Wdh. in Reserve', intro:'Entlastungswoche: mit weniger Last und Sätzen locker durchbewegen.'}
   }[kind];
   const lines = ex.slice(0, K.ne).map(([n, id]) => ({n, id, r:`${K.sets} × ${K.reps}`})), core = STR_CORE[kind === 'erh' || kind === 'leicht' ? 'short' : home ? 'fullHome' : 'full'];
-  return {kind, n:K.n, m:K.m, intro:K.intro, rir:K.rir, lines, core, home};
+  return {kind, n:K.n, get m(){ return sqMin(this, K.m); }, intro:K.intro, rir:K.rir, lines, core, home};
 }
 function strOf(p, w, plan){
   const n0 = p.strN | 0; if (!n0 || !plan) return {};
