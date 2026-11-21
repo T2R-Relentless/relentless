@@ -358,7 +358,7 @@ EXS['calf'] = dict(pose=calf, kopf_linie=True, keys=KR_KEYS, perframe=True, wurz
 
 # Hip Thrust: Bank quer (40 cm), unterer Schulterblattrand auf der Kante, Kurzhantel quer in der Hüftbeuge (Hände greifen die
 # Scheiben von außen), Nacken gebeugt, Blick zu den Knien. Oben liegen Schulter, Hüfte und Knie auf einer Linie, Schienbein senkrecht.
-P['thrust'] = {'h': .40, 'kante': 0.0, 'unten': .075, 'roll': .12, 'fx': .13, 'nacken': 35.0, 'kopf': 25.0}   # unten: Gesäß 7,5 cm über der Matte
+P['thrust'] = {'h': .40, 'kante': 0.0, 'unten': .075, 'roll': .12, 'fx': .13, 'nacken': 35.0, 'kopf': 25.0, 'hv': .08}   # unten: Gesäß 7,5 cm über der Matte
 KR_GERAET['thrust'] = kr_bank(0, P['thrust']['kante'] + .16, P['thrust']['h'], laenge=1.1, breite=.32, quer=True)
 def _kr_thrust_rumpf(al):
     """Rückenlage, Kopf nach +Y; Rumpf al Grad über der Waagerechten (zum Kopf ansteigend), Wirbelsäule neutral.
@@ -371,8 +371,26 @@ def _kr_thrust_rumpf(al):
     return u, n
 def kr_thrust_hantel():
     """Mitte der Hantel in der Hüftbeuge (aus Lage und Drehung des Beckens) und ihre Achse (quer)"""
-    q = P['thrust']; n = _ach('Hips', (0, -1, 0)); u = _ach('Hips', (0, 0, 1))
-    return wpos('Hips') + n * (q['dh'] + KR_HANTEL['r'] + q.get('hn', 0.0)) - u * q.get('hv', .08), Vector((1, 0, 0))
+    q = P['thrust']; n = _ach('Hips', (0, -1, 0)); u = _ach('Hips', (0, 0, 1)); hv, hn = kr_thrust_lage()
+    return wpos('Hips') + n * (q['dh'] + KR_HANTEL['r'] + hn) - u * hv, Vector((1, 0, 0))
+def _kr_thrust_phi():
+    """Hüftbeugung (Grad): Oberschenkel gegen die Verlängerung des Beckens nach unten (0 = gestreckt)"""
+    return math.degrees((wpos('LeftLeg') - wpos('LeftUpLeg')).angle(-_ach('Hips', (0, 0, 1))))
+def kr_thrust_lage():
+    """Lage der Hantel im Rahmen des Beckens (hv entlang des Rumpfs, hn über der Haut) aus dem aktuellen Hüftwinkel"""
+    q = P['thrust']
+    if 'tab_r' not in q: return q['hv'], q.get('hn', 0.0)
+    r_ = min(1.0, max(0.0, _kr_thrust_phi() / q['phi0']))
+    return q['hv1'] + (q['hv0'] - q['hv1']) * r_, float(np.interp(r_, q['tab_r'], q['tab_hn']))
+def _kr_thrust_hn_suchen():
+    """kleinster Abstand hn, bei dem die Hantel (bei q['hv']) 3 mm frei über Haut und Hose liegt (nur beim Einmessen)"""
+    q = P['thrust']; lo, hi = -.06, .30
+    for _ in range(14):
+        q['hn'] = (lo + hi) / 2
+        if kr_hantel_netzabstand(kr_thrust_hantel_matrix().inverted(), gr=KR_THRUST_HAUT) >= .003: hi = q['hn']
+        else: lo = q['hn']
+    q['hn'] = hi; return hi
+KR_THRUST_HAUT = ('Spine', 'Hips', 'LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg')   # Haut unter der Hantel: Unterbauch, Becken und Beine (mit Hose)
 def thrust(ph):
     q = P['thrust']; t = max(0, min(1, ph)); reset(); kr_ruhe()
     if 'Lb' not in q:
@@ -384,9 +402,8 @@ def thrust(ph):
         # w: 1 = oben (unterer Schulterblattrand auf der Kante), 0 = unten: der Rücken rollt über die Kante, die Auflage wandert
         # q['roll'] weiter zu den Schultern; die Hantel rückt etwas zum Bauch, weil die Oberschenkel in die Hüftbeuge kommen
         reset(); rig.location = (0, 0, 0); u, n = _kr_thrust_rumpf(al); bpy.context.view_layer.update(); Lb_ = q['Lb'] + q['roll'] * (1 - w)
-        q['hv'] = .08 - .14 * (1 - w)     # unten liegt die Hantel weiter oben auf dem Unterbauch: die Oberschenkel schließen die Hüftbeuge, die Arme reichen sonst nicht
         rig.location = (q['C'] - u * Lb_ + n * q['d']) - wpos('Hips') + rig.location; bpy.context.view_layer.update()   # Rückenfläche liegt d hinter der Wirbelsäule (−n)
-        q['hn'] = 0.0; _kr_thrust_arme(u, n)
+        _kr_thrust_arme(u, n)
         for _ in range(8):     # Rücken liegt genau auf der Bank auf (die Beine stehen hier noch in Ruhelage, vor der Bank)
             g_ = kr_luecke('bank', ['Spine', 'Spine1', 'Spine2', 'LeftShoulder', 'RightShoulder', 'Neck'], True)   # nur der Rücken; die Bank gilt als massiv, der Rücken liegt an ihrer Kante
             if abs(g_) < .002 or abs(g_) > .3: break
@@ -413,17 +430,32 @@ def thrust(ph):
         print('KR thrust Rücken', round(q['Lb'], 3), round(q['d'], 3), 'Gesäß', round(q['db'], 3), 'Rumpfwinkel unten', round(q['al0'], 1), 'oben', round(q['al1'], 1), 'Fußgelenk y', round(q['fy'], 3))
     u, n = oberkoerper(q['al0'] + (q['al1'] - q['al0']) * t, t)
     for side, sx in (('Left', 1), ('Right', -1)): kr_bein(kr_fuss(side, sx * q['fx'], q['fy'], 0, 5, 0, 'knoechel'), (0, -.3, 1))
-    for _ in range(12):     # Hantel (so wie sie aus den Handgelenken gebaut wird) liegt auf der Hüftbeuge, ohne in die Beine einzudringen
-        d_ = kr_hantel_netzabstand(_kr_thrust_griffmatrix().inverted())
-        if d_ >= .003: break
-        q['hn'] += (.004 - d_) * .5; q['hv'] -= (.004 - d_); _kr_thrust_arme(u, n)     # etwas höher und zum Bauch hin (weg vom Oberschenkel)
-    q['hn_end'] = q['hn']
+    _kr_thrust_arme(u, n)
+    if 'tab_r' not in q and not q.get('kal'):
+        # einmal: Lage der Hantel aus dem Hüftwinkel. Unten (Hüfte gebeugt) schließen die Oberschenkel die Hüftbeuge bis etwa
+        # 15 cm über dem Becken; die Hantel liegt dort in der Falte zwischen Unterbauch und Oberschenkel (hv0). Oben (Hüfte
+        # gestreckt) liegt sie quer auf dem Becken (hv1 = 0). Dazwischen gleitet sie mit dem Hüftwinkel. Der Abstand zur Haut (hn)
+        # wird an fünf Stufen der Bewegung gemessen (3 mm frei) und dazwischen nach dem Hüftwinkel verteilt; je Bild wird
+        # nichts gesucht, die Hände folgen der Hantel per IK.
+        q['kal'] = True; q['hn'] = 0.0; q['hv'] = 0.0
+        thrust(0.0); q['phi0'] = _kr_thrust_phi(); hv0 = None
+        for hv in [round(-.20 + .005 * i, 3) for i in range(13)]:
+            q['hv'] = hv; h_ = _kr_thrust_hn_suchen(); print('KR thrust unten hv', hv, 'hn', round(h_, 3))
+            if h_ <= .005: hv0 = hv          # liegt noch auf dem Unterbauch, nicht auf dem Oberschenkel
+        q['hv0'] = hv0 if hv0 is not None else -.15; q['hv1'] = 0.0; rs, hs = [], []
+        for tt in (1.0, .75, .5, .25, 0.0):
+            thrust(tt); r_ = min(1.0, max(0.0, _kr_thrust_phi() / q['phi0'])); q['hv'] = q['hv1'] + (q['hv0'] - q['hv1']) * r_
+            h_ = _kr_thrust_hn_suchen(); rs.append(r_); hs.append(h_)
+            print('KR thrust Stufe', tt, 'Hüftwinkel', round(_kr_thrust_phi(), 1), 'r', round(r_, 3), 'hv', round(q['hv'], 3), 'hn', round(h_, 3))
+        o_ = sorted(range(len(rs)), key=lambda i: rs[i]); q['tab_r'] = [rs[i] for i in o_]; q['tab_hn'] = [hs[i] for i in o_]
+        q['kal'] = False; thrust(ph); return
+    if not q.get('kal') and P['thrust'].get('check'):
+        print('KR thrust Bild t', round(t, 3), 'Hüftwinkel', round(_kr_thrust_phi(), 1), 'Hantel–Haut', round(kr_hantel_netzabstand(kr_thrust_hantel_matrix().inverted(), gr=KR_THRUST_HAUT) * 100, 2), 'cm')
     q['t'] = t
 def _kr_thrust_arme(u, n):
     """Hände greifen die Hantelscheiben von außen, Handflächen nach innen; Oberarme seitlich, Ellbogen zur Bank"""
-    D, ax_ = kr_thrust_hantel(); ra = KR_HANTEL['griff'] / 2 + KR_HANTEL['dicke']
-    for side, sx in (('Left', 1), ('Right', -1)):
-        ik2(side + 'Arm', side + 'ForeArm', D + ax_ * sx * (ra + .045) + u * .04, (sx, .1, -.25)); aim(side + 'Hand', -u + n * .15); kr_handruecken(side, (sx, 0, 0))
+    for side, sx in (('Left', 1), ('Right', -1)):     # die Hände folgen der festen Hantel, die Ellbogen beugen frei
+        ik2(side + 'Arm', side + 'ForeArm', _kr_thrust_ziel(side), (sx, .1, -.25)); aim(side + 'Hand', -u + n * .15); kr_handruecken(side, (sx, 0, 0))
 def _kr_thrust_griffmatrix():
     """Lage der Hantel aus den Handgelenken, wie sie später gebaut wird"""
     D = kr_mitte(wpos('LeftHand'), wpos('RightHand')) - _ach('Hips', (0, 0, 1)) * .04; M = Vector((1, 0, 0)).to_track_quat('Z', 'Y').to_matrix().to_4x4(); M.translation = D; return M
@@ -434,9 +466,14 @@ def kr_mw_thrust():
     k_ = kopf_kontur('huefte'); vo_ = _ach('Spine2', (0, -1, 0))
     return [f'Gesäß {lowg(["Hips"], .5) * 100:.1f} cm über der Matte', f'unterer Schulterblattrand {(S_.y - q["kante"]) * 100:+.1f} cm hinter der Bankkante, {(S_.z - q["h"]) * 100:+.1f} cm über ihrer Oberkante',
             f'Schienbein {kr_mw_schien("Left"):.0f}° gegen die Senkrechte', f'Kopfmitte {k_.dot(vo_) * 100:+.1f} cm vor (+) der Linie Hüfte–Schulter (Kinn zur Brust)',
-            f'Rücken–Bank: {kr_luecke("bank", ["Spine", "Spine1", "Spine2", "LeftShoulder", "RightShoulder"], True) * 100:.1f} cm']
-EXS['thrust'] = dict(pose=thrust, keys=KR_KEYS, perframe=True, wurzel=True, cam=V(1, -.15, .15), zone=None, blatt=(1, 36, 60), bilder=KR_NAMEN_AUF, kopf_linie=True,
-                     griff_kontakt=lambda: [kr_finger_anlegen(s_, _kr_thrust_griffmatrix(), KR_HANTEL, P['thrust'].setdefault('finger', {}).setdefault(round(P['thrust'].get('t', 0) * 8), {})) for s_ in ('Left', 'Right')],   # Griff je Stufe der Bewegung neu angelegt
+            f'Rücken–Bank: {kr_luecke("bank", ["Spine", "Spine1", "Spine2", "LeftShoulder", "RightShoulder"], True) * 100:.1f} cm',
+            f'Hantel–Oberschenkel {kr_hantel_netzabstand(kr_thrust_hantel_matrix().inverted()) * 100:+.1f} cm, Hantel–Haut {kr_hantel_netzabstand(kr_thrust_hantel_matrix().inverted(), gr=KR_THRUST_HAUT) * 100:+.1f} cm (− = eingedrungen)'] + [
+            f'Reichweite {s_}: Schulter–Griffziel {(_kr_thrust_ziel(s_) - wpos(s_ + "Arm")).length * 100:.1f} cm, Armlänge {_kr_armlaenge(s_) * 100:.1f} cm, Hand {(_kr_thrust_ziel(s_) - wpos(s_ + "Hand")).length * 100:.1f} cm neben dem Ziel' for s_ in ('Left', 'Right')]
+def _kr_armlaenge(s_): return (wpos(s_ + 'Arm', True) - wpos(s_ + 'Arm')).length + (wpos(s_ + 'ForeArm', True) - wpos(s_ + 'ForeArm')).length
+def _kr_thrust_ziel(s_):
+    D, ax_ = kr_thrust_hantel(); return D + ax_ * (1 if s_ == 'Left' else -1) * (KR_HANTEL['griff'] / 2 + KR_HANTEL['dicke'] + .045) + _ach('Hips', (0, 0, 1)) * .04
+EXS['thrust'] = dict(pose=thrust, keys=KR_KEYS, perframe=True, wurzel=True, cam=V(1, 0, .02), zone=None, blatt=(1, 36, 60), bilder=KR_NAMEN_AUF, kopf_linie=True,
+                     griff_kontakt=lambda: [kr_finger_anlegen(s_, kr_thrust_hantel_matrix(), KR_HANTEL, P['thrust'].setdefault('finger', {}).setdefault(round(P['thrust'].get('t', 0) * 8), {})) for s_ in ('Left', 'Right')],   # Griff je Stufe der Bewegung neu angelegt
                      hanteln=('huefte',), auflage=('bank',), hantel_abstand=-1, messwerte=kr_mw_thrust)
 
 # Plank (Unterarmstütz): Start Bauchlage auf den Unterarmen, dann Körper heben (Linie Ohr–Knöchel), Kopf in Verlängerung des
@@ -504,8 +541,8 @@ def kr_hanteln_anlegen():
         elif art == 'goblet':
             ob = kr_kurzhantel('hantel_goblet', **{k: v for k, v in KR_HANTEL_GOBLET.items() if k in ('r', 'dicke')})
             kr_hantel_frei(ob, lambda: (kr_mitte(wpos('LeftHand'), wpos('RightHand')) - P['squat']['hoff'], (0, 0, 1))); KR_HANTELN.append((ob, ('Left', 'Right')))
-        elif art == 'huefte':      # Mitte aus den Handgelenken (die Hände sitzen fest an der Hantel), Achse quer
-            ob = kr_kurzhantel('hantel_huefte'); kr_hantel_frei(ob, lambda: (_kr_thrust_griffmatrix().translation.copy(), Vector((1, 0, 0)))); KR_HANTELN.append((ob, ('Left', 'Right')))
+        elif art == 'huefte':      # fest im Rahmen des Beckens, quer über der Hüftbeuge (die Hände folgen ihr)
+            ob = kr_kurzhantel('hantel_huefte'); kr_hantel_frei(ob, lambda: (kr_thrust_hantel_matrix().translation.copy(), Vector((1, 0, 0)))); KR_HANTELN.append((ob, ('Left', 'Right')))
 KR_HANTELN = []     # (Hantel, greifende Hände) für die Messungen in mess_teil.py
 
 # ======================= Weitere Kraftübungen (Gerüste): rdl, slrdl, stepup, bridge, sidep =======================
@@ -519,6 +556,18 @@ def kr_sohle_glatt(sx):
     P_ = a_.reshape(n, 3).astype(np.float64) @ M[:3, :3].T + M[:3, 3]; P_ = P_[P_[:, 0] * sx > 0]
     for m in ms_: m.show_viewport = False
     bpy.context.view_layer.update(); return float(P_[:, 2].min())
+def kr_schuh_ueber(sx, b, rand=.005):
+    """Abstand (m) des Schuhs der Seite sx (geglättet wie im Bild) über der Deckfläche eines Quaders b = (x0, x1, y0, y1, z0, z1):
+    tiefster Schuhpunkt über der Grundfläche (plus Rand) minus Kastenhöhe; negativ = Schuh steckt im Kasten, 9 = nicht darüber"""
+    ms_ = [m for m in shoes.modifiers if m.type == 'SUBSURF']
+    for m in ms_: m.show_viewport = True
+    bpy.context.view_layer.update(); e = shoes.evaluated_get(bpy.context.evaluated_depsgraph_get()); n = len(e.data.vertices)
+    a_ = np.empty(n * 3, dtype=np.float32); e.data.vertices.foreach_get('co', a_); M = np.array(shoes.matrix_world, dtype=np.float64)
+    P_ = a_.reshape(n, 3).astype(np.float64) @ M[:3, :3].T + M[:3, 3]; P_ = P_[P_[:, 0] * sx > 0]
+    for m in ms_: m.show_viewport = False
+    bpy.context.view_layer.update()
+    P_ = P_[(P_[:, 0] > b[0] - rand) & (P_[:, 0] < b[1] + rand) & (P_[:, 1] > b[2] - rand) & (P_[:, 1] < b[3] + rand) & (P_[:, 2] > b[5] - .06)]   # nur Punkte nahe der Deckfläche: ein Fuß am Boden neben dem Kasten zählt nicht
+    return float(P_[:, 2].min() - b[5]) if len(P_) else 9.0
 def kr_huefte_setzen(H, side='Left'):
     """nach kr_rumpf: Skelett so verschieben, dass das Hüftgelenk der Seite genau bei H liegt (die Beckenkippung verschiebt es)"""
     rig.location += Vector(H) - wpos(side + 'UpLeg'); bpy.context.view_layer.update()
@@ -548,9 +597,9 @@ def kr_arm_senkrecht(side, vor=0.0, frei=.012, hantel=True, seitlich=False, neut
         if d >= frei - .003: return
         if seitlich: aus += frei - d + .002
         else: vor += frei - d + .002
-def kr_hantel_netzabstand(Mi, p=None):
-    """kleinster Abstand (m) der Hantel (Kehrmatrix Mi) zu Ober- und Unterschenkeln am Netz mit Hose (wie die Messung)"""
-    p = p or KR_HANTEL; M = np.array(Mi, dtype=np.float64); gr = ('LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg')
+def kr_hantel_netzabstand(Mi, p=None, gr=('LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg')):
+    """kleinster Abstand (m) der Hantel (Kehrmatrix Mi) zu Ober- und Unterschenkeln (gr) am Netz mit Hose (wie die Messung)"""
+    p = p or KR_HANTEL; M = np.array(Mi, dtype=np.float64)
     P_ = [_kr_punkte(list(gr))]
     if shirt:
         gi = frozenset(shirt.vertex_groups['mixamorig:' + g].index for g in gr if 'mixamorig:' + g in shirt.vertex_groups)
@@ -614,8 +663,11 @@ EXS['slrdl'] = dict(pose=slrdl, kopf_linie=True, keys=KR_KEYS, perframe=True, wu
 
 # Step-up auf einen Kasten (40 cm): linker Fuß ganz auf dem Kasten, rechter am Boden mit gehobener Ferse; über das vordere Bein
 # hochdrücken, der hintere Fuß setzt neben dem vorderen auf; je eine Kurzhantel seitlich; Kamera etwa 30° schräg von vorn
-P['stepup'] = {'h': .40, 'fx': .1, 'fx_h': .2, 'fx_e': .07, 'yb': -.44, 'knie0': 92.0, 'schien0': 14.0, 'rumpf0': 15.0, 'hinten': .97}
+P['stepup'] = {'h': .40, 'fx': .1, 'fx_h': .23, 'fx_e': .07, 'yb': -.44, 'knie0': 92.0, 'schien0': 14.0, 'rumpf0': 15.0, 'hinten': .97, 'sw_t': .4, 'sw_mitte': .55, 'sw_k': .05, 'sw_bogen': .17, 'sw_hub': 5.0}   # sw_*: Schwung des hinteren Fußes (Beginn im Ablauf, Anteil bis zum Hochpunkt, Hochpunkt anteilig Richtung Kasten, Fußgelenk dort über Kastenfuß-Höhe, zusätzliche Beinbeugung beim Vorschwingen in Grad); fx_h: hinterer Fuß 23 cm neben der Mitte, frei von der Kastenecke
 KR_GERAET['stepup'] = kr_kasten(.06, -.36, P['stepup']['h'], bx=.48, by=.4)   # schmal unter dem linken Fuß: der hintere Fuß bleibt von schräg vorn sichtbar
+def _kr_fuss_schieben(fu, d):
+    """Fuß aus kr_fuss als Ganzes verschieben (Fußgelenk-Ziel und Lage von Fuß und Zehen gemeinsam, sonst trennt sich der Fuß vom Ziel)"""
+    M = Matrix.Translation(d); fu['A'] = fu['A'] + d; fu['T'] = M @ fu['T']; fu['Tz'] = M @ fu['Tz']
 def _kr_rechts_offset():
     return KR_RUHE['Right']['h'] - KR_RUHE['Left']['h']
 def stepup(ph):
@@ -632,22 +684,40 @@ def stepup(ph):
     w = sm(t); H = q['H0'].lerp(q['H1'], w)
     kr_rumpf(kr_becken_ueber(fl['A'], H, 'Left'), q['rumpf0'] * (1 - w) + 2 * w); kr_huefte_setzen(H)
     kr_bein(fl)
-    # hinterer Fuß: bleibt am Boden, solange das Bein reicht (sonst hebt er ab und folgt), ab der Hälfte schwingt er auf den Kasten
+    # hinterer Fuß: bleibt am Boden, solange das Bein reicht (sonst hebt er ab und folgt), ab sw_t schwingt er auf den Kasten
     HR = wpos('RightUpLeg'); Lm = kr_beinlaenge('Right', 2) * .995
     def am_boden(tt):
-        fr = kr_fuss('Right', -q['fx_h'], q['yr'], .011, 4, 30 + 30 * sm(tt / .5)); return fr      # Sohle etwa 3 mm über der Matte (die Ferse dreht um den Ballen): keine Schnittkante unter dem Schuh
-    if t < .5:
-        fr = am_boden(t); dv = fr['A'] - HR
-        if dv.length > Lm:     # reicht das Bein nicht mehr: Fuß hebt senkrecht ab (rutscht nicht zum Kasten)
+        fr = kr_fuss('Right', -q['fx_h'], q['yr'], .011, 4, 30 + 30 * sm(tt / q['sw_t'])); return fr      # Sohle etwa 3 mm über der Matte (die Ferse dreht um den Ballen): keine Schnittkante unter dem Schuh
+    def boden(tt):     # Fuß am Boden (Ferse hebt sich um den Ballen); reicht das Bein nicht mehr, hebt der ganze Fuß senkrecht ab
+        fr = am_boden(tt); dv = fr['A'] - HR
+        if dv.length > Lm:
             h2 = Lm ** 2 - dv.x ** 2 - dv.y ** 2
-            fr['A'] = Vector((fr['A'].x, fr['A'].y, HR.z - math.sqrt(h2))) if h2 > 0 else HR + dv.normalized() * Lm
-        kr_bein(fr, (0, -.4, .2))
+            _kr_fuss_schieben(fr, (Vector((fr['A'].x, fr['A'].y, HR.z - math.sqrt(h2))) if h2 > 0 else HR + dv.normalized() * Lm) - fr['A'])
+        for _ in range(5):     # Schuhspitze (geglättet wie im Bild) bleibt beim Abdrücken über der Matte: sonst ganzen Fuß stetig anheben
+            kr_bein(fr, (0, -.4, .2)); g_ = kr_sohle_glatt(-1)
+            if g_ >= .001: break
+            _kr_fuss_schieben(fr, Vector((0, 0, .002 - g_)))
+    def richtungen():
+        return tuple((wpos(b_) - wpos(a_)).normalized() for a_, b_ in (('RightUpLeg', 'RightLeg'), ('RightLeg', 'RightFoot'), ('RightFoot', 'RightToeBase')))
+    if t < q['sw_t']: boden(t)
     else:
-        u2 = sm((t - .5) / .5); fb = kr_fuss('Right', -q['fx_e'], q['yb'], None, 4)
-        A0 = am_boden(.5)['A']; A1 = fb['A']; P_ = A0.lerp(A1, sm(min(1, u2 * 1.3) * .999)); P_.z = A0.z + (A1.z - A0.z) * sm(min(1, u2 * 2.2)) + .12 * math.sin(math.pi * u2)   # Fuß hebt früh und hoch genug über die Kastenkante
-        ik2('RightUpLeg', 'RightLeg', P_, (0, -1, .1))
+        # Schwung in zwei Teilen: erst Hüfte und Knie stetig beugen (Winkel überblenden, kein Fußgelenk-Ziel: am fast gestreckten Bein
+        # würde das Knie sonst nach vorn schnellen) bis zum Hochpunkt über Kastenhöhe hinter der Kante, dann Fuß auf die Deckfläche setzen
+        u2 = (t - q['sw_t']) / (1 - q['sw_t']); fb = kr_fuss('Right', -q['fx_e'], q['yb'], None, 4)
+        boden(q['sw_t']); d0 = richtungen(); A0 = wpos('RightFoot'); A1 = fb['A']
+        Pk = A0.lerp(A1, q['sw_k']); Pk.z = A1.z + q['sw_bogen']
+        fk = V(0, -.55, -.8)     # Fußspitze am Hochpunkt nach unten-vorn
+        ik2('RightUpLeg', 'RightLeg', Pk, (0, -1, .1)); aim('RightFoot', fk); d1 = richtungen()
         if u2 >= .999: kr_bein(fb)
-        else: aim('RightFoot', V(0, -.15 - .85 * u2, -1 + .55 * u2))     # Fußspitze zeigt beim Abheben nach unten, flacht über dem Kasten ab
+        elif u2 < q['sw_mitte']:
+            w_ = sm(u2 / q['sw_mitte'])
+            for i_, n_ in enumerate(('RightUpLeg', 'RightLeg', 'RightFoot')): aim(n_, d0[i_].slerp(d1[i_], w_))
+        else:      # vom Hochpunkt zur Endlage auf dem Kasten ebenfalls über die Winkel: landet ohne Sprung genau in der Endhaltung
+            kr_bein(fb); d2 = richtungen(); w_ = sm((u2 - q['sw_mitte']) / (1 - q['sw_mitte']))
+            Rh = Matrix.Rotation(math.radians(-q['sw_hub'] * math.sin(math.pi * w_)), 3, 'X')    # Bein beim Vorschwingen etwas mehr gebeugt: Schuh über der Deckfläche
+            for i_, n_ in enumerate(('RightUpLeg', 'RightLeg', 'RightFoot')): aim(n_, Rh @ d1[i_].slerp(d2[i_], w_))
+        g_ = kr_schuh_ueber(-1, KR_GERAET['stepup'][0]['b']) if u2 < .999 else 9
+        if g_ < -.002: print('PRUEF stepup Schwungfuß im Kasten', round(-g_, 3), 'm bei u2', round(u2, 3))
     for s in ('Left', 'Right'): kr_arm_senkrecht(s, frei=.005, seitlich=True, neutral=True)   # Arme locker am Rumpf, Hanteln senkrecht unter der Schulter
     kr_kopf(-8 * (1 - w))
 EXS['stepup'] = dict(pose=stepup, kopf_linie=True, keys=KR_KEYS, perframe=True, wurzel=True, cam=V(-.27, -1, .3), zone=None, blatt=(1, 36, 60), bilder=KR_NAMEN_AUF,
@@ -655,17 +725,27 @@ EXS['stepup'] = dict(pose=stepup, kopf_linie=True, keys=KR_KEYS, perframe=True, 
 
 # Einbeinige Glute Bridge: Rückenlage, Standbein links (Ferse 25–30 cm vor dem Gesäß), rechtes Bein gestreckt in Verlängerung des
 # Oberschenkels, Arme neben dem Körper; Kamera auf der Standbeinseite, leicht von oben
-P['bridge'] = {'fx': .1, 'unten': .035, 'flach': 25.0, 'weiter': .04, 'kinn': 30.0, 'knie_r': 7.0}   # weiter: Fuß 4 cm weiter vom Gesäß (Ferse–Gesäß), Schienbein oben dann etwa 4° schräg
+P['bridge'] = {'fx': .1, 'unten': .035, 'flach': 25.0, 'weiter': .04, 'kinn': 30.0, 'knie_r': 7.0, 'bw1': .5, 'bw2': .1}   # bw1/bw2: Anteil der Rumpfneigung an Spine1/Spine2   # weiter: Fuß 4 cm weiter vom Gesäß (Ferse–Gesäß), Schienbein oben dann etwa 4° schräg
 def _kr_rueckenlage(al):
     """Rückenlage, Kopf nach +Y, Rumpf al Grad gegen die Waagerechte (negativ: Becken höher als die Schultern), Wirbelsäule, Hals
     und Kopf wie in der Ruhehaltung. Gibt Rumpfrichtung u (Becken → Schultern) zurück."""
     R = Matrix.Rotation(math.radians(-90 + al), 3, 'X'); rig.rotation_euler = (math.radians(-90 + al), 0, 0); bpy.context.view_layer.update()
-    kr_wirbel(R, ('Spine', 'Spine1', 'Spine2', 'Neck', 'Head')); a = math.radians(al); return Vector((0, math.cos(a), math.sin(a)))
+    # Becken und Lendenwirbel heben sich mit al, der Brustkorb immer weniger: Schulterblätter, Hals und Kopf bleiben auf der Matte
+    # (sonst hebt der ganze Oberkörper als starres Brett von der Schulterkante ab)
+    for n_, f_ in (('Spine', 1.0), ('Spine1', P['bridge']['bw1']), ('Spine2', P['bridge']['bw2']), ('Neck', 0.0), ('Head', 0.0)):
+        kr_wirbel(Matrix.Rotation(math.radians(-90 + al * f_), 3, 'X'), (n_,))
+    a = math.radians(al); return Vector((0, math.cos(a), math.sin(a)))
 def bridge(ph):
     q = P['bridge']; t = max(0, min(1, ph)); reset(); kr_ruhe()
     def oberkoerper(al):
         reset(); rig.location = (0, 0, 0); u = _kr_rueckenlage(al)
         ax_ = _ach('Spine2', (1, 0, 0)); twist('Neck', q['kinn'] * .5, ax_); twist('Head', q['kinn'] * .5, ax_)    # Kinn leicht zur Brust, Hinterkopf auf der Matte
+        fl_ = 0.0     # Rumpf schräg (Becken oben): Hals beugt mit, damit Schulterblätter und Hinterkopf auf der Matte liegen (sonst trägt der Kopf, Schultern und Oberkörper heben ab)
+        for _ in range(40):     # Hinterkopf liegt auf: nicht darunter, nicht mehr als 5 mm darüber (Kinn je nach Rumpfneigung mehr oder weniger zur Brust)
+            d_ = lowg(['Head'], .5) - lowg(['Spine2', 'LeftShoulder', 'RightShoulder'], .5)
+            if -.003 <= d_ <= .005: break
+            st_ = 1.0 if d_ < -.003 else -1.0; twist('Neck', st_ * .5, ax_); twist('Head', st_ * .5, ax_); fl_ += st_
+        q['hals_plus'] = fl_
         for side, sx in (('Left', 1), ('Right', -1)):      # Arme liegen neben dem Körper, Handflächen auf der Matte
             for az in (-.14, -.1, -.06, -.02, .02):
                 aim(side + 'Arm', V(sx * .16, -1, az)); aim(side + 'ForeArm', V(sx * .08, -1, az * .5)); aim(side + 'Hand', V(sx * .04, -1, -.04)); flat(side + 'Hand', -1)
@@ -776,7 +856,8 @@ def kr_mw_rdl():
     return z
 def kr_mw_bridge():
     hl = max(v[1] for v in _welt(shoes)[_maske(shoes, ('fl',), lambda v: v.co.x > 0)]); gs = float(_kr_punkte(['Hips'])[:, 1].min())
-    return [f'Schienbein Standbein {kr_mw_schien("Left"):.0f}° gegen die Senkrechte', f'Ferse–Gesäß {(gs - hl) * 100:.0f} cm', f'Gesäß {lowg(["Hips"], .5) * 100:.1f} cm über der Matte']
+    return [f'Schienbein Standbein {kr_mw_schien("Left"):.0f}° gegen die Senkrechte', f'Ferse–Gesäß {(gs - hl) * 100:.0f} cm', f'Gesäß {lowg(["Hips"], .5) * 100:.1f} cm über der Matte',
+            f'Schulterblätter {lowg(["Spine2", "LeftShoulder", "RightShoulder"], .5) * 100:.1f} cm, Hinterkopf {lowg(["Head"], .5) * 100:.1f} cm über der Matte (Hals zusätzlich {P["bridge"].get("hals_plus", 0):.0f}° gebeugt)']
 def kr_gier(name):
     """Blickrichtung des Knochens im Grundriss (Grad; 0 = nach vorn −Y, + zur linken Körperseite)"""
     f = _ach(name, (0, -1, 0)); return math.degrees(math.atan2(f.x, -f.y))
@@ -791,3 +872,102 @@ def kr_mw_sidep():
 def kr_mw_slrdl():
     return [f'Schienbein Standbein {kr_mw_schien("Left"):.0f}°']
 for _k, _f in (('rdl', kr_mw_rdl), ('bridge', kr_mw_bridge), ('stepup', kr_mw_stepup), ('sidep', kr_mw_sidep), ('slrdl', kr_mw_slrdl)): EXS[_k]['messwerte'] = _f
+
+# Bird Dog: Vierfüßlerstand (Hände unter den Schultern, Knie unter der Hüfte, Fußrücken auf der Matte, Rücken waagerecht, Blick
+# zum Boden), dann Gegenarm und Gegenbein waagerecht strecken (Daumen oben, Ferse auf Hüfthöhe). Rumpf, Becken und Kopf bleiben
+# unverändert, Stützhand und Stützknie bleiben am Boden. Schleife: rechter Arm + linkes Bein, zurück, linker Arm + rechtes Bein.
+# ph: 0 = Vierfüßlerstand, +1 = rechter Arm und linkes Bein gestreckt, −1 = linker Arm und rechtes Bein gestreckt
+P['birddog'] = {'root': -.45, 'st': 0.0, 'hz': .03, 'bein_ab': 0.0}
+def birddog(ph):
+    q = P['birddog']; a = max(-1.0, min(1.0, ph)); t = abs(a)
+    arm_s, bein_s = ('Right', 'Left') if a >= 0 else ('Left', 'Right')
+    reset(); rig.rotation_euler = (math.radians(90), 0, 0); rig.location = (0, 0, q['root']); bpy.context.view_layer.update()
+    for n_ in ('Spine', 'Spine1', 'Spine2'): aim(n_, V(0, -1, q['st']))
+    aim('Neck', V(0, -1, q['st'])); aim('Head', V(0, -1, q['st'] - .05))      # Kopf in Verlängerung, Blick zum Boden
+    for side in ('Left', 'Right'):     # fu je Seite: Fuß so weit gestreckt, dass der Fußrücken auf der Matte liegt
+        aim(side + 'UpLeg', V(0, 0, -1)); aim(side + 'Leg', V(0, 1, 0)); aim(side + 'Foot', V(0, 1, -.12 - q.get('fu' + side[0], 0.0)))
+    if 'HL' not in q:   # Hände senkrecht unter den Schultern (hk je Seite: Hand so geneigt, dass sie aufliegt)
+        for side in ('Left', 'Right'): S_ = wpos(side + 'Arm'); q['H' + side[0]] = Vector((S_.x, S_.y, q['hz']))
+    for side, sx in (('Left', 1), ('Right', -1)):
+        ik2(side + 'Arm', side + 'ForeArm', q['H' + side[0]], (sx, .25, .2)); aim(side + 'Hand', V(0, -1, -.05 - q.get('hk' + side[0], 0.0))); flat(side + 'Hand', -1)
+    if t <= 0: return
+    # Arm: im Bogen um die Schulter von senkrecht unten nach vorn waagerecht, dabei ganz gestreckt; Hand dreht auf (Daumen oben)
+    sx = 1 if arm_s == 'Left' else -1; S_ = wpos(arm_s + 'Arm'); La = bd_armlaenge(arm_s)
+    d0 = (q['H' + arm_s[0]] - S_).normalized(); d1 = V(0, -1, 0); ax_ = d0.cross(d1).normalized(); w0 = d0.angle(d1)
+    d = Matrix.Rotation(w0 * t, 3, ax_) @ d0
+    L0 = (q['H' + arm_s[0]] - S_).length     # Abstand Schulter–Hand im Stütz
+    ik2(arm_s + 'Arm', arm_s + 'ForeArm', S_ + d * (L0 + (La * .9999 - L0) * sm((t - .3) / .4)), (sx, .25, .2))     # erst strecken, wenn die Hand frei ist
+    fa = (wpos(arm_s + 'ForeArm', True) - wpos(arm_s + 'ForeArm')).normalized(); wh = sm((t - .3) / .45)     # Finger bleiben nach vorn, bis der Arm hoch genug ist (sonst stoßen sie in die Matte)
+    aim(arm_s + 'Hand', V(0, -1, -.05 - q.get('hk' + arm_s[0], 0.0)).normalized().lerp(fa, wh)); flat(arm_s + 'Hand', -1, 1 - wh)
+    if wh > 0: kr_handruecken(arm_s, (sx, 0, 0), wh)
+    # Bein: Oberschenkel schwingt von senkrecht nach hinten waagerecht, das Knie streckt sich; der Fuß bleibt in Nullstellung
+    # (Zehen zum Boden). bein_ab: Bein am Ende leicht abwärts, damit die Ferse nicht über Hüfthöhe steigt
+    ab = math.radians(q['bein_ab']) * t; ph_ = math.radians(90) * t
+    th = Matrix.Rotation(-ab, 3, 'X') @ V(0, math.sin(ph_), -math.cos(ph_)); sh = Matrix.Rotation(-ab, 3, 'X') @ V(0, 1, 0)
+    b_ = bein_s[0]; aim(bein_s + 'UpLeg', th); aim(bein_s + 'Leg', sh)
+    aim(bein_s + 'Foot', V(0, 1, -.12 - q.get('fu' + b_, 0.0)).normalized().lerp(V(0, .05, -1), sm((t - .4) / .5)))     # Zehen erst zum Boden drehen, wenn das Knie hoch genug ist
+def bd_kalibrieren():
+    """nach vf_kalibrieren (gemeinsame Höhe): je Seite Hand und Fußrücken auf die Matte (nach dem Entspannen der Hände in pose()),
+    dann das gestreckte Bein so weit senken, dass die Ferse nicht über Hüftgelenkhöhe steigt"""
+    q = P['birddog']
+    # Knie: Das Netz ist links und rechts nicht gleich (links etwa 6 mm höher). Becken so weit senken, dass das höhere Knie
+    # höchstens 4 mm über der Matte liegt; das andere sinkt dafür ebenso weit in die weiche Matte ein
+    def st_anpassen():     # Rumpfneigung so, dass beide Stützarme fast gestreckt bis zur Hand reichen (Hände bleiben bei hz)
+        for _ in range(12):
+            pose(0); e = sum((wpos(s_ + 'Arm').z - q['hz']) - bd_armlaenge(s_) * BD_ARM for s_ in ('Left', 'Right')) / 2
+            if abs(e) < .0007: break
+            q['st'] -= e * 1.2
+    for _k in range(3):
+        if _k:
+            pose(0); kl, kr_ = lowg(['LeftLeg'], .5), lowg(['RightLeg'], .5); dk = max(kl, kr_) - .0045; q['root'] -= dk; st_anpassen()
+            print('BIRDDOG Knie links/rechts', round(kl * 100, 2), round(kr_ * 100, 2), 'cm → Becken', round(dk * 100, 2), 'cm tiefer, st', round(q['st'], 3))
+            if abs(dk) < .0005: break
+        for _ in range(10):
+            pose(0); fe_ = []
+            for side, sx in (('Left', 1), ('Right', -1)):
+                gh = lowg(HAND(side), .3); gf = lowpts(_kr_seite(sx), [shoes]); fe_.append((round(gh, 3), round(gf, 3)))
+                q['hk' + side[0]] = q.get('hk' + side[0], 0.0) + gh / .12; q['fu' + side[0]] = q.get('fu' + side[0], 0.0) + gf * 4
+            print('BIRDDOG Auflage Hand/Fuß links, rechts', fe_, 'Handneigung', round(q.get('hkL', 0), 3), round(q.get('hkR', 0), 3))
+            if all(abs(a_) < .002 and abs(b_) < .003 for a_, b_ in fe_): break
+    for _ in range(6):
+        pose(1); fe = bd_ferse('Left'); hz_ = (wpos('LeftUpLeg').z + wpos('RightUpLeg').z) / 2; L_ = (fe - wpos('LeftUpLeg')).length
+        print('BIRDDOG Ferse über Hüftgelenk', round((fe.z - hz_) * 100, 1), 'cm, Bein abwärts', round(q['bein_ab'], 1), '°')
+        if -.01 <= fe.z - hz_ <= 0: break
+        q['bein_ab'] += math.degrees(math.asin(max(-.5, min(.5, (fe.z - hz_ + .005) / L_))))
+BD_ARM = .9985     # Stützarm: Abstand Schulter–Handgelenk als Anteil der Armlänge (Ellbogen etwa 6° gebeugt)
+def bd_hand_zu():
+    """gehobene Hand: Finger locker zusammen und leicht gebeugt (je Glied etwa 8°), Daumen bleibt oben. Die Richtungen werden
+    aus der Handfläche gesetzt (Handrücken aus kr_handachsen), damit linke und rechte Hand gleich aussehen"""
+    for side, other in (('Left', 'Right'), ('Right', 'Left')):
+        w = sm((wpos(side + 'Hand').z - wpos(other + 'Hand').z - .03) / .1)
+        if w <= 0: continue
+        d_, ac_, ru_ = kr_handachsen(side); pa = -ru_     # Handfläche
+        for f, sp in (('Index', 4.0), ('Middle', 0.0), ('Ring', -4.0), ('Pinky', -8.0)):
+            b_ = Matrix.Rotation(math.radians(sp), 3, ru_ if side == 'Left' else -ru_) @ d_
+            ax_ = b_.cross(pa).normalized()
+            for i in (1, 2, 3):
+                cur = (wpos(f'{side}Hand{f}{i}', True) - wpos(f'{side}Hand{f}{i}')).normalized()
+                ziel = Matrix.Rotation(math.radians(8 * i), 3, ax_) @ b_
+                aim(f'{side}Hand{f}{i}', cur.lerp(ziel, w))
+def bd_armlaenge(s_): return (wpos(s_ + 'Arm', True) - wpos(s_ + 'Arm')).length + (wpos(s_ + 'ForeArm', True) - wpos(s_ + 'ForeArm')).length
+def bd_ferse(side):
+    """Ferse: hinterster Punkt des Schuhs der Seite (entgegen der Fußrichtung), Weltlage"""
+    fd = (wpos(side + 'ToeBase') - wpos(side + 'Foot')).normalized(); sx = 1 if side == 'Left' else -1
+    P_ = _welt(shoes); P_ = P_[(P_[:, 0] * sx) > 0]; i = int(np.argmin(P_ @ np.array(fd)))
+    return Vector(P_[i])
+def kr_mw_birddog():
+    arm_s, bein_s = ('Left', 'Right') if wpos('LeftHand').z > wpos('RightHand').z + .02 else ('Right', 'Left')     # gehobener Arm
+    hl, hr = wpos('LeftUpLeg'), wpos('RightUpLeg'); sl, sr = wpos('LeftArm'), wpos('RightArm')
+    oa = wpos(arm_s + 'ForeArm') - wpos(arm_s + 'Arm'); ua = wpos(arm_s + 'Hand') - wpos(arm_s + 'ForeArm')
+    ob_ = wpos(bein_s + 'Leg') - wpos(bein_s + 'UpLeg'); ub = wpos(bein_s + 'Foot') - wpos(bein_s + 'Leg')
+    ru = wpos('Spine2') - wpos('Hips'); fe = bd_ferse(bein_s); hz_ = (hl.z + hr.z) / 2
+    d, ac, ruck = kr_handachsen(arm_s); da = math.degrees(math.asin(max(-1, min(1, -ruck.z))))   # Handrücken zur Seite = Daumen oben (0°)
+    stz_h, stz_k = ('Left', 'Right') if arm_s == 'Right' else ('Right', 'Left')
+    return [f'Becken quer {math.degrees(math.atan2(hl.z - hr.z, hl.x - hr.x)):+.1f}° (Hüftgelenke links/rechts), Schultern quer {math.degrees(math.atan2(sl.z - sr.z, sl.x - sr.x)):+.1f}°',
+            f'Rumpf Hüfte–Brust {math.degrees(math.atan2(ru.z, -ru.y)):+.1f}° gegen die Waagerechte',
+            f'Arm {arm_s}: Oberarm {math.degrees(math.atan2(oa.z, -oa.y)):+.0f}° gegen die Waagerechte, Ellbogen {_w(oa, ua):.0f}° gebeugt, Handrücken {da:+.0f}° gegen die Seite (0 = Daumen oben)',
+            f'Bein {bein_s}: Oberschenkel {math.degrees(math.atan2(ob_.z, ob_.y)):+.0f}° gegen die Waagerechte, Knie {_w(ob_, ub):.0f}° gebeugt, Ferse {(fe.z - hz_) * 100:+.1f} cm gegen Hüftgelenkhöhe',
+            f'Stützarme: Ellbogen links {_w(wpos("LeftForeArm") - wpos("LeftArm"), wpos("LeftHand") - wpos("LeftForeArm")):.0f}°, rechts {_w(wpos("RightForeArm") - wpos("RightArm"), wpos("RightHand") - wpos("RightForeArm")):.0f}° (gehobener Arm mitgezählt), Hand vor (+) der Schulter links {(wpos("LeftArm").y - wpos("LeftHand").y) * 100:+.1f} cm, rechts {(wpos("RightArm").y - wpos("RightHand").y) * 100:+.1f} cm',
+            f'Auflage: Stützhand {stz_h} {lowg(HAND(stz_h), .3) * 100:.1f} cm, Stützknie {stz_k} {lowg([stz_k + "Leg"], .5) * 100:.1f} cm, Fußrücken {stz_k} {lowpts(_kr_seite(1 if stz_k == "Left" else -1), [shoes]) * 100:.1f} cm über der Matte']
+EXS['birddog'] = dict(pose=birddog, keys=((1, 0), (13, 0), (61, 1), (109, 1), (157, 0), (169, 0), (217, -1), (265, -1), (313, 0), (325, 0)), perframe=True,
+                      griff_kontakt=bd_hand_zu, cam=V(.77, .64, .31), cam_spiegel=163, zone=None, blatt=(1, 61, 217), bilder={'start': 0, 'ende': 1}, kopf_linie=True, messwerte=kr_mw_birddog)
