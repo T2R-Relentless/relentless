@@ -7160,5 +7160,9 @@
 "Testart": "Test type",
 "Rampentest, Ausbelastung unsicher": "Ramp test, exhaustion uncertain",
 "Rampe erkannt, beste Minute {0} W.": "Ramp detected, best minute {0} W.",
-"Aus deiner hochgeladenen Fahrt {0} erkannt: beste {1} Min. {2} W, beste Minute {3} W. Rampe erkannt, beste Minute {4} W.": "Detected from your uploaded ride {0}: best {1} min {2} W, best minute {3} W. Ramp detected, best minute {4} W."
+"Aus deiner hochgeladenen Fahrt {0} erkannt: beste {1} Min. {2} W, beste Minute {3} W. Rampe erkannt, beste Minute {4} W.": "Detected from your uploaded ride {0}: best {1} min {2} W, best minute {3} W. Ramp detected, best minute {4} W.",
+"Satzpause {0} Min., auch vor der nächsten Kraftübung. Rumpf: {1} Sek. zwischen den Sätzen, {2} Sek. davor.": "{0} min rest between sets, also before the next strength exercise. Core: {1} s between sets, {2} s before.",
+"Die Übungssequenz läuft ganz auf Zeit: Wiederholungen im passenden Tempo, ein kurzer Übergang beim Seitenwechsel und wechselnde Ausführungshinweise während der Übung. Mit {0} geht es früher weiter.": "The exercise sequence now runs fully on time: reps at the right tempo, a short transition when you switch sides and changing technique cues during the exercise. With {0} you move on earlier.",
+"Fertig – weiter": "Done – next",
+"Hinweise einstellen": "Set up cues"
 }

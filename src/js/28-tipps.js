@@ -25,6 +25,7 @@ const DYK = [
   ['tb', 'Im Winter weniger Zeit als im Sommer? Unter Einstellungen → Alltag und Planstart legst du ein Zeitbudget je Jahreszeit fest. Der Plan richtet seinen Umfang danach.', 'Zeitbudget festlegen', "dykSet('settings','tb')", () => true],
   ['age', 'Mit deinem Geburtsdatum stimmt die App die Erholung auf dein Alter ab: Ab 50 schlägt sie jede dritte Woche eine Entlastungswoche und mehr Abstand zwischen harten Einheiten vor. Ob du das übernimmst, entscheidest du.', 'Alter und Erholung', "dykSet('settings','age')", () => !(S.p && ageOf(S.p))],
   ['seq', 'Kraft- und Mobilitätsübungen laufen als Ablauf mit Tönen und Ansagen. Du musst nicht aufs Handy sehen: Die App sagt dir, wann die nächste Übung oder Satzpause beginnt.', 'Ablauf einstellen', "dykSet('settings','sq')", () => true],
+  ['sqt', 'Die Übungssequenz läuft ganz auf Zeit: Wiederholungen im passenden Tempo, ein kurzer Übergang beim Seitenwechsel und wechselnde Ausführungshinweise während der Übung. Mit „Fertig – weiter“ geht es früher weiter.', 'Hinweise einstellen', "dykSet('settings','sqh')", () => true],
   ['mob', 'Unter Mehr → Übungen findest du Mobilitätsroutinen für vor und nach der Fahrt, für Ruhetage und für den Schreibtisch.', 'Übungen ansehen', "goPg('ex')", () => true],
   ['tire', 'Unter Mehr → Werkzeuge berechnet der Reifendruckrechner einen Startwert für vorn und hinten, passend zu Gewicht, Reifenbreite, Felge und Untergrund.', 'Reifendruck berechnen', "navGo('more');goPg('tool-tire')", () => true],
   ['trace', 'In jeder Fahrtbewertung siehst du den Verlauf deiner Fahrt mit dem Zielbereich der Intervalle und darunter, wie viel Zeit du in welcher Zone warst.', 'Fahrten ansehen', "dykRides()", () => true],
@@ -62,10 +63,10 @@ const DYK = [
 ];
 /* Ziel eines Hinweises: [Unterseite, Abschnitt, Eingabefeld]. Der Knopf landet direkt am Feld, nicht nur oben auf der Seite. */
 const DYK_AT = {wx:['set-wx', 'fx-wx', '#wxQ'], hr:['set-hr', 'fx-hr', '#hrMaxI'], wf:['set-wf', null, '#wfKg'], shift:['set-ali', 'fx-shift'], ali:['set-ali', 'fx-ali'],
-  tb:['set-ali', 'fx-tb', '#fx-tb input'], vac:['set-ali', 'fx-vac', '#fx-vac input[type=date]'], age:['set-age', 'fx-age', '#bdD'], sq:['set-sq', null], theme:['set-lang', 'fx-theme'], lang:['set-lang', 'fx-lang']};
+  tb:['set-ali', 'fx-tb', '#fx-tb input'], vac:['set-ali', 'fx-vac', '#fx-vac input[type=date]'], age:['set-age', 'fx-age', '#bdD'], sq:['set-sq', null], sqh:['set-sq', null, ['#sqT-hints', '#sqT-voice']], theme:['set-lang', 'fx-theme'], lang:['set-lang', 'fx-lang']};
 function dykSet(p, k){ const at = p === 'settings' && DYK_AT[k]; if (at) { goPg('settings'); goPg(at[0]); dykFocus(at[1], at[2]); return; } goPg(p); dykFocus('fx-' + k); }
 /* Zum Abschnitt scrollen, Feld fokussieren und den Abschnitt kurz hervorheben */
-function dykFocus(id, sel){ setTimeout(() => { try { const el = id ? document.getElementById(id) : null, f = sel ? document.querySelector(sel) : null, tg = el || (f && f.closest('section')) || f;
+function dykFocus(id, sel){ setTimeout(() => { try { const el = id ? document.getElementById(id) : null, f = sel ? [].concat(sel).map(q => document.querySelector(q)).find(Boolean) || null : null, tg = el || (f && f.closest('section')) || f;
   if (tg) tg.scrollIntoView({block:'start'}); if (f) try { f.focus({preventScroll:true}); } catch (e) { elog(e); }
   if (tg) { tg.classList.add('dyk-hit'); setTimeout(() => tg.classList.remove('dyk-hit'), 1800); } } catch (e) { elog(e); } }, 80); }
 /* Woche öffnen und gleich den Bereich „Diese Woche nicht alles machbar?“ (Tage sperren, Pendeln) aufklappen */

@@ -79,11 +79,19 @@ DECODER_LAG = 0  # Abtastwerte. Mit lameenc erzeugte Dateien (22,05 kHz): Browse
                  # Die ersten 296 Dateien (24 kHz, anderer Encoder) haben im Manifest gemessene Werte und bleiben unberührt.
 
 
+# Sprechtempo aller Sätze (Piper length_scale; 1 = Modellvorgabe, kleiner = schneller).
+SCALE = 0.9
+# Englische Namen in deutschen Sätzen stehen als Lautschrift [[ … ]] im Text (VC_PRON in src/js/45-stimme.js). Der Satz wird in
+# einem Stück gesprochen: Namen getrennt und langsamer zu sprechen, zerreißt die Satzmelodie (Spracherkennung schlechter).
+# Ändert sich SCALE, müssen alle Dateien neu erzeugt werden (Dateien löschen, dann dieses Skript; der Schlüssel bleibt gleich).
+
+
 def synth(voice, text):
     import lameenc
+    from piper import SynthesisConfig
     buf = io.BytesIO()
     with wave.open(buf, 'wb') as w:
-        voice.synthesize_wav(text, w)
+        voice.synthesize_wav(text, w, syn_config=SynthesisConfig(length_scale=SCALE))
     buf.seek(0)
     with wave.open(buf, 'rb') as r:
         sr, pcm = r.getframerate(), r.readframes(r.getnframes())

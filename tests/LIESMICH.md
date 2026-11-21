@@ -38,6 +38,7 @@ Ohne Klicken (Terminal, Claude Code, GitHub-CI): `node tools/test.mjs` startet S
 | `vo2max.test.js` | F27: VO2max (Formeln, Gültigkeit, Auswahl, Trend, Sicherung, Anzeige); Rampentest am Fitness-Check erkennen (Urteil, erledigt, Vorbelegung, Gegenproben, Englisch) |
 | `elog.test.js` | Fehlerprotokoll: Erfassen, Zusammenfassen, Speichern, Anzeige; normale Nutzung erzeugt keine Einträge |
 | `uebungen-pilot.test.js` | Übungsfenster: Pilotfiguren (Felder, Bodenkontakt, Englisch), Videos für Pilot- und Kraftübungen, Rückfall auf die gezeichnete Figur mit passender Bildunterschrift |
+| `uebungssequenz.test.js` | Übungssequenz auf Zeit: Seite je Zeitpunkt und Seitenansage, Spiegelung auf Seite 2 mit Ausnahmen, Ablauf ohne Antippen bis „Geschafft“, „Fertig“ früher weiter, Aussprache englischer Namen, Hinweis-Zeitplan, Satz- und Rumpfpausen, Englisch, Altdaten |
 
 Die App läuft dabei in einem abgeschotteten Rahmen: eigener Speicher (deine echten Daten bleiben unberührt), angehaltene
 Uhr (Mittwoch, 11.11.2026, 9:30), reproduzierbarer Zufall, keine Aufrufe ins Internet, Downloads werden nur mitgeschrieben.

@@ -3,14 +3,43 @@
    und unter audio/voice/<sprache>/<hash>.mp3 mit audio/voice/manifest.json ausgeliefert. Auf dem Gerät wird nichts
    synthetisiert, solange eine Datei vorhanden ist; sonst spricht die Systemstimme denselben Satz (Rückfall).
    Abgespielt wird über den AudioContext der Pieptöne (gleiche Lautstärke, Mischen mit Musik, audioSession „ambient“).
-   Schlüssel je Satz: FNV-1a-32 über „<stimme>|<sprache>|<text>“, identisch in generate.py. */
+   Schlüssel je Satz: FNV-1a-32 über „<stimme>|<sprache>|<text>“ (Text mit Lautschrift, vcTxt), identisch in generate.py. */
 const VC_VOICE = {"de": "piper:de_DE-thorsten-high", "en": "piper:en_GB-cori-high"};
 let vcMan = null, vcManP = null, vcSrc = null;
 const vcBuf = new Map(), vcBad = new Set();
 const vcLog = (t, x) => { try { (window.__vcLog = window.__vcLog || []).push({t, x, at:Date.now()}); if (window.__vcLog.length > 600) window.__vcLog.shift(); } catch (e) { elog(e); } };
 function vcHash(s){ let h = 0x811c9dc5; const b = new TextEncoder().encode(s); for (let i = 0; i < b.length; i++) { h ^= b[i]; h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, '0'); }
 const vcL = en => en ? 'en' : 'de';
-const vcKey = (t, en) => VC_VOICE[vcL(en)] ? vcHash(`${VC_VOICE[vcL(en)]}|${vcL(en)}|${t}`) : '';
+/* Aussprache englischer Übungsnamen in deutschen Ansagen – die einzige Tabelle dafür: [Lautschrift (espeak-ng, Englisch),
+   eingedeutschte Schreibweise]. Die natürliche Stimme bekommt die Lautschrift als [[ … ]] (Piper; Namen langsamer, siehe
+   tools/tts/generate.py), die Systemstimme die eingedeutschte Schreibweise. Der Schlüssel der Sprachdatei wird über den Text
+   mit Lautschrift gebildet (vcKey): Ändert sich eine Aussprache, entsteht eine neue Datei, der Cache greift nicht. */
+const VC_PRON = {
+  "Bulgarian Split Squat":["bʊlɡˈɛːriən splˈɪt skwˈɔt", "Ballgährien Splitt Squott"],
+  "Split Squat":["splˈɪt skwˈɒt", "Splitt Squott"],
+  "Dead Bug":["dˈɛd bˈʌɡ", "Däd Bagg"],
+  "Pallof Press":["pˈalɒf pɹˈɛs", "Pällof Press"],
+  "Plank":["plˈaŋk", "Plänk"],
+  "Bird Dog":["bˈɜːd dˈɔk", "Börd Dogg"],
+  "Clamshell":["klˈamʃɛl", "Klämschell"],
+  "Couch Stretch":["kˈaʊtʃ stɹˈɛtʃ", "Kautsch Strettsch"],
+  "Glute Bridge":["ɡlˈuːt brˈɪdʒ", "Gluht Britsch"],
+  "Good Morning":["ɡˈʊd mˈɔːnɪŋ", "Gudd Mohrning"],
+  "Hamstring Floss":["hˈæmstrɪŋ flˈɔs", "Hämmßtring Floss"],
+  "Hip Thrust":["hˈɪp θɹˈast", "Hipp Thrasst"],
+  "Open Book":["ˈəʊpən bˈʊk", "Ohpen Buck"],
+  "Step-ups":["stˈɛp ˈaps", "Stepp-apps"],
+  "Thread the Needle":["θrˈɛd ðə nˈiːdəl", "Fredd se Nihdl"],
+  "World's Greatest Stretch":["wˈɜːldz ɡɹˈeɪtɪst stɹˈɛtʃ", "Wörlds Grehtist Strettsch"],
+  "Rock-Back":["rˈɔkbˈɛk", "Rock-Bäck"],
+  "Dislocates":["dˈɪsloːkeːts", "Dislo-keits"]
+};
+let vcPrRe = null;
+function vcPron(t, sys){ t = String(t || ''); if (!vcPrRe) vcPrRe = new RegExp('(?<![\\wÄÖÜäöüß])(' + Object.keys(VC_PRON).sort((a, b) => b.length - a.length).map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![\\wÄÖÜäöüß])', 'g');
+  return t.replace(vcPrRe, m => sys ? VC_PRON[m][1] : '[[ ' + VC_PRON[m][0] + ' ]]'); }
+/* Text, wie ihn die natürliche Stimme spricht (Deutsch mit Lautschrift; Englisch unverändert) */
+const vcTxt = (t, en) => en ? String(t || '') : vcPron(t, false);
+const vcKey = (t, en) => VC_VOICE[vcL(en)] ? vcHash(`${VC_VOICE[vcL(en)]}|${vcL(en)}|${vcTxt(t, en)}`) : '';
 /* Nur über http(s) (Netlify, Artifact); als lokale Datei gibt es keine Sprachdateien */
 const vcWeb = () => { try { return /^https?:$/.test(location.protocol); } catch (e) { elog(e); return false; } };
 const vcOn = () => { const c = sqCfg(); return c.voice && c.vs !== 'sys'; };
@@ -65,7 +94,7 @@ function vcPlay(t, en, vol){
 function vcStop(){ const L = vcSrc; vcSrc = null; if (L) { L.forEach(s => { try { s.stop(); } catch (e) { elog(e); } }); vcLog('stop', ''); } }
 /* Katalog aller Sätze, die die Ansage-Logik sprechen kann (Build: build/tts/catalog.js, Test f28) */
 function sqCatalog(){
-  const de = new Set(), en = new Set(), add = p => { if (p && p[0]) vcSegs(p[0], false).forEach(x => de.add(x)); if (p && p[1]) vcSegs(p[1], true).forEach(x => en.add(x)); };
+  const de = new Set(), en = new Set(), add = p => { if (p && p[0]) vcSegs(p[0], false).forEach(x => de.add(vcTxt(x, false))); if (p && p[1]) vcSegs(p[1], true).forEach(x => en.add(vcTxt(x, true))); };
   const S0 = S.p, M0 = mobMap, T0 = strMap;
   try { if (!S.p) S.p = {start:'catalog'};
     const ses = [];

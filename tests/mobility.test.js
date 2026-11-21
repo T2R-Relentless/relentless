@@ -20,10 +20,11 @@ test('Englisch für alle neuen Übungstexte vorhanden', async () => {
 });
 
 test('Routinen: vier Arten mit je drei Varianten, Dauer passend, fachlich (dynamisch vorher, halten danach)', async () => {
-  const a = await boot(), RT = a.$('MOB_RT'), cfg = a.$('sqCfg()'), out = {};
+  const a = await boot(), RT = a.$('MOB_RT'), out = {};
   eq(Object.keys(RT).sort(), ['office', 'post', 'pre', 'rest']);
   for (const [k, r] of Object.entries(RT)) { eq(r.v.length, 3, k + ': drei Varianten');
-    out[k] = r.v.map((v, i) => { const d = v.map(([, , dose]) => a.w.sqDose(dose)); const sec = d.reduce((q, x) => q + a.w.sqEst(x) * x.sets, 0) + (v.length - 1) * cfg.tr;
+    /* Dauer wie im Ablauf: Tempo je Übung, Übergang beim Seitenwechsel, Pausen (sqTotal), ohne Vorlauf */
+    out[k] = r.v.map((v, i) => { const d = v.map(([id, , dose]) => a.w.sqDose(dose, id)), sec = a.$(`(() => { rtSel = mobRt('${k}', ${i}); const se = sqSession('rt', -1), c = {...sqCfg(), voice:false}; return sqTotal(se, c).s - sqSteps(se, c)[0].dur / 1000; })()`);
       if (k === 'pre') ok(d.every(x => !x.sec), `pre ${i}: nur dynamische Übungen, kein Halten`);
       if (k === 'post' || k === 'rest') d.filter(x => x.sec).forEach(x => ok(x.sec >= 30 && x.sec <= 60, `${k} ${i}: Halten 30–60 s (${x.sec})`));
       const min = Math.round(sec / 60); ok(min >= r.m * .6 && min <= r.m * 1.5, `${k} Variante ${i}: etwa ${min} Min. statt ${r.m}`); return min; }); }
