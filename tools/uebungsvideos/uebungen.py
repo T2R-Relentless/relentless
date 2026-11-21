@@ -12,6 +12,7 @@ for _kr_i, _kr_a in enumerate(sys.argv):
         if _kr_v and _kr_v != 'blatt' and not all(_kr_t.isdigit() for _kr_t in _kr_v.split(',')): KR_BILDNAME = _kr_v.split(','); sys.argv[_kr_i] = 'still=1'
 _kr_args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 if _kr_args and _kr_args[0] in ('squat', 'stepup') and not any(_kr_a.startswith('kinn=') for _kr_a in _kr_args): sys.argv.append('kinn=1')   # Blick schräg von vorn: Kinnmitte ohne Linie wie bei pallof
+if _kr_args and _kr_args[0] == 'bridge' and not any(_kr_a.startswith('gkr=') for _kr_a in _kr_args): sys.argv.append('gkr=.18')   # Glute Bridge: Knie 105–125° gebeugt, breitere Glättung am Knie (Regler aus koerper_teil.py, Standard .12) gegen die Kerbe in der Kniekehle
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'basis_teil.py')).read())
 from mathutils import Vector, Matrix
 import bmesh
@@ -545,7 +546,7 @@ if KR_GERAET.get(EX) or cfg.get('hanteln'):
 xs = [p.x for p in pts]; ys = [p.y for p in pts]
 floor = bpy.data.objects.new('mat', bpy.data.meshes.new('mat')); sc.collection.objects.link(floor)
 g = bmesh.new(); bmesh.ops.create_cube(g, size=1); g.to_mesh(floor.data); g.free()
-floor.scale = (max(xs) - min(xs) + .24, max(ys) - min(ys) + .3, .035); floor.location = ((max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, -.0175)
+floor.scale = (max(xs) - min(xs) + .24 + 2 * cfg.get('matte_rand', 0), max(ys) - min(ys) + .3 + 2 * cfg.get('matte_rand', 0), .035); floor.location = ((max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, -.0175)
 setmat(floor, toon('mat', srgb('#cfdde2'), srgb('#b9cbd1')))
 for _kr_g in KR_GERAET.get(EX, ()):
     if _kr_g['art'] == 'wand':   # Matte endet an der Wandfläche (die Person steht auf der +Y-Seite der Wand)

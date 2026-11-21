@@ -217,6 +217,12 @@ def kr_blickwinkel():
     """Höhenwinkel (Grad) der Linie Ohr → Auge in der Körpermittelebene (Person schaut nach −Y): + nach oben, − nach unten"""
     eg = bm.vertex_groups.get('ears'); mk = _maske(bm, ('ohr',), lambda v: any(g.group == eg.index and g.weight > .5 for g in v.groups))
     f = Vector(_welt(eyes).mean(axis=0)) - Vector(_welt(bm)[mk].mean(axis=0)); return math.degrees(math.atan2(f.z, -f.y)), Vector(_welt(eyes).mean(axis=0))
+def kopf_kontur(von='fuss'):
+    """Kopf über die Kontur: Mittelpunkt aller Kopfpunkte (Netz) gegen die Gerade Fuß–Schulter (Mitte der Fußgelenke → Mitte der
+    Schultergelenke; von='huefte': Hüfte–Schulter, wenn der Körper in der Hüfte abknickt). Gibt den senkrechten Versatz (Vektor, m) zurück."""
+    Hc = Vector(_kr_punkte(['Head'], .5).mean(axis=0)); S_ = (wpos('LeftArm') + wpos('RightArm')) / 2
+    A = (wpos('LeftFoot') + wpos('RightFoot')) / 2 if von == 'fuss' else (wpos('LeftUpLeg') + wpos('RightUpLeg')) / 2
+    t = (S_ - A).normalized(); d = Hc - A; return d - t * d.dot(t)
 def kopf_hinweise():
     w = kopf_linie(); z = []
     if abs(w) >= 10: z.append(f'Kopf – Ohr {abs(w):.0f}° {"vor bzw. unter" if w > 0 else "hinter bzw. über"} der Linie Hüfte–Schulter (soll in Verlängerung des Rumpfs liegen)')
@@ -280,6 +286,11 @@ def hantel_durchdringung():
             if d.min() < -.005: z.append(f'Durchdringung – {ob.name} steckt bis {-d.min() * 100:.1f} cm in {nm}')
             elif d.min() < globals().get('cfg', {}).get('hantel_abstand', .02) and nm.startswith(('Oberschenkel', 'Unterschenkel')): z.append(f'Abstand – {ob.name} nur {d.min() * 100:.1f} cm von {nm}')
     return z
+def rumpf_oberschenkel(side='Left'):
+    """kleinster Abstand (m) der Bauch- und Brustfläche (Knochen Spine, Spine1) zur Oberfläche des Oberschenkels der Seite
+    (Achse Hüfte–Knie mit 7,5 cm Halbmesser); < 0: der Oberschenkel dringt in den Rumpf ein"""
+    P_ = _kr_punkte(['Spine', 'Spine1'], .5); A = np.array(wpos(side + 'UpLeg')); B_ = np.array(wpos(side + 'Leg')); d = B_ - A
+    u = np.clip(((P_ - A) @ d) / d.dot(d), 0, 1); return float((np.linalg.norm(P_ - (A + np.outer(u, d)), axis=1) - .075).min())
 def messen(fr, kamera=None):
     """alle Hinweise für das aktuelle Bild als Textzeilen"""
     if any(a_ == 'winkel=1' for a_ in args): print('WINKEL', fr, {k: round(v) for k, v in gelenke().items()})   # Prüfhilfe: alle Winkel
@@ -290,6 +301,10 @@ def messen(fr, kamera=None):
     if _kr_quader(): z += kr_hinweise()
     if _kr_hanteln(): z += hand_hinweise() + hantel_durchdringung()
     if globals().get('cfg', {}).get('kopf_linie'): z += kopf_hinweise()
+    if globals().get('cfg', {}).get('messwerte'): z += [f'Messwert – {m}' for m in cfg['messwerte']()]
+    if globals().get('cfg', {}).get('rumpf_bein'):
+        g_ = rumpf_oberschenkel(); print('MESSWERT Bild', fr, 'Rumpf–Oberschenkel links', round(g_ * 100, 1), 'cm')
+        if g_ < .005: z.append(f'Durchdringung – Rumpf und Oberschenkel links: {"Abstand nur" if g_ >= 0 else "dringen"} {abs(g_) * 100:.1f} cm{"" if g_ >= 0 else " ineinander"}')
     lw = low()
     if lw < -.02: z.append(f'Auflage – tiefster Punkt {lw * 100:.1f} cm unter der Matte')
     return [f'Bild {fr}: {x}' for x in z]

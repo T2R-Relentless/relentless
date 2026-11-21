@@ -1,4 +1,4 @@
-/* Übungssequenz auf Zeit (v220): Seite je Zeitpunkt, Spiegelung, Ablauf ohne Antippen, „Fertig“ früher weiter,
+/* Übungssequenz auf Zeit (v221): Seite je Zeitpunkt, Spiegelung, Ablauf ohne Antippen, „Fertig“ früher weiter,
    Aussprache, Hinweis-Zeitplan, Pausen, Englisch, Altdaten. Erwartungen aus der Fachregel vom 21.11.2026. */
 R.file = 'uebungssequenz';
 const UQ_KINDS = ['tech', 'base', 'build', 'erh', 'leicht'];
@@ -179,7 +179,7 @@ test('Englisch: Ablauf, Startbild, Einstellungen, Hinweis und Neuigkeiten ohne f
   for (const {tag, se} of uqAll(a)) a.w.sqSays(se, cfg).forEach(p => { if (/\b(links|rechts|Seite|Satz|Wiederholungen|Bein|Jetzt|Los|Noch)\b|[äöüß]/.test(p[1])) de.add(tag + ': ' + p[1]); });
   eq([...de].slice(0, 6), [], 'englische Ansagen');
   const D = a.$("DYK.find(x => x[0] === 'sqt')"), has = t => a.$(`I18N[iNorm(${JSON.stringify(t)}).k] != null || trS(${JSON.stringify(t)}) !== ${JSON.stringify(t)}`);
-  ok(D && has(D[1]) && has(D[2]), 'Hinweis „Wusstest du schon?“ auf Englisch'); ok(a.$("(WN_DATA['220'] || []).every(x => x.de && x.en && x.en !== x.de) && (WN_DATA['220'] || []).length > 0"), 'Neuigkeiten 220 auf Englisch');
+  ok(D && has(D[1]) && has(D[2]), 'Hinweis „Wusstest du schon?“ auf Englisch'); ok(a.$("(WN_DATA['221'] || []).every(x => x.de && x.en && x.en !== x.de) && (WN_DATA['221'] || []).length > 0"), 'Neuigkeiten 221 auf Englisch');
   a.noErrors();
 });
 
