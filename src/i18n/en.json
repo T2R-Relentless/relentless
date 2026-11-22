@@ -7168,5 +7168,9 @@
 "Satzpause {0} Min., auch vor der nächsten Kraftübung. Rumpf: {1} Sek. zwischen den Sätzen, {2} Sek. davor.": "{0} min rest between sets, also before the next strength exercise. Core: {1} s between sets, {2} s before.",
 "Die Übungssequenz läuft ganz auf Zeit: Wiederholungen im passenden Tempo, ein kurzer Übergang beim Seitenwechsel und wechselnde Ausführungshinweise während der Übung. Mit {0} geht es früher weiter.": "The exercise sequence now runs fully on time: reps at the right tempo, a short transition when you switch sides and changing technique cues during the exercise. With {0} you move on earlier.",
 "Fertig – weiter": "Done – next",
-"Hinweise einstellen": "Set up cues"
+"Hinweise einstellen": "Set up cues",
+"Takt und Zählen bei Wiederholungen": "Tempo and counting for repetitions",
+"Bei Übungen mit Wiederholungen gibt die Sequenz den Takt vor: Töne und kurze Worte wie „runter“ und „hoch“ zeigen das Tempo, dazu zählt sie mit und sagt die letzten drei an. Abschalten lässt sich das in den Einstellungen der Sequenz.": "For exercises with repetitions the sequence sets the pace: tones and short words like “down” and “up” show the tempo, it counts along and announces the last three. You can switch this off in the sequence settings.",
+"Takt einstellen": "Set up tempo",
+"Der Takt ist eine Orientierung. Fühlt er sich nicht gut an, mach in deinem eigenen Tempo weiter.": "The tempo is a guide. If it does not feel right, carry on at your own pace."
 }

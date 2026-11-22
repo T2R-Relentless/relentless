@@ -1,4 +1,4 @@
-/* Übungssequenz auf Zeit (v221): Seite je Zeitpunkt, Spiegelung, Ablauf ohne Antippen, „Fertig“ früher weiter,
+/* Übungssequenz auf Zeit (v221, Takt v222): Seite je Zeitpunkt, Spiegelung, Ablauf ohne Antippen, „Fertig“ früher weiter,
    Aussprache, Hinweis-Zeitplan, Pausen, Englisch, Altdaten. Erwartungen aus der Fachregel vom 21.11.2026. */
 R.file = 'uebungssequenz';
 const UQ_KINDS = ['tech', 'base', 'build', 'erh', 'leicht'];
@@ -208,4 +208,43 @@ test('Angezeigte Minuten = Dauer der Sequenz (Kraft plus 10 Min. Aufwärmen), au
     for (const k of Object.keys(a.$('MOB_RT'))) for (const i of [0, 1, 2]) { const m = a.$(`mobRt('${k}', ${i}).m`), s = a.$(`(() => { rtSel = mobRt('${k}', ${i}); return sqTotal(sqSession('rt', -1), sqCfg()).s; })()`);
       if (m !== r5(s, 0)) bad.push(`${k} ${i}/${tr}s: ${m} Min. statt ${r5(s, 0)}`); } }
   a.$('rtSel = null'); eq(bad.slice(0, 8), []); a.noErrors();
+});
+
+/* Takt bei Wiederholungen (v222, Fachregel Takt 21.11.2026) */
+test('Takt: Ton je Phase im Tempo der Übung, Zählung je Seite mit „noch drei, noch zwei, die letzte“', async () => {
+  const a = await boot(); makePlan(a, SCEN[2].d); const cfg = uqCfg(a), bad = [];
+  const st = a.w.sqSteps(uqStrSe(a, 'tech', true), cfg); a.w.sqTipPlan(st);
+  st.filter(s => s.t === 'ex' && s.reps && a.w.sqBeatOf(s.d)).forEach((s, k) => {
+    const sch = a.w.sqSched(s, false, cfg), b = a.w.sqBeatOf(s.d), tp = a.$('sqTp')(s.d) * 1000, U = s.d.side && !s.two ? 2 : 1, N = +String(s.d.reps).split(/[–-]/).pop();
+    const segs = s.two ? [s.prep, s.prep + s.per + s.sw] : [s.prep];
+    segs.forEach(a0 => { const k1 = b.up ? 'bh' : 'bl', low = sch.filter(x => (x.k === k1 || x.k === 'bs') && x.at >= a0 && x.at < a0 + N * U * tp && !((x.at - a0) % tp)).map(x => x.at);
+      if (sch.some(x => x.k === (b.up ? 'bl' : 'bh') && x.at >= a0 && x.at < a0 + N * U * tp && !((x.at - a0) % tp))) bad.push(`${s.id} #${k}: Tonhöhe zu Phase 1 vertauscht`);
+      if (low.length < N * U - 2) bad.push(`${s.id} #${k}: nur ${low.length} von ${N * U} Takttönen`);
+      const says = sch.filter(x => x.tk && x.say && x.at >= a0 - 300 && x.at < a0 + N * U * tp).map(x => x.say[0]);
+      if (!says.includes('Die letzte.') || !says.includes('Noch zwei.')) bad.push(`${s.id} #${k}: Countdown fehlt (${says.join(' ')})`);
+      if (!b.m && s.d.reps.length < 3 && !says.some(x => x === 'Zwei.')) bad.push(`${s.id} #${k}: Zählung fehlt`); });
+    if (sch.some(x => x.k === 'tick' && x.at > s.dur - 3500)) bad.push(`${s.id} #${k}: 3-2-1 trotz Takt`); });
+  eq(bad.slice(0, 8), []); a.noErrors();
+});
+
+test('Takt weicht aus: kein Taktwort über einer Ansage oder einem festen Ton, in allen Einheiten', async () => {
+  const a = await boot(); makePlan(a, SCEN[2].d); const cfg = uqCfg(a), bad = [], talk = a.$('sqTalk'), T = a.$('SQ_TONES');
+  for (const {tag, se} of uqAll(a)) { const st = a.w.sqSteps(se, cfg); a.w.sqTipPlan(st);
+    st.forEach((s, k) => { if (s.t !== 'ex') return; const sch = a.w.sqSched(s, false, cfg), says = sch.filter(x => x.k === 'say'), tones = sch.filter(x => T.includes(x.k)).map(x => x.at);
+      says.forEach(x => { if (!x.tk) return; const e = x.at + talk(x.say);
+        if (says.some(y => y !== x && y.at < e && y.at + talk(y.say) > x.at)) bad.push(`${tag} #${k} ${s.id}: „${x.say[0]}“ überlappt eine Ansage`);
+        if (tones.some(t => t >= x.at - 500 && t < e + 500)) bad.push(`${tag} #${k} ${s.id}: „${x.say[0]}“ am Ton`); }); }); }
+  eq(bad.slice(0, 8), []); a.noErrors();
+});
+
+test('Takt abschaltbar, nicht bei Übungen auf Zeit; Anzeige „3 / 10“; Hinweis führt zum Schalter', async () => {
+  const a = await boot(); makePlan(a, {...SCEN[2].d, strPlace:'home'}); a.$("S.p.strPlace = 'home'; S.d.strPlace = 'home'; render();");
+  const off = {...uqCfg(a), takt:false}, st = a.w.sqSteps(uqStrSe(a, 'tech', true), off), bt = x => ['bl', 'bh', 'bs'].includes(x.k);
+  ok(st.every(s => s.t !== 'ex' || !a.w.sqSched(s, false, off).some(bt)), 'aus: kein Takt');
+  const on = uqCfg(a); ok(a.w.sqSteps(uqStrSe(a, 'tech', true), on).every(s => s.t !== 'ex' || !s.d.sec || !a.w.sqSched(s, false, on).some(bt)), 'kein Takt bei Übungen auf Zeit');
+  const i = +a.$('Object.keys(strMap)[0]'); a.w.sqOpen('str', i); a.$('sqGo()'); const go = uqClock(a);
+  go(a.$('sq.steps[0].dur') + 500); go(a.$('sq.steps[1].prep') + a.$('sqTp')(a.$('sq.steps[1].d')) * 2000 + 600);
+  eq(a.f.contentDocument.getElementById('sqRepN').textContent.split(' / ')[0], '3', 'Anzeige zeigt Wiederholung 3');
+  a.$('sqClose()'); const D = a.$("DYK.find(x => x[0] === 'sqk')"); ok(D, 'Hinweis vorhanden'); a.page(null); a.$(`dykGo(${JSON.stringify(D[3])})`); await a.tick(200);
+  const f = a.f.contentDocument.activeElement; eq(f && f.id, 'sqT-takt', 'Schalter hat den Fokus'); a.noErrors();
 });
