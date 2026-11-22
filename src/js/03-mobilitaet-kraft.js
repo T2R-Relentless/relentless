@@ -37,7 +37,7 @@ Object.assign(EXI, {
     s:['Rückenlage, beide Füße am Boden. Lege den rechten Knöchel auf das linke Knie.', 'Greife hinter den linken Oberschenkel und ziehe ihn zur Brust.', 'Das rechte Knie drückt leicht nach außen. Du spürst die Dehnung im rechten Gesäß.', '45 Sekunden halten, dann Seite wechseln.'],
     f:['Kopf und Schultern heben ab. Kopf bleibt am Boden, notfalls ein Band zu Hilfe nehmen.', 'Zu viel Druck auf das Knie. Sanft dosieren.'],
     v:'', r:'Das Gesäß arbeitet beim Treten viel und verspannt leicht. Lockerheit hier beugt Hüft- und Rückenbeschwerden vor.'},
-  birddog:{t:'Bird Dog', cap:['Start: Vierfüßlerstand', 'Gegenarm und Gegenbein strecken'], m:'Rumpf, Rückenstrecker, Gesäß',
+  birddog:{t:'Bird Dog', cap:['Start: Vierfüßlerstand, Rücken gerade', 'Gegenarm und Gegenbein waagerecht strecken'], m:'Rumpf, Rückenstrecker, Gesäß',
     s:['Vierfüßlerstand, Rücken gerade, Bauch leicht angespannt.', 'Strecke den rechten Arm nach vorn und das linke Bein nach hinten, bis beide waagerecht sind.', '3 Sekunden halten, ohne dass das Becken kippt.', 'Zurück und Seite wechseln. 8 Wiederholungen pro Seite.'],
     f:['Das Becken dreht auf. Stell dir ein Glas Wasser auf dem unteren Rücken vor.', 'Hohlkreuz, weil das Bein zu hoch geht. Nur bis zur Waagerechten.'],
     v:'Schwerer: Ellbogen und Knie unter dem Körper zusammenführen, dann wieder strecken.', r:'Trainiert die Rumpfspannung, die das Becken auf dem Sattel ruhig hält.'},

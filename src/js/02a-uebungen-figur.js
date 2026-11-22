@@ -154,13 +154,15 @@ function exBThread(ph){
 
 /* ---------- Übungsvideos: gerenderte 3D-Figur (MakeHuman, CC0; in Blender animiert) für Rumpf-, Mobilitäts- und Kraftübungen ----------
    Dateien: public/img/uebungen/<id>.mp4 (Endlosschleife) und <id>.jpg (Startbild für Kacheln und als Vorschaubild).
-   h = Zeitpunkt (s) der Endposition, p = Zeitfenster (s), in dem das Video Phase 1 zeigt (für die Beschriftung unter dem Bild).
+   h = Zeitpunkt (s) der Endposition, p = Zeitfenster (s), in denen das Video Phase 1 zeigt (für die Beschriftung unter dem Bild;
+   Paare von Anfang und Ende, bei Übungen mit beiden Seiten in einer Schleife mehrere).
    Lässt sich ein Video oder Bild nicht laden (z. B. offline: der Service Worker speichert Videos nicht), erscheint die
    gezeichnete Figur. Blockiert das Gerät das automatische Abspielen (z. B. Stromsparmodus), bekommt das Video Bedienelemente. */
 const EXVID = {deadbug:{h:1.92, p:[1.04, 2.79]}, clam:{h:1.83, p:[1, 2.67]}, pallof:{h:1.83, p:[1, 2.67]},
   hip9090:{h:2.17, p:[1.17, 3.17]}, openbook:{h:2.29, p:[1.25, 3.33]}, thread:{h:2.92, p:[1.58, 4.25]},
   squat:{h:3, p:[1.5, 4.5]}, bss:{h:3, p:[1.5, 4.5]}, calf:{h:3, p:[1.5, 4.5]}, plank:{h:3.92, p:[1.42, 5.92]},
-  rdl:{h:3, p:[1.5, 4.5]}, slrdl:{h:3, p:[1.5, 4.5]}, stepup:{h:3, p:[1.5, 4.5]}, bridge:{h:3, p:[1.5, 4.5]}, sidep:{h:3.92, p:[1.42, 5.92]}};
+  rdl:{h:3, p:[1.5, 4.5]}, slrdl:{h:3, p:[1.5, 4.5]}, stepup:{h:3, p:[1.5, 4.5]}, bridge:{h:3, p:[1.5, 4.5]}, sidep:{h:3.92, p:[1.42, 5.92]},
+  birddog:{h:3.54, p:[1.54, 5.54, 8.04, 12.04]}, thrust:{h:3, p:[1.5, 4.5]}};   /* Bird Dog: beide Seiten in einer Schleife, Phase 1 zweimal */
 const exVidBad = {};
 const exVidOk = id => !!EXVID[id] && !exVidBad[id];
 const exRed = () => sqReduced();
@@ -181,6 +183,7 @@ function exVidFail(el){
 /* Video starten; lehnt der Browser das ab, bekommt es Bedienelemente zum Antippen */
 function exVidPlay(v){ try { const pr = v.play(); if (pr && pr.catch) pr.catch(() => { v.controls = true; }); } catch (e) { elog(e); v.controls = true; } }
 /* Videos mit dem Übungsfenster abgleichen: angetippter Schritt hält das Video in dessen Phase an, Beschriftung folgt dem Bild */
+function exVidPhase(c, t){ for (let i = 0; i + 1 < c.p.length; i += 2) if (t >= c.p[i] && t < c.p[i + 1]) return 1; return 0; }
 function exVidSync(){
   document.querySelectorAll('video[data-exv]').forEach(v => {
     const c = EXVID[v.dataset.exv]; if (!c) return;
@@ -188,7 +191,7 @@ function exVidSync(){
     if (hold) { const t = hold.ph ? c.h : 0; if (!v.paused) v.pause(); if (Math.abs(v.currentTime - t) > .04) { try { v.currentTime = t; } catch (e) { elog(e); } } v._held = 1; }
     else if (v._held) { v._held = 0; if (!exRed()) exVidPlay(v); }
     else if (v.paused && !v._tried && !exRed() && v.readyState >= 2) { v._tried = 1; exVidPlay(v); }   /* Autoplay blockiert: einmal selbst starten */
-    const k = hold ? hold.ph : (v.currentTime >= c.p[0] && v.currentTime < c.p[1] ? 1 : 0);
+    const k = hold ? hold.ph : exVidPhase(c, v.currentTime);
     const box = v.closest('.exanim'); if (box) box.querySelectorAll('[data-ph]').forEach(x => x.classList.toggle('on', (k >= .5) === (x.dataset.ph === '1')));
   });
 }

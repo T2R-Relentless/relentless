@@ -2,7 +2,7 @@
 R.file = 'uebungen-pilot';
 const PILOT = ['clam', 'deadbug', 'pallof', 'hip9090', 'openbook', 'thread'];
 /* Kraftübungen mit Video, aber ohne gegliederte Felder (q, a, b …) */
-const KRAFT = ['squat', 'bss', 'calf', 'plank', 'rdl', 'slrdl', 'stepup', 'bridge', 'sidep'];
+const KRAFT = ['squat', 'bss', 'calf', 'plank', 'rdl', 'slrdl', 'stepup', 'bridge', 'sidep', 'birddog', 'thrust'];
 
 test('Pilotübungen: Animation, gegliederte Felder, s aus b abgeleitet, Ausschnitt', async () => {
   const a = await boot(), bad = [];
@@ -121,6 +121,8 @@ test('Übungsvideos: Dateien vorhanden, Fenster zeigt Video, Schritt hält es an
     ok(r.ok && n > 5000 && n < 400000, `${id}.${ext} vorhanden und klein genug (${n} Bytes)`);
     const c = a.$(`EXVID['${id}']`); ok(c.h > c.p[0] && c.h < c.p[1], `${id}: Endposition liegt im Fenster der Phase 1`);
   }
+  /* Bird Dog zeigt beide Seiten in einer Schleife: Phase 1 (gestreckt) zweimal */
+  eq([1, 3.5, 7, 10, 13].map(t => a.$(`exVidPhase(EXVID.birddog, ${t})`)), [0, 1, 0, 1, 0], 'Bird Dog: Beschriftung „gestreckt“ auf beiden Seiten');
   a.$(`openEx('deadbug')`);
   ok(a.$(`!!document.querySelector('.exov video[data-exv="deadbug"][muted][playsinline][loop]')`), 'Video im Übungsfenster, stumm und ohne Vollbild');
   ok(a.$(`!document.querySelector('.exov .exbleg')`) && /Bewegungsablauf vereinfacht/.test(a.text()), 'keine Zonen-Legende, passender Hinweistext');
@@ -130,7 +132,7 @@ test('Übungsvideos: Dateien vorhanden, Fenster zeigt Video, Schritt hält es an
   ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="deadbug"]')`) && a.$(`exVidOk('deadbug')`) === false, 'fällt das Video aus, erscheint die gezeichnete Figur');
   a.$(`delete exVidBad.deadbug; closeEx()`);
   ok(a.$(`(exLibrary().match(/<img class="exvid"/g) || []).length`) === ids.length, 'Übungsübersicht zeigt die Startbilder');
-  a.$(`openEx('thrust')`); ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="thrust"]')`), 'andere Übungen unverändert'); a.$('closeEx()');
+  a.$(`openEx('catcow')`); ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="catcow"]')`), 'andere Übungen unverändert'); a.$('closeEx()');
   await a.w.i18nLoad(); ok(a.$(`I18N[iNorm('Die Animation zeigt den Bewegungsablauf vereinfacht.').k] != null`), 'Englisch für den Hinweistext');
   a.noErrors();
 });
