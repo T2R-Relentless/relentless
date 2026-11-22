@@ -998,3 +998,223 @@ def kr_mw_birddog():
             f'Auflage: Stützhand {stz_h} {lowg(HAND(stz_h), .3) * 100:.1f} cm, Stützknie {stz_k} {lowg([stz_k + "Leg"], .5) * 100:.1f} cm, Fußrücken {stz_k} {lowpts(_kr_seite(1 if stz_k == "Left" else -1), [shoes]) * 100:.1f} cm über der Matte']
 EXS['birddog'] = dict(pose=birddog, keys=((1, 0), (13, 0), (61, 1), (109, 1), (157, 0), (169, 0), (217, -1), (265, -1), (313, 0), (325, 0)), perframe=True,
                       griff_kontakt=bd_hand_zu, cam=V(.77, .64, .31), cam_spiegel=163, zone=None, blatt=(1, 61, 217), bilder={'start': 0, 'ende': 1}, kopf_linie=True, messwerte=kr_mw_birddog)
+
+# Katze-Kuh: Vierfüßlerstand wie beim Bird Dog (Hände unter den Schultern, Knie unter der Hüfte, Fußrücken auf der Matte). Katze:
+# Becken nach hinten gekippt, Lende und Brustkorb rund nach oben, Kopf sinkt zwischen die Arme. Kuh: Becken nach vorn gekippt, Bauch
+# sinkt, Brustbein nach vorn, Blick schräg nach vorn. Hände und Knie bleiben, die Arme bleiben gestreckt (Schulterhöhe wird über die
+# Neigung des ganzen Rumpfs gehalten). ph: 0 = neutral, -1 = Katze (rund), +1 = Kuh (hohl)
+P['catcow'] = {'root': -.45, 'st': 0.0, 'hz': .03, 'becken': 14.0, 'lw': 22.0, 'bw': 18.0, 'kopf_k': 30.0, 'kopf_h': 35.0, 'kuh': .55}
+def _cc_d(w, z0):     # Richtung nach vorn (−y), um w Grad nach oben gedreht, ausgehend von der Neigung z0
+    a = math.atan2(z0, 1) + math.radians(w); return V(0, -math.cos(a), math.sin(a))
+def catcow(ph, _dst=None):
+    q = P['catcow']; a = max(-1.0, min(1.0, ph)); k = -a if a < 0 else -a * q['kuh']     # k > 0: rund
+    reset(); rig.rotation_euler = (math.radians(90), 0, 0); rig.location = (0, 0, q['root']); bpy.context.view_layer.update()
+    h0 = (wpos('Hips', True) - wpos('Hips')).normalized(); aim('Hips', Matrix.Rotation(math.radians(-q['becken'] * k * (1 if k > 0 else .65)), 3, 'X') @ h0)     # Kuh: Becken etwas weniger (Hüftwinkel ≤100°)     # Becken kippen (Katze: Schambein nach vorn)
+    st = q['st'] + (_dst or 0.0)
+    aim('Spine', _cc_d(q['lw'] * k, st)); aim('Spine1', _cc_d(0.0, st)); aim('Spine2', _cc_d(-q['bw'] * k, st))     # Scheitel am Übergang Lende/Brust
+    kk = q['kopf_k'] if k > 0 else q['kopf_h']
+    aim('Neck', _cc_d(-q['bw'] * k - kk * k * .5, st)); aim('Head', _cc_d(-q['bw'] * k - kk * k - 3, st))     # HWS kk gegen den Brustkorb
+    for side in ('Left', 'Right'):
+        aim(side + 'UpLeg', V(0, 0, -1)); aim(side + 'Leg', V(0, 1, 0)); aim(side + 'Foot', V(0, 1, -.12 - q.get('fu' + side[0], 0.0)))
+    bpy.context.view_layer.update()
+    if 'K0' in q:     # Knie bleiben liegen: das Kippen des Beckens verschiebt die Hüftgelenke, der Körper folgt den Knien
+        kn = (wpos('LeftLeg') + wpos('RightLeg')) / 2; rig.location = rig.location + (q['K0'] - kn); bpy.context.view_layer.update()
+    if 'HL' not in q:
+        for side in ('Left', 'Right'): S_ = wpos(side + 'Arm'); q['H' + side[0]] = Vector((S_.x, S_.y, q['hz']))
+    if _dst is None and 'S0' in q and a != 0:      # Arme gestreckt wie im neutralen Stand: Rumpfneigung nachführen
+        d_ = 0.0
+        for _ in range(16):
+            e = sum((wpos(s_ + 'Arm') - q['H' + s_[0]]).length for s_ in ('Left', 'Right')) / 2 - q['S0']
+            if abs(e) < .0002: break
+            d_ -= e * 1.5; catcow(ph, d_)
+        if d_ == 0.0: _cc_arme(q)
+        return
+    _cc_arme(q)
+def _cc_arme(q):
+    for side, sx in (('Left', 1), ('Right', -1)):
+        ik2(side + 'Arm', side + 'ForeArm', q['H' + side[0]], (sx, .25, .2)); aim(side + 'Hand', V(0, -1, -.05 - q.get('hk' + side[0], 0.0))); flat(side + 'Hand', -1)
+def cc_kalibrieren():
+    q = P['catcow']; vf_kalibrieren(q, 0, BD_ARM, .002); vf_feinschliff(q, 0)
+    pose(0); q['K0'] = (wpos('LeftLeg') + wpos('RightLeg')) / 2; q['S0'] = sum((wpos(s_ + 'Arm') - q['H' + s_[0]]).length for s_ in ('Left', 'Right')) / 2
+    print('CATCOW Arm neutral', round(q['S0'], 4))
+def kr_mw_catcow():
+    sp = [wpos(n_) for n_ in ('Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head')] + [wpos('Head', True)]
+    w = [math.degrees(math.atan2(b.z - a_.z, a_.y - b.y)) for a_, b in zip(sp, sp[1:])]     # Knochen Hips, Spine, Spine1, Spine2, Neck, Head
+    hz_ = (wpos('LeftUpLeg').z + wpos('RightUpLeg').z) / 2; sz = (wpos('LeftArm').z + wpos('RightArm').z) / 2
+    return ['Segmente Hüfte→Kopf gegen die Waagerechte: ' + ', '.join(f'{x:+.0f}°' for x in w),
+            f'Krümmung Lende–Brust {w[1] - w[3]:+.0f}° (Spine gegen Spine2, + = rund), Kopf (Head) gegen Brustkorb (Spine2) {w[5] - w[3]:+.0f}°',
+            f'Schulter über der Hand {sum(wpos(s_ + "Hand").y - wpos(s_ + "Arm").y for s_ in ("Left", "Right")) * 50:+.1f} cm (+ = Schulter vor der Hand), Hüfte über dem Knie {sum(wpos(s_ + "Leg").y - wpos(s_ + "UpLeg").y for s_ in ("Left", "Right")) * 50:+.1f} cm (+ = Hüfte vor dem Knie), Hüftwinkel {180 - _w(wpos("Spine") - wpos("Hips"), wpos("LeftLeg") - wpos("LeftUpLeg")):.0f}°',
+            f'Hüftgelenk {hz_ * 100:.1f} cm, Schulter {sz * 100:.1f} cm über der Matte',
+            f'Stützarme: Ellbogen links {_w(wpos("LeftForeArm") - wpos("LeftArm"), wpos("LeftHand") - wpos("LeftForeArm")):.0f}°, rechts {_w(wpos("RightForeArm") - wpos("RightArm"), wpos("RightHand") - wpos("RightForeArm")):.0f}°',
+            f'Auflage: Hände {lowg(HAND("Left") + HAND("Right"), .3) * 100:.1f} cm, Knie {lowg(["LeftLeg", "RightLeg"], .5) * 100:.1f} cm über der Matte']
+EXS['catcow'] = dict(pose=catcow, keys=((1, -1), (24, -1), (96, 1), (120, 1), (192, -1)), perframe=True, wurzel=True,
+                     cam=V(1, .15, .25), zone=None, blatt=(1, 60, 108), bilder={'start': -1, 'ende': 1}, kopf_linie=False, messwerte=kr_mw_catcow)
+
+# Brustwirbelsäule öffnen im Vierfüßlerstand: linke Hand am Hinterkopf, Ellbogen zeigt zu Beginn zum Boden (Oberkörper zur
+# Stützseite eingedreht), dann dreht der Oberkörper auf, der Ellbogen zeigt zur Decke, der Blick folgt. Becken, Knie und die
+# rechte Stützhand bleiben, die Stützschulter bleibt über der Stützhand. ph: 0 = eingedreht (Ellbogen unten), 1 = aufgedreht
+P['tspine'] = {'root': -.45, 'st': 0.0, 's1': 0.0, 'hz': .03, 'sgn': 1, 'zu': 12.0, 'auf': 44.0, 'kopf': 1.13, 'finger': 30, 'hebe': float(next((a.split('=')[1] for a in args if a.startswith('hebe=')), .7)), 'kopf_hoch': .12, 'hinten': .085}
+def _ts_achsen():
+    M_ = (rig.matrix_world @ B('Head').matrix).to_3x3()
+    return M_, (M_ @ Vector((0, 1, 0))).normalized()
+def tspine(ph):
+    """rechte Hand am Hinterkopf (bewegt), linker Arm stützt"""
+    q = P['tspine']; t = max(0.0, min(1.0, ph)); Y_ = (0, -1, 0)
+    rot = (-q['zu'] + (q['zu'] + q['auf']) * t) * q['sgn']
+    def build(cx, cz):
+        reset(); rig.rotation_euler = (math.radians(90), 0, 0); rig.location = (0, 0, q['root']); bpy.context.view_layer.update()
+        sz = q['st'] + cz
+        for n_ in ('Spine', 'Spine1', 'Spine2'): aim(n_, V(cx, -1, sz))
+        aim('Neck', V(cx, -1, sz + q['kopf_hoch'])); aim('Head', V(cx, -1, sz + q['kopf_hoch'] - .05))     # Kopf in Verlängerung (nicht hängend)
+        for side in ('Left', 'Right'):
+            aim(side + 'UpLeg', V(0, 0, -1)); aim(side + 'Leg', V(0, 1, 0)); aim(side + 'Foot', V(0, 1, -.12 - q.get('fu' + side[0], 0.0)))
+        if 'HL' not in q:
+            for side in ('Left', 'Right'): S_ = wpos(side + 'Arm'); q['H' + side[0]] = Vector((S_.x, S_.y - .01, q['hz'])); q['S' + side[0]] = S_.copy()
+        # Drehachse: Linie Beckenmitte–Stützschulter (die Stützschulter bleibt dadurch fast an ihrem Platz, der Brustkorb dreht um sie)
+        ax_ = Y_ if 'SL' not in q else tuple((q['SL'] - (wpos('LeftUpLeg') + wpos('RightUpLeg')) / 2).normalized())
+        twist('Spine', .1 * rot, ax_); twist('Spine1', .35 * rot, ax_); twist('Spine2', .55 * rot, ax_)
+        twist('Neck', q['kopf'] * .35 * rot, ax_); twist('Head', q['kopf'] * .35 * rot, ax_)
+    build(0, 0)
+    if 'SL' in q:     # Stützschulter (links) bleibt über der Stützhand: der Brustkorb hebt sich etwas (Anteil hebe), den Rest gleicht
+        cx = cz = 0.0  # das Schulterblatt aus (Schlüsselbein hebt und schiebt vor, der Brustkorb dreht unter dem Schulterblatt)
+        for _ in range(12):
+            e_ = wpos('LeftArm') - q['SL']
+            if abs(e_.x) < .001 and abs(e_.z * q['hebe']) < .001: break
+            cx -= e_.x / .5; cz -= e_.z * q['hebe'] / .5; build(cx, cz)
+        for _ in range(3):
+            c0 = wpos('LeftShoulder'); aim('LeftShoulder', (q['SL'] - c0).normalized())
+        for _ in range(6):      # was das Schulterblatt nicht auffängt, über die Rumpfneigung (Stützarm bleibt gestreckt)
+            ez = wpos('LeftArm').z - q['SL'].z
+            if abs(ez) < .0008: break
+            cz -= ez / .5; build(cx, cz)
+            for _ in range(3): c0 = wpos('LeftShoulder'); aim('LeftShoulder', (q['SL'] - c0).normalized())
+    ik2('LeftArm', 'LeftForeArm', q['HL'], (1, .25, .2)); aim('LeftHand', V(0, -1, -.05 - q.get('hkL', 0.0))); flat('LeftHand', -1)
+    if q.get('kal'):      # Kalibrieren der Grundhaltung: beide Arme stützen
+        ik2('RightArm', 'RightForeArm', q['HR'], (-1, .25, .2)); aim('RightHand', V(0, -1, -.05 - q.get('hkR', 0.0))); flat('RightHand', -1); return
+    # rechte Hand am Hinterkopf: Handgelenk hinter dem rechten Ohr, Finger locker über den Hinterkopf zur Mitte; der Ellbogen
+    # liegt in der Ebene der Schultern (Pol entlang der Schulterachse nach rechts)
+    M_, ya = _ts_achsen(); fa = (M_ @ q.get('gesicht', Vector((0, 0, 1)))).normalized(); fa = -(fa - ya * fa.dot(ya)).normalized()     # gemessen: so zeigt fa nach vorn (Gesicht)
+    sa = (wpos('RightArm') - wpos('LeftArm')); sa = (sa - ya * sa.dot(ya)).normalized()     # zur rechten Kopfseite
+    K = wpos('Head') + ya * (.08 + q.get('hand_h', 0.0))
+    W_ = K - fa * q['hinten'] + sa * q.get('seit', .07)
+    sl_ = (wpos('RightArm') - wpos('LeftArm')).normalized()
+    pol = V(-.45, 0, -1).normalized().lerp(sl_ + ya * .05, sm(t / .6))     # Ellbogen zu Beginn zum Boden (nicht zur Stützhand), oben in der Schulterebene nach oben-außen
+    ik2('RightArm', 'RightForeArm', W_, pol)
+    aim('RightHand', (-sa * .8 + ya * .4 + fa * .15).normalized())
+    kr_handruecken('Right', -fa)
+def ts_kalibrieren():
+    q = P['tspine']
+    zu, auf = q['zu'], q['auf']; q['zu'] = q['auf'] = 0.0; pose(0); M_, ya = _ts_achsen(); q['zu'], q['auf'] = zu, auf
+    g_ = V(0, 0, -1); g_ = (g_ - ya * g_.dot(ya)).normalized(); q['gesicht'] = (M_.inverted() @ g_).normalized()
+    q['zu'] = 0.0; q['auf'] = 10.0; pose(1); z1 = wpos('RightArm').z; q['zu'], q['auf'] = zu, auf; q['sgn'] = 1
+    q['zu'] = q['auf'] = 0.0; pose(1); z0 = wpos('RightArm').z; q['zu'], q['auf'] = zu, auf
+    q['sgn'] = 1 if z1 > z0 else -1
+    q['kal'] = True; q['zu'] = q['auf'] = 0.0; vf_kalibrieren(q, 0, BD_ARM, .002); vf_feinschliff(q, 0); q['zu'], q['auf'] = zu, auf; q['kal'] = False
+    q.pop('HL', None); q.pop('SL', None); pose(0)
+def _ts_eb_ebene():
+    sl_ = (wpos('RightArm') - wpos('LeftArm')).normalized(); ax_ = (wpos('Spine2') - wpos('Hips')).normalized()
+    n_ = sl_.cross(ax_).normalized(); d_ = (wpos('RightForeArm') - wpos('RightArm')).normalized()
+    hv = (ax_ - sl_ * ax_.dot(sl_)).normalized()
+    return math.degrees(math.atan2(d_.dot(hv), math.hypot(d_.dot(sl_), d_.dot(n_)))) if False else math.degrees(math.asin(max(-1, min(1, d_.dot(hv)))))
+def kr_mw_tspine():
+    sl, sr = wpos('LeftArm'), wpos('RightArm'); hl, hr = wpos('LeftUpLeg'), wpos('RightUpLeg'); el = wpos('RightForeArm')
+    return [f'Schulterachse {math.degrees(math.atan2(sr.z - sl.z, abs(sr.x - sl.x))):+.0f}° gegen die Waagerechte (+ = rechts oben), Becken quer {math.degrees(math.atan2(hl.z - hr.z, hl.x - hr.x)):+.1f}°',
+            f'Ellbogen rechts {(el.z - sr.z) * 100:+.1f} cm gegen die Schulter (+ = darüber), Handgelenk–Kopf {(wpos("RightHand") - wpos("Head")).length * 100:.1f} cm',
+            f'Stützarm links: Ellbogen {_w(wpos("LeftForeArm") - sl, wpos("LeftHand") - wpos("LeftForeArm")):.0f}°, Schulter vor (+) der Hand {(wpos("LeftHand").y - sl.y) * 100:+.1f} cm',
+            f'Rumpf Hüfte–Brust {math.degrees(math.atan2(wpos("Spine2").z - wpos("Hips").z, wpos("Hips").y - wpos("Spine2").y)):+.0f}° gegen die Waagerechte, Hüfte über den Knien seitlich {((hl.x + hr.x) - (wpos("LeftLeg").x + wpos("RightLeg").x)) * 50:+.1f} cm',
+            f'Ellbogen rechts gegen die Schulterebene {_ts_eb_ebene():+.0f}° (+ = vor bzw. zum Kopf, − = nach hinten zur Hüfte)',
+            f'Kopfdrehung gegen den Brustkorb {math.degrees((B("Spine2").matrix.to_quaternion().inverted() @ B("Head").matrix.to_quaternion()).to_euler("YXZ").y):+.0f}° (um die Längsachse)',
+            f'Auflage: Stützhand {lowg(HAND("Left"), .3) * 100:.1f} cm, Knie {lowg(["LeftLeg", "RightLeg"], .5) * 100:.1f} cm über der Matte']
+EXS['tspine'] = dict(griff=(('Right', 30),), pose=tspine, keys=((1, 0), (24, 0), (72, 1), (96, 1), (144, 0)), perframe=True, cam=V(-.75, -.55, .6), zone=None,
+                     blatt=(1, 48, 84), bilder={'start': 0, 'ende': 1}, messwerte=kr_mw_tspine)
+
+# Adduktoren-Rock-Back: Vierfüßlerstand, rechtes Bein seitlich gestreckt (Ferse auf Höhe des linken Knies, Fußsohle flach,
+# Kniescheibe und Fußspitze nach vorn). Das Gesäß schiebt 15–20 cm nach hinten Richtung linker Ferse: Das linke Knie und das
+# Schienbein bleiben liegen, der Oberschenkel kippt nach hinten (Knie höchstens 125°), Hände bleiben, Arme gestreckt, Rücken lang.
+# ph: 0 = Start, 1 = hinten
+P['addrock'] = {'root': -.45, 'st': 0.0, 'hz': .03, 'seit': .72, 'fz': .09, 'fneig': .35, 'rueck': 24.0}
+def _ar_rechts_pts():
+    P_ = _welt(shoes); return P_[P_[:, 0] < 0]
+def _ar_fuss(q):
+    """Fußgelenk des seitlich gestreckten Beins: auf Höhe fz, Ferse in Linie mit dem linken Knie, so weit seitlich, dass das Knie
+    fast gestreckt ist (Abstand Hüfte–Fußgelenk 99,6 % der Beinlänge)"""
+    H_ = wpos('RightUpLeg'); L_ = (wpos('RightUpLeg', True) - H_).length + (wpos('RightLeg', True) - wpos('RightLeg')).length
+    dy = q['K'].y - .01 - H_.y; dz = q['fz'] - H_.z; dx = math.sqrt(max(.01, (L_ * q.get('lf', .999)) ** 2 - dy * dy - dz * dz))
+    return Vector((H_.x - dx, H_.y + dy, q['fz']))
+def addrock(ph, _st=None):
+    q = P['addrock']; t = max(0.0, min(1.0, ph)); a = math.radians(q['rueck']) * t
+    st = q['st'] if _st is None else _st
+    reset(); rig.rotation_euler = (math.radians(90), 0, 0); rig.location = (0, 0, q['root']); bpy.context.view_layer.update()
+    for n_ in ('Spine', 'Spine1', 'Spine2'): aim(n_, V(0, -1, st))
+    aim('Neck', V(0, -1, st)); aim('Head', V(0, -1, st - .05))
+    aim('LeftUpLeg', V(0, -math.sin(a), -math.cos(a))); aim('LeftLeg', V(0, 1, 0)); aim('LeftFoot', V(0, 1, -.12 - q.get('fuL', 0.0)))
+    aim('RightUpLeg', V(0, 0, -1)); aim('RightLeg', V(0, 1, 0)); bpy.context.view_layer.update()
+    if 'K' not in q: q['K'] = wpos('LeftLeg').copy()
+    rig.location = rig.location + (q['K'] - wpos('LeftLeg')); bpy.context.view_layer.update()     # linkes Knie bleibt liegen
+    if 'HL' not in q:
+        for side in ('Left', 'Right'): S_ = wpos(side + 'Arm'); q['H' + side[0]] = Vector((S_.x, S_.y, q['hz']))
+    if 'F' not in q: q['F'] = _ar_fuss(q)
+    ik2('RightUpLeg', 'RightLeg', q['F'], (0, -1, 0)); aim('RightFoot', V(0, -1, -q['fneig']))
+    for side, sx in (('Left', 1), ('Right', -1)):
+        ik2(side + 'Arm', side + 'ForeArm', q['H' + side[0]], (sx, .25, .2)); aim(side + 'Hand', V(0, -1, -.05 - q.get('hk' + side[0], 0.0))); flat(side + 'Hand', -1)
+    if _st is None and t > 0 and 'S0' in q:     # Arme bleiben gestreckt: Rumpfneigung so, dass der Abstand Schulter–Hand wie im Start bleibt
+        s_ = st
+        for _ in range(12):
+            e = (wpos('RightArm') - q['HR']).length - q['S0']
+            if abs(e) < .0006: break
+            s_ -= e * 2.0; addrock(ph, s_)
+def ar_kalibrieren():
+    q = P['addrock']
+    for _ in range(20):     # linkes Knie und Fußrücken auf der Matte, Hände auf der Matte, Arme fast gestreckt
+        for k_ in ('K', 'HL', 'HR', 'F'): q.pop(k_, None)
+        addrock(0); gl = min(lowg(['LeftLeg'], .5), lowpts(_kr_seite(1), [shoes])); gh = lowg(HAND('Left') + HAND('Right'))
+        S_ = wpos('LeftArm'); La = bd_armlaenge('Left'); e_ = (S_ - wpos('LeftHand')).length - La * BD_ARM
+        print('ADDROCK root', round(q['root'], 3), 'Knie', round(gl, 3), 'Hände', round(gh, 3), 'Arm', round(e_, 3), 'st', round(q['st'], 3))
+        if abs(gl) < .003 and abs(gh) < .004 and abs(e_) < .003: break
+        q['root'] -= gl; q['hz'] -= gh * .8; q['st'] -= e_ * 1.2
+    vf_feinschliff(q, 0, weg=('HL', 'HR', 'K', 'F'))     # Hände und Finger auf der Matte, Arme bis auf 4° gestreckt
+    q['lf'] = .999
+    for _ in range(12):     # rechte Fußsohle flach auf der Matte: Neigung des Fußes und Höhe des Fußgelenks
+        addrock(0); P_ = _ar_rechts_pts(); A_ = wpos('RightFoot'); vo = P_[P_[:, 1] < A_.y - .06]; hi = P_[P_[:, 1] > A_.y + .01]
+        zv, zh = float(vo[:, 2].min()), float(hi[:, 2].min()); print('ADDROCK Sohle vorn', round(zv, 3), 'hinten', round(zh, 3), 'fneig', round(q['fneig'], 3), 'fz', round(q['fz'], 3))
+        if abs(zv) < .002 and abs(zh) < .002: break
+        q['fneig'] += (zv - zh) * 4; q['fz'] -= (zv + zh) / 2
+        q.pop('F', None)
+    addrock(0); q['S0'] = (wpos('RightArm') - q['HR']).length
+    for _ in range(8):      # Bein so lang wählen, dass es in der Mitte der Bewegung gestreckt ist (Start und Ende höchstens wenige Grad)
+        k0 = _ar_knie_r(0); k1 = _ar_knie_r(1); print('ADDROCK Knie rechts Start/Ende', round(k0, 1), round(k1, 1), 'lf', round(q.get('lf', .999), 4))
+        if abs(k1 - k0) < 1.5 or k0 < .5: break
+        q['lf'] = q.get('lf', .999) + .003; q.pop('F', None); addrock(0)
+def _ar_knie_r(ph):
+    addrock(ph); return _w(wpos('RightLeg') - wpos('RightUpLeg'), wpos('RightFoot') - wpos('RightLeg'))
+def kr_mw_addrock():
+    def w3(a_, b_, c_): return _w(b_ - a_, c_ - b_)
+    hl, hr = wpos('LeftUpLeg'), wpos('RightUpLeg'); kl = wpos('LeftLeg'); fl = wpos('LeftFoot')
+    rb = (wpos('RightFoot') - hr); P_ = _ar_rechts_pts(); A_ = wpos('RightFoot')
+    sp = wpos('Spine2') - wpos('Hips')
+    return [f'Knie links {w3(hl, kl, fl):.0f}°, Hüfte links {_w(wpos("Spine") - wpos("Hips"), kl - hl) :.0f}° (Rumpf–Oberschenkel, 0 = gestreckt: 180 − Wert)',
+            f'Gesäß (Hüftgelenk links) {(hl.y - P["addrock"]["K"].y) * 100:+.1f} cm hinter dem linken Knie',
+            f'Rechtes Bein: Knie {w3(hr, wpos("RightLeg"), A_):.0f}° gebeugt, fällt {math.degrees(math.atan2(-rb.z, math.hypot(rb.x, rb.y))):.0f}° ab, Ferse {(A_.y - kl.y) * 100:+.1f} cm hinter (+) dem linken Knie, seitlich {abs(A_.x - kl.x) * 100:.0f} cm',
+            f'Rechte Sohle: vorn {float(P_[P_[:, 1] < A_.y - .06][:, 2].min()) * 100:.1f} cm, hinten {float(P_[P_[:, 1] > A_.y + .01][:, 2].min()) * 100:.1f} cm über der Matte',
+            f'Rumpf Hüfte–Brust {math.degrees(math.atan2(sp.z, -sp.y)):+.0f}° gegen die Waagerechte, Becken quer {math.degrees(math.atan2(hl.z - hr.z, hl.x - hr.x)):+.1f}°',
+            f'Stützarme: Ellbogen links {_w(wpos("LeftForeArm") - wpos("LeftArm"), wpos("LeftHand") - wpos("LeftForeArm")):.0f}°, rechts {_w(wpos("RightForeArm") - wpos("RightArm"), wpos("RightHand") - wpos("RightForeArm")):.0f}°, Schulterwinkel (Oberarm–Rumpf) {_w(wpos("Spine2") - wpos("Hips"), wpos("LeftForeArm") - wpos("LeftArm")):.0f}°',
+            f'Auflage: Hände {lowg(HAND("Left") + HAND("Right"), .3) * 100:.1f} cm, Knie links {lowg(["LeftLeg"], .5) * 100:.1f} cm über der Matte']
+EXS['addrock'] = dict(pose=addrock, keys=((1, 0), (12, 0), (60, 1), (96, 1), (144, 0)), perframe=True, wurzel=True, cam=V(-1, .8, .5), zone=None,
+                      blatt=(1, 36, 78), bilder={'start': 0, 'ende': 1}, messwerte=kr_mw_addrock)
+
+VF_ARM = .9997     # Stützarm Mobilität: Ellbogen etwa 4° (Fachvorgabe 0–5°)
+def vf_feinschliff(q, ph, seiten=('Left', 'Right'), weg=('HL', 'HR'), f=VF_ARM, nach=None):
+    """nach vf_kalibrieren: mit pose() (also nach dem Entspannen der Finger) je Stützhand die Handneigung (hk) so, dass Hand und
+    Finger aufliegen, die gemeinsame Handhöhe (hz) und die Rumpfneigung (st) so, dass die Stützarme bis auf f der Armlänge gestreckt
+    sind. nach: Funktion, die nach jedem Schritt weitere Größen nachführt"""
+    for i in range(30):
+        for k_ in weg: q.pop(k_, None)
+        pose(ph)
+        gh = {s_: lowg(HAND(s_), .3) for s_ in seiten}
+        e = sum((wpos(s_ + 'Arm') - wpos(s_ + 'Hand')).length - bd_armlaenge(s_) * f for s_ in seiten) / len(seiten)
+        print('VF_FEIN', i, 'Hände', {k: round(v, 4) for k, v in gh.items()}, 'Arm', round(e, 4), 'st', round(q['st'], 4), 'hz', round(q['hz'], 4))
+        if all(abs(v) < .0015 for v in gh.values()) and abs(e) < .0006: break
+        m_ = min(gh.values())
+        for s_ in seiten: q['hk' + s_[0]] = q.get('hk' + s_[0], 0.0) + (gh[s_] - m_) / .12
+        q['hz'] -= m_ * .8; q['st'] -= e * 1.2
+        if nach: nach()

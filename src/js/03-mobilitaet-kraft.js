@@ -25,7 +25,7 @@ Object.assign(EXI, {
     s:['Vierfüßlerstand: Hände unter den Schultern, Knie unter der Hüfte.', 'Eine Hand an den Hinterkopf legen, der Ellbogen zeigt zum Boden.', 'Drehe den Oberkörper auf, der Ellbogen wandert Richtung Decke, der Blick folgt.', 'Langsam zurück. 8 Wiederholungen pro Seite.'],
     f:['Die Bewegung kommt aus der Hüfte. Becken bleibt ruhig, nur der Oberkörper dreht.', 'Zu schnell. Langsam und mit Ausatmen aufdrehen.'],
     v:'', r:'Die Brustwirbelsäule ist auf dem Rad lange gebeugt. Mehr Drehfähigkeit hilft bei Schulterblick, Atmung und Nackenverspannungen.'},
-  catcow:{t:'Katze-Kuh', cap:['Katze: Rücken rund', 'Kuh: Rücken hohl, Blick nach vorn'], m:'Ganze Wirbelsäule',
+  catcow:{t:'Katze-Kuh', cap:['Katze: Rücken rund', 'Kuh: Rücken hohl, Blick leicht nach vorn'], m:'Ganze Wirbelsäule',
     s:['Vierfüßlerstand, Hände unter den Schultern, Knie unter der Hüfte.', 'Ausatmen: Rücken rund machen, Kinn zur Brust, Bauchnabel nach innen.', 'Einatmen: Rücken langsam durchhängen lassen, Brust nach vorn, Blick leicht nach vorn.', '10 langsame Wiederholungen, im Atemrhythmus.'],
     f:['Ruckartig. Fließend und langsam.', 'Nur der Nacken bewegt sich. Die Bewegung geht Wirbel für Wirbel durch den ganzen Rücken.'],
     v:'', r:'Löst den Rücken nach langen Ausfahrten und ist ein guter Start in jede Routine.'},

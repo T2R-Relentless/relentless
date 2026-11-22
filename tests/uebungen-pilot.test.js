@@ -2,7 +2,7 @@
 R.file = 'uebungen-pilot';
 const PILOT = ['clam', 'deadbug', 'pallof', 'hip9090', 'openbook', 'thread'];
 /* Kraftübungen mit Video, aber ohne gegliederte Felder (q, a, b …) */
-const KRAFT = ['squat', 'bss', 'calf', 'plank', 'rdl', 'slrdl', 'stepup', 'bridge', 'sidep', 'birddog', 'thrust'];
+const KRAFT = ['squat', 'bss', 'calf', 'plank', 'rdl', 'slrdl', 'stepup', 'bridge', 'sidep', 'birddog', 'thrust', 'catcow', 'tspine', 'addrock'];
 
 test('Pilotübungen: Animation, gegliederte Felder, s aus b abgeleitet, Ausschnitt', async () => {
   const a = await boot(), bad = [];
@@ -132,7 +132,7 @@ test('Übungsvideos: Dateien vorhanden, Fenster zeigt Video, Schritt hält es an
   ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="deadbug"]')`) && a.$(`exVidOk('deadbug')`) === false, 'fällt das Video aus, erscheint die gezeichnete Figur');
   a.$(`delete exVidBad.deadbug; closeEx()`);
   ok(a.$(`(exLibrary().match(/<img class="exvid"/g) || []).length`) === ids.length, 'Übungsübersicht zeigt die Startbilder');
-  a.$(`openEx('catcow')`); ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="catcow"]')`), 'andere Übungen unverändert'); a.$('closeEx()');
+  a.$(`openEx('hipflex')`); ok(a.$(`!document.querySelector('.exov video') && !!document.querySelector('.exov g[data-ex="hipflex"]')`), 'andere Übungen unverändert'); a.$('closeEx()');
   await a.w.i18nLoad(); ok(a.$(`I18N[iNorm('Die Animation zeigt den Bewegungsablauf vereinfacht.').k] != null`), 'Englisch für den Hinweistext');
   a.noErrors();
 });

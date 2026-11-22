@@ -422,7 +422,10 @@ def vf_kalibrieren(q, ph, f=.975, tol=.012):
         print('VIERFUSS root', round(q['root'], 3), 'Knie', round(gl, 3), 'Hände', round(gh, 3), 'Armspalt', round(gap, 3), 'st', round(q['st'], 3))
         if abs(gl) < .004 and abs(gh) < .005 and abs((S_.z - q['hz']) - La * f) < tol: break
         q['root'] -= gl; q['hz'] -= gh * .8; q['st'] -= ((S_.z - q['hz']) - La * f) * 1.2
-if EX == 'birddog': vf_kalibrieren(P['birddog'], 0, BD_ARM, .002); bd_kalibrieren()   # Stützarme fast gestreckt (Ellbogen unter 10°)
+if EX == 'catcow': cc_kalibrieren()
+elif EX == 'tspine': ts_kalibrieren()
+elif EX == 'addrock': ar_kalibrieren()
+elif EX == 'birddog': vf_kalibrieren(P['birddog'], 0, BD_ARM, .002); bd_kalibrieren()   # Stützarme fast gestreckt (Ellbogen unter 10°)
 elif EX == 'thread':
     q = P['thread']
     pose(.5); z0 = wpos('LeftArm').z; twist('Spine2', 10, (0, -1, 0)); q['sgn'] = 1 if wpos('LeftArm').z > z0 else -1
