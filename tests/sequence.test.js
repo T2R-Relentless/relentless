@@ -22,11 +22,16 @@ test('Jede Kraft-Einheit: vollständiger Ton- und Ansageplan', async () => {
         if (s.reps && s.prep) { if (/^Los\. /.test(t) || !t.startsWith(a.$('sqNm')(s.n))) bad.push(`${tag} #${k}: Vorbereitung „${t}“`);
           if (!/Wiederholungen/.test(P0) || (s.sets > 1 && !P0.includes(`Satz 1 von ${s.sets}`))) bad.push(`${tag} #${k}: Ansage davor ohne Satz/Wdh. „${P0}“`);
           if (!sch.some(x => x.k === 'go' && x.at === s.prep)) bad.push(`${tag} #${k}: Startton nach der Vorbereitung fehlt`); }
-        if (s.reps && !s.prep) { if (!/^Los\. /.test(t) || !/Wiederholungen/.test(t)) bad.push(`${tag} #${k}: Start „${t}“`);
+        const tk = s.reps && cfg.takt && a.w.sqBeatOf(s.d);
+        /* mit Takt: kurzes „Los“ ohne Name und Dosis (kamen in der Pause davor), sonst die volle Startansage */
+        if (s.reps && !s.prep && tk) { if (!/^Los\. /.test(t) || (s.set > 1 ? !t.includes(`Satz ${s.set} von ${s.sets}`) || !/Wiederholungen/.test(P0) : !t.startsWith('Los. ' + a.$('sqNm')(s.n)))) bad.push(`${tag} #${k}: Start mit Takt „${t}“`); }
+        else if (s.reps && !s.prep) { if (!/^Los\. /.test(t) || !/Wiederholungen/.test(t)) bad.push(`${tag} #${k}: Start „${t}“`);
           if (s.sets > 1 && !t.includes(`Satz ${s.set} von ${s.sets}`)) bad.push(`${tag} #${k}: Satz fehlt in „${t}“`); }
         if (s.two && !/(linke(s Bein| Seite)|Band rechts)/.test(t)) bad.push(`${tag} #${k}: erste Seite fehlt in „${t}“`);
         if (s.d.side && !s.two && !/im Wechsel/.test(t)) bad.push(`${tag} #${k}: „im Wechsel“ fehlt in „${t}“`);
-        const end = ticks.filter(x => x.at >= D - 3000).map(x => x.at); if (JSON.stringify(end) !== JSON.stringify([D - 3000, D - 2000, D - 1000])) bad.push(`${tag} #${k}: 3-2-1 am Ende fehlt`);
+        const end = ticks.filter(x => x.at >= D - 3000).map(x => x.at), takt = s.reps && cfg.takt && a.w.sqBeatOf(s.d);
+        /* Takt bei Wiederholungen: statt 3-2-1 zählt die Ansage die letzten drei (Fachregel Takt 2) */
+        if (takt ? end.length || !sch.some(x => x.k === 'bl' || x.k === 'bs') : JSON.stringify(end) !== JSON.stringify([D - 3000, D - 2000, D - 1000])) bad.push(`${tag} #${k}: ${takt ? 'Takt statt 3-2-1' : '3-2-1 am Ende fehlt'}`);
         if (!sch.some(x => x.k === 'pause' && x.at === D)) bad.push(`${tag} #${k}: Pausenton am Ende fehlt`);
         if (s.two) { const t1 = s.prep + s.per, t2 = t1 + s.sw;
           if (!sch.some(x => x.k === 'ding' && x.at === t1) || !sch.some(x => x.k === 'go' && x.at === t2)) bad.push(`${tag} #${k}: Seitenwechsel ohne Ding/Startton`);
@@ -36,7 +41,7 @@ test('Jede Kraft-Einheit: vollständiger Ton- und Ansageplan', async () => {
       if (s.t === 'tr' || s.t === 'pre' || s.t === 'rr') {
         if (ticks.length !== 3 || !sch.some(x => x.k === 'go' && x.at === D)) bad.push(`${tag} #${k} ${s.t}: 3-2-1 und Los fehlen`);
         if (s.t === 'tr' && s.set) { const t = S0[0] || '', d = Math.round(D / 1000);
-          if (!/^Satzpause, .*\. Als Nächstes: Satz \d von \d\.$/.test(t)) bad.push(`${tag} #${k}: Satzpause „${t}“`);
+          if (!/^Satzpause, .*\. Als Nächstes: Satz \d von \d(, [^.]*Wiederholungen[^.]*)?\.$/.test(t)) bad.push(`${tag} #${k}: Satzpause „${t}“`);
           if (d === 90 && !t.startsWith('Satzpause, 1 Minute 30.')) bad.push(`${tag} #${k}: Dauer „${t}“`);
           if (d >= 25 && !S0.includes('Noch 10 Sekunden')) bad.push(`${tag} #${k}: „Noch 10 Sekunden“ fehlt`); }
       }
@@ -51,7 +56,7 @@ test('Satzpause und Startansage: Beispiel aus der Meldung', async () => {
   const bss = st.find(s => s.t === 'ex' && s.id === 'bss' && s.set === 1), bss2 = st.find(s => s.t === 'ex' && s.id === 'bss' && s.set === 2); ok(bss && bss2, 'Bulgarian Split Squat im Plan');
   eq(bss.prep, 5000, 'Vorbereitung 5 s'); ok(/^Als Nächstes: Bulgarian Split Squat oder Ausfallschritte, 8 bis 10 Wiederholungen, Satz 1 von 3\./.test(says(a.w.sqSched(st[st.indexOf(bss) - 1], false, cfg))[0]), 'Pause davor nennt Satz und Wiederholungen');
   await snap('sequence', 'bss-start', {vorbereitung:a.w.sqRepSay(bss), satz2:a.w.sqRepSay(bss2)}); const rest = st[st.indexOf(bss) + 1]; eq(rest.t, 'tr');
-  eq(a.w.sqSetRestSay(rest)[0], `Satzpause, ${a.w.sqDurSay(rest.dur / 1000)[0]}. Als Nächstes: Satz 2 von ${bss.sets}.`);
+  eq(a.w.sqSetRestSay(rest)[0], `Satzpause, ${a.w.sqDurSay(rest.dur / 1000)[0]}. Als Nächstes: Satz 2 von ${bss.sets}, ${a.w.sqDoseSay(bss.d)[0]}.`);
   eq(a.w.sqDurSay(90), ['1 Minute 30', '1 minute 30']); eq(a.w.sqDurSay(120), ['2 Minuten', '2 minutes']); eq(a.w.sqDurSay(45), ['45 Sekunden', '45 seconds']);
 });
 
@@ -65,9 +70,10 @@ test('Ablauf: Start, Vorbereitung, Fertig, Satzpause, nächster Satz', async () 
   go(5000); const L1b = log(); ok(L1b.includes('say: Kniebeuge oder Beinpresse.') && L1b.includes('go'), 'Vorbereitung: Name, dann Startton: ' + L1b.join(' | '));
   eq(a.$('sqSideAt(sq.steps[sq.k], sqEl()).ph'), 'one', 'Übung läuft');
   a.w.sqRepDone(); go(1000); const L2 = log(); ok(L2[0] === 'pause', 'Bestätigungston nach „Fertig“');
-  ok(L2.some(x => /^say: Satzpause, 1 Minute 30\. Als Nächstes: Satz 2 von 3\.$/.test(x)), 'Satzpause angesagt: ' + L2.join(' | '));
+  ok(L2.some(x => /^say: Satzpause, 1 Minute 30\. Als Nächstes: Satz 2 von 3, 8 bis 10 Wiederholungen\.$/.test(x)), 'Satzpause angesagt: ' + L2.join(' | '));
   go(91500); const L3 = log(); ok(L3.includes('say: Noch 10 Sekunden') && L3.filter(x => x === 'tick').length === 3 && L3.includes('go'), 'Ende der Satzpause: ' + L3.join(' | '));
-  ok(L3.some(x => /^say: Los\. Kniebeuge oder Beinpresse, Satz 2 von 3, 8 bis 10 Wiederholungen\.$/.test(x)), 'Satz 2 startet ohne Vorbereitung mit Ansage: ' + L3.join(' | '));
+  /* mit Takt (Standard) kurzes „Los“, Wiederholungen kamen in der Satzpause */
+  ok(L3.some(x => /^say: Los\. Satz 2 von 3\.$/.test(x)), 'Satz 2 startet ohne Vorbereitung mit Ansage: ' + L3.join(' | '));
   /* ohne „Fertig“: nach 10 Wdh. × 4 s ist der Satz vorbei, die Satzpause beginnt von selbst */
   eq(a.$('sq.steps[sq.k].dur'), 40000, 'Satz 2: 10 × 4 s'); go(40000); eq(a.$('[sq.steps[sq.k].t, sq.steps[sq.k].set]'), ['tr', true], 'Satzpause von selbst');
   ok(log().includes('pause'), 'Pausenton am Ende des Satzes'); a.noErrors();
