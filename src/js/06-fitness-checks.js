@@ -1,9 +1,44 @@
 /* ---------- Fitness-Checks (Meilensteine): FTP-Test nach Erholungswochen, Auswertung gegen den erwarteten Korridor ---------- */
 const testsOn = p => !!p && p.tests !== false;
+/* Testwochen mit Abstand nach einem Nachholtest (Fachregel 22.11.2026): Ein nachgeholter Check (gemacht oder geplant) bzw. ein
+   selbst angelegter Check schiebt die folgenden regulären Checks der Reihe nach auf mindestens 5 Wochen Abstand, auf die nächste
+   erlaubte Woche, bis eine Lücke von 5 Wochen erreicht ist. Passt ein Check nicht mehr vor die Woche vor dem Taper, entfällt er.
+   Unverändert bleiben selbst angelegte Checks (xTests), der Starttest und der Abschlusstest beim FTP-Ziel. Die Anker sind
+   gespeicherte Daten, deshalb bleibt eine Verschiebung auch stehen, wenn die ursprüngliche Woche vorbei ist. */
+const TEST_GAP = 5;
 function testWeeks(p){
+  const base = testWeeks0(p); if (!p || !testsOn(p) || !base.length) return base;
+  const M = testMakeups(p); if (!M.length) return base;
+  const ph = phases(p), tot = ph[ph.length - 1].to, tS = testTaper(ph), w0 = t0W(p), X = p.xTests || [];
+  const fixed = w => X.includes(w) || w === w0 || (p.goal === 'ftp' && w === tot), out = [];
+  let need = 0;
+  base.forEach(w => {
+    const m = M.filter(x => x < w).pop();
+    if (m != null && (!out.length || m >= out[out.length - 1])) need = Math.max(need, m + TEST_GAP);
+    if (fixed(w) || w >= need) { out.push(w); need = 0; return; }
+    let q = need; while (q < tS - 1 && testBad(ph, q)) q++;
+    if (q < tS - 1 && !out.includes(q)) { out.push(q); need = q + TEST_GAP; }
+  });
+  return out.sort((a, b) => a - b);
+}
+const testTaper = ph => { const tp = ph.filter(x => x.key === 'taper').pop(); return tp ? tp.from : ph[ph.length - 1].to + 1; };
+const testBad = (ph, w) => ph.some(x => w >= x.from && w <= x.to && (x.key === 'taper' || x.rec || x.keep)) || ph.some(x => x.key === 'taper' && x.from === w + 1);
+/* Anker: gemachter Nachholtest (Einheit „Fitness-Check (nachgeholt)“ bzw. erstes Ergebnis ab der Woche des Ausfalls), noch offener
+   Nachholtest (p.testDue: frühestens die Woche des Termins, nie vor der laufenden; ausgelassene Testwoche p.owedSince: laufende
+   Woche) und selbst angelegte Checks. Ohne testWeeks (keine Rekursion). */
+function testMakeups(p){
+  const o = new Set(p.xTests || []), cw = S.wk || 1;
+  Object.entries(p.exe || {}).forEach(([k, e]) => { if (e && /Fitness-Check \(nachgeholt\)/.test(e.plan || '')) o.add(+k.split('-')[0]); });
+  if (p.testDue) { const w = p.testDue.w;
+    if (testDoneSince(p, w)) { const d = [...Object.keys(p.res || {}).map(Number), ...Object.entries(p.exe || {}).filter(([, e]) => e && /Fitness-Check|Test/.test(e.plan || '')).map(([k]) => +k.split('-')[0]), ...(p.testDone || [])].filter(x => x >= w); if (d.length) o.add(Math.min(...d)); }
+    else o.add(Math.max(testWkOf(p, p.testDue.from), cw)); }
+  if (p.owedSince != null && !(p.testDue && !testDoneSince(p, p.testDue.w))) { const last = testWeeks0(p).filter(x => x < cw && x >= p.owedSince).pop(); if (last && !testDoneSince(p, last)) o.add(cw); }
+  return [...o].filter(x => x >= 1).sort((a, b) => a - b);
+}
+function testWeeks0(p){
   if (!p) return []; const w0 = t0W(p);
   if (!testsOn(p)) return w0 ? [w0] : [];
-  const ph = phases(p), tot = ph[ph.length - 1].to, tp = ph.filter(x => x.key === 'taper').pop(), tS = tp ? tp.from : tot + 1, out = [], bad = w => ph.some(x => w >= x.from && w <= x.to && (x.key === 'taper' || x.rec || x.keep)) || ph.some(x => x.key === 'taper' && x.from === w + 1);
+  const ph = phases(p), tot = ph[ph.length - 1].to, tS = testTaper(ph), out = [], bad = w => testBad(ph, w);
   if (tot >= 9) { for (let w = rhyN(p) + 1; w < tS - 1; w += 2 * rhyN(p)) { const v = [w, w + 1, w - 1, w + 2].find(q => q >= 2 && q < tS - 1 && !bad(q)); if (v && !out.includes(v)) out.push(v); } }
   else if (tot >= 6) out.push(Math.max(2, Math.floor(tot / 2)));
   if (p.goal === 'ftp' && tot >= 4 && !out.includes(tot)) out.push(tot);

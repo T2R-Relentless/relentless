@@ -7172,5 +7172,7 @@
 "Takt und Zählen bei Wiederholungen": "Tempo and counting for repetitions",
 "Bei Übungen mit Wiederholungen gibt die Sequenz den Takt vor: Töne und kurze Worte wie „runter“ und „hoch“ zeigen das Tempo, dazu zählt sie mit und sagt die letzten drei an. Abschalten lässt sich das in den Einstellungen der Sequenz.": "For exercises with repetitions the sequence sets the pace: tones and short words like “down” and “up” show the tempo, it counts along and announces the last three. You can switch this off in the sequence settings.",
 "Takt einstellen": "Set up tempo",
-"Der Takt ist eine Orientierung. Fühlt er sich nicht gut an, mach in deinem eigenen Tempo weiter.": "The tempo is a guide. If it does not feel right, carry on at your own pace."
+"Der Takt ist eine Orientierung. Fühlt er sich nicht gut an, mach in deinem eigenen Tempo weiter.": "The tempo is a guide. If it does not feel right, carry on at your own pace.",
+"Der nächste Fitness-Check rückt deshalb in Woche {0}.": "The next fitness check therefore moves to week {0}.",
+"Der nächste Fitness-Check entfällt deshalb, weil vor dem Taper kein Platz mehr ist.": "The next fitness check is therefore dropped, as there is no room left before the taper."
 }
