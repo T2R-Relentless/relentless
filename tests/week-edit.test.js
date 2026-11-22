@@ -142,3 +142,21 @@ test('Wusstest du schon: Knopf landet direkt im passenden Abschnitt und Feld', a
   }
   ok(/Diese Woche nicht alles machbar/.test(a.text()) && /Mit dem Rad zur Arbeit/.test(a.text()), 'Woche: Bereich zum Pendeln aufgeklappt'); a.noErrors();
 });
+
+/* Nachgeholter Fitness-Check: der nächste reguläre Check liegt mindestens 5 Wochen danach, nie in Erholung oder Taper (Fachregel 22.11.2026) */
+test('Nachholtest schiebt den nächsten Check auf mindestens 5 Wochen Abstand, ohne Nachholtest bleibt alles gleich', async () => {
+  const a = await boot({now:at(2026, 11, 12)}); makePlan(a, pDat({commute:[false, false, false, false, false, false, false]}));
+  const base = a.$('testWeeks0(S.p)'); eq(a.$('testWeeks(S.p)'), base, 'ohne Nachholtest unverändert'); ok(base.length >= 4, 'Testwochen ' + base);
+  const T = base.filter(w => w > 2), t2 = T[0], t3 = T[1], mk = t3 - 2, tS = a.$('testTaper(phases(S.p))');
+  a.$(`S.wk = ${t2}; S.p.testDue = {w:${t2}, from:addD(S.p.start, ${(mk - 1) * 7})}`);
+  const tw = a.$('testWeeks(S.p)'), after = tw.filter(w => w > mk);
+  ok(tw.filter(w => w < t2).join() === base.filter(w => w < t2).join(), 'vergangene Wochen unverändert');
+  ok(!after.length || after[0] >= mk + 5, `nächster Check ${after[0]} mindestens 5 Wochen nach Woche ${mk}`);
+  for (let k = 1; k < after.length; k++) ok(after[k] - after[k - 1] >= 5 || base.includes(after[k]), `Abstand ${after[k - 1]} → ${after[k]}`);
+  ok(after.every(w => !a.$(`testBad(phases(S.p), ${w})`) && w < tS - 1), 'nie in Erholung, Taper oder der Woche davor: ' + after);
+  a.$(`S.p.xTests = [${mk + 1}]`); ok(a.$('testWeeks(S.p)').includes(mk + 1), 'selbst angelegter Check bleibt');
+  a.$(`delete S.p.xTests; S.p.res = {${mk}:{ftp:300, st:'ok'}}`); const tw2 = a.$('testWeeks(S.p)');
+  ok(tw2.filter(w => w > mk)[0] >= mk + 5, 'auch nach gemachtem Nachholtest: ' + tw2);
+  /* Verschiebung bleibt, wenn die ursprüngliche Woche vorbei ist (kein „ausgelassen“, kein zweiter Nachholtest) */
+  a.$(`S.wk = ${t3 + 1}`); eq(a.$('testWeeks(S.p)'), tw2, 'nach der ursprünglichen Woche unverändert'); a.noErrors();
+});
