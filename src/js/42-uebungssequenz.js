@@ -28,11 +28,11 @@ const IC_P = {
 function icWarn(){ return ic('warn', 16, 'margin:-3px 4px 0 0'); }
 function icX(){ return ic('close', 18); }
 function ic(n, s = 22, st = ''){ return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="display:inline-block;vertical-align:middle;flex:none${st ? ';' + st : ''}">${IC_P[n] || ''}</svg>`; }
-const SQ_DEF = {snd:true, voice:true, hints:true, vol:'m', vib:true, tr:10, hideMute:false, hideNoVoice:false, vs:'nat'};
+const SQ_DEF = {snd:true, voice:true, hints:true, takt:true, vol:'m', vib:true, tr:10, hideMute:false, hideNoVoice:false, vs:'nat'};
 function sqCfg(){ const c = S.sqCfg && typeof S.sqCfg === 'object' ? S.sqCfg : {}; const o = {...SQ_DEF, ...c};
   /* F13: Ansage ist jetzt Standard. Wer sie nicht selbst umgestellt hat (voiceSet), bekommt einmalig „an“. */
   if (!c.voiceSet) o.voice = true;
-  if (![5, 10, 15, 20].includes(+o.tr)) o.tr = 10; o.tr = +o.tr; if (!['l', 'm', 'h'].includes(o.vol)) o.vol = 'm'; if (!['nat', 'sys'].includes(o.vs)) o.vs = 'nat'; ['snd', 'voice', 'hints', 'vib', 'hideMute', 'hideNoVoice', 'voiceSet'].forEach(k => { o[k] = !!o[k]; }); return o; }
+  if (![5, 10, 15, 20].includes(+o.tr)) o.tr = 10; o.tr = +o.tr; if (!['l', 'm', 'h'].includes(o.vol)) o.vol = 'm'; if (!['nat', 'sys'].includes(o.vs)) o.vs = 'nat'; ['snd', 'voice', 'hints', 'takt', 'vib', 'hideMute', 'hideNoVoice', 'voiceSet'].forEach(k => { o[k] = !!o[k]; }); return o; }
 function sqSet(k, v){ S.sqCfg = {...sqCfg(), [k]:v, ...(k === 'voice' ? {voiceSet:true} : {})}; if (k === 'voice' && !v) sqHush(); save(); render(); }
 /* ---- Dosis: „2 × 45 Sek. pro Seite“, „8 pro Seite“, „10 langsame Wiederholungen“, „3 × 8–10 Wdh.“, „3–4 × 6–8 Wdh. pro Bein, langsam ablassen (3 Sek.)“ ---- */
 function sqDose(t, id){
@@ -60,6 +60,46 @@ const SQ_EXR = {
   hip9090:{tp:5}, hipcar:{tp:5, sw:5}, anklecar:{tp:3, sw:5}, legswing:{tp:2, sw:5}, hamfloss:{tp:3, sw:5}, calfwall:{tp:3, sw:5}, addrock:{tp:5, sw:5},
   dislocate:{tp:4}, neck:{tp:6, alt:1}, chintuck:{tp:4}, revlunge:{tp:4, sw:5}, pushup:{tp:3}, gmorn:{tp:4}, doorpec:{sw:5}, seatfig4:{sw:5}, fig4:{sw:5}, hipflex:{sw:8}, ham:{sw:8}, couch:{sw:10}, pigeon:{sw:10}
 };
+/* Takt je Wiederholung (Fachregel Takt 1): p = Phase 1 / Pause / Phase 2 / Pause in Sekunden (Summe = tp), w = Wörter
+   [Phase 1, Phase 2] DE und EN (fehlt: nur Ton), up = beginnt mit dem Heben (langsam ablassen: 1/1/3/0 statt 3/0,5/1/0,5),
+   m = Mobilität (danach nur weicher Ton, Zahl nur im Countdown) */
+const SQ_WD = {dn:[['runter', 'hoch'], ['down', 'up']], up:[['hoch', 'runter'], ['up', 'down']], rb:[['strecken', 'zurück'], ['reach', 'back']], ob:[['rüber', 'zurück'], ['over', 'back']]};
+const SQ_BEAT = {
+  squat:{p:[2, .5, 1, .5], w:SQ_WD.dn}, rdl:{p:[2, .5, 1, .5], w:SQ_WD.dn}, bss:{p:[2, .5, 1, .5], w:SQ_WD.dn}, gmorn:{p:[2, .5, 1, .5], w:SQ_WD.dn}, revlunge:{p:[2, .5, 1, .5], w:SQ_WD.dn},
+  slrdl:{p:[2.5, .5, 1.5, .5], w:SQ_WD.dn}, pushup:{p:[1.5, 0, 1, .5], w:SQ_WD.dn},
+  thrust:{p:[1, 1, 2, 0], w:SQ_WD.up, up:1}, bridge:{p:[1, 1, 2, 0], w:SQ_WD.up, up:1}, calf:{p:[1, 1, 2, 0], w:SQ_WD.up, up:1}, stepup:{p:[1.5, .5, 2, 0], w:SQ_WD.up, up:1},
+  deadbug:{p:[2, 0, 2, 0], w:SQ_WD.rb}, birddog:{p:[1.5, 3, 1.5, 0], w:SQ_WD.rb}, pallof:{p:[1, 2, 1, 0], w:[['vor', 'zurück'], ['out', 'in']]}, clam:{p:[1, .5, 1.5, 0], w:[['auf', 'zu'], ['open', 'close']]},
+  catcow:{p:[3, 0, 3, 0], w:[['rund', 'hohl'], ['round', 'arch']], m:1}, tspine:{p:[2, 0, 2, 0], w:[['auf', 'ab'], ['up', 'down']], m:1}, thread:{p:[2.5, 0, 2.5, 0], w:[['durch', 'auf'], ['under', 'open']], m:1},
+  openbook:{p:[3, 0, 3, 0], w:[['auf', 'zu'], ['open', 'close']], m:1}, wgs:{p:[8, 0, 0, 0], m:1}, lungetw:{p:[3, 0, 3, 0], w:[['drehen', 'zurück'], ['twist', 'back']], m:1}, hip9090:{p:[2.5, 0, 2.5, 0], w:SQ_WD.ob, m:1},
+  hipcar:{p:[5, 0, 0, 0], m:1}, anklecar:{p:[3, 0, 0, 0], m:1}, legswing:{p:[1, 0, 1, 0], m:1}, hamfloss:{p:[1.5, 0, 1.5, 0], w:[['streck', 'beug'], ['straight', 'bend']], m:1},
+  calfwall:{p:[1.5, 0, 1.5, 0], w:[['vor', 'zurück'], ['in', 'back']], m:1}, addrock:{p:[2.5, 0, 2.5, 0], w:[['zurück', 'vor'], ['back', 'forward']], m:1}, dislocate:{p:[2, 0, 2, 0], w:SQ_WD.ob, m:1},
+  neck:{p:[3, 0, 3, 0], w:[['hin', 'zurück'], ['over', 'back']], m:1}, chintuck:{p:[1, 2, 1, 0], w:[['zurück', 'lösen'], ['in', 'relax']], m:1}
+};
+/* Einzelwörter spricht die Stimme ausgeschrieben mit Punkt („Eins.“) bzw. mit „Und“ („Und runter.“) deutlicher (Spracherkennung geprüft) */
+const SQ_NUM = ['Null', 'Eins', 'Zwei', 'Drei', 'Vier', 'Fünf', 'Sechs', 'Sieben', 'Acht', 'Neun', 'Zehn', 'Elf', 'Zwölf', 'Dreizehn', 'Vierzehn', 'Fünfzehn', 'Sechzehn', 'Siebzehn', 'Achtzehn', 'Neunzehn', 'Zwanzig'];
+const sqNumSay = c => [(SQ_NUM[c] || String(c)) + '.', c + '.'], sqWdSay = (w, j) => ['Und ' + w[0][j] + '.', 'And ' + w[1][j] + '.'];
+const SQ_LEFT = [['Noch drei.', '3 more.'], ['Noch zwei.', '2 more.'], ['Die letzte.', 'Last one.']], SQ_MIN = ['Minimum geschafft, weiter, solange die Technik sauber ist', 'Minimum done, keep going while your form is clean'];
+/* Phasen einer Übung (ohne Takt: null); langsam ablassen: 3 s Absenken */
+function sqBeatOf(d){ const b = SQ_BEAT[d.id]; if (!b) return null; const p = d.slow ? (b.up ? [1, 1, 3, 0] : [3, .5, 1, .5]) : b.p;
+  return Math.abs(p.reduce((a, x) => a + x, 0) - sqTp(d)) > .01 ? null : {...b, p}; }
+/* Takt eines Abschnitts ab a (ms): Ton je Phase (tief/hoch), Wörter in Wdh. 1–2 (Phase ≥ 1,5 s), danach Zahl der fertigen
+   Wiederholung zu Beginn der nächsten (Mobilität nur Countdown), die letzten drei als „noch drei, noch zwei, letzte“; bei Spannen
+   einmal „Minimum geschafft“. Wechselseitig: links + rechts = 1. Wörter 0,2 s vor dem Phasenbeginn (Sprachverzögerung). */
+function sqBeats(s, a, n){
+  const d = s.d, b = sqBeatOf(d); if (!b) return; const tp = sqTp(d) * 1000, alt = d.side && !sqTwo(d), U = alt ? 2 : 1;
+  const r = String(d.reps).split(/[–-]/).map(Number), N = r[r.length - 1] || 10, L = r.length > 1 ? r[0] : 0, p2 = (b.p[0] + b.p[1]) * 1000, two = b.p[2] > 0;
+  for (let i = 0; i < N * U; i++) { const t = a + i * tp, c = i % U ? 0 : i / U, left = N - c, early = i < 2 * U;
+    /* tief = Absenken bzw. Strecken beginnt, hoch = Heben bzw. Zurück (bei Übungen, die mit dem Heben beginnen, umgekehrt) */
+    const k1 = b.m && !early ? 'bs' : b.up ? 'bh' : 'bl', k2 = b.m && !early ? 'bs' : b.up ? 'bl' : 'bh';
+    n(t, k1, null, null, 1); if (two) n(t + p2, k2, null, null, 1);
+    let say = null;
+    /* Countdown geht vor „Minimum geschafft“ (enge Spannen wie 8–10: die Anzeige zeigt die Zahl) */
+    if (c && L && c === L && left > 3) say = SQ_MIN; else if (c && left <= 3) say = SQ_LEFT[3 - left]; else if (c && !b.m) say = sqNumSay(c);
+    else if (early && b.w && p2 >= 1500) say = sqWdSay(b.w, 0);
+    /* erste Wiederholung: Wort nach dem Startton */
+    if (say) n(i ? t - 200 : a + 600, 'say', say, null, say === SQ_MIN ? 2 : 1);
+    if (early && b.w && two && (tp - p2) >= 1500) n(t + p2 - 200, 'say', sqWdSay(b.w, 1), null, 1); }
+}
 const SQ_TP0 = 3, SQ_SW0 = 5, SQ_SLOW = 5, SQ_PREP = 5, SQ_CORE_SET = 60, SQ_CORE_IN = 30, SQ_SIDE_REST = 60, SQ_WARM = 10;
 const sqR = id => SQ_EXR[id] || {};
 /* Sekunden je Wiederholung („langsam ablassen (3 Sek.)“: 5 s) */
@@ -240,6 +280,18 @@ function sqTipPlan(st){ const rot = {};
       while (s.tips.length < 3 && n < (s.two ? 2 : 3) && !(L.length < 2 && s.tips.length)) { const say = L[i % L.length], len = sqTalk(say); if (at + len > lim) break;
         s.tips.push({at, say}); n++; i++; at += Math.min(20000, Math.max(15000, len + 12000)); } });
     rot[s.id] = i; }); }
+/* Anzeige unter der Uhr: mit Takt die laufende Wiederholung („3 / 10“), sonst die Anzahl */
+function sqRepNow(s, el){ const d = s.d, g = sqSideAt(s, el || 0); if (!(sq && sq.cfg ? sq.cfg : sqCfg()).takt || !sqBeatOf(d) || !['a', 'b', 'one'].includes(g.ph)) return String(d.reps);
+  const U = d.side && !sqTwo(d) ? 2 : 1, N = +String(d.reps).split(/[–-]/).pop() || 10;
+  return Math.min(N, Math.floor((el - g.a) / (sqTp(d) * 1000 * U)) + 1) + ' / ' + d.reps; }
+/* Hinweise im Takt (Fachregel Takt 4): je geplantem Hinweis die nächste Wiederholung ab Nr. 3 bis vor dem Countdown, 0,9 s nach der Zahl;
+   er muss vor der nächsten Zahl fertig sein, sonst entfällt er. Bei tp ≤ 3 s keine Hinweise während der Wiederholungen. */
+function sqTipBeat(s, a, b0){ const d = s.d, tp = sqTp(d) * 1000, U = d.side && !sqTwo(d) ? 2 : 1, N = +String(d.reps).split(/[–-]/).pop() || 10, o = [];
+  if (tp <= 3000) return o; const last = {}, L = /[–-]/.test(String(d.reps)) ? +String(d.reps).split(/[–-]/)[0] : 0;
+  (s.tips || []).forEach(x => { const a0 = s.two && x.at >= b0 ? b0 : a;
+    for (let c = Math.max(3, (last[a0] || 0) + 2); c <= N - 4; c++) { const at = a0 + c * U * tp + 900; if (at < x.at || c === L) continue;
+      if (sqTalk(x.say) <= tp * U - 1100) { o.push({at, say:x.say}); last[a0] = c; } break; } });
+  return o; }
 /* Text unter dem Namen je Abschnitt (sqSideAt), in der App-Sprache */
 function sqSideTxt(s, ph){ const L = sqSideLbl(s), t = ph === 'prep' ? SQ_PREPT : ph === 'a' ? L.a : ph === 'b' ? L.b : ph === 'sw' ? SQ_SWT : s.d.side && !s.two ? SQ_ALTT : null; return t ? t[lang() === 'en' ? 1 : 0] : ''; }
 /* Zeile unter der Wiederholungszahl: im Übergang die nächste Seite („als Nächstes: rechtes Bein“), sonst die Einheit */
@@ -275,25 +327,34 @@ function sqDurSay(sec){ const m = Math.floor(sec / 60), r = Math.round(sec % 60)
   return m ? [(m === 1 ? '1 Minute' : m + ' Minuten') + (r ? ' ' + r : ''), (m === 1 ? '1 minute' : m + ' minutes') + (r ? ' ' + r : '')] : [r + ' Sekunden', r + ' seconds']; }
 /* B10: Satzpause: „Satzpause, 1 Minute 30. Als Nächstes: Satz 2 von 3.“ */
 function sqSetRestSay(s){ const x = s.nx, d = sqDurSay(Math.round(s.dur / 1000));
-  return [`Satzpause, ${d[0]}. Als Nächstes: Satz ${x.set} von ${x.sets}.`, `Set rest, ${d[1]}. Next: set ${x.set} of ${x.sets}.`]; }
+  const r = x.d && x.d.reps ? sqDoseSay(x.d) : null;
+  return [`Satzpause, ${d[0]}. Als Nächstes: Satz ${x.set} von ${x.sets}${r ? ', ' + r[0] : ''}.`, `Set rest, ${d[1]}. Next: set ${x.set} of ${x.sets}${r ? ', ' + r[1] : ''}.`]; }
+/* Kurzer Start mit Takt: ab Satz 2 „Los. Satz 2 von 3, linkes Bein.“, sonst mit Name „Los. Katze-Kuh.“ (die Ansage im
+   Übergang kann entfallen, wenn sie nicht vor die Töne passt) */
+function sqGoSay(s){ const L = sqSideLbl(s), sd = L === SQ_SD.alt ? [', im Wechsel', ', alternating'] : L.say;
+  return s.set > 1 ? [`Los. Satz ${s.set} von ${s.sets}${sd[0]}.`, `Go. Set ${s.set} of ${s.sets}${sd[1]}.`] : [`Los. ${sqNm(s.n)}${sd[0]}.`, `Go. ${sqNm(sqEn(s.n))}${sd[1]}.`]; }
 const SQ_10 = ['Noch 10 Sekunden', '10 seconds left'];
 function sqSched(s, last, cfg, raw){
   cfg = cfg || sqCfg();
-  const o = [], D = s.dur, n = (x, k, say, alt) => o.push({at:x, k, ...(say ? {say} : {}), ...(alt ? {alt} : {})}), H = cfg.voice && cfg.hints;
+  const o = [], D = s.dur, n = (x, k, say, alt, tk) => o.push({at:x, k, ...(say ? {say} : {}), ...(alt ? {alt} : {}), ...(tk ? {tk} : {})}), H = cfg.voice && cfg.hints;
   if (s.t === 'pre' || s.t === 'tr' || s.t === 'rr') {
     if (s.nx) { if (s.t === 'tr' && s.set) n(800, 'say', sqSetRestSay(s)); else if (H && s.full) n(800, 'say', sqNextSay(s, true), sqNextSay(s, false)); else n(800, 'say', sqNextSay(s, false, s.t !== 'pre')); }
     if (s.t !== 'pre' && D >= 25000) n(D - 10000, 'say', SQ_10);
     [3000, 2000, 1000].forEach(x => { if (D - x >= 0) n(D - x, 'tick'); }); n(D, 'go');
   } else if (s.t === 'ex') {
-    const x0 = sqExSay(s, H), p = s.prep || 0, b0 = s.two ? p + s.per + s.sw : p;
-    n(800, 'say', x0.say, x0.alt);
+    const p = s.prep || 0, b0 = s.two ? p + s.per + s.sw : p, T = cfg.takt && s.reps && sqBeatOf(s.d);
+    /* Mit Takt ohne Vorbereitung beginnt die erste Wiederholung sofort: nur kurzes „Los“ (Name und Dosis kamen in der Pause davor) */
+    if (T && !p) n(0, 'say', sqGoSay(s)); else { const x0 = sqExSay(s, H); n(800, 'say', x0.say, x0.alt); }
     if (p) n(p, 'go');
     /* Seitenwechsel: Ding und Ansage, 3-2-1 nur bei mindestens 8 s Übergang, Startton am Ende; kein Hinweis im Übergang */
     if (s.two) { const t1 = p + s.per, t2 = t1 + s.sw; n(t1, 'ding'); n(t1 + 700, 'say', sqSideLbl(s).sw); if (s.sw >= 8000) [3000, 2000, 1000].forEach(x => n(t2 - x, 'tick')); n(t2, 'go'); }
     else if (!s.reps && D - p >= 60000) n(p + (D - p) / 2, 'half');
-    if (H && s.tips) s.tips.forEach(x => n(x.at, 'say', x.say));
-    if (D - b0 >= 25000) n(D - 10000, 'say', SQ_10);
-    [3000, 2000, 1000].forEach(x => { if (D - x > b0 + 1500) n(D - x, 'tick'); });
+    /* Takt bei Wiederholungen: Seitenweise; Hinweise nur in Wdh. 3 bis N−3 direkt nach der Zahl (sqTipBeat), keine
+       „Noch 10 Sekunden“ und kein 3-2-1 (die Zählung sagt, wie viele noch kommen) */
+    if (T) { sqBeats(s, p, n); if (s.two) sqBeats(s, b0, n); if (H && s.tips) sqTipBeat(s, p, b0).forEach(x => n(x.at, 'say', x.say)); }
+    else { if (H && s.tips) s.tips.forEach(x => n(x.at, 'say', x.say));
+      if (D - b0 >= 25000) n(D - 10000, 'say', SQ_10);
+      [3000, 2000, 1000].forEach(x => { if (D - x > b0 + 1500) n(D - x, 'tick'); }); }
     /* Ende der letzten Übung: Melodie und „Geschafft“ kommen aus sqEnd */
     if (!last) n(D, 'pause');
   }
@@ -302,7 +363,15 @@ function sqSched(s, last, cfg, raw){
   /* Ansagen dürfen keinen Ton überlagern (0,5 s Abstand vor und nach Tönen): sonst kürzere Fassung oder weglassen */
   const tones = o.filter(x => SQ_TONES.includes(x.k)).map(x => x.at);
   const fits = (at, say) => { const end = at + sqTalk(say); return !tones.some(t => (t >= at - 500 && t < end + 500)); };
-  return o.filter(x => { if (x.k !== 'say') return true; if (fits(x.at, x.say)) return true; if (x.alt && fits(x.at, x.alt)) { x.say = x.alt; return true; } return false; }).map(x => { delete x.alt; return x; });
+  const f = o.filter(x => { if (x.k !== 'say') return true; if (fits(x.at, x.say)) return true; if (x.alt && fits(x.at, x.alt)) { x.say = x.alt; return true; } return false; }).map(x => { delete x.alt; return x; });
+  if (!f.some(x => x.tk)) return f;
+  /* Takt weicht aus: Taktwort nicht über einer Ansage (eine neue Ansage bricht die laufende ab), Takt-Ton nicht neben einem
+     festen Ton; „Minimum geschafft“ (tk 2) geht vor Zahl und Wort */
+  const busy = f.filter(x => x.k === 'say' && x.tk !== 1).map(x => [x.at - 150, x.at + sqTalk(x.say) + 150]), tt = f.filter(x => SQ_TONES.includes(x.k)).map(x => x.at);
+  let end = -1, prev = '';
+  return f.filter(x => { if (x.tk !== 1) return true; if (x.k !== 'say') return !tt.some(t => Math.abs(t - x.at) < 300);
+    /* auch Taktwörter untereinander nie überlappend und nie zweimal dasselbe hintereinander (das spätere entfällt) */
+    if (x.at < end || x.say[0] === prev || busy.some(([a, b]) => x.at + sqTalk(x.say) > a && x.at < b)) return false; end = x.at + sqTalk(x.say); prev = x.say[0]; return true; });
 }
 /* F16: alle Sätze, die eine Sequenz sprechen kann – Lang- und Kurzfassungen, unabhängig davon, welche der Zeitplan
    wählt (das hängt von der Sprechdauer ab). Grundlage für Katalog, Vorladen und Test. */
@@ -354,6 +423,9 @@ function sqSig(k, say){
     else if (k === 'pause') { sqTone(392, 0, .16, v); sqTone(330, .24, .2, v); }
     else if (k === 'ding') { sqTone(1760, 0, .4, v * .8, 'triangle'); sqTone(2637, 0, .25, v * .25); }
     else if (k === 'half') sqTone(660, 0, .14, v * .45);
+    else if (k === 'bl') sqTone(440, 0, .1, v * .5);
+    else if (k === 'bh') sqTone(660, 0, .1, v * .5);
+    else if (k === 'bs') sqTone(520, 0, .12, v * .35, 'triangle');
     else if (k === 'done') { sqTone(523, 0, .18, v); sqTone(659, .2, .18, v); sqTone(784, .4, .45, v); } }
   if (c.vib && SQ_VIB[k]) { try { navigator.vibrate && navigator.vibrate(SQ_VIB[k]); } catch (e) { elog(e); } }
 }
@@ -408,12 +480,12 @@ function sqStart(){
   sqGo();
 }
 function sqGo(){
-  const now = Date.now(), cfg = sqCfg(); sq = {...sq, view:'run', cfg, steps:sqSteps(sq.se, cfg), k:0, t0:now, paused:false, pAt:0, pTot:0, startAt:now, fired:{}, doneEx:{}, ask:false, bg:false};
+  const now = Date.now(), cfg = sqCfg(); sq = {...sq, view:'run', cfg, steps:sqSteps(sq.se, cfg), k:0, t0:now, paused:false, pAt:0, pTot:0, startAt:now, fired:{}, sch:null, doneEx:{}, ask:false, bg:false};
   sqEnter(0, now, false); clearInterval(sqTm); sqTm = setInterval(sqTick, 100); render();
 }
 const sqLastEx = k => !sq.steps.slice(k + 1).some(s => s.t === 'ex');
 function sqEnter(k, t0, manual){
-  sq.k = k; sq.t0 = t0; sq.fired = {}; sq.ph = null; const s = sq.steps[k];
+  sq.k = k; sq.t0 = t0; sq.fired = {}; sq.ph = null; sq.sch = null; const s = sq.steps[k];
   if (s.t === 'end') return sqEnd(false);
   if (manual) sqHush();
   if (manual && s.t === 'ex') sqSig('go');
@@ -425,7 +497,7 @@ function sqLive(s){ const en = lang() === 'en', d = s.dur ? sqDurSay(Math.round(
 const sqEl = () => (sq.paused ? sq.pAt : Date.now()) - sq.t0;
 function sqTick(){
   if (!sq || sq.view !== 'run' || sq.paused || sq.ask) return;
-  const s = sq.steps[sq.k], el = sqEl(), sch = sqSched(s, s.t === 'ex' && sqLastEx(sq.k), sq.cfg);
+  const s = sq.steps[sq.k], el = sqEl(), sch = sqSchNow(s);
   sch.forEach((x, j) => { if (!sq.fired[j] && el >= x.at && (!s.dur || x.at <= s.dur)) { sq.fired[j] = 1; sqSig(x.k, x.say); } });
   if (s.dur && el >= s.dur) {
     if (s.t === 'ex') sq.doneEx[sq.k] = 1;
@@ -449,6 +521,7 @@ function sqDom(){
     if (r) r.setAttribute('stroke', g.ph === 'sw' || g.ph === 'prep' ? 'var(--ice)' : 'var(--teal)');
     const b = document.getElementById('sqDoneB'); if (b) b.textContent = sqDoneTxt(s, g.ph);
     const rl = document.getElementById('sqRl'), rt = sqRlTxt(s, g.ph); if (rl && rl.textContent !== rt) rl.textContent = rt; }
+  if (s.t === 'ex' && s.reps) { const e = document.getElementById('sqRepN'), t = sqRepNow(s, el); if (e && e.textContent !== t) e.textContent = t; }
 }
 function sqRepDone(){
   const s = sq && sq.steps[sq.k]; if (!s || s.t !== 'ex' || !s.reps || sq.paused || sq.ask) return;
@@ -459,7 +532,10 @@ function sqRepDone(){
   sqSig('pause'); sqEnter(sq.k + 1, Date.now(), false); render();
 }
 /* Innerhalb der Phase an die Stelle at springen; Signale davor gelten als erledigt (keine nachgeholten Töne) */
-function sqJump(s, at){ sq.t0 = Date.now() - at; sqHush(); sqSched(s, sqLastEx(sq.k), sq.cfg).forEach((x, j) => { if (x.at < at) sq.fired[j] = 1; }); }
+function sqJump(s, at){ sq.t0 = Date.now() - at; sqHush(); sqSchNow(s).forEach((x, j) => { if (x.at < at) sq.fired[j] = 1; }); }
+/* Zeitplan je Schritt einmal festhalten: sq.fired zählt nach Index, und welche Ansagen passen, hängt an den Sprechdauern
+   (Manifest kann nachladen, eine Datei ausfallen) – sonst verschieben sich die Indizes mitten in der Übung */
+function sqSchNow(s){ if (!sq.sch || sq.schK !== sq.k) { sq.sch = sqSched(s, s.t === 'ex' && sqLastEx(sq.k), sq.cfg); sq.schK = sq.k; } return sq.sch; }
 function sqPause(){ if (!sq || sq.view !== 'run' || sq.paused) return; sq.paused = true; sq.pAt = Date.now(); sqHush(); render(); }
 function sqResume(){ if (!sq || sq.view !== 'run' || !sq.paused) return; const d = Date.now() - sq.pAt; sq.t0 += d; sq.pTot += d; sq.paused = false; sq.bg = false; try { sqAudio(); } catch (e) { elog(e); } try { sqWake(); } catch (e) { elog(e); }
   /* nach „Weiter“ nur den Namen der laufenden Übung, nicht den Hinweis */
@@ -505,7 +581,7 @@ function sqCfgUi(inline){
   const c = sqCfg(), tg = (k, l) => `<label class="flex items-center gap-3" style="min-height:44px"><input type="checkbox"${inline ? '' : ` id="sqT-${k}"`} style="width:22px;height:22px" ${c[k] ? 'checked' : ''} onchange="sqSet('${k}',this.checked)"><span class="text-sm">${l}</span></label>`;
   const ch = (k, v, l) => `<button class="${c[k] === v ? 'btn' : 'ghost'} !w-auto !px-3 text-sm" style="min-height:44px" aria-pressed="${c[k] === v}" onclick="sqSet('${k}',${typeof v === 'number' ? v : `'${v}'`})">${l}</button>`;
   const vib = typeof navigator !== 'undefined' && 'vibrate' in navigator;
-  return `<div class="${inline ? 'mt-3 p-3' : 'panel p-4'}" style="${inline ? 'border:1px solid var(--line)' : ''}">${tg('snd', 'Tonsignale')}${tg('voice', 'Sprachansage')}${c.voice ? `<div style="padding-left:34px">${tg('hints', 'Ausführungshinweise ansagen')}<p class="mt-1 text-sm font-semibold">Stimme</p><div class="mt-1 flex flex-wrap gap-2">${ch('vs', 'nat', 'Natürlich (empfohlen)')}${ch('vs', 'sys', 'Systemstimme')}</div></div>` : ''}${vib ? tg('vib', 'Vibration') : ''}
+  return `<div class="${inline ? 'mt-3 p-3' : 'panel p-4'}" style="${inline ? 'border:1px solid var(--line)' : ''}">${tg('snd', 'Tonsignale')}${tg('takt', 'Takt und Zählen bei Wiederholungen')}${c.takt ? '<p class="text-xs" style="padding-left:34px;color:var(--mute)">Der Takt ist eine Orientierung. Fühlt er sich nicht gut an, mach in deinem eigenen Tempo weiter.</p>' : ''}${tg('voice', 'Sprachansage')}${c.voice ? `<div style="padding-left:34px">${tg('hints', 'Ausführungshinweise ansagen')}<p class="mt-1 text-sm font-semibold">Stimme</p><div class="mt-1 flex flex-wrap gap-2">${ch('vs', 'nat', 'Natürlich (empfohlen)')}${ch('vs', 'sys', 'Systemstimme')}</div></div>` : ''}${vib ? tg('vib', 'Vibration') : ''}
     <p class="mt-2 text-sm font-semibold">Lautstärke</p><div class="mt-1 flex flex-wrap gap-2">${ch('vol', 'l', 'Leise')}${ch('vol', 'm', 'Mittel')}${ch('vol', 'h', 'Laut')}</div>
     <p class="mt-3 text-sm font-semibold">Übergangszeit zwischen den Übungen</p><div class="mt-1 flex flex-wrap gap-2">${[5, 10, 15, 20].map(v => ch('tr', v, v + ' Sek.')).join('')}</div>
     <button class="ghost mt-3 !w-auto !px-3 text-sm inline-flex items-center gap-2" style="min-height:44px" onclick="sqTest()">${ic('sound', 18)}<span>Töne testen</span></button></div>`;
@@ -552,7 +628,7 @@ function sqView(){
   if (s.t === 'ex') {
     const side = sqSideTxt(s, g.ph), hasSide = s.d.side || s.prep;
     body = `${top}${head(esc(s.n), hasSide ? `<p id="sqSide" class="sqsub mt-1 text-center font-semibold" style="color:var(--teal)" data-noi18n>${esc(side)}</p>` : '', String(s.n).length)}${sqFig(s.id, sqMir(s, g.ph))}
-      ${slot(s.reps ? `<div class="sqrep">${ring}<p class="sqrl text-center font-semibold" data-noi18n><span class="sqrepn">${esc(s.d.reps)}</span> <span id="sqRl">${esc(sqRlTxt(s, g.ph))}</span></p></div><button id="sqDoneB" class="btn sqdone mx-auto block w-full font-semibold" data-noi18n onclick="sqRepDone()">${esc(sqDoneTxt(s, g.ph))}</button>` : ring)}
+      ${slot(s.reps ? `<div class="sqrep">${ring}<p class="sqrl text-center font-semibold" data-noi18n><span id="sqRepN" class="sqrepn">${esc(sqRepNow(s, el))}</span> <span id="sqRl">${esc(sqRlTxt(s, g.ph))}</span></p></div><button id="sqDoneB" class="btn sqdone mx-auto block w-full font-semibold" data-noi18n onclick="sqRepDone()">${esc(sqDoneTxt(s, g.ph))}</button>` : ring)}
       ${cap(`${(EXI[s.id].cap || []).length > 1 ? `<span>${esc(EXI[s.id].cap[0])}</span> → <span>${esc(EXI[s.id].cap[1])}</span>` : ''}${s.d.hint ? ` · <span>${esc(s.d.hint)}</span>` : ''}`)}`;
   } else if (s.t === 'pre') body = `${top}${head("Gleich geht's los", `<p class="sqnx mt-1 text-center"><span>Erste Übung:</span> <span>${esc(s.nx.n)}</span></p>`)}${sqFig(s.nx.id)}${slot(ring)}${cap('')}`;
   else body = `${top}${head(s.t === 'rr' ? 'Rundenpause' : s.set ? 'Satzpause' : 'Pause', `<p class="sqnx mt-1 text-center">als Nächstes: <b>${esc(s.nx.n)}</b>${s.nx.sets > 1 ? ` (Satz ${s.nx.set} von ${s.nx.sets})` : ''}</p>`)}${sqFig(s.nx.id)}${slot(ring)}${cap('')}`;
