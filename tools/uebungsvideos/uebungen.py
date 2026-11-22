@@ -218,7 +218,8 @@ def openbook(ph):
         q['open'] = 168 - math.degrees(math.atan2(d0.z, -d0.x))   # Bogen von vorn unten über die Decke bis 12° über der Matte hinten
     d = Matrix.Rotation(math.radians(q['open'] * t), 3, Y) @ d0
     aim('LeftArm', d); aim('LeftForeArm', d); aim('LeftHand', V(-1, .05, 0).lerp(d, sm(t * 5)))
-EXS['openbook'] = dict(pose=openbook, keys=((1, 0), (12, 0), (48, 1), (62, 1), (98, 0), (108, 0)), perframe=True, cam=V(-.35, .85, .6), zone=None)
+    if t > 0: relax_hands(); bpy.context.view_layer.update(); rig.location.z -= low(); bpy.context.view_layer.update()   # Auflage je Bild (nach dem Entspannen der Hände): Beim Aufdrehen verlagert sich das Gewicht, die Figur bleibt auf der Matte
+EXS['openbook'] = dict(pose=openbook, keys=((1, 0), (12, 0), (48, 1), (62, 1), (98, 0), (108, 0)), perframe=True, cam=V(-.35, .85, .6), zone=None, wurzel=True)
 
 if EX == 'pallof':
     # Griff mit beiden Händen: Linien zwischen den Fingern weglassen (sonst wird der Griff ein dunkles Strichknäuel)
@@ -410,17 +411,22 @@ def ground():
             if abs(dz) < .001: break
         return
     rig.location.z = 0; bpy.context.view_layer.update(); m = low(); rig.location.z = -m; bpy.context.view_layer.update()
-if EX == 'thread':
-    q = P['thread']
-    pose(.5); z0 = wpos('LeftArm').z; twist('Spine2', 10, (0, -1, 0)); q['sgn'] = 1 if wpos('LeftArm').z > z0 else -1
+def vf_kalibrieren(q, ph, f=.975, tol=.012):
+    """Vierfüßlerstand (thread, birddog): Knie und Fußrücken auf der Matte (root), Hände auf der Matte (hz, nach dem Entspannen
+    der Hände in pose()), Stützarm fast gestreckt (st: Neigung des Rumpfs; f: Anteil der Armlänge, tol: Toleranz)"""
     for _ in range(25):
-        q.pop('HL', None); pose(.5)
+        q.pop('HL', None); pose(ph)
         gl = min(lowg(['LeftLeg', 'RightLeg'], .5), lowpts(lambda co, ob: True, [shoes])); gh = lowg(HAND('Left') + HAND('Right'))
         S_ = wpos('RightArm'); La = (wpos('RightArm', True) - S_).length + (wpos('RightForeArm', True) - wpos('RightForeArm')).length
-        gap = (S_ - wpos('RightHand')).length - La * .975      # > 0: Arm überstreckt (Schulter zu hoch), < 0: Ellbogen zu stark gebeugt
+        gap = (S_ - wpos('RightHand')).length - La * f      # > 0: Arm überstreckt (Schulter zu hoch), < 0: Ellbogen zu stark gebeugt
         print('VIERFUSS root', round(q['root'], 3), 'Knie', round(gl, 3), 'Hände', round(gh, 3), 'Armspalt', round(gap, 3), 'st', round(q['st'], 3))
-        if abs(gl) < .004 and abs(gh) < .005 and abs((S_.z - q['hz']) - La * .975) < .012: break
-        q['root'] -= gl; q['hz'] -= gh * .8; q['st'] -= ((S_.z - q['hz']) - La * .975) * 1.2
+        if abs(gl) < .004 and abs(gh) < .005 and abs((S_.z - q['hz']) - La * f) < tol: break
+        q['root'] -= gl; q['hz'] -= gh * .8; q['st'] -= ((S_.z - q['hz']) - La * f) * 1.2
+if EX == 'birddog': vf_kalibrieren(P['birddog'], 0, BD_ARM, .002); bd_kalibrieren()   # Stützarme fast gestreckt (Ellbogen unter 10°)
+elif EX == 'thread':
+    q = P['thread']
+    pose(.5); z0 = wpos('LeftArm').z; twist('Spine2', 10, (0, -1, 0)); q['sgn'] = 1 if wpos('LeftArm').z > z0 else -1
+    vf_kalibrieren(q, .5)
     for _ in range(25):
         pose(1); g_ = min(lowg(['Head'], .5), lowg(['LeftShoulder', 'LeftArm'], .5))
         print('FAEDELN s1', round(q['s1'], 3), 'Kopf/Schulter', round(g_, 3))
@@ -476,11 +482,12 @@ if EX == 'openbook':
     print('KISSEN unter', [round(c, 3) for c in hp])
     pil = bpy.data.objects.new('kissen', bpy.data.meshes.new('kissen')); sc.collection.objects.link(pil)
     # Kissen: Quader mit je einem Zwischenschnitt, dann geglättet → weiche, kissenartige Form ohne Kantenartefakte
-    g = bmesh.new(); bmesh.ops.create_cube(g, size=1); bmesh.ops.scale(g, vec=(.46, .26, hz * 1.08), verts=g.verts[:])
+    kh_ = hz * 1.08 - .005    # Kissenhöhe: Kopf liegt auf, ohne einzusinken (vorher 3–4 mm im Kissen)
+    g = bmesh.new(); bmesh.ops.create_cube(g, size=1); bmesh.ops.scale(g, vec=(.46, .26, kh_), verts=g.verts[:])
     bmesh.ops.subdivide_edges(g, edges=g.edges[:], cuts=2, use_grid_fill=True); g.to_mesh(pil.data); g.free()
     for f in pil.data.polygons: f.use_smooth = True
     sp_ = pil.modifiers.new('weich', 'SUBSURF'); sp_.levels = 2; sp_.render_levels = 2
-    pil.location = (hp.x + .10, hp.y + .02, hz * 1.08 / 2)      # Kissen mittig unter dem Kopf, Rand zum Körper etwa 11 cm unter der Schläfe: Hals und untere Schulter bleiben frei; setmat(pil, toon('kissen', srgb('#f4f7f8'), srgb('#c6d3d8')))
+    pil.location = (hp.x + .10, hp.y + .02, kh_ / 2)      # Kissen mittig unter dem Kopf, Rand zum Körper etwa 11 cm unter der Schläfe: Hals und untere Schulter bleiben frei; setmat(pil, toon('kissen', srgb('#f4f7f8'), srgb('#c6d3d8')))
     print('KISSEN Hoehe', round(hz, 3))
 if EX == 'clam':
     # Kopf in Verlängerung der Wirbelsäule; nur so weit zur Matte neigen, bis die Schläfe auf dem unteren Oberarm liegt
@@ -578,6 +585,14 @@ if cfg.get('zoom'):
     for fr in range(1, K_[-1][0] + 1):
         w_ = sm((ph_at(fr) - .3) / .22); cam.location = locA.lerp(locB, w_); cam.data.ortho_scale = scA + (scB - scA) * w_
         cam.keyframe_insert('location', frame=fr); cam.data.keyframe_insert('ortho_scale', frame=fr)
+if cfg.get('cam_spiegel'):
+    # Kamera je Seite gespiegelt (an der Körpermitte x = 0): bis Bild cam_spiegel von der anderen Seite, damit die gestreckte
+    # Seite immer der Kamera zugewandt ist. Schnitt in der Pause zwischen den Seiten (konstante Schlüsselbilder)
+    _sp_L, _sp_R = cam.location.copy(), cam.rotation_euler.to_matrix(); _sp_S = Matrix.Diagonal((-1, 1, 1))
+    for _sp_fr, _sp_m in ((1, True), (cfg['cam_spiegel'] - 1, True), (cfg['cam_spiegel'], False), (cfg['keys'][-1][0], False)):
+        cam.location = Vector((-_sp_L.x, _sp_L.y, _sp_L.z)) if _sp_m else _sp_L
+        cam.rotation_euler = ((_sp_S @ _sp_R @ _sp_S) if _sp_m else _sp_R).to_euler()     # S·R·S: gespiegelte Blickrichtung, Bild nicht seitenverkehrt
+        cam.keyframe_insert('location', frame=_sp_fr); cam.keyframe_insert('rotation_euler', frame=_sp_fr)
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 MESS = []
