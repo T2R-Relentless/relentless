@@ -425,6 +425,9 @@ def vf_kalibrieren(q, ph, f=.975, tol=.012):
 if EX == 'catcow': cc_kalibrieren()
 elif EX == 'tspine': ts_kalibrieren()
 elif EX == 'addrock': ar_kalibrieren()
+elif EX == 'wallsit': ws_kalibrieren()
+elif EX == 'pushup': pu_kalibrieren()
+elif EX == 'revlunge': rl_geometrie()
 elif EX == 'birddog': vf_kalibrieren(P['birddog'], 0, BD_ARM, .002); bd_kalibrieren()   # Stützarme fast gestreckt (Ellbogen unter 10°)
 elif EX == 'thread':
     q = P['thread']
@@ -559,9 +562,13 @@ g = bmesh.new(); bmesh.ops.create_cube(g, size=1); g.to_mesh(floor.data); g.free
 floor.scale = (max(xs) - min(xs) + .24 + 2 * cfg.get('matte_rand', 0), max(ys) - min(ys) + .3 + 2 * cfg.get('matte_rand', 0), .035); floor.location = ((max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, -.0175)
 setmat(floor, toon('mat', srgb('#cfdde2'), srgb('#b9cbd1')))
 for _kr_g in KR_GERAET.get(EX, ()):
-    if _kr_g['art'] == 'wand':   # Matte endet an der Wandfläche (die Person steht auf der +Y-Seite der Wand)
+    if _kr_g['art'] == 'wand' and _kr_g['b'][3] <= 0:   # Matte endet an der Wandfläche (Wand vor der Person, -Y)
         _kr_y0 = _kr_g['b'][3]; _kr_y1 = floor.location.y + floor.scale.y / 2
         if floor.location.y - floor.scale.y / 2 < _kr_y0: floor.scale.y = _kr_y1 - _kr_y0; floor.location.y = (_kr_y0 + _kr_y1) / 2
+    elif _kr_g['art'] == 'wand':   # Wand hinter der Person (+Y): Boden läuft unter der Wand durch und weit nach vorn (über die Bildbreite)
+        _kr_y1 = _kr_g['b'][2]; _kr_y0 = floor.location.y - floor.scale.y / 2 - (3.0 if cfg.get('matte_wand') else 0)
+        floor.scale.y = _kr_y1 - _kr_y0; floor.location.y = (_kr_y0 + _kr_y1) / 2
+        if cfg.get('matte_wand'): floor.scale.z = 1.0; floor.location.z = -.5     # Boden als Fläche bis zum unteren Bildrand
 # Kamera: orthografisch aus Richtung cfg['cam'], Ausschnitt eng um Figur und Matte
 d = cfg['cam']; cen = sum(pts, Vector()) / len(pts)
 cam.rotation_euler = (-d).to_track_quat('-Z', 'Y').to_euler(); cam.location = cen + d * 8; bpy.context.view_layer.update()
