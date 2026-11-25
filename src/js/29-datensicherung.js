@@ -6,7 +6,7 @@
    3 Tägliche Schnappschüsse (die letzten 7) in IndexedDB, wiederherstellbar unter „Meine Pläne“.
    4 Vor Zurücksetzen, Plan löschen und Sicherung laden: automatischer Schnappschuss und „Rückgängig“.
    5 Erinnerung nach wichtigen Änderungen (neuer oder angepasster Plan, 5 neue Bewertungen) oder spätestens nach 14 Tagen. */
-const BK_SIDE = ['relentless.dyk', 'relentless.gmtip', 'relentless.inst.hide', 'relentless.stats.off'], BK_GK = 'relentless.garmin.key';
+const BK_SIDE = ['relentless.dyk', 'relentless.gmtip', 'relentless.inst.hide', 'relentless.stats.off', 'relentless.stats.consent'], BK_GK = 'relentless.garmin.key';
 let bkImp = null, bkUndo = null, bkList = null, bkAsk = null, bkMsg = '', bkTimer = null, bkReady = false;
 /* Beim Laden der Seite festhalten, ob der normale Speicher leer war (bevor die App etwas hineinschreibt) */
 const bkEmpty0 = (() => { try { return !localStorage.getItem(K) && !localStorage.getItem(LIBK); } catch (e) { elog(e); return false; } })();
@@ -155,8 +155,15 @@ function bkKeyUi(){
 
 /* ---------- Erinnerung ---------- */
 const bkExeN = () => { try { return Object.keys((S.p && S.p.exe) || {}).length; } catch (e) { elog(e); return 0; } };
+/* F36 (Sofortmaßnahme zu 8): 14 Tage ohne Sicherungsdatei (seit der letzten bzw. seit dem ersten Start) → genau einmal
+   erinnern. Wer dann „Später“ tippt, wird für diesen Stand nicht mehr erinnert (S.bkRem = Bezugszeitpunkt), erst wieder
+   14 Tage nach der nächsten Sicherung. Davor gelten die bisherigen Anlässe (Planänderung, 5 Bewertungen, erster Plan). */
+const bkBase = () => S.bkAt || S.bkAt0 || 0;
+const bkDue14 = () => !!bkBase() && Date.now() - bkBase() >= 14 * 864e5;
+function bkLater(){ if (bkDue14()) S.bkRem = bkBase(); S.bkSnooze = Date.now(); save(); render(); }
 function bkReason(){
   if (!S.p) return null; const now = Date.now(), last = S.bkAt || 0, snooze = S.bkSnooze || 0;
+  if (bkDue14()) { if (S.bkRem === bkBase()) return null; const d = Math.floor((now - bkBase()) / 864e5); return last ? `Deine letzte Sicherung ist ${d} Tage alt.` : `Seit ${d} Tagen gibt es keine Sicherungsdatei deiner Pläne. Sie liegen nur auf diesem Gerät.`; }
   if (now - snooze < 3 * 864e5) return null;
   if (!last) return now - (S.bkAt0 || now) > 2 * 864e5 ? 'Deine Pläne, Einstellungen und Fahrten liegen nur auf diesem Gerät.' : null;
   if ((S.bkChg || 0) > 0) return 'Du hast deinen Plan seit der letzten Sicherung geändert.';
@@ -168,7 +175,7 @@ function bkHint(){
   const now = Date.now(); if (!S.bkAt0) { S.bkAt0 = now; try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
   const why = bkReason(); if (!why) return '';
   const ios = typeof instOs === 'function' && instOs() === 'ios';
-  return `<section class="panel p-4" style="border-left:4px solid var(--ice)"><p class="font-semibold">Zeit für eine Sicherung</p><p class="mt-1 text-sm" style="color:var(--mute)">${why} Speichere eine Sicherungsdatei, dann geht auch bei einem neuen Handy nichts verloren.${ios ? ' Tipp: Wähle danach „In Dateien sichern“ und dann iCloud Drive.' : ''}</p><div class="mt-3 flex gap-2"><button class="btn !py-2" onclick="exportPlans()">Jetzt sichern</button><button class="ghost !py-2" onclick="S.bkSnooze=Date.now();save();render()">Später</button></div></section>`;
+  return `<section class="panel p-4" style="border-left:4px solid var(--ice)"><p class="font-semibold">Zeit für eine Sicherung</p><p class="mt-1 text-sm" style="color:var(--mute)">${why} Speichere eine Sicherungsdatei, dann geht auch bei einem neuen Handy nichts verloren.${ios ? ' Tipp: Wähle danach „In Dateien sichern“ und dann iCloud Drive.' : ''}</p><div class="mt-3 flex gap-2"><button class="btn !py-2" onclick="exportPlans()">Jetzt sichern</button><button class="ghost !py-2" onclick="bkLater()">Später</button></div></section>`;
 }
 function bkMarkChange(){ S.bkChg = (S.bkChg || 0) + 1; }
 

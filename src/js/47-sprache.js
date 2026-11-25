@@ -83,7 +83,7 @@ function trS(s){
   if (e == null) { const p = trP(t); if (p != null) return s.replace(t, p); const T2 = iNormT(t), e2 = T2.k !== k && T2.k !== '{0}' ? I18N[T2.k] : null; if (e2 != null) return s.replace(t, e2.replace(/\{(\d+)\}/g, (m, i) => T2.v[i] ? iVal(T2.v[i]) : m)); const mk = T2.k === '{0}' ? k : T2.k; if (window.__iMiss && !window.__iMiss.has(mk)) window.__iMiss.set(mk, t); return s; }
   return s.replace(t, e.replace(/\{(\d+)\}/g, (m, i) => v[i] ? iVal(v[i]) : m));
 }
-const I_ABBR = /(?:\b(?:Std|Min|Sek|ca|bzw|Nr|evtl|inkl|ggf|vgl|etc|Mo|Di|Mi|Do|Fr|Sa|So|B|h|z|d|u|a|o|Jan|Feb|Okt|Nov|Dez|Dr|Prof|al)|\d)\.$/;
+const I_ABBR = /(?:\b(?:Std|Min|Sek|ca|bzw|Nr|evtl|inkl|ggf|vgl|etc|Mo|Di|Mi|Do|Fr|Sa|So|B|h|z|d|u|a|o|Jan|Feb|Okt|Nov|Dez|Dr|Prof|al|Art|Abs|lit|Inc)|\d)\.$/;
 function trText(s){
   const lead = s.match(/^\s*/)[0], trail = s.match(/\s*$/)[0], core = s.trim(); if (!core) return s;
   if (I18N[iNorm(core).k] != null) return lead + iSing(trS(core)) + trail;

@@ -52,8 +52,12 @@ def versionen():
     m = re.search(r"APP_BUILD\s*=\s*'(\d+)'", lies('src/js/26-statistik-update.js'))
     if m:
         v['APP_BUILD'] = m.group(1)
+    m = re.search(r"APP_BUILT\s*=\s*'(\d+)'", lies('src/js/26-statistik-update.js'))
+    if m:
+        v['APP_BUILT'] = m.group(1)
     vj = json.loads(lies('public/version.json'))
     v['version.json:version'], v['version.json:build'] = vj.get('version'), str(vj.get('build'))
+    v['version.json:built'] = str(vj['built']) if vj.get('built') is not None else None
     m = re.search(r"const V\s*=\s*'([^']+)'", lies('public/sw.js'))
     if m:
         v['sw.js:V'] = m.group(1)
@@ -77,6 +81,8 @@ def pruefe_versionen():
         fehler.append(f"APP_VERSION {v['APP_VERSION']} ≠ public/version.json version {v['version.json:version']}")
     if v['APP_BUILD'] != v['version.json:build']:
         fehler.append(f"APP_BUILD {v['APP_BUILD']} ≠ public/version.json build {v['version.json:build']}")
+    if v.get('APP_BUILT') != v.get('version.json:built'):
+        fehler.append(f"APP_BUILT {v.get('APP_BUILT')} ≠ public/version.json built {v.get('version.json:built')} → python3 tools/version.py")
     if v['APP_SW'] != v['sw.js:V']:
         fehler.append(f"APP_SW '{v['APP_SW']}' ≠ public/sw.js '{v['sw.js:V']}'")
     return v

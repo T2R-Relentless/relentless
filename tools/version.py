@@ -10,7 +10,9 @@
 Danach baut das Skript public/index.html neu. Stellen: src/js/44-version-neuigkeiten.js (APP_VERSION, APP_SW),
 src/js/26-statistik-update.js (APP_BUILD), public/version.json, public/sw.js (Cache-Version V).
 Die Build-ID wird als Text verglichen (neuer = größer). Sie wird deshalb nie kleiner als die bisherige, auch wenn die
-bisherige in der Zukunft liegt.
+bisherige in der Zukunft liegt. Sie ist nur eine Reihenfolge-ID, kein Datum.
+F36: Angezeigt wird APP_BUILT (src/js/26-statistik-update.js, version.json "built"). Das Skript setzt es bei fix und neu
+auf die aktuelle Uhrzeit, unabhängig von der Build-ID.
 """
 import datetime as dt
 import json
@@ -72,14 +74,16 @@ def main():
         return
     ver2, sw2 = ver + 1, f'{sw_pre}{sw_n + 1}'
     bid2 = neue_build_id(bid) if art == 'neu' else bid
+    built = dt.datetime.now().replace(microsecond=0).strftime(FMT)
     ersetze(F_VER, r"(APP_VERSION\s*=\s*)\d+(\s*,\s*APP_SW\s*=\s*')[^']*(')", rf"\g<1>{ver2}\g<2>{sw2}\g<3>")
     ersetze(F_SW, r"(const V\s*=\s*')[^']*(')", rf"\g<1>{sw2}\g<2>")
     if bid2 != bid:
         ersetze(F_BUILD, r"(APP_BUILD\s*=\s*')\d+(')", rf"\g<1>{bid2}\g<2>")
+    ersetze(F_BUILD, r"(APP_BUILT\s*=\s*')\d+(')", rf"\g<1>{built}\g<2>")
     vj = json.loads(lies(F_JSON))
-    vj['version'], vj['build'] = ver2, bid2
+    vj['version'], vj['build'], vj['built'] = ver2, bid2, built
     schreib(F_JSON, json.dumps(vj, separators=(', ', ': ')))
-    print(f'Version {ver} → {ver2} · Service Worker {sw_pre}{sw_n} → {sw2} · Build {bid}' + (f' → {bid2}' if bid2 != bid else ' (unverändert)'))
+    print(f'Version {ver} → {ver2} · Service Worker {sw_pre}{sw_n} → {sw2} · Build {bid}' + (f' → {bid2}' if bid2 != bid else ' (unverändert)') + f' · gebaut {built}')
     if art == 'neu':
         print('Nicht vergessen: Eintrag in WN_DATA (src/js/44-version-neuigkeiten.js) und Hinweis in DYK (src/js/28-tipps.js).')
     subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'build.py')], check=True)

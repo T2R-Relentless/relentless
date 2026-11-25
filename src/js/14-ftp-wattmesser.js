@@ -223,5 +223,5 @@ function tog(i){ open = open === i ? null : i; render(); }
 let askReset = false;
 function reset(){ askReset = true; render(); }
 function cancelReset(){ askReset = false; render(); }
-function doReset(){ bkPre('Vor dem Zurücksetzen'); try { localStorage.removeItem(LIBK); } catch (e) { elog(e); } S = load(true); save(); open = null; vw = null; askReset = false; render(); bkMirrorSoon(); }
+function doReset(){ bkPre('Vor dem Zurücksetzen'); try { localStorage.removeItem(LIBK); } catch (e) { elog(e); } try { gmKeySet(''); gmKeyIn = ''; } catch (e) { elog(e); } /* F36: auch den Garmin-Schlüssel */ S = load(true); save(); open = null; vw = null; askReset = false; render(); bkMirrorSoon(); }
 

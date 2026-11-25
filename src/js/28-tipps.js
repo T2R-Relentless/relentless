@@ -60,10 +60,13 @@ const DYK = [
   ['dark', 'Die App gibt es auch im dunklen Design, angenehm am Abend.', 'Darstellung', "dykSet('settings','theme')", () => S.theme !== 'dark'],
   ['en', 'Die App spricht auch Englisch: Tippe oben auf „EN“.', '', '', () => true],
   ['inst', 'Leg die App auf deinen Home-Bildschirm. Dann startet sie wie eine echte App, ohne Browserleiste und auch offline.', 'So geht’s', "dykInst()", () => dykWeb() && !dykAlone() && typeof instOs === 'function' && !!instOs()],
+  /* F36 (Version 223) */
+  ['priv', 'Du entscheidest, ob die App anonym zählen darf. Unter Einstellungen → Datenschutz änderst du das jederzeit, dort findest du auch Impressum und Datenschutzerklärung.', 'Datenschutz öffnen', "dykSet('settings','priv')", () => true],
+  ['gmdel', 'Garmin nicht mehr nutzen? Unter Einstellungen → Garmin Connect trennst du die Verbindung und löschst den Schlüssel von diesem Gerät.', 'Zu Garmin Connect', "dykSet('settings','gm')", () => { try { return gmHasData(); } catch (e) { return false; } }],
   ['team', 'Neuigkeiten, Ausfahrten und Termine des Teams findest du auf teamrelentlessriders.de, verlinkt unter Mehr → Team.', 'Zur Homepage', "dykTeam()", () => true],
 ];
 /* Ziel eines Hinweises: [Unterseite, Abschnitt, Eingabefeld]. Der Knopf landet direkt am Feld, nicht nur oben auf der Seite. */
-const DYK_AT = {wx:['set-wx', 'fx-wx', '#wxQ'], hr:['set-hr', 'fx-hr', '#hrMaxI'], wf:['set-wf', null, '#wfKg'], shift:['set-ali', 'fx-shift'], ali:['set-ali', 'fx-ali'],
+const DYK_AT = {priv:['set-priv', 'fx-priv', '#trChips button'], gm:['set-gm', null, '#gmWipeB'], wx:['set-wx', 'fx-wx', '#wxQ'], hr:['set-hr', 'fx-hr', '#hrMaxI'], wf:['set-wf', null, '#wfKg'], shift:['set-ali', 'fx-shift'], ali:['set-ali', 'fx-ali'],
   tb:['set-ali', 'fx-tb', '#fx-tb input'], vac:['set-ali', 'fx-vac', '#fx-vac input[type=date]'], age:['set-age', 'fx-age', '#bdD'], sq:['set-sq', null], sqh:['set-sq', null, ['#sqT-hints', '#sqT-voice']], sqk:['set-sq', null, ['#sqT-takt']], theme:['set-lang', 'fx-theme'], lang:['set-lang', 'fx-lang']};
 function dykSet(p, k){ const at = p === 'settings' && DYK_AT[k]; if (at) { goPg('settings'); goPg(at[0]); dykFocus(at[1], at[2]); return; } goPg(p); dykFocus('fx-' + k); }
 /* Zum Abschnitt scrollen, Feld fokussieren und den Abschnitt kurz hervorheben */
@@ -88,7 +91,7 @@ function dykNext(){ dykPick(true); try { track('tipp-weiter'); } catch (e) { elo
 function dykClose(){ dykPut({hide:iso(0)}); render(); }
 function dykOff(on){ dykPut({off:!on}); render(); }
 const dykIsOff = () => !!dykGet().off;
-function dykInst(){ instHide = false; instHelp = true; try { localStorage.removeItem('relentless.inst.hide'); } catch (e) { elog(e); } render(); }
+function dykInst(){ instHide = false; instHelp = true; instForce = true; render(); try { scrollTop0(); } catch (e) { elog(e); } } /* F36: nur für diesen Besuch, „×“ bleibt gültig */
 function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
 /* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
    Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */

@@ -543,3 +543,15 @@
 .lbc-plan{fill:none;stroke:var(--mute);stroke-width:1.2;stroke-dasharray:3 2}
 .lbc-jump{fill:#d9a400}
 .lbc-pkey{display:inline-block;width:12px;height:10px;border:1.2px dashed var(--mute);vertical-align:-1px}
+/* F36: Lesbarkeit und Tippflächen ab 375 pt (auch 320): Beschriftungen mindestens 12 px, Knöpfe mindestens 44 px hoch */
+.eyebrow,.hgl,.fblk .fl,.rvt span,.vz-stl,.mm-lg,.wk-zl,.recb,.cyc-d{font-size:.75rem}
+.bnav button{font-size:.75rem;min-height:44px}
+.wstrip{gap:2px}
+.wsd{font-size:.75rem;min-height:44px}
+.brand .ghost{min-width:44px;min-height:44px}
+.brand button.hd{min-height:44px}
+button.btn,button.ghost{min-height:44px}
+.dzone summary{padding:12px 0}
+.hbtn{min-height:44px}
+.hact .hib{font-size:.75rem;min-height:44px}
+@media (max-width:430px){ .hact .hib{flex:1 1 calc(33.333% - 6px)} }

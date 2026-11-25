@@ -3,7 +3,10 @@
    Netlify-Server derselben Adresse wie die App, ruft Garmin dort auf und gibt das Ergebnis an die App zurück.
    - Nur lesend und nur zwei feste Garmin-Adressen (Aktivitätsliste, Originaldatei). Kein offener Proxy.
    - Der API-Schlüssel kommt bei jedem Aufruf aus dem Browser des Nutzers (Header x-garmin-key). Er wird weder gespeichert
-     noch protokolliert; nur das kurzlebige Garmin-Zugangstoken bleibt für ein paar Stunden im Arbeitsspeicher.
+     noch protokolliert; nur das Garmin-Zugangstoken bleibt bis zu seinem Ablauf (ersatzweise 12 Std.) im Arbeitsspeicher
+     dieser Instanz, abgelegt unter dem sha256-Prüfwert des Schlüssels, nicht unter dem Schlüssel selbst.
+   - F36: Keine console-Ausgaben. Kein Fehler verlässt die Funktion unbehandelt (sonst schriebe Netlify ihn mit Stacktrace
+     ins Funktionsprotokoll); Fehlerantworten enthalten nur feste Texte, nie Schlüssel, Token oder Inhalte von Garmin.
    Phase 2 (F-16, F-17):
    - Aufrufe nur aus der App selbst: Origin derselben Adresse oder Sec-Fetch-Site "same-origin". Das hält fremde Webseiten
      ab, ist aber keine Authentifizierung: Programme außerhalb eines Browsers können Header frei setzen. Schutz für
@@ -77,6 +80,10 @@ function limited(ip) {
 }
 
 export default async (req, context) => {
+  try { return await handle(req, context); }
+  catch (e) { return json(500, { error: 'server', message: 'Interner Fehler.' }); }
+};
+async function handle(req, context) {
   if (req.method !== 'POST') return json(405, { error: 'method', message: 'Nur POST.' });
   if (!sameOrigin(req)) return json(403, { error: 'origin', message: 'Nicht erlaubt.' });
   const ip = (context && context.ip) || req.headers.get('x-nf-client-connection-ip') || 'unbekannt';
@@ -110,5 +117,5 @@ export default async (req, context) => {
     if (e instanceof ApiError) return json(e.status, { error: e.code, message: e.message });
     return json(500, { error: 'server', message: 'Interner Fehler.' });
   }
-};
+}
 export const config = { path: '/api/garmin' };
