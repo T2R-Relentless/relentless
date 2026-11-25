@@ -33,7 +33,7 @@ Object.assign(EXI, {
     s:['Rückenlage, ein Band oder Handtuch um den Fuß legen.', 'Das Bein gestreckt nach oben führen, das andere Bein liegt gestreckt am Boden.', 'Mit dem Band sanft ziehen, bis du hinten am Oberschenkel eine Dehnung spürst. Fußspitze zu dir ziehen dehnt zusätzlich die Wade.', '45 Sekunden halten, dann Seite wechseln.'],
     f:['Das Becken hebt ab. Das untere Bein und der Rücken bleiben am Boden.', 'Knie stark gebeugt. Nur so weit hochziehen, wie das Bein fast gestreckt bleibt.'],
     v:'', r:'Bewegliche Beinrückseiten erleichtern die Sitzposition und entlasten den unteren Rücken.'},
-  fig4:{t:'Gesäß-Dehnung in Rückenlage (Figur 4)', cap:['Start: Knöchel oberhalb des Knies ablegen', 'Bein zur Brust ziehen'], m:'Gesäßmuskulatur, Piriformis',
+  fig4:{t:'Gesäß-Dehnung in Rückenlage (Figur 4)', cap:['Start: Knöchel oberhalb des Knies ablegen', 'Bein zur Brust ziehen'], m:'Gesäßmuskulatur, Piriformis',
     s:['Rückenlage, beide Füße am Boden. Lege den rechten Knöchel auf das linke Knie.', 'Greife hinter den linken Oberschenkel und ziehe ihn zur Brust.', 'Das rechte Knie drückt leicht nach außen. Du spürst die Dehnung im rechten Gesäß.', '45 Sekunden halten, dann Seite wechseln.'],
     f:['Kopf und Schultern heben ab. Kopf bleibt am Boden, notfalls ein Band zu Hilfe nehmen.', 'Zu viel Druck auf das Knie. Sanft dosieren.'],
     v:'', r:'Das Gesäß arbeitet beim Treten viel und verspannt leicht. Lockerheit hier beugt Hüft- und Rückenbeschwerden vor.'},
