@@ -1423,3 +1423,165 @@ def _rl_schritt():
     P_ = _welt(shoes); L_ = P_[P_[:, 0] > 0]
     return wpos('RightToeBase').y - float(L_[:, 1].max())     # Ballen hinten (Zehengrundgelenk) minus Ferse vorn
 EXS['revlunge'] = dict(griff=(('Left', 35), ('Right', 35)), pose=revlunge, kopf_linie=True, keys=KR_KEYS, perframe=True, wurzel=True, cam=V(1, -.3, .15), zone=None, blatt=(1, 36, 72), bilder=KR_NAMEN_AB, messwerte=kr_mw_revlunge)
+
+# ---------------- Welle 3 (Rückenlage) ----------------
+def kr_rl_oben(kinn=12.0):
+    """Rückenlage flach, Kopf nach +Y: Rumpf, Hals und Kopf wie in der Ruhehaltung, Kinn leicht zur Brust, Hinterkopf und
+    Schulterblätter auf der Matte; das Skelett wird so gesenkt, dass Rücken, Becken und Kopf aufliegen"""
+    reset(); rig.location = (0, 0, 0); _kr_rueckenlage(0)
+    ax_ = _ach('Spine2', (1, 0, 0)); twist('Neck', kinn * .5, ax_); twist('Head', kinn * .5, ax_)
+    for _ in range(40):
+        d_ = lowg(['Head'], .5) - lowg(['Spine2', 'LeftShoulder', 'RightShoulder'], .5)
+        if -.003 <= d_ <= .005: break
+        st_ = 1.0 if d_ < -.003 else -1.0; twist('Neck', st_ * .5, ax_); twist('Head', st_ * .5, ax_)
+    bpy.context.view_layer.update()
+    g = lowg(['Spine2', 'LeftShoulder', 'RightShoulder', 'Neck', 'Head', 'Hips', 'Spine'], .5); rig.location.z -= g + .003; bpy.context.view_layer.update()
+def _rl_dir(w):
+    """Richtung in der Körpermittelebene: w Grad von „fußwärts entlang der Matte“ (0) nach oben (90 = senkrecht)"""
+    a = math.radians(w); return Vector((0, -math.cos(a), math.sin(a)))
+def kr_rl_bein(side, huefte, knie, fuss=0.0, aussen=0.0):
+    """Bein in Rückenlage: Oberschenkel huefte Grad angehoben, Knie knie Grad gebeugt, Fuß fuss Grad gestreckt (+) bzw. angezogen (−);
+    aussen: Knie nach außen (Grad)"""
+    sx = 1 if side == 'Left' else -1; th = _rl_dir(huefte); sh = _rl_dir(huefte - knie)
+    if aussen: R = Matrix.Rotation(math.radians(-sx * aussen), 3, th.cross(V(1, 0, 0)).normalized() if abs(th.x) < .99 else V(0, 1, 0)); th = th; sh = R @ sh
+    aim(side + 'UpLeg', th + Vector((sx * .02, 0, 0))); aim(side + 'Leg', sh + Vector((sx * .01, 0, 0)))
+    f_ = Matrix.Rotation(math.radians(-90 + fuss), 3, 'X') @ sh; aim(side + 'Foot', f_); aim(side + 'ToeBase', f_)
+def kr_rl_bein_liegt(side):
+    """gestrecktes Bein liegt auf der Matte (Wade und Ferse tragen), Fußspitze zeigt nach oben"""
+    w = 0.0
+    for _ in range(14):
+        kr_rl_bein(side, w, 0.0, 0.0); g_ = min(lowg([side + 'Leg'], .5), lowpts(_kr_seite(1 if side == 'Left' else -1), [shoes]))
+        if abs(g_ - .002) < .0015: break
+        w -= math.degrees(math.atan2(g_ - .002, .8))
+    return w
+def _rl_oberschenkel_punkt(side, f, hinten):
+    """Punkt auf der Rückseite (Unterseite) des Oberschenkels bei Anteil f der Länge, hinten: Abstand von der Knochenachse"""
+    H_ = wpos(side + 'UpLeg'); K_ = wpos(side + 'Leg'); d_ = (K_ - H_).normalized(); n_ = Vector((0, d_.z, d_.y)); n_ = n_.normalized() if n_.length > 1e-4 else Vector((0, 0, -1))     # Unterseite (Beugeseite) des Oberschenkels
+    return H_.lerp(K_, f) + n_ * hinten
+
+def kr_daumen_zu(sides=('Left', 'Right')):
+    """Daumen schließt sich über Zeige- und Mittelfinger (Faust um einen Griff), nicht nach oben abgespreizt"""
+    for side in sides:
+        Z = wpos(side + 'HandIndex2').lerp(wpos(side + 'HandMiddle2'), .5)
+        for i in (1, 2, 3):
+            n_ = f'{side}HandThumb{i}'; aim(n_, (Z - wpos(n_)).normalized())
+
+# Hamstring Floss: rechtes Bein, Oberschenkel senkrecht, Hände verschränkt hinter dem Oberschenkel knapp über der Kniekehle; das Knie
+# streckt sich von 90° auf etwa 20° und beugt wieder; linkes Bein liegt gestreckt; Kopf auf der Matte
+P['hamfloss'] = {'k0': 90.0, 'k1': 20.0, 'f': .70, 'hinten': .075, 'fuss': 8.0}     # Fuß locker, 8° gestreckt (Messwert −8)
+def hamfloss(ph):
+    q = P['hamfloss']; t = max(0.0, min(1.0, ph)); kr_ruhe(); kr_rl_oben()
+    kr_rl_bein_liegt('Left'); kr_rl_bein('Right', 90.0, q['k0'] + (q['k1'] - q['k0']) * t, q['fuss'])
+    T = _rl_oberschenkel_punkt('Right', q['f'], q['hinten'])
+    for side, sx in (('Left', 1), ('Right', -1)):
+        W = T + Vector((sx * .03, .01, 0)); ik2(side + 'Arm', side + 'ForeArm', W, (sx * 1, -.2, -.6))
+        aim(side + 'Hand', Vector((-sx * 1, 0, 0)) + Vector((0, 0, .25))); kr_handruecken(side, (0, 1, 0))
+def kr_mw_rl():
+    def wk(a_, b_, c_): return _w(b_ - a_, c_ - b_)
+    z = []
+    for side in ('Left', 'Right'):
+        H_, K_, A_ = wpos(side + 'UpLeg'), wpos(side + 'Leg'), wpos(side + 'Foot'); th = K_ - H_
+        z.append(f'{side}: Hüfte {math.degrees(math.atan2(th.z, -th.y)):.0f}° angehoben, Knie {wk(H_, K_, A_):.0f}°, Sprunggelenk {_w(A_ - K_, wpos(side + "ToeBase") - A_) - 90:+.0f}° (+ = angezogen, − = gestreckt)')
+    return ['Beine ' + '; '.join(z),
+            f'Auflage: Kopf {lowg(["Head"], .5) * 100:.1f}, Schulterblätter {lowg(["Spine2", "LeftShoulder", "RightShoulder"], .5) * 100:.1f}, Becken {lowg(["Hips"], .5) * 100:.1f}, linke Wade {lowg(["LeftLeg"], .5) * 100:.1f} cm über der Matte',
+            f'Hände: links {(wpos("LeftHand") - _rl_oberschenkel_punkt("Right", P.get(EX, {}).get("f", .78), .075)).length * 100:.0f} cm, rechts {(wpos("RightHand") - _rl_oberschenkel_punkt("Right", P.get(EX, {}).get("f", .78), .075)).length * 100:.0f} cm vom Griffpunkt']
+EXS['hamfloss'] = dict(pose=hamfloss, griff=(('Left', 45), ('Right', 45)), griff_kontakt=kr_daumen_zu, keys=((1, 0), (10, 0), (58, 1), (64, 1), (112, 0), (120, 0)), perframe=True, wurzel=True,
+                       cam=V(-1, .05, .3), zone=None, blatt=(1, 34, 61), bilder={'start': 0, 'ende': 1}, messwerte=kr_mw_rl)
+
+# Beinrückseite mit Band: rechtes Bein fast gestreckt, Band um die Fußsohle (Mittelfuß), Enden in beiden Händen, Oberarme liegen auf
+# der Matte, Ellbogen 60–90°; das Bein wird von etwa 45° auf 75° herangezogen (nicht senkrecht), linkes Bein liegt gestreckt
+P['ham'] = {'h0': 45.0, 'h1': 75.0, 'k0': 3.0, 'k1': 6.0, 'fuss': -5.0, 'ell': 62.0, 'ell_z': .055}
+def _ham_sohle():
+    """Mitte der Fußsohle (Mittelfuß, zwischen Ferse und Ballen) des rechten Fußes und die Sohlennormale (von der Sohle weg)"""
+    A_ = wpos('RightFoot'); B_ = wpos('RightToeBase'); P_ = _welt(shoes); P_ = P_[P_[:, 0] < 0]
+    f_ = (B_ - A_).normalized(); sh = (A_ - wpos('RightLeg')).normalized(); n_ = sh - f_ * sh.dot(f_); n_.normalize()     # Sohle zeigt in Unterschenkelrichtung
+    M_ = A_.lerp(B_, .55); d_ = np.array(P_ - np.array(M_)) @ np.array(n_); i = int(np.argmax(d_))
+    G_ = P_[(np.abs((P_ - np.array(M_)) @ np.array(f_)) < .02)]; bq = Vector((1, 0, 0)) - f_ * f_.x; bq.normalize()     # Querschnitt des Schuhs am Mittelfuß
+    w_ = (G_ - np.array(M_)) @ np.array(bq); q_ = P['ham']; q_['_bl'] = float(w_.min()); q_['_br'] = float(w_.max()); q_['_bq'] = bq
+    return M_ + n_ * float(d_[i]) + bq * float((w_.min() + w_.max()) / 2), n_, f_
+def ham(ph):
+    q = P['ham']; t = max(0.0, min(1.0, ph)); kr_ruhe(); kr_rl_oben()
+    kr_rl_bein_liegt('Left'); kr_rl_bein('Right', q['h0'] + (q['h1'] - q['h0']) * t, q['k0'] + (q['k1'] - q['k0']) * t, q['fuss'])
+    S_, n_, f_ = _ham_sohle(); q['_S'] = S_
+    for side, sx in (('Left', 1), ('Right', -1)):     # Oberarm liegt neben dem Rumpf auf, Ellbogen etwa 80°, Hände 16 cm auseinander
+        Sh = wpos(side + 'Arm'); La = (wpos(side + 'Arm', True) - Sh).length; Lf = (wpos(side + 'ForeArm', True) - wpos(side + 'ForeArm')).length
+        E = Sh + Vector((sx * .03, -math.sqrt(max(.01, La * La - (Sh.z - q['ell_z']) ** 2)), 0)); E.z = q['ell_z']
+        W = E + Vector((sx * .08 - E.x, -Lf * math.cos(math.radians(q['ell'])), Lf * math.sin(math.radians(q['ell']))))
+        W = E + (W - E).normalized() * Lf * .995
+        ik2(side + 'Arm', side + 'ForeArm', W, (E - (Sh + W) / 2).normalized())
+        aim(side + 'Hand', (S_ - W).normalized()); kr_handruecken(side, (sx, 0, 0))
+def kr_mw_ham():
+    z = kr_mw_rl()[:2]
+    return z + [f'Ellbogen links {_w(wpos("LeftForeArm") - wpos("LeftArm"), wpos("LeftHand") - wpos("LeftForeArm")):.0f}°, rechts {_w(wpos("RightForeArm") - wpos("RightArm"), wpos("RightHand") - wpos("RightForeArm")):.0f}°, Oberarme (Ellbogen) {min(wpos("LeftForeArm").z, wpos("RightForeArm").z) * 100:.0f}–{max(wpos("LeftForeArm").z, wpos("RightForeArm").z) * 100:.0f} cm über der Matte (Gelenk)']
+EXS['ham'] = dict(pose=ham, griff=(('Left', 95), ('Right', 95)), griff_kontakt=kr_daumen_zu, keys=((1, 0), (12, 0), (84, 1), (156, 1), (204, 0), (216, 0)), perframe=True, wurzel=True,
+                  cam=V(-1, .05, .3), zone=None, blatt=(1, 48, 120), bilder={'start': 0, 'ende': 1}, messwerte=kr_mw_ham, band_fuss=True)
+
+# Gesäß-Dehnung Figur 4: rechter Knöchel liegt auf dem linken Oberschenkel direkt über dem Knie, rechtes Knie fällt nach außen, rechter
+# Fuß angezogen. Start: linker Fuß flach auf der Matte, Arme liegen neben dem Körper. Die Hände greifen hinter den linken Oberschenkel
+# (rechter Arm durch die Lücke zwischen den Beinen) und ziehen das Bein heran: linke Hüfte 50° → 100°, linkes Knie bleibt etwa 95°.
+P['fig4'] = {'rf_soll': 5.0, 'kinn': 20.0, 'kopf_dreh': float(next((a.split('=')[1] for a in args if a.startswith('kopfdreh=')), 35)), 'h0': 50.0, 'h1': 95.0, 'k': 95.0, 'f': .62, 'hinten': .075, 'auf': float(next((a.split('=')[1] for a in args if a.startswith('auf=')), .11)), 'ueber': float(next((a.split('=')[1] for a in args if a.startswith('ueber=')), .16)), 'seit': float(next((a.split('=')[1] for a in args if a.startswith('seit=')), .0)), 'pol': tuple(float(x) for x in next((a.split('=')[1] for a in args if a.startswith('pol=')), '-1,0,0').split(',')), 'rfuss': (.15, .2, 1.0)}
+def _f4_knoechel():
+    """Auflagepunkt des rechten Knöchels: Oberseite (Vorderseite) des linken Oberschenkels knapp über dem Knie"""
+    H_ = wpos('LeftUpLeg'); K_ = wpos('LeftLeg'); d_ = (K_ - H_).normalized(); n_ = Vector((0, -1, 0)) - d_ * (-d_.y); n_ = n_ - d_ * n_.dot(d_); n_.normalize()
+    return K_ - d_ * P['fig4']['ueber'] + n_ * P['fig4']['auf'] + Vector((P['fig4']['seit'] + P['fig4'].get('_seit_add', 0.0), 0, 0))
+def fig4(ph):
+    q = P['fig4']; t = max(0.0, min(1.0, ph)); kr_ruhe(); kr_rl_oben(q['kinn'])
+    twist('Neck', q['kopf_dreh'] * .5, (0, 1, 0)); twist('Head', q['kopf_dreh'] * .5, (0, 1, 0))     # Kopf um die Körperlängsachse zur Kamera (rechts) gedreht: Profil statt leeres Gesichtsoval
+    if 'h0k' not in q:     # linker Fuß steht im Start flach: Hüftwinkel so, dass die Sohle aufliegt
+        lo, hi = 20.0, 80.0
+        for _ in range(16):
+            mi = (lo + hi) / 2; kr_rl_bein('Left', mi, q['k'], 0.0); aim('LeftFoot', V(.02, -1, -.02)); aim('LeftToeBase', V(.02, -1, 0))
+            if kr_sohle_glatt(1) > .003: hi = mi     # Fuß schwebt: Oberschenkel flacher
+            else: lo = mi
+        q['h0k'] = (lo + hi) / 2; print('KR fig4 Hüfte Start', round(q['h0k'], 1)); kr_rl_oben(q['kinn'])
+    w = sm(max(0.0, (t - .25) / .75)); h = q['h0k'] + (q['h1'] - q['h0k']) * w
+    kr_rl_bein('Left', h, q['k'], -5.0)
+    wf = sm(min(1.0, w * 3))      # Fuß löst sich von der Matte und geht in die Neutralstellung
+    fd = (wpos('LeftFoot') - wpos('LeftLeg')).normalized(); fn = Matrix.Rotation(math.radians(-85), 3, 'X') @ fd
+    aim('LeftFoot', V(.02, -1, -.02).lerp(fn, wf)); aim('LeftToeBase', V(.02, -1, 0).lerp(fn, wf))
+    def rechts():
+        pol = Vector(q['pol']); ik2('RightUpLeg', 'RightLeg', _f4_knoechel(), pol)
+        tt = (wpos('RightLeg') - wpos('RightUpLeg')).normalized(); roll_to('RightUpLeg', pol - tt * pol.dot(tt))     # Kniescheibe zeigt nach außen-oben (wie kr_bein)
+        Kt = _f4_knoechel(); aim('RightLeg', Kt - wpos('RightLeg'))
+        ss = (Kt - wpos('RightLeg')).normalized(); up_ = Vector((0, 0, 1)); kv = up_ - ss * up_.dot(ss); kv.normalize(); roll_to('RightLeg', kv)     # Schienbeinvorderseite und Fußspitze zeigen zur Decke
+        ax_ = ss.cross(kv).normalized(); best = None      # Fuß angezogen, Messwert +5° (Schutz fürs Knie): nur in der Nähe der Neutralstellung suchen (Zehen bleiben oben)
+        for th_ in range(-30, 31, 2):
+            fr2 = Matrix.Rotation(math.radians(th_), 3, ax_) @ kv; aim('RightFoot', fr2); aim('RightToeBase', fr2)
+            A_ = wpos('RightFoot'); m_ = _w(A_ - wpos('RightLeg'), wpos('RightToeBase') - A_) - 90
+            if best is None or abs(m_ - q['rf_soll']) < best[0]: best = (abs(m_ - q['rf_soll']), fr2)
+        fr = best[1]
+        aim('RightFoot', fr); aim('RightToeBase', fr)
+    s0 = q['seit']; q['_seit_add'] = 0.0
+    for _ in range(25):      # Schuh liegt nie im linken Bein: Auflagepunkt nur so weit nach außen wie nötig (mindestens 0,6 cm Luft)
+        rechts(); cl_ = _f4_fuss_im_bein()
+        if cl_ >= .006: break
+        q['_seit_add'] += .01
+    q['_cl_min'] = min(q.get('_cl_min', 9.0), cl_)     # kleinster Abstand Schuh–Bein über alle gestellten Bilder (für das Messprotokoll)
+    g_ = lowg(['Hips'], .5) - .002; rig.location.z -= g_; bpy.context.view_layer.update()     # Kreuzbein liegt auf
+    u = sm(min(1.0, t / .6))     # Hände: vom Liegen neben dem Körper zum Griff hinter dem linken Oberschenkel
+    T = _rl_oberschenkel_punkt('Left', q['f'], q['hinten'])
+    for side, sx in (('Left', 1), ('Right', -1)):
+        Sh = wpos(side + 'Arm'); W0 = Sh + Vector((sx * .14, -.5, -.02)); W0.z = max(W0.z, .035)
+        W1 = T + Vector((sx * .03, .01, 0)); Wm = T + Vector((sx * .13, .07, -.03))     # Weg seitlich am Oberschenkel vorbei nach hinten, nicht über die Oberseite
+        W = W0 * (1 - u) ** 2 + Wm * 2 * u * (1 - u) + W1 * u * u
+        ik2(side + 'Arm', side + 'ForeArm', W, (sx * 1, -.1, -.6))
+        hd0 = V(sx * .04, -1, -.04); hd1 = Vector((-sx * 1, 0, .25)); aim(side + 'Hand', hd0.lerp(hd1, u).normalized())
+        if u < .5: flat(side + 'Hand', -1, 1 - u * 2)
+        else: kr_handruecken(side, (0, 1, 0), (u - .5) * 2)
+def _f4_fuss_im_bein():
+    """kleinster Abstand der rechten Schuhpunkte zur Oberfläche des linken Beins (Oberschenkel r 7,5 cm, Unterschenkel r 5,5 cm, als
+    Kapseln um die Knochenachsen); negativ = Schuh steckt im Bein"""
+    P_ = _welt(shoes); P_ = P_[P_[:, 0] < wpos('RightUpLeg').x + .5]; R_ = np.array(wpos('RightFoot'))
+    L_ = np.array(wpos('LeftFoot')); P_ = P_[(np.linalg.norm(P_ - R_, axis=1) < .35) & (np.linalg.norm(P_ - R_, axis=1) < np.linalg.norm(P_ - L_, axis=1))]; m = 9.0     # nur der rechte Schuh
+    for a_, b_, r_ in (('LeftUpLeg', 'LeftLeg', .075), ('LeftLeg', 'LeftFoot', .055)):
+        A_ = np.array(wpos(a_)); B_ = np.array(wpos(b_)); v = B_ - A_; u = np.clip(((P_ - A_) @ v) / (v @ v), 0, 1)
+        d = np.linalg.norm(P_ - (A_ + u[:, None] * v), axis=1) - r_; i = int(np.argmin(d))
+        if float(d[i]) < m: m = float(d[i]); wo = (a_, tuple(round(float(x), 3) for x in (P_[i] - R_)), round(float(u[i]), 2))
+    if m < 0 and any(a == 'fussdbg=1' for a in args): print('F4DBG', round(m, 3), wo, 'Fußrichtung', tuple(round(x, 2) for x in (wpos('RightToeBase') - wpos('RightFoot')).normalized()))
+    return m
+def kr_mw_fig4():
+    z = kr_mw_rl()[:2]; kn = wpos('RightFoot'); sh = wpos('RightFoot') - wpos('RightLeg'); sl = wpos('RightArm') - wpos('LeftArm')
+    return z + [f'Rechter Schuh zur Oberfläche des linken Beins: {_f4_fuss_im_bein() * 100:+.1f} cm (− = im Bein), kleinster Wert über den ganzen Ablauf {P["fig4"].get("_cl_min", 9) * 100:+.1f} cm', f'Rechter Knöchel {(kn - wpos("LeftLeg")).length * 100:.0f} cm vom linken Knie (Gelenk), rechtes Schienbein {_w(Vector((sh.x, sh.y, 0)), Vector((sl.x, sl.y, 0))):.0f}° gegen die Schulterlinie (Grundriss)',
+                f'Rechtes Knie {(wpos("RightLeg").x - wpos("RightUpLeg").x) * 100:+.0f} cm seitlich (− = außen), Hände {(wpos("LeftHand") - _rl_oberschenkel_punkt("Left", P["fig4"]["f"], .075)).length * 100:.0f} / {(wpos("RightHand") - _rl_oberschenkel_punkt("Left", P["fig4"]["f"], .075)).length * 100:.0f} cm vom Griffpunkt']
+EXS['fig4'] = dict(pose=fig4, griff=(('Left', 55), ('Right', 55)), griff_kontakt=kr_daumen_zu, keys=((1, 0), (12, 0), (84, 1), (156, 1), (204, 0), (216, 0)), perframe=True, wurzel=True,
+                   cam=V(-.9, .35, .75), zone=None, blatt=(1, 48, 120), bilder={'start': 0, 'ende': 1}, messwerte=kr_mw_fig4)

@@ -164,7 +164,8 @@ const EXVID = {deadbug:{h:1.92, p:[1.04, 2.79]}, clam:{h:1.83, p:[1, 2.67]}, pal
   rdl:{h:3, p:[1.5, 4.5]}, slrdl:{h:3, p:[1.5, 4.5]}, stepup:{h:3, p:[1.5, 4.5]}, bridge:{h:3, p:[1.5, 4.5]}, sidep:{h:3.92, p:[1.42, 5.92]},
   birddog:{h:3.54, p:[1.54, 5.54, 8.04, 12.04]}, thrust:{h:3, p:[1.5, 4.5]},
   catcow:{h:4.5, p:[2.5, 6.5]}, tspine:{h:3.5, p:[2, 5]}, addrock:{h:3.25, p:[1.5, 5]},
-  gmorn:{h:3, p:[1.5, 4.5]}, wallsit:{h:5, p:[2, 7.5]}, revlunge:{h:3, p:[1.5, 4.5]}};   /* Bird Dog: beide Seiten in einer Schleife, Phase 1 zweimal */
+  gmorn:{h:3, p:[1.5, 4.5]}, wallsit:{h:5, p:[2, 7.5]}, revlunge:{h:3, p:[1.5, 4.5]},
+  hamfloss:{h:2.54, p:[1.42, 3.67]}, ham:{h:5, p:[2, 7.5]}, fig4:{h:5, p:[2, 7.5]}};   /* Bird Dog: beide Seiten in einer Schleife, Phase 1 zweimal */
 const exVidBad = {};
 const exVidOk = id => !!EXVID[id] && !exVidBad[id];
 const exRed = () => sqReduced();

@@ -552,6 +552,22 @@ if EX == 'pallof':
         v = hc - AX; band.location = (hc + AX) / 2; band.rotation_euler = v.to_track_quat('Z', 'Y').to_euler(); band.scale = (1, 1, v.length)
         for ob in (handle, band): ob.keyframe_insert('location', frame=fr); ob.keyframe_insert('rotation_euler', frame=fr); ob.keyframe_insert('scale', frame=fr)
     pts += [Vector((AX.x - .2, AX.y, 0)), Vector((AX.x, AX.y, 1.75))]
+if cfg.get('band_fuss'):
+    # Band um die rechte Fußsohle: zwei Stränge von den Händen zur Sohle, dazwischen das Stück unter der Sohle
+    def _bcyl(name, r, mat):
+        ob = bpy.data.objects.new(name, bpy.data.meshes.new(name)); sc.collection.objects.link(ob)
+        g = bmesh.new(); bmesh.ops.create_cone(g, cap_ends=True, segments=16, radius1=r, radius2=r, depth=1); g.to_mesh(ob.data); g.free()
+        for f in ob.data.polygons: f.use_smooth = True
+        setmat(ob, mat); return ob
+    _bm = toon('band', srgb('#00bcb3'), srgb('#00897f')); _bs = [_bcyl('band' + str(i), .009 if i < 2 else .006, _bm) for i in range(3)]
+    def _bsetz(ob, a_, b_):
+        v = b_ - a_; ob.location = (a_ + b_) / 2; ob.rotation_euler = v.to_track_quat('Z', 'Y').to_euler(); ob.scale = (1, 1, max(.01, v.length))
+    for fr in range(1, cfg['keys'][-1][0] + 1):
+        sc.frame_set(fr); S_, n_, f_ = _ham_sohle()
+        L_ = wpos('LeftHand') + (wpos('LeftHand') - wpos('LeftForeArm')).normalized() * .045; R_ = wpos('RightHand') + (wpos('RightHand') - wpos('RightForeArm')).normalized() * .045
+        bq = P['ham']['_bq']; hb = (P['ham']['_br'] - P['ham']['_bl']) / 2 - .002; bl_ = S_ + bq * hb - n_ * .006; br_ = S_ - bq * hb - n_ * .006     # Querstück liegt bündig an der Sohle, Stränge an Innen- und Außenkante
+        _bsetz(_bs[0], L_, bl_); _bsetz(_bs[1], R_, br_); _bsetz(_bs[2], bl_, br_)
+        for ob in _bs: ob.keyframe_insert('location', frame=fr); ob.keyframe_insert('rotation_euler', frame=fr); ob.keyframe_insert('scale', frame=fr)
 if KR_GERAET.get(EX) or cfg.get('hanteln'):
     # Geräte und Kurzhanteln (vor dem Festlegen der Strichstärke, sonst fehlt ihre Kontur)
     pts += kr_bauen(); kr_hanteln_anlegen()

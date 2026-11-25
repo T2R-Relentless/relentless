@@ -2,7 +2,7 @@
 R.file = 'uebungen-pilot';
 const PILOT = ['clam', 'deadbug', 'pallof', 'hip9090', 'openbook', 'thread'];
 /* Kraftübungen mit Video, aber ohne gegliederte Felder (q, a, b …) */
-const KRAFT = ['squat', 'bss', 'calf', 'plank', 'rdl', 'slrdl', 'stepup', 'bridge', 'sidep', 'birddog', 'thrust', 'catcow', 'tspine', 'addrock', 'gmorn', 'wallsit', 'revlunge'];
+const KRAFT = ['squat', 'bss', 'calf', 'plank', 'rdl', 'slrdl', 'stepup', 'bridge', 'sidep', 'birddog', 'thrust', 'catcow', 'tspine', 'addrock', 'gmorn', 'wallsit', 'revlunge', 'hamfloss', 'ham', 'fig4'];
 
 test('Pilotübungen: Animation, gegliederte Felder, s aus b abgeleitet, Ausschnitt', async () => {
   const a = await boot(), bad = [];
