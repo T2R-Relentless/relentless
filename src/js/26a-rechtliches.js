@@ -43,7 +43,7 @@ function lglDs(){
 function lglModal(){
   if (!lglShow) return '';
   const ds = lglShow === 'ds';
-  return `<div class="exov" onclick="if(event.target===this)lglClose()" role="dialog" aria-modal="true" aria-labelledby="lglH"><div class="exbox" style="max-width:560px">
+  return `<div class="exov" onclick="if(event.target===this)lglClose()" role="dialog" aria-modal="true" aria-labelledby="lglH"><div class="exbox" style="max-width:560px" data-nogl>
     <div class="flex items-center gap-2"><h3 id="lglH" class="hd min-w-0 flex-1 text-2xl font-semibold">Impressum und Datenschutz</h3><button style="min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;color:var(--mute)" aria-label="Schließen" onclick="lglClose()">${icX()}</button></div>
     <div class="mt-2 flex flex-wrap gap-2">${chip('Impressum', !ds, "lglOpen('imp')")}${chip('Datenschutz', ds, "lglOpen('ds')")}</div>
     <p class="mt-3 p-2 text-xs" style="background:var(--tint);border:1px solid var(--line)">Entwurf: Gelb markierte Platzhalter werden vor der Veröffentlichung ersetzt, der Text wird rechtlich geprüft.</p>

@@ -29,14 +29,19 @@ test('Statistik: nach „Erlauben“ wird gezählt, änderbar unter Einstellunge
   eq(a.store()['relentless.stats.off'], '1', 'alter Schlüssel für ältere Versionen mitgeführt');
 });
 
-test('Statistik: Altdaten – „aus“ bleibt aus, bisher „an“ wird einmal neu gefragt, Sicherung trägt die Wahl', async () => {
+test('Statistik: Altdaten – „aus“ bleibt aus, bisher „an“ wird einmal neu gefragt, Wahl gilt nur für das Gerät', async () => {
   const off = await boot({store:{'relentless.stats.off':'1'}}); dsWeb(off); off.w.render();
   eq(off.$('trConsent()'), 'nein'); ok(!/Darf die App anonym zählen\?/.test(off.text()), 'keine Abfrage bei bisher „aus“');
   const on = await boot(); dsWeb(on); on.w.render(); ok(/Darf die App anonym zählen\?/.test(on.text()), 'bisher ohne eigene Wahl gezählt: Abfrage');
   on.w.trSet(true); makePlan(on, {goal:'event', eventName:'Testrennen', eventDate:'2027-03-20'}); await on.w.exportPlans();
-  const txt = await on.w.__downloads.find(x => /\.json$/.test(x.name)).blob.text(); eq(JSON.parse(txt).side['relentless.stats.consent'], 'ja', 'in der Sicherungsdatei');
-  const old = JSON.parse(txt); delete old.side['relentless.stats.consent']; old.side['relentless.stats.off'] = '1';
-  const b = await boot(); b.$(`bkWriteRaw(${JSON.stringify({state:JSON.stringify(old.state), lib:JSON.stringify(old.lib), side:old.side})})`); eq(b.$('trConsent()'), 'nein', 'ältere Sicherung ohne neuen Schlüssel lädt');
+  const txt = await on.w.__downloads.find(x => /\.json$/.test(x.name)).blob.text(), sd = JSON.parse(txt).side;
+  ok(!('relentless.stats.consent' in sd) && !('relentless.stats.off' in sd), 'Wahl nicht in der Sicherungsdatei');
+  /* Sicherung von einem anderen Gerät (Zustimmung) auf einem Gerät ohne Entscheidung: setzt keine Zustimmung */
+  const fremd = {...sd, 'relentless.stats.consent':'ja'}, raw = o => JSON.stringify({state:JSON.stringify(JSON.parse(txt).state), lib:JSON.stringify(JSON.parse(txt).lib), side:o});
+  const b = await boot(); b.$(`bkWriteRaw(${raw(fremd)})`); eq(b.$('trConsent()'), '', 'keine Zustimmung aus fremder Sicherung');
+  /* Gerät mit „Nicht zählen“, alte Sicherung ohne stats.off bzw. mit „an“: Wahl bleibt */
+  const c = await boot(); c.w.trSet(false); c.$(`bkWriteRaw(${raw({...sd})})`); eq(c.$('trConsent()'), 'nein', 'Wahl „nein“ bleibt beim Wiederherstellen');
+  const d = await boot(); d.w.trSet(true); d.$(`bkWriteRaw(${raw({...sd, 'relentless.stats.off':'1'})})`); eq(d.$('trConsent()'), 'ja', 'alte Sicherung mit stats.off ändert die Wahl nicht');
 });
 
 test('Impressum und Datenschutz: vor dem ersten Plan und unter Mehr erreichbar, Empfänger und Platzhalter', async () => {
@@ -91,8 +96,11 @@ test('Sicherung: nach 14 Tagen ohne Sicherungsdatei genau einmal erinnern', asyn
   a.$('S.bkAt = Date.now() - 15 * 864e5; S.bkAt0 = S.bkAt - 864e5; S.bkChg = 0; S.bkSnooze = 0;');
   ok(/Deine letzte Sicherung ist 15 Tage alt/.test(a.page(null)), 'Erinnerung');
   a.w.bkLater(); ok(!/Zeit für eine Sicherung/.test(a.page(null)), 'nach „Später“ weg');
-  a.setNow(NOW0 + 10 * 864e5); a.$('S.bkChg = 3'); ok(!/Zeit für eine Sicherung/.test(a.page(null)), 'kommt für diesen Stand nicht wieder');
-  a.$('S.bkAt = Date.now() - 14 * 864e5 - 1000; S.bkChg = 0'); ok(/Zeit für eine Sicherung/.test(a.page(null)), 'nach einer neuen Sicherung wieder nach 14 Tagen');
+  a.setNow(NOW0 + 2 * 864e5); a.$('S.bkChg = 3'); ok(!/Zeit für eine Sicherung/.test(a.page(null)), 'innerhalb der 3-Tage-Pause nichts');
+  a.setNow(NOW0 + 4 * 864e5); ok(/Du hast deinen Plan seit der letzten Sicherung geändert/.test(a.page(null)), 'danach die bisherigen Anlässe wie vor F36');
+  a.$('S.bkSnooze = 0; S.bkChg = 0; S.bkEx = 0; S.p.exe = Object.fromEntries([1, 2, 3, 4, 5].map(i => ["1-" + i, {score:80}]))'); ok(/5 Fahrten bewertet/.test(a.page(null)), '5 neue Bewertungen');
+  a.$('S.p.exe = {}; S.bkSnooze = 0'); ok(/Deine letzte Sicherung ist 19 Tage alt/.test(a.page(null)), 'Alter der Sicherung mit Pause wie bisher');
+  a.$('S.bkAt = Date.now() - 14 * 864e5 - 1000; S.bkChg = 0; S.bkSnooze = Date.now()'); ok(/Zeit für eine Sicherung/.test(a.page(null)), 'nach einer neuen Sicherung nach 14 Tagen wieder sofort einmal');
   const b = await boot(); makePlan(b, {goal:'event', eventName:'Testrennen', eventDate:'2027-03-20'}); b.$('S.bkAt = 0; S.bkAt0 = Date.now() - 20 * 864e5; S.bkSnooze = 0');
-  ok(/Seit 20 Tagen gibt es keine Sicherungsdatei/.test(b.page(null)), 'auch ohne jede Sicherung'); b.w.bkLater(); ok(!/Zeit für eine Sicherung/.test(b.page(null)));
+  ok(/Seit 20 Tagen gibt es keine Sicherungsdatei/.test(b.page(null)), 'auch ohne jede Sicherung'); b.w.bkLater(); ok(!/Zeit für eine Sicherung/.test(b.page(null)), 'nach „Später“ 3 Tage Pause');
 });

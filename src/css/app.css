@@ -555,3 +555,5 @@ button.btn,button.ghost{min-height:44px}
 .hbtn{min-height:44px}
 .hact .hib{font-size:.75rem;min-height:44px}
 @media (max-width:430px){ .hact .hib{flex:1 1 calc(33.333% - 6px)} }
+.brand{flex-wrap:wrap}
+@media (max-width:359px){ .brand .hd.text-2xl{font-size:1.25rem} .brand img{height:16px!important} }

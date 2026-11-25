@@ -6,7 +6,10 @@
    3 Tägliche Schnappschüsse (die letzten 7) in IndexedDB, wiederherstellbar unter „Meine Pläne“.
    4 Vor Zurücksetzen, Plan löschen und Sicherung laden: automatischer Schnappschuss und „Rückgängig“.
    5 Erinnerung nach wichtigen Änderungen (neuer oder angepasster Plan, 5 neue Bewertungen) oder spätestens nach 14 Tagen. */
-const BK_SIDE = ['relentless.dyk', 'relentless.gmtip', 'relentless.inst.hide', 'relentless.stats.off', 'relentless.stats.consent'], BK_GK = 'relentless.garmin.key';
+/* F36: Die Statistik-Wahl (relentless.stats.off, relentless.stats.consent) gilt nur für dieses Gerät. Sie steht nicht mehr in
+   BK_SIDE: Sicherungen und Schnappschüsse nehmen sie nicht auf, und Wiederherstellen (auch alter Dateien, die stats.off noch
+   enthalten) lässt die Wahl auf diesem Gerät unverändert. */
+const BK_SIDE = ['relentless.dyk', 'relentless.gmtip', 'relentless.inst.hide'], BK_GK = 'relentless.garmin.key';
 let bkImp = null, bkUndo = null, bkList = null, bkAsk = null, bkMsg = '', bkTimer = null, bkReady = false;
 /* Beim Laden der Seite festhalten, ob der normale Speicher leer war (bevor die App etwas hineinschreibt) */
 const bkEmpty0 = (() => { try { return !localStorage.getItem(K) && !localStorage.getItem(LIBK); } catch (e) { elog(e); return false; } })();
@@ -155,15 +158,15 @@ function bkKeyUi(){
 
 /* ---------- Erinnerung ---------- */
 const bkExeN = () => { try { return Object.keys((S.p && S.p.exe) || {}).length; } catch (e) { elog(e); return 0; } };
-/* F36 (Sofortmaßnahme zu 8): 14 Tage ohne Sicherungsdatei (seit der letzten bzw. seit dem ersten Start) → genau einmal
-   erinnern. Wer dann „Später“ tippt, wird für diesen Stand nicht mehr erinnert (S.bkRem = Bezugszeitpunkt), erst wieder
-   14 Tage nach der nächsten Sicherung. Davor gelten die bisherigen Anlässe (Planänderung, 5 Bewertungen, erster Plan). */
+/* F36 (Sofortmaßnahme zu 8): 14 Tage ohne Sicherungsdatei (seit der letzten bzw. seit dem ersten Start) → einmal sofort
+   erinnern, auch während einer 3-Tage-Pause. Nach „Später“ (S.bkRem = Bezugszeitpunkt) gelten wieder die bisherigen
+   Anlässe mit 3-Tage-Pause (Planänderung, 5 Bewertungen, Alter der Sicherung), wie vor F36. */
 const bkBase = () => S.bkAt || S.bkAt0 || 0;
 const bkDue14 = () => !!bkBase() && Date.now() - bkBase() >= 14 * 864e5;
 function bkLater(){ if (bkDue14()) S.bkRem = bkBase(); S.bkSnooze = Date.now(); save(); render(); }
 function bkReason(){
   if (!S.p) return null; const now = Date.now(), last = S.bkAt || 0, snooze = S.bkSnooze || 0;
-  if (bkDue14()) { if (S.bkRem === bkBase()) return null; const d = Math.floor((now - bkBase()) / 864e5); return last ? `Deine letzte Sicherung ist ${d} Tage alt.` : `Seit ${d} Tagen gibt es keine Sicherungsdatei deiner Pläne. Sie liegen nur auf diesem Gerät.`; }
+  if (bkDue14() && S.bkRem !== bkBase()) { const d = Math.floor((now - bkBase()) / 864e5); return last ? `Deine letzte Sicherung ist ${d} Tage alt.` : `Seit ${d} Tagen gibt es keine Sicherungsdatei deiner Pläne. Sie liegen nur auf diesem Gerät.`; }
   if (now - snooze < 3 * 864e5) return null;
   if (!last) return now - (S.bkAt0 || now) > 2 * 864e5 ? 'Deine Pläne, Einstellungen und Fahrten liegen nur auf diesem Gerät.' : null;
   if ((S.bkChg || 0) > 0) return 'Du hast deinen Plan seit der letzten Sicherung geändert.';

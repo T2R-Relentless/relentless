@@ -145,7 +145,7 @@ function gmWipeUi(){
   if (!gmHasData()) return '';
   if (!gmWipeAsk) return `<button id="gmWipeB" class="ghost mt-3 !w-auto text-sm" style="min-height:44px;border-color:#c0392b;color:#c0392b" onclick="gmWipeAsk=true;render()">Verbindung trennen und Schlüssel löschen</button>`;
   return `<div class="mt-3 p-3 text-sm" role="alertdialog" aria-label="Garmin-Daten löschen" style="border:1px solid #c0392b"><p class="font-semibold">Garmin-Verbindung trennen und Schlüssel löschen?</p>
-    <ul class="mt-1 space-y-1 text-xs" style="list-style:disc;padding-left:1.1rem;color:var(--mute)"><li>Gelöscht werden der Schlüssel, der Abgleichstand und die Wahl, den Schlüssel in Sicherungsdateien aufzunehmen.</li><li>Deine übernommenen Fahrten bleiben erhalten.</li><li>Sicher wertlos wird der Schlüssel erst, wenn du ihn bei Garmin widerrufst: <a class="underline" target="_blank" rel="noopener" href="https://connect.garmin.com/app/settings/personalApiToken">connect.garmin.com → Einstellungen → Persönlicher API-Schlüssel</a>.</li><li>Früher gespeicherte Sicherungsdateien mit Schlüssel enthalten ihn weiter.</li>${gmInClaude() ? '<li>In der Claude-Desktop-App liegt der Schlüssel in der Erweiterung „Garmin für Relentless“. Lösche ihn dort.</li>' : ''}</ul>
+    <ul class="mt-1 space-y-1 text-sm" style="list-style:disc;padding-left:1.1rem;color:var(--mute)"><li>Gelöscht werden der Schlüssel, der Abgleichstand und die Wahl, den Schlüssel in Sicherungsdateien aufzunehmen.</li><li>Deine übernommenen Fahrten bleiben erhalten.</li><li>Sicher wertlos wird der Schlüssel erst, wenn du ihn bei Garmin widerrufst: <a class="underline" target="_blank" rel="noopener" href="https://connect.garmin.com/app/settings/personalApiToken">connect.garmin.com → Einstellungen → Persönlicher API-Schlüssel</a>.</li><li>Früher gespeicherte Sicherungsdateien mit Schlüssel enthalten ihn weiter.</li>${gmInClaude() ? '<li>In der Claude-Desktop-App liegt der Schlüssel in der Erweiterung „Garmin für Relentless“. Lösche ihn dort.</li>' : ''}</ul>
     <div class="mt-3 flex flex-wrap gap-2"><button class="btn !w-auto" style="min-height:44px;background:#c0392b;border-color:#c0392b;color:#fff!important" onclick="gmWipe()">Ja, löschen</button><button class="ghost" style="min-height:44px" onclick="gmWipeAsk=false;render()">Abbrechen</button></div></div>`;
 }
 function gmHelp(code){
@@ -162,6 +162,7 @@ function gmHelp(code){
   return '';
 }
 function gmCard(target){
+  gmNorm();
   /* Außerhalb von Claude (z. B. als Web-App auf dem iPhone) gibt es keine Garmin-Verbindung: Garmin sperrt Webseiten */
   if (!gmInClaude() && !gmMode()) {
     if (gmWebOk === null) gmProbe();
@@ -173,14 +174,14 @@ function gmCard(target){
       <li>Bei Garmin einen persönlichen API-Schlüssel erstellen: <a class="underline" target="_blank" rel="noopener" href="https://connect.garmin.com/app/settings/personalApiToken">connect.garmin.com → Einstellungen → Persönlicher API-Schlüssel</a>, Gültigkeit am besten 1 Jahr.</li>
       <li>Den Schlüssel kopieren, hier einfügen und auf „Verbinden“ tippen.</li></ol>
     <input type="password" autocomplete="off" spellcheck="false" class="inp mt-2" placeholder="Garmin-API-Schlüssel" aria-label="Garmin-API-Schlüssel" oninput="gmKeyIn=this.value">
-    <p class="mt-2 text-xs" style="color:var(--mute)">Der Schlüssel wird nur auf diesem Gerät gespeichert. Bei jedem Abruf schickt die App ihn verschlüsselt an den Vermittler dieser App bei Netlify (/api/garmin). Er liest damit deine Aktivitäten bei Garmin und gibt sie direkt an dich weiter. Der Vermittler speichert weder Schlüssel noch Fahrten. In eine Sicherungsdatei kommt der Schlüssel nur, wenn du das unter Sicherung ausdrücklich wählst. Die App liest nur deine Aktivitätsliste und die Originaldateien, sie schreibt nichts in dein Garmin-Konto.</p>
+    <p class="mt-2 text-sm" style="color:var(--mute)">Der Schlüssel wird nur auf diesem Gerät gespeichert. Bei jedem Abruf schickt die App ihn verschlüsselt an den Vermittler dieser App bei Netlify (/api/garmin). Er liest damit deine Aktivitäten bei Garmin und gibt sie direkt an dich weiter. Der Vermittler speichert weder Schlüssel noch Fahrten. In eine Sicherungsdatei kommt der Schlüssel nur, wenn du das unter Sicherung ausdrücklich wählst. Die App liest nur deine Aktivitätsliste und die Originaldateien, sie schreibt nichts in dein Garmin-Konto.</p>
     <button class="btn mt-2 !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmConnect('${ja(target)}')">${gmBusy ? 'Verbinde …' : 'Verbinden'}</button>${busy}${msg}${gmWipeUi()}</div>`;
   }
   const md = gmMode(), g = S.gm || {}, msg = gmMsg ? `<p class="mt-2 text-sm" style="color:${esc(gmMsg.ok ? 'var(--ok)' : '#c0392b')}">${gmMsg.ok ? '✓' : icWarn()} ${esc(gmMsg.t)}</p>${!gmMsg.ok && gmHelp(gmMsg.code) ? `<p class="mt-1 text-xs" style="color:var(--mute)">${gmHelp(gmMsg.code)}</p>` : ''}` : '';
   const busy = gmBusy ? `<p class="mt-2 text-sm" style="color:var(--mute)">${esc(gmProg)}</p>` : '';
   if (md) return `<div class="mt-3 p-3" style="border:1px solid var(--line);border-left:3px solid var(--teal)"><p class="text-sm font-semibold">Garmin Connect verbunden</p>
     <p class="mt-1 text-xs" style="color:var(--mute)">${g.last ? `Zuletzt abgeglichen: ${fmt(lstr(new Date(g.last)))}, ${new Date(g.last).toTimeString().slice(0, 5)} Uhr. ` : ''}Neue Radfahrten werden beim Öffnen der App${md === 'mcp' ? ' in der Claude-Desktop-App' : ''} automatisch übernommen und ${target === 'hist' ? 'für die Auswertung genutzt' : 'der Einheit am selben Tag zugeordnet und bewertet'}.</p>
-    <div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmSync('${ja(target)}')">${gmBusy ? 'Gleicht ab …' : 'Jetzt abgleichen'}</button></div>${busy}${msg}${md === 'web' ? '<p class="mt-2 text-xs" style="color:var(--mute)">Dein Schlüssel liegt nur auf diesem Gerät. Bei jedem Abruf geht er über den Vermittler dieser App (/api/garmin) an Garmin, gespeichert wird er dort nicht.</p>' : ''}${gmWipeUi()}</div>`;
+    <div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmSync('${ja(target)}')">${gmBusy ? 'Gleicht ab …' : 'Jetzt abgleichen'}</button></div>${busy}${msg}${md === 'web' ? '<p class="mt-2 text-sm" style="color:var(--mute)">Dein Schlüssel liegt nur auf diesem Gerät. Bei jedem Abruf geht er über den Vermittler dieser App (/api/garmin) an Garmin, gespeichert wird er dort nicht.</p>' : ''}${gmWipeUi()}</div>`;
   return `<div class="mt-3 p-3" style="border:1px solid var(--line)"><p class="text-sm font-semibold">Fahrten direkt aus Garmin Connect holen</p>
     <p class="mt-1 text-xs" style="color:var(--mute)">Die App holt deine Radfahrten mit Watt, Puls und Höhenprofil selbst aus Garmin Connect. Garmin sperrt Zugriffe aus Webseiten, deshalb läuft die Verbindung über eine kleine Erweiterung in der Claude-Desktop-App. Einmalig einrichten:</p>
     <ol class="mt-2 space-y-1 text-xs" style="list-style:decimal;padding-left:1.2rem;color:var(--mute)">
@@ -191,7 +192,10 @@ function gmCard(target){
     <button class="btn mt-2 !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmConnect('${ja(target)}')">Verbinden</button>${busy}${msg}</div>`;
 }
 /* Beim Öffnen: neue Fahrten still nachholen (höchstens alle 3 Stunden) */
+/* F36: Nach dem Laden oder Wiederherstellen ohne Schlüssel im Gerät: getrennt anzeigen, Schlüssel nicht in Sicherungen vormerken */
+function gmNorm(){ try { if (gmInClaude() || gmKey()) return; let ch = false; if (S.gm && S.gm.mode === 'web') { S.gm = {}; ch = true; } if (S.bkKey) { S.bkKey = false; ch = true; } if (ch) save(); } catch (e) { elog(e); } }
 function gmAuto(force){
+  gmNorm();
   try { if (S.gm && S.gm.mode && !['mcp', 'web'].includes(S.gm.mode)) S.gm = {}; if (S.gm && S.gm.mode === 'web' && (gmInClaude() || !gmKey())) S.gm = {}; const g = S.gm || {}; if (!g.mode || !g.ok || gmBusy) return; if (g.last && Date.now() - new Date(g.last) < (force ? 10 : 20) * 60e3) return;
     setTimeout(() => gmSync(S.p && S.step === 0 ? 'man' : 'hist', true), force ? 300 : 1500); } catch (e) { elog(e); }
 }

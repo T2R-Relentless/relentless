@@ -3,7 +3,7 @@ const spinner = '<svg class="spin" viewBox="0 0 24 24" width="18" height="18" fi
 const field = (label, inner) => `<label class="block"><span class="mb-1.5 block text-sm" style="color:var(--mute)">${label}</span>${inner}</label>`;
 
 /* ---------- Onboarding ---------- */
-const chip = (l, on, fn) => `<button onclick="${fn}" class="rounded-xl px-3.5 py-2.5 text-sm font-semibold" style="${esc(on ? 'background:var(--ice);color:#071747;border:1px solid var(--ice)' : 'border:1px solid var(--line);color:var(--mute)')}">${l}</button>`;
+const chip = (l, on, fn) => `<button onclick="${fn}" class="rounded-xl px-3.5 py-2.5 text-sm font-semibold" style="min-height:44px;${esc(on ? 'background:var(--ice);color:#071747;border:1px solid var(--ice)' : 'border:1px solid var(--line);color:var(--mute)')}">${l}</button>`;
 
 /* ---------- Schnellplanung (Light): ein Bildschirm, sinnvolle Voreinstellungen ---------- */
 const LVL = {new:['Einsteiger', 2.0, 'fährt gelegentlich, kurze Touren'], hob:['Hobby', 2.7, 'fährt regelmäßig, 2 bis 4 Std. Touren'], amb:['Ambitioniert', 3.3, 'trainiert gezielt, fährt Rennen']};
