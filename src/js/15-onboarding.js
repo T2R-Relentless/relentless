@@ -143,8 +143,15 @@ function lightPage(d){
   return head(showStart ? 'Wann geht es los?' : 'Fast geschafft', 'Ein kurzer Blick auf deine Angaben, dann erstellt die App deinen Plan.')
     + (showStart ? `<div class="panel p-4">${startUi(d)}</div>` : '')
     + `<div class="panel mt-4 p-4"><p class="eyebrow mb-2">Deine Angaben</p>${sum.map((t, i) => `<div class="flex items-center justify-between gap-3 py-1.5 text-sm" style="${esc(i ? 'border-top:1px solid var(--line)' : '')}"><span>${t}</span><button class="underline shrink-0" style="color:var(--teal)" onclick="lightNav(${ja(i + 1)})">Ändern</button></div>`).join('')}</div>
+    ${ev ? lightGapUi(d) : ''}
     <p class="mt-4 text-sm" style="color:var(--mute)">Die App plant den Long Ride ans Wochenende, ${ev ? 'schätzt eine realistische Zielzeit' : 'baut die Ausdauer schrittweise auf'} und lässt Pendeln und Krafttraining weg. Alles davon kannst du später ergänzen.</p>`
     + navRow(3, 0);
+}
+/* Paket C, Punkt 4 (Fachregel 4.5): Lücke zwischen Training und Event schon in Schritt 4 zeigen, mit Angeboten (nur nach Tipp) */
+function lightGapUi(d){
+  let n = null; try { n = planCheck(mkPrev(d), false).notes.find(x => x.gap); } catch (e) { elog(e); }
+  const acts = n ? [...(n.acts || []).filter(a => a[0] !== 'longDay' && a[0] !== 'longPri'), ['more', 0, 'Mehr Wochenzeit einplanen']] : [];
+  return n ? `<div class="mt-4 p-3 text-sm" style="background:#fff6dc;border-left:3px solid #d9a400"><p>${n.t}</p>${n.hint ? `<p class="mt-1 text-xs" style="color:var(--mute)">${n.hint}</p>` : ''}<div class="mt-2 flex flex-wrap gap-2">${acts.map(a => `<button class="ghost !w-auto !px-3 text-sm" style="min-height:44px" onclick="${a[0] === 'more' ? 'lightNav(3)' : `applyChk('${ja(a[0])}', ${typeof a[1] === 'string' ? `'${ja(a[1])}'` : ja(a[1])}, 'draft')`}">${a[2]}</button>`).join('')}</div>${d.wkBlk ? '<p class="mt-2 text-xs" style="color:var(--ok)">✓ Wochenend-Blöcke sind eingeplant.</p>' : ''}</div>` : '';
 }
 function lightNav(n){
   const d = S.d;

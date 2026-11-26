@@ -31,10 +31,10 @@ const evLinkOk = v => /^https?:\/\/[^\s"'<>]+$/i.test(String(v || '').trim());
 /* ---- Lesen und Schreiben ---- */
 function evGet(id, raw){
   const p = S.p; if (!p) return null;
-  if (id === 'main') { const o = {id, main:true, name:p.eventName || '', date:p.eventDate || '', start:p.evStart || '', dist:+p.dist || 0, hm:+p.hm || 0, prio:'A', kind:evKindOf(p.kind ? p : null, p.eventName), myT:p.evMyT || 0, note:p.evNote || '', link:p.evLink || '', course:!!p.course, pend:p.evPend || null};
+  if (id === 'main') { const o = {id, main:true, name:p.eventName || '', date:p.eventDate || '', start:p.evStart || '', dist:+p.dist || 0, hm:+p.hm || 0, prio:'A', kind:evKindOf(p.kind ? p : null, p.eventName), myT:p.evMyT || 0, lim:p.evLim || 0, note:p.evNote || '', link:p.evLink || '', course:!!p.course, pend:p.evPend || null};
     return raw || !o.pend ? o : {...o, ...o.pend, pend:o.pend}; }
   const s = (p.subs || []).find(x => x.id === id); if (!s) return null;
-  const o = {id, name:s.name || '', date:s.date || '', start:s.start || '', dist:+s.dist || 0, hm:+s.hm || 0, prio:s.prio || 'C', kind:evKindOf(s, s.name), myT:s.myT || 0, note:s.note || '', link:s.link || '', pend:s.pend || null};
+  const o = {id, name:s.name || '', date:s.date || '', start:s.start || '', dist:+s.dist || 0, hm:+s.hm || 0, prio:s.prio || 'C', kind:evKindOf(s, s.name), myT:s.myT || 0, lim:s.lim || 0, note:s.note || '', link:s.link || '', pend:s.pend || null};
   return raw || !o.pend ? o : {...o, ...o.pend, pend:o.pend};
 }
 const evClone = p => JSON.parse(JSON.stringify(p));
@@ -42,7 +42,7 @@ const evClone = p => JSON.parse(JSON.stringify(p));
 function evNewP(p0, id, f, o){
   o = o || {}; const p = evClone(p0); p.subs = p.subs || []; let nid = id;
   const setSub = (s, f) => { ['name', 'date', 'prio', 'kind', 'start', 'note', 'link'].forEach(k => { if (f[k] !== undefined) { if (f[k] === '' && k !== 'name') delete s[k]; else s[k] = k === 'name' ? String(f[k]).trim().slice(0, 80) : f[k]; } });
-    if (f.dist !== undefined) s.dist = +f.dist || 0; if (f.hm !== undefined) { s.hm = +f.hm || 0; s.hm0 = s.hm === 0 && f.hm !== ''; } if (f.myT !== undefined) { if (f.myT) s.myT = f.myT; else delete s.myT; }
+    if (f.dist !== undefined) s.dist = +f.dist || 0; if (f.hm !== undefined) { s.hm = +f.hm || 0; s.hm0 = s.hm === 0 && f.hm !== ''; } if (f.myT !== undefined) { if (f.myT) s.myT = f.myT; else delete s.myT; } if (f.lim !== undefined) { if (f.lim) s.lim = f.lim; else delete s.lim; }
     s.min = subEst(p, s); delete s.pend; };
   if (o.del) { if (id !== 'main') p.subs = p.subs.filter(s => s.id !== id); return {p, id:null}; }
   if (id === 'main') {
@@ -50,11 +50,11 @@ function evNewP(p0, id, f, o){
     if (f.dist !== undefined && +f.dist !== +p.dist) { p.dist = +f.dist || 0; if (p.course && !f.course) { delete p.course; p.noBuiltin = true; } }
     if (f.hm !== undefined && +f.hm !== +p.hm) { p.hm = +f.hm || 0; if (p.course && !f.course) { delete p.course; p.noBuiltin = true; } }
     if (f.course) { p.course = f.course; p.dist = Math.round(f.course.dist * (f.course.laps || 1) * 10) / 10; p.hm = Math.round(f.course.hm * (f.course.laps || 1)); }
-    if (f.kind !== undefined) p.kind = f.kind; [['start', 'evStart'], ['note', 'evNote'], ['link', 'evLink'], ['myT', 'evMyT']].forEach(([k, q]) => { if (f[k] !== undefined) { if (f[k]) p[q] = f[k]; else delete p[q]; } });
+    if (f.kind !== undefined) p.kind = f.kind; [['start', 'evStart'], ['note', 'evNote'], ['link', 'evLink'], ['myT', 'evMyT'], ['lim', 'evLim']].forEach(([k, q]) => { if (f[k] !== undefined) { if (f[k]) p[q] = f[k]; else delete p[q]; } });
     delete p.evPend;
     /* Saisonhöhepunkt wird B/C: ein anderes Event übernimmt (newMain) */
     if (f.prio && f.prio !== 'A' && f.newMain) { const s = p.subs.find(x => x.id === f.newMain); if (s) { const was = {name:p.eventName, date:p.eventDate, dist:p.dist, hm:p.hm, kind:p.kind}; p.subs = p.subs.filter(x => x.id !== s.id);
-      p.evId = ''; p.eventName = s.name; p.eventDate = s.date; p.dist = +s.dist || 0; p.hm = +s.hm || 0; p.kind = s.kind; p.targetTime = ''; delete p.course; delete p.evDateEst; ['evStart', 'evNote', 'evLink', 'evMyT'].forEach(k => delete p[k]);
+      p.evId = ''; p.eventName = s.name; p.eventDate = s.date; p.dist = +s.dist || 0; p.hm = +s.hm || 0; p.kind = s.kind; p.targetTime = ''; delete p.course; delete p.evDateEst; ['evStart', 'evNote', 'evLink', 'evMyT', 'evLim'].forEach(k => delete p[k]);
       /* Der Saisonhöhepunkt ist das Planende: das bisherige Hauptevent liegt danach und fällt aus dem Plan (Warnung im Vorschlag) */
       nid = 'main'; } }
     if (p.eventDate) p.subs = p.subs.filter(s => s.date < p.eventDate || (s.pend && s.pend.add));
@@ -62,8 +62,8 @@ function evNewP(p0, id, f, o){
     const s = {id:uid()}; setSub(s, f); nid = s.id;
     if (s.date > p.eventDate) { /* liegt nach dem Saisonhöhepunkt: wird neuer Höhepunkt, der Plan wird verlängert */
       const old = {id:uid(), name:p.eventName, date:p.eventDate, prio:'A', dist:+p.dist || 0, hm:+p.hm || 0, kind:p.kind}; old.min = subEst(p, old);
-      p.evId = ''; p.eventName = s.name; p.eventDate = s.date; p.dist = s.dist; p.hm = s.hm; p.kind = s.kind; p.targetTime = ''; delete p.course; ['evStart', 'evNote', 'evLink', 'evMyT'].forEach(k => { delete p[k]; });
-      [['start', 'evStart'], ['note', 'evNote'], ['link', 'evLink'], ['myT', 'evMyT']].forEach(([k, q]) => { if (s[k]) p[q] = s[k]; }); p.subs.push(old); nid = 'main';
+      p.evId = ''; p.eventName = s.name; p.eventDate = s.date; p.dist = s.dist; p.hm = s.hm; p.kind = s.kind; p.targetTime = ''; delete p.course; ['evStart', 'evNote', 'evLink', 'evMyT', 'evLim'].forEach(k => { delete p[k]; });
+      [['start', 'evStart'], ['note', 'evNote'], ['link', 'evLink'], ['myT', 'evMyT'], ['lim', 'evLim']].forEach(([k, q]) => { if (s[k]) p[q] = s[k]; }); p.subs.push(old); nid = 'main';
     } else p.subs.push(s);
   } else {
     const s = p.subs.find(x => x.id === id); if (!s) return {p, id}; setSub(s, f);
@@ -165,8 +165,8 @@ function evPendDrop(id){ evSnap(evL('Offene Änderung verworfen.', 'Pending chan
 
 /* ---- Formular ---- */
 function evOpen(id){ const e = id ? evGet(id) : null; evMsg = ''; evProp = null;
-  evF = e ? {id, main:!!e.main, name:e.name, date:e.date, start:e.start, dist:e.dist || '', hm:e.hm || (e.hm === 0 && e.dist ? 0 : ''), prio:e.prio, kind:e.kind, myT:evTF(e.myT), note:e.note, link:e.link, tz:(typeof rzEv === 'function' ? rzEv(id).tz : '') || '', newMain:undefined}
-    : {id:null, main:false, name:'', date:'', start:'', dist:'', hm:'', prio:'B', kind:'jed', myT:'', note:'', link:'', tz:''};
+  evF = e ? {id, main:!!e.main, name:e.name, date:e.date, start:e.start, dist:e.dist || '', hm:e.hm || (e.hm === 0 && e.dist ? 0 : ''), prio:e.prio, kind:e.kind, myT:evTF(e.myT), lim:evTF(e.lim), note:e.note, link:e.link, tz:(typeof rzEv === 'function' ? rzEv(id).tz : '') || '', newMain:undefined}
+    : {id:null, main:false, name:'', date:'', start:'', dist:'', hm:'', prio:'B', kind:'jed', myT:'', lim:'', note:'', link:'', tz:''};
   render(); }
 function evDup(id){ const e = evGet(id); if (!e) return; evOpen(null); Object.assign(evF, {name:e.name, date:addD(e.date, 364 + (new Date(e.date + 'T12:00:00').getDay() === new Date(addD(e.date, 365) + 'T12:00:00').getDay() ? 1 : 0)), start:e.start, dist:e.dist || '', hm:e.hm || '', prio:e.main ? 'B' : e.prio, kind:e.kind, note:e.note, link:e.link, dupOf:e.name}); render(); }
 function evFSet(k, v){ if (!evF) return; evF[k] = v; if (k === 'prio' || k === 'kind' || k === 'newMain') render(); }
@@ -195,13 +195,14 @@ function evCheckF(f){
   if (String(f.hm).trim() !== '' && !(h >= 0 && h < 20000)) return evL('Die Höhenmeter müssen zwischen 0 und 20.000 liegen.', 'Elevation must be between 0 and 20,000 m.');
   if (d > 0 && h > 0 && h / (d * 1000) > .1) return evL(`${Math.round(h).toLocaleString('de-DE')} hm auf ${f1(d)} km wären mehr als 10 % Steigung im Schnitt. Bitte Distanz und Höhenmeter prüfen.`, `${Math.round(h)} m on ${f1(d)} km would be more than 10 % average gradient. Please check distance and elevation.`);
   if (String(f.myT || '').trim() && !evTP(f.myT)) return evL('Die eigene Zielzeit bitte als Stunden:Minuten eingeben, z. B. 2:15.', 'Please enter your own target time as hours:minutes, e.g. 2:15.');
+  if (String(f.lim || '').trim() && !evTP(f.lim)) return evL('Das Zeitlimit bitte als Stunden:Minuten eingeben, z. B. 10:30.', 'Please enter the time limit as hours:minutes, e.g. 10:30.');
   if (String(f.link || '').trim() && !evLinkOk(f.link)) return evL('Der Link muss mit http:// oder https:// beginnen.', 'The link must start with http:// or https://.');
   if (f.main && f.prio !== 'A' && f.newMain === undefined) return evL('Wähle, welches Event dein Saisonhöhepunkt wird.', 'Choose which event becomes your season goal.');
   return '';
 }
 function evSave(){
   const f = evF; if (!f) return; evMsg = evCheckF(f); if (evMsg) return render();
-  const g = {name:String(f.name).trim(), date:f.date, prio:f.main ? (f.prio !== 'A' && f.newMain ? f.prio : 'A') : f.prio, kind:f.kind, dist:Math.round(wfNum(f.dist) * 10) / 10 || 0, hm:String(f.hm).trim() === '' ? 0 : Math.round(wfNum(f.hm)), start:f.start || '', myT:evTP(f.myT) || 0, note:String(f.note || '').trim().slice(0, 500), link:String(f.link || '').trim().slice(0, 300)};
+  const g = {name:String(f.name).trim(), date:f.date, prio:f.main ? (f.prio !== 'A' && f.newMain ? f.prio : 'A') : f.prio, kind:f.kind, dist:Math.round(wfNum(f.dist) * 10) / 10 || 0, hm:String(f.hm).trim() === '' ? 0 : Math.round(wfNum(f.hm)), start:f.start || '', myT:evTP(f.myT) || 0, lim:evTP(f.lim) || 0, note:String(f.note || '').trim().slice(0, 500), link:String(f.link || '').trim().slice(0, 300)};
   if (f.course) g.course = f.course; if (f.main && f.newMain) g.newMain = f.newMain;
   if (!f.id) return evPropose(null, g, {add:1});
   if (rzOn && typeof rzOn === 'function' && rzOn()) { const tz0 = (rzEv(f.id) || {}).tz || ''; if ((f.tz || '') !== tz0) g.tz = f.tz || ''; }
@@ -242,6 +243,7 @@ function evModal(){
       <div><p class="mb-1.5 text-sm" style="color:var(--mute)">${evL('Priorität', 'Priority')}</p><div class="flex flex-wrap gap-2" role="group" aria-label="${esc(evL('Priorität', 'Priority'))}">${prio}</div><p class="mt-1 text-xs" style="color:var(--mute)">${esc(evPrioTxt(f.prio))}</p>${mainAsk}</div>
       <div><p class="mb-1.5 text-sm" style="color:var(--mute)">${evL('Art', 'Type')}</p><div class="flex flex-wrap gap-2" role="group" aria-label="${esc(evL('Art des Events', 'Event type'))}">${kinds}</div></div>
       <div>${field(evL('Eigene Zielzeit (optional, Std:Min)', 'Own target time (optional, h:mm)'), inp('myT', 'text', ' inputmode="numeric" placeholder="2:00"'))}${tgt}</div>
+      <div>${field(evL('Zeitlimit des Veranstalters (falls vorhanden, Std:Min)', 'Organiser time limit (if any, h:mm)'), inp('lim', 'text', ' inputmode="numeric" placeholder="12:00"'))}<p class="mt-1 text-xs" style="color:var(--mute)">${evL('Nur eintragen, wenn die Ausschreibung ein Limit nennt. Die App erfindet keins.', 'Only enter it if the event lists a limit. The app never invents one.')}</p></div>
       ${field(evL('Notiz', 'Note'), `<textarea class="inp" rows="2" maxlength="500" oninput="evFSet('note',this.value)">${esc(f.note || '')}</textarea>`)}
       ${field(evL('Link (z. B. Ausschreibung)', 'Link (e.g. event website)'), inp('link', 'url', ' placeholder="https://"'))}</div>
     ${evMsg ? `<p class="mt-3 text-sm" role="alert" style="color:#c0392b">${esc(evMsg)}</p>` : ''}

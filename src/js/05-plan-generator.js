@@ -395,7 +395,20 @@ function genWeekCore(p, w, base){
   /* M6: Urlaubstage kennzeichnen */
   res = res.map((x, j) => vacDay(p0, w, j) && !x.m ? {...REST, n:'Urlaub', st:'Keine Einheit geplant. Bewegung nach Lust und Laune, zum Beispiel Wandern oder Schwimmen.', tip:'Erholung gehört zum Training.', vac:1} : x);
   if (reE) res = res.map(x => x.m && (x.t === 'base' || x.t === 'long' || HARD.includes(x.t)) && !/^Eventtag|^Aktivierung/.test(x.n || '') ? {...x, tip:(x.tip || '') + (reE.src === 'vac' ? ' Wiedereinstieg nach dem Urlaub: weniger Umfang, damit du gut reinkommst.' : ' Wiedereinstieg nach der Pause: weniger Umfang, damit du gut reinkommst.')} : x);
-  return applyCyc(snWeek(placeTest(applySubs(fitBudget(res, p), p, w), p, w), p0, w), p, w);
+  return applyCyc(blkWeek(snWeek(placeTest(applySubs(fitBudget(res, p), p, w), p, w), p0, w), p, w, k, rec, prof), p, w);
+}
+/* Paket C, Punkt 4 (Fachregel 4.5): „2–3 lange Wochenend-Blöcke“ (p.wkBlk, nur nach Zustimmung im Plan-Check). Im Aufbau und in der
+   Spitze jede dritte Woche: Samstag lang (mindestens 3 Std. bzw. die Hälfte der Eventdauer), Sonntag 2:30 ruhig. Nicht in Entlastungs- und
+   Taperwochen, bei Einsteigern nicht in den ersten 6 Wochen, nur mit Samstag und Sonntag als Trainingstage. */
+function blkWeek(res, p, w, k, rec, prof){
+  if (!p || !p.wkBlk || p.goal !== 'event' || rec || !(k === 'build' || k === 'peak') || w % 3 || (p.lvl === 'new' && w <= 6) || !p.avail[5] || !p.avail[6]) return res;
+  if (res.some(x => x && (x.sub || x.t === 'test' || /^Eventtag|^Aktivierung/.test(x.n || '')))) return res;
+  const tev = prof && prof.tev ? prof.tev : 300, m1 = Math.min(360, capOf(p, 5), Math.max(180, Math.round(tev * .5 / 15) * 15)), m2 = Math.min(150, capOf(p, 6));
+  if (m1 < 120 || m2 < 60) return res;
+  const out = res.slice();
+  out[5] = D('long', 'Wochenend-Block: langer Tag', m1, 56, 75, '85–95 U/min', 'Lang und ruhig in Zone 2, Verpflegung wie am Eventtag (60–90 g Kohlenhydrate pro Std.). Morgen folgt der zweite Tag.', 'Der Block übt lange Tage hintereinander, ohne eine Einzelfahrt über 6 Std.');
+  out[6] = D('base', 'Wochenend-Block: zweiter Tag', m2, 56, 75, '85–95 U/min', 'Mit müden Beinen ruhig in Zone 2, Gespräch muss möglich sein.', 'So gewöhnst du dich an lange Tage hintereinander.');
+  return out;
 }
 /* Wochenbudget: Die Summe der Einheiten darf die verfügbare Wochenzeit nicht überschreiten.
    Gekürzt wird zuerst Grundlage, dann Erholungsfahrt, dann der Long Ride. Event, Zieltour und Pendeln bleiben. */

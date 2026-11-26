@@ -63,7 +63,7 @@ test('Gewicht ab 1.500 hm Pflicht, Hinweise „geschätzt“ an allen vier Stell
   ok(/Gewicht \(kg\), Pflicht/.test(a.text()), 'Pflichtfeld'); a.w.lightNav(3); eq(a.$('S.step'), 2, 'bleibt in Schritt 2'); ok(/Bitte trag dein Gewicht ein/.test(a.text()), 'Hinweis');
   a.$("S.d.kgHk = 'geschaetzt'; S.d.weight = 75;"); a.w.lightFinish(); eq(a.$('S.p'), null, 'kein Plan ohne Gewicht');
   pcLight(a); a.$("S.p.kgHk = S.d.kgHk = 'geschaetzt'; S.wk = 1; S.plan = genWeek(S.p, 1);");
-  ok(/Dein FTP ist geschätzt, Test einplanen/.test(a.page(null)) && /FTP geschätzt/.test(a.text()), 'Heute');
+  ok(/Dein FTP ist geschätzt/.test(a.page(null)) && /FTP geschätzt/.test(a.text()), 'Heute');
   a.page('settings'); ok(/FTP \d+ W \(geschätzt\) · 75 kg \(geschätzt\)/.test(a.text()), 'Einstellungen');
   ok(/Prognose mit Schätzwerten/.test(a.page('check')), 'Plan-Check'); a.page('state'); ok(/FTP \d+ W \(geschätzt\)/.test(a.text()), 'Fortschritt');
   a.page('set-wf'); a.w.hkKgOk(); eq(a.$('S.p.kgHk'), 'eingegeben', '„Stimmt“ bestätigt das Gewicht'); a.noErrors();
@@ -117,4 +117,22 @@ test('Korrektur 5–7: ausführliche Planung, „Test einplanen“ nicht in der 
   pcLight(a); a.$('S.p.recW = [S.wk]; S.p.xTests = []; S.p.test0 = false;'); a.page(null); ok(!/Test einplanen<\/button>/.test(a.w.document.getElementById('app').innerHTML), 'kein Knopf in der Erholungswoche');
   pcLight(a, {avail:[false, false, false, false, false, true, true], hours:5}); const w1 = a.$('genWeek(S.p, 1)');
   eq([w1[5].t, w1[6].t], ['long', 'test'], 'Long Ride am Samstag, Test am Sonntag'); ok(w1[5].m <= 120, 'höchstens 2 Std. davor'); a.noErrors();
+});
+
+test('Punkt 3: ohne eigene Zielzeit nur Prognose mit Spanne, Stufen mit eigener Zielzeit, Zeitlimit', async () => {
+  const a = await boot(); pcLight(a);
+  const c = () => a.$('(() => { const c = planCheck(S.p, true); return {v:c.verdict, prog:c.prog, rg:c.rg, lmt:c.lmt}; })()');
+  let r = c(); eq([r.v, r.prog], [null, true], 'kein Urteil ohne eigene Zielzeit'); ok(r.rg.lo < r.rg.mid && r.rg.hi > r.rg.mid && r.rg.s > .15, 'breite Spanne bei geschätztem FTP');
+  a.page('check'); ok(/Prognose \(vorläufig\)/.test(a.text()) && !/Auf Kurs/.test(a.text()), 'Anzeige „Prognose“'); ok(/Aus FTP \(geschätzt\), Gewicht und Streckenprofil, ohne Pausen\./.test(a.text()), 'Herkunft');
+  const set = t => { a.$(`S.p.targetTime = '${t}'; S.p.tgtMan = true; delete S.p.pcV;`); return c().v; };
+  eq(set(a.$('hm2')(r.rg.mid + 30)), 'ok'); eq(set(a.$('hm2')(r.rg.mid - 30)), 'mid'); eq(set(a.$('hm2')(r.rg.lo - 30)), 'high');
+  a.$('S.p.evLim = 600;'); eq(c().lmt.k, 'no', 'Limit unter der Prognose'); a.$('S.p.evLim = 1000;'); eq(c().lmt.k, 'ok');
+  a.$("S.p.ftpHk = 'gemessen'; S.p.res = {1:{adopted:true, date:iso(0)}};"); ok(c().rg.s < r.rg.s, 'mit Messwert engere Spanne'); a.noErrors();
+});
+
+test('Punkt 4: Lücke Training–Event mit Angeboten, Wochenend-Blöcke nur nach Zustimmung', async () => {
+  const a = await boot(); a.$(`S = load(true); S.d = Object.assign(S.d, ${JSON.stringify({...PC_D, hours:5, avail:[false, true, false, true, false, true, true], weight:75, kgHk:'eingegeben'})}); S.step = 4; ensureBuiltin(S.d); render();`);
+  ok(/Vorbereitung auf die Eventdauer: Längste Fahrt \d+:\d\d von empfohlenen 5:00 Std\./.test(a.text()), 'Hinweis in Schritt 4'); ok(!/ACWR/.test(a.text()));
+  a.w.applyChk('wkBlk', 1, 'draft'); eq(a.$('S.d.wkBlk'), true); a.w.lightFinish(); a.noErrors();
+  const blk = a.$('Array.from({length:30}, (_, k) => genWeek(S.p, k + 1)).filter(pl => pl[5].n === "Wochenend-Block: langer Tag").length'); ok(blk > 0, 'Blöcke im Plan');
 });
