@@ -225,6 +225,14 @@
   .mrow:first-child{border-top:0}
   .mrow:hover{background:var(--tint)}
   .mrow .mi{color:var(--teal);flex:none;display:flex}
+  .mr-tl>summary{list-style:none;cursor:pointer;min-height:56px}
+  .mr-tl>summary::-webkit-details-marker{display:none}
+  .mr-tl>summary:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
+  .mr-tl .mr-chv svg{transition:transform .15s}
+  .mr-tl[open] .mr-chv svg{transform:rotate(180deg)}
+  .hm-pl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .hm-pl button{display:flex;align-items:center;gap:8px;min-height:48px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:.9rem;text-align:left}
+  .hm-pl button .mi{color:var(--teal);display:flex;flex:none}
   .wstrip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
   .wsd{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 5px;background:var(--panel);border:1px solid var(--line);font-size:.68rem;color:var(--mute);min-width:0;cursor:pointer}
   .wsd .bar{display:block;width:62%;height:4px}
@@ -5088,7 +5096,7 @@ let PGP = {};
 const scEl = () => document.documentElement.classList.contains('sa-wrap') ? document.getElementById('sc') : null;
 function scrollTop0(){ const e = scEl(); if (e) e.scrollTop = 0; else window.scrollTo(0, 0); }
 try { if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) document.documentElement.classList.add('sa-wrap'); } catch (e) { elog(e); }
-function goPg(k){ if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); scrollTop0(); }
+function goPg(k){ mrTlOpen = false; if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); scrollTop0(); }
 const ICO = {
   'tool-tire':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21"/>',
   week:'<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>',
@@ -5399,8 +5407,8 @@ let pgFrom = null, wGrp = null, icsMsg = '';
 const TABS = [null, 'week', 'logbook', 'state', 'more'];
 const NAVI = {logbook:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 8h6"/>', home:'<path d="M3 11l9-7 9 7v10h-6v-6H9v6H3z"/>', week:'<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>', state:'<path d="M3 12h4l3-7 4 14 3-7h4"/>', more:'<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>'};
 const svgI = (d, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true">${d}</svg>`;
-function navGo(k){ PGP = {}; vw = null; pgFrom = null; pg = k || null; open = null; render(); scrollTop0(); }
-function goBack(){ const par = PGP[pg] || (typeof PG_PAR !== 'undefined' && PG_PAR[pg]) || (typeof IA_PAR !== 'undefined' && IA_PAR[pg]); if (par) { pg = par; open = null; render(); scrollTop0(); return; } if (false) { pg = PG_PAR[pg]; open = null; render(); scrollTop0(); return; } const k = pgFrom; pgFrom = null; pg = k; open = null; render(); scrollTop0(); }
+function navGo(k){ mrTlOpen = false; PGP = {}; vw = null; pgFrom = null; pg = k || null; open = null; render(); scrollTop0(); }
+function goBack(){ mrTlOpen = false; const par = PGP[pg] || (typeof PG_PAR !== 'undefined' && PG_PAR[pg]) || (typeof IA_PAR !== 'undefined' && IA_PAR[pg]); if (par) { pg = par; open = null; render(); scrollTop0(); return; } if (false) { pg = PG_PAR[pg]; open = null; render(); scrollTop0(); return; } const k = pgFrom; pgFrom = null; pg = k; open = null; render(); scrollTop0(); }
 const tabOf = page => TABS.includes(page) ? page : TABS.includes(pgFrom) ? pgFrom : 'more';
 const TABL = {null:'Heute', week:'Woche', logbook:'Logbuch', state:'Fortschritt', more:'Mehr'};
 function navBar(page){
@@ -5415,8 +5423,10 @@ function homePage(){
   const warn = gv === 'high' || gv === 'mid' ? `<button class="panel flex w-full items-center gap-3 p-4 text-left" style="border-left:4px solid ${esc(gv === 'high' ? '#c2410c' : '#d9a400')}" onclick="openGoal('dash')"><span class="min-w-0 flex-1"><span class="block font-semibold">${gv === 'high' ? (p.goal === 'event' ? 'Dein Ziel ist gefährdet' : 'Dein Ziel braucht eine Anpassung') : (p.goal === 'event' ? 'Dein Ziel ist knapp' : 'Dein Ziel ist in Reichweite')}</span><span class="text-sm" style="color:var(--mute)">${gv === 'high' ? 'Es gibt gute Wege dorthin. Sieh dir die Optionen an, mit Empfehlung.' : 'Mit ein paar Stellschrauben wird es sicherer. Sieh dir die Optionen an.'}</span></span><span aria-hidden="true" class="text-xl">›</span></button>` : '';
   return `${hlthCard()}${heatCard()}${ovlCard()}${gapCard()}${rzHome()}${reentFtpCard()}${hkHomeCard()}${morHint()}${bkHint()}${typeof zxHomeNote === 'function' ? zxHomeNote() : ''}${pendingCard()}${xrHome()}${warn}${goalMsg && !pg ? `<p class="text-sm" style="color:var(--ok)">✓ ${esc(goalMsg)}</p>` : ''}${heroDay(p)}${mvTodayCard()}${mvModal()}${vaModal()}${weekStrip()}${reviewCard()}${rcHome()}${tipCard()}${dykCard()}
     <button class="panel gcard w-full p-5 text-left" onclick="goPg('${p.goal === 'event' ? (efList(p).length > 1 ? 'ev-saison' : 'event') : 'check'}')"><span class="min-w-0 flex-1">${goalCard(false)}</span><span aria-hidden="true" class="text-xl" style="color:var(--mute)">›</span></button>
-    ${startCard()}`;
+    ${hmPlanLinks()}${startCard()}`;
 }
+/* F37: Plan-Check und Gesamtplan direkt von Heute aus (früher unter Mehr) */
+const hmPlanLinks = () => `<div class="hm-pl"><button onclick="goPg('check')"><span class="mi">${svgI(ICO.check, 20)}</span><span class="min-w-0 flex-1">Plan-Check</span><span aria-hidden="true" style="color:var(--mute)">›</span></button><button onclick="goPg('overview')"><span class="mi">${svgI(ICO.overview, 20)}</span><span class="min-w-0 flex-1">Gesamtplan</span><span aria-hidden="true" style="color:var(--mute)">›</span></button></div>`;
 const shortM = m => m >= 60 ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}` : `${m}′`;
 function weekStrip(){
   const p = S.p, started = hasStarted(p), plan = S.plan || [], t = started ? todayIdx() : -1, so = started ? 0 : startOff(p);
@@ -5428,18 +5438,24 @@ function weekStrip(){
   return `<section><div class="mb-2 flex items-baseline justify-between"><p class="eyebrow">${started ? 'Diese Woche' : 'Startwoche'}</p><button class="text-sm font-semibold" style="color:var(--teal)" onclick="navGo('week')">${started ? `${nd} von ${n} erledigt` : 'Wochenplan'} ›</button></div><div class="wstrip">${cells}</div></section>`;
 }
 
-/* ---------- Mehr ---------- */
+/* ---------- Mehr (F37) ----------
+   Immer fünf feste Punkte, darunter genau eine aufklappbare Zeile „Werkzeuge“. Sie ist beim Öffnen der Seite immer zu,
+   der Zustand wird nicht gespeichert (mrTlOpen gilt nur, solange man auf der Seite bleibt, damit ein render() sie nicht schließt).
+   Plan-Check und Gesamtplan stehen unter „Fortschritt“ und auf „Heute“; die Seiten-IDs check und overview bleiben. */
+let mrTlOpen = false;
+const MR_EXT = '<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/>', MR_TL = '<path d="M14 7l3-3 3 3-3 3M17 4l-9 9M4 20l5-1 9-9-4-4-9 9z"/>', MR_CHV = '<path d="M6 9l6 6 6-6"/>';
 function morePage(){
-  const p = S.p, ph = phases(p), tot = ph[ph.length - 1].to, cw = S.wk, ch = chkHead(p), pr = p.goal === 'event' ? evProfile(p) : null;
+  const p = S.p, cw = S.wk, pr = p.goal === 'event' ? evProfile(p) : null;
   const ns = (p.subs || []).filter(s => s.date >= iso(0) && s.date < p.eventDate).length, libN = Object.keys(readLib().plans).length, exN = Object.keys(EXI).length;
   const row = (k, t, sub, warn) => `<button class="mrow" onclick="goPg('${ja(k)}')"><span class="mi">${svgI(ICO[k])}</span><span class="min-w-0 flex-1"><span class="block font-semibold">${t}</span><span class="block text-xs" style="color:${esc(warn || 'var(--mute)')}">${sub}</span></span><span aria-hidden="true" style="color:var(--mute)">›</span></button>`;
   const ms = testsOn(p) && testWeeks(p).length ? (() => { const tw = testWeeks(p), rs = Object.keys(p.res || {}).map(Number).sort((a, b) => b - a), lr = rs.length ? p.res[rs[0]] : null, nx = tw.find(w => w >= cw && !(p.res || {})[w]); return row('ms', 'Fitness-Checks', lr && !(nx === cw) ? `${ST[lr.st][0]} (${lr.ftp} W)` : nx ? (nx === cw ? 'Check diese Woche' : `Nächster Check: Woche ${nx}`) : 'Alle Checks erledigt'); })() : '';
-  const grp = (t, rows) => `<p class="eyebrow mb-2 mt-5">${t}</p><div class="mlist">${rows}</div>`;
-  return grp('Dein Plan', `${row('check', 'Plan-Check', ch[0], ch[1])}${p.goal === 'event' ? row('event', 'Event', `${pr ? EVTY[pr.ty][0] : 'Zielzeit und Strecke'}${ns ? ', ' + ns + ' Zwischenevent' + (ns > 1 ? 's' : '') : ''}`) : ''}${row('overview', 'Gesamtplan', `${tot} Wochen bis ${fmt(endOf(p))}`)}${ms}${cycOn(p) ? (c => row('cycle', 'Zyklus', `Tag ${c.day}, ${c.label}`))(cycInfo(p, iso(0))) : ''}${row('plans', 'Meine Pläne', `Plan anpassen, ${libN} gespeichert`)}`)
-    + grp('Training', `${row('rides', 'Fahrten bewerten', (S.man || []).length ? (S.man || []).length + ' hochgeladen' : 'Fahrt hochladen und bewerten lassen', S.pending ? '#c0392b' : null)}${row('ex', 'Übungen', `${exN} Übungen mit Grafik`)}${row('science', 'Wissen', 'Ernährung, Training, Gesundheit')}`)
-    + grp('Werkzeuge', row('tool-tire', 'Reifendruck', 'Startwert vorn und hinten für dein Rad'))
-    + grp('App', `${row('export', 'Export', 'Kalender, Garmin und Zwift')}${row('settings', 'Einstellungen', `${p.tb && p.tb.on ? 'Winter ' + hStd(p.tb.prof.w.h) + ', Sommer ' + hStd(p.tb.prof.s.h) : hStd(p.hours)} Std. pro Woche, ${p.ftp} W`)}`)
-    + grp('Team', `<a class="mrow" href="https://teamrelentlessriders.de" target="_blank" rel="noopener" onclick="try{track('homepage-geoeffnet')}catch(e){elog(e)}" style="text-decoration:none;color:inherit"><span class="mi">${svgI('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>')}</span><span class="min-w-0 flex-1"><span class="block font-semibold">Team Relentless Riders</span><span class="block text-xs" style="color:var(--mute)" data-noi18n>teamrelentlessriders.de</span></span><span aria-hidden="true" style="color:var(--mute)">↗</span></a>`);
+  const cy = cycOn(p) ? (c => row('cycle', 'Zyklus', `Tag ${c.day}, ${c.label}`))(cycInfo(p, iso(0))) : '';
+  const ev = p.goal === 'event' ? row('event', 'Event und meine Pläne', `${pr ? EVTY[pr.ty][0] : 'Zielzeit und Strecke'}${ns ? ', ' + ns + ' Zwischenevent' + (ns > 1 ? 's' : '') : ''}, ${libN} ${libN === 1 ? 'Plan' : 'Pläne'} gespeichert`) : row('plans', 'Meine Pläne', `Plan anpassen, ${libN} gespeichert`);
+  const team = `<a class="mrow" href="https://teamrelentlessriders.de" target="_blank" rel="noopener" onclick="try{track('homepage-geoeffnet')}catch(e){elog(e)}" style="text-decoration:none;color:inherit" aria-label="Team Relentless Riders, öffnet teamrelentlessriders.de in einem neuen Fenster"><span class="mi">${svgI('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>')}</span><span class="min-w-0 flex-1"><span class="block font-semibold">Team Relentless Riders</span><span class="block text-xs" style="color:var(--mute)" data-noi18n>teamrelentlessriders.de</span></span><span aria-hidden="true" style="color:var(--mute);display:flex">${svgI(MR_EXT, 18)}</span></a>`;
+  const tl = [ms && 'Fitness-Checks', cy && 'Zyklus', 'Reifendruck', 'Wissen', 'Team'].filter(Boolean);
+  return `<div class="mlist mt-2">${row('rides', 'Fahrten bewerten', (S.man || []).length ? (S.man || []).length + ' hochgeladen' : 'Fahrt hochladen und bewerten lassen', S.pending ? '#c0392b' : null)}${row('ex', 'Übungen', `${exN} Übungen mit Grafik`)}${ev}${row('export', 'Export', 'Kalender, Garmin und Zwift')}${row('settings', 'Einstellungen', `${p.tb && p.tb.on ? 'Winter ' + hStd(p.tb.prof.w.h) + ', Sommer ' + hStd(p.tb.prof.s.h) : hStd(p.hours)} Std. pro Woche, ${p.ftp} W`)}</div>`
+    + `<details class="mlist mr-tl mt-4" id="fx-tools"${mrTlOpen ? ' open' : ''} ontoggle="mrTlOpen=this.open"><summary class="mrow"><span class="mi">${svgI(MR_TL)}</span><span class="min-w-0 flex-1"><span class="block font-semibold">Werkzeuge</span><span class="block text-xs" style="color:var(--mute)">${tl.join(', ')}</span></span><span class="mr-chv" aria-hidden="true" style="color:var(--mute);display:flex">${svgI(MR_CHV, 18)}</span></summary>`
+    + `${ms}${cy}${row('tool-tire', 'Reifendruck', 'Startwert vorn und hinten für dein Rad')}${row('science', 'Wissen', 'Ernährung, Training, Gesundheit')}${team}</details>`;
 }
 
 /* ---------- Wochenrückblick ---------- */
@@ -8711,9 +8727,10 @@ const ST_ICO = {
   spb:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3a3 3 0 0 1-3 4M7 5H4a3 3 0 0 0 3 4"/>',
   svo2:'<path d="M12 21c-4-3-8-6-8-11a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5-4 8-8 11z"/><path d="M7 12h3l1-2 2 4 1-2h3"/>',
   sprof:'<path d="M12 3l8 5v8l-8 5-8-5V8z"/><path d="M12 8l4 3-1 5h-6l-1-5z"/>',
-  slog:'<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>'
+  slog:'<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>',
+  check:ICO.check, overview:ICO.overview /* F37: Plan-Check und Gesamtplan stehen unter Fortschritt */
 };
-function stRow(k, t, sub){ return `<button class="mrow" onclick="goPg('${ja(k)}')"><span class="mi">${svgI(ST_ICO[k])}</span><span class="min-w-0 flex-1"><span class="block font-semibold">${t}</span><span class="block text-xs" style="color:var(--mute)">${sub}</span></span><span aria-hidden="true" style="color:var(--mute)">›</span></button>`; }
+function stRow(k, t, sub, col){ return `<button class="mrow" onclick="goPg('${ja(k)}')"><span class="mi">${svgI(ST_ICO[k])}</span><span class="min-w-0 flex-1"><span class="block font-semibold">${t}</span><span class="block text-xs" style="color:${esc(col || 'var(--mute)')}">${sub}</span></span><span aria-hidden="true" style="color:var(--mute)">›</span></button>`; }
 function stSubs(){
   const p = S.p, o = {};
   try { const tot = phases(p).slice(-1)[0].to; o.shist = `Woche ${Math.min(S.wk || 1, tot)} von ${tot}, FTP-Verlauf, Wochenrückblicke`; } catch (e) { elog(e); o.shist = 'FTP-Verlauf und Wochenrückblicke'; }
@@ -8727,11 +8744,12 @@ function stSubs(){
 function statePage(){
   const p = S.p, o = stSubs(), grp = (t, rows) => `<p class="eyebrow mb-2 mt-5">${t}</p><div class="mlist">${rows}</div>`;
   const now = hasStarted(p) ? stateCard() : '<section class="panel p-4"><p class="text-sm" style="color:var(--mute)">Der Plan hat noch nicht begonnen. Ab dem Start siehst du hier, wie deine Woche läuft.</p></section>';
+  const ch = (() => { try { return chkHead(p); } catch (e) { elog(e); return ['öffnen', null]; } })(), tot = (() => { try { return phases(p).slice(-1)[0].to; } catch (e) { elog(e); return 0; } })();
   return hrHint() + now
+    + grp('Plan', stRow('check', 'Plan-Check', ch[0], ch[1]) + stRow('overview', 'Gesamtplan', `${tot} Wochen bis ${fmt(endOf(p))}`) + (hasStarted(p) ? stRow('slog', 'Anpassungen', o.slog) : ''))
     + grp('Entwicklung', stRow('sform', p.goal === 'event' ? 'Formkurve bis zum Event' : 'Formkurve', o.sform) + stRow('shist', 'Verlauf und Wochenumfang', o.shist))
     + grp('Leistung', stRow('sprof', 'Leistungsprofil', o.sprof) + stRow('svo2', 'VO2max', `<span data-noi18n>${esc(vo2Sub())}</span>`) + stRow('sperf', 'FTP und Leistung', o.sperf) + stRow('spb', 'Bestwerte', o.spb)) + (typeof mmProgCard === 'function' ? mmProgCard() : '')
-    + grp('Rückblicke', stRow('rc', 'Woche, Monat, Jahr', rcSub()))
-    + (hasStarted(p) ? grp('Plan', stRow('slog', 'Anpassungen', o.slog)) : '');
+    + grp('Rückblicke', stRow('rc', 'Woche, Monat, Jahr', rcSub()));
 }
 /* Die Seite hat schon eine Überschrift: die erste Überschrift der Karte entfällt */
 const stNoHead = h => String(h || '').replace(/<h2 class="hd text-xl font-semibold">[^<]*<\/h2>|<p class="hd text-xl font-semibold">[^<]*<\/p>/, '');
@@ -8988,7 +9006,8 @@ const EV_ICO = {
   pace:'<circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M12 3v2"/>',
   fuel:'<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z"/>',
   subs:'<path d="M5 21V4h11l-2 4 2 4H5"/><path d="M19 9v6M16 12h6"/>',
-  goal:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>'
+  goal:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  plans:ICO.plans /* F37: Mehr → „Event und meine Pläne“ führt hierher, deshalb auch die Pläne */
 };
 let evFT = null, evFTon = false;
 const evPh = (when, title) => /^(Wochen davor|2 Tage vorher|Tag vorher|Vorabend)$/.test(String(when)) ? 0 : title === 'Danach' ? 2 : 1;
@@ -9007,7 +9026,8 @@ function evPage(){
     + (pace ? evRow('ev-pace', 'pace', 'Pacing-Plan', pace) : '')
     + evRow('ev-fuel', 'fuel', 'Ernährungsstrategie', fuel)
     + evRow('ev-subs', 'subs', 'Saison und Events', (() => { const si = seasonInfo(p); return L.length ? `${si.multi ? si.nA + ' Formhöhepunkte · ' : ''}${L.length} weitere${L.length === 1 ? 's Event' : ' Events'}, nächstes: <span data-noi18n>${esc(L[0].name)}</span> am ${fmt(L[0].date)}` : 'Noch keine weiteren Events'; })())
-    + `</div>`;
+    + `</div>`
+    + `<p class="eyebrow mb-2 mt-5">Pläne</p><div class="mlist">` + (n => evRow('plans', 'plans', 'Meine Pläne', `Plan anpassen, ${n} gespeichert`))((() => { try { return Object.keys(readLib().plans).length; } catch (e) { elog(e); return 0; } })()) + `</div>`;
 }
 function evFuelPage(){
   const sp = efFuelPage(); if (sp) return sp;

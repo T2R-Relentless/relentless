@@ -35,7 +35,7 @@ let PGP = {};
 const scEl = () => document.documentElement.classList.contains('sa-wrap') ? document.getElementById('sc') : null;
 function scrollTop0(){ const e = scEl(); if (e) e.scrollTop = 0; else window.scrollTo(0, 0); }
 try { if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) document.documentElement.classList.add('sa-wrap'); } catch (e) { elog(e); }
-function goPg(k){ if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); scrollTop0(); }
+function goPg(k){ mrTlOpen = false; if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); scrollTop0(); }
 const ICO = {
   'tool-tire':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21"/>',
   week:'<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>',
