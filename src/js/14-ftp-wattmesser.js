@@ -31,8 +31,17 @@ function pBests(w, t){
 /* ---------- Woher kommt der FTP? Selbst eintragen, aus Fahrten errechnen oder Fitnesstest zu Beginn ---------- */
 function setFtpSrc(k){ const was = S.d.ftpSrc; S.d.ftpSrc = k; S.d.test0 = k === 'test' || (k === 'nopwr' && S.d.npTest !== false); if (k === 'nopwr') S.d.noPwr = true; else if (was === 'nopwr') S.d.noPwr = false; save(); render(); track('ftp-quelle-' + String(k || '').replace(/[^a-z]/g, '')); }
 function togNoPwrL(){ const on = !S.d.noPwr; S.d.noPwr = on; if (on) { S.d.ftpSrc = 'nopwr'; if (!S.d.lthr) S.d.test0 = true; } else if (S.d.ftpSrc === 'nopwr') S.d.ftpSrc = S.d.test0 ? 'test' : 'manual'; save(); render(); }
-function togTest0(){ S.d.test0 = !S.d.test0; save(); render(); }
-const t0W = p => { if (!p.test0) return 0; const so = startOff(p); let slot = false; try { slot = [0, 1, 2, 3, 4, 5, 6].some(j => j >= so && p.avail[j] && capOf(p, j) >= 55); } catch (e) { elog(e); slot = true; } return 7 - so >= 3 && slot ? 1 : 2; };
+function togTest0(){ S.d.test0 = !snT0(S.d); save(); render(); }
+/* Paket C (Fachregel 2.2): In der Schnellplanung ist der Fitnesstest vorausgewählt, solange kein FTP eingetragen ist */
+const snT0 = d => d.mode === 'light' && d.test0 == null ? !(d.ftpKnown > 0) : !!d.test0;
+function snSetArt(k){ S.d.testArt = k === 'ramp' ? 'ramp' : '20'; save(); render(); }
+/* Entscheidung 4 B: Rampentest, wenn eine Rolle da ist, sonst 20 Minuten. Ohne Test: Hinweis auf die Obergrenze (Entscheidung 5 B). */
+function snT0Ui(d){
+  if (d.noPwr) return '';
+  if (!snT0(d)) return d.ftpKnown > 0 ? '' : '<p class="px-1 text-sm" style="color:#9a6a00">Ohne Test bleibt dein FTP geschätzt. Die ersten zwei Wochen enthalten dann keine Einheiten über 85 % FTP, danach fährst du die Intervalle nach Gefühl, bis du einen gemessenen Wert einträgst.</p>';
+  return `<div class="panel p-4"><p class="font-semibold">Hast du für den Test eine Rolle (Smarttrainer)?</p><p class="mb-2 mt-1 text-sm" style="color:var(--mute)">Alle späteren Fitness-Checks nutzen dieselbe Testart, so bleiben sie vergleichbar.</p><div class="space-y-2">${lopt(d.testArt === 'ramp', "snSetArt('ramp')", 'Ja, Rampentest', 'Kurz und ohne Einteilung: Die Leistung steigt jede Minute, bis es nicht mehr geht.')}${lopt(d.testArt !== 'ramp', "snSetArt('20')", 'Nein, 20-Minuten-Test', 'Draußen oder auf der Rolle: 20 Minuten gleichmäßig hart, am besten an einem Anstieg.')}</div></div>`;
+}
+const t0W = p => { if (!p.test0) return 0; if (p.sanft && snLow(p)) return 3; /* Paket C: Einsteiger und Wiedereinstieg erst nach zwei ruhigen Wochen */ const so = startOff(p); let slot = false; try { slot = [0, 1, 2, 3, 4, 5, 6].some(j => j >= so && p.avail[j] && capOf(p, j) >= 55); } catch (e) { elog(e); slot = true; } return 7 - so >= 3 && slot ? 1 : 2; };
 /* ---------- Wattmesser schon bei der Planerstellung abfragen: immer, mal mit und mal ohne, ohne ---------- */
 const pwmOf = d => d.noPwr ? 'off' : d.pwMix ? 'mix' : 'on';
 function pwSel(m, quick){

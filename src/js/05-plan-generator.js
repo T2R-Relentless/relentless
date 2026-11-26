@@ -395,7 +395,7 @@ function genWeekCore(p, w, base){
   /* M6: Urlaubstage kennzeichnen */
   res = res.map((x, j) => vacDay(p0, w, j) && !x.m ? {...REST, n:'Urlaub', st:'Keine Einheit geplant. Bewegung nach Lust und Laune, zum Beispiel Wandern oder Schwimmen.', tip:'Erholung gehört zum Training.', vac:1} : x);
   if (reE) res = res.map(x => x.m && (x.t === 'base' || x.t === 'long' || HARD.includes(x.t)) && !/^Eventtag|^Aktivierung/.test(x.n || '') ? {...x, tip:(x.tip || '') + (reE.src === 'vac' ? ' Wiedereinstieg nach dem Urlaub: weniger Umfang, damit du gut reinkommst.' : ' Wiedereinstieg nach der Pause: weniger Umfang, damit du gut reinkommst.')} : x);
-  return applyCyc(placeTest(applySubs(fitBudget(res, p), p, w), p, w), p, w);
+  return applyCyc(snWeek(placeTest(applySubs(fitBudget(res, p), p, w), p, w), p0, w), p, w);
 }
 /* Wochenbudget: Die Summe der Einheiten darf die verfügbare Wochenzeit nicht überschreiten.
    Gekürzt wird zuerst Grundlage, dann Erholungsfahrt, dann der Long Ride. Event, Zieltour und Pendeln bleiben. */
