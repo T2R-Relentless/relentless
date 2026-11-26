@@ -154,3 +154,11 @@ test('Punkt 17: Event-Auswahl mit Name, Strecke, Höhenmetern und Suche', async 
   a.w.evFilter('köln'); const n = [...a.w.document.getElementById('evSel').options].filter(o => o.value).length; ok(n >= 1 && n < 10, 'Suche filtert: ' + n);
   a.w.evFilter(''); a.noErrors();
 });
+
+test('Punkt 13: ganze Woche als .fit-Paket (ZIP)', async () => {
+  const a = await boot(); makePlan(a, {goal:'event', eventName:'Testrennen', eventDate:'2027-03-20', ftp:250, hours:8});
+  const n = a.$('fwItems(S.wk).length'); ok(n >= 2, 'Einheiten in der Woche'); a.page('week'); ok(/Ganze Woche als \.fit-Paket/.test(a.text()), 'Knopf in der Woche');
+  await a.w.fwExport(a.$('S.wk')); await a.tick(50); const d = a.w.__downloads.pop(); ok(d && /^relentless-woche-\d+-fit\.zip$/.test(d.name), 'ZIP-Name');
+  const b = new Uint8Array(await d.blob.arrayBuffer()), e = b.length - 22; eq([b[e], b[e + 1], b[e + 2], b[e + 3]], [0x50, 0x4B, 5, 6], 'ZIP-Ende'); eq(b[e + 10] | (b[e + 11] << 8), n, 'eine .fit-Datei pro Einheit');
+  a.page('exp-fit'); ok(/Ganze Woche aufs Gerät/.test(a.text())); a.noErrors();
+});

@@ -8727,6 +8727,30 @@ function zxItems(kind, range){
   try { if (sw !== null) strWeek = sw; } catch (e) { elog(e); }
   return out;
 }
+/* ---------- Paket C, Punkt 13: ganze Woche als .fit-Paket (ZIP mit je einer .fit-Datei pro Radeinheit, Pendeltage je Weg) ---------- */
+let fwMsg = null, fwW = null;
+function fwItems(w){
+  const p = S.p; if (!p) return []; const cur = w === S.wk && S.plan, pl = cur ? S.plan : genWeek(p, w), out = [];
+  pl.forEach((x, i) => { if (!x || !(x.m > 0) || x.t === 'rest' || x.t === 'race' || /^Eventtag/.test(x.n || '') || (cur && S.done && S.done[i])) return;
+    if (x.parts) x.parts.forEach((q, k) => out.push({i, k, x, label:(q.lbl === 'Hinweg' ? 'Hin ' : 'Rueck ') + x.n})); else out.push({i, k:-1, x, label:x.n}); });
+  return out;
+}
+async function fwExport(w){
+  w = w || S.wk || 1; const items = fwItems(w); if (!items.length) { fwMsg = {err:true, w, t:'In dieser Woche gibt es keine offenen Radeinheiten.'}; return render(); }
+  const slug = t => asc(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const files = items.map(({i, k, x, label}) => ({name:`relentless-w${String(w).padStart(2, '0')}-${i + 1}-${SD[i].toLowerCase()}-${slug(label)}.fit`, data:fitBytes(asc(label).trim().slice(0, 15).trim(), fitSteps(S.p, x, k >= 0 ? x.parts[k] : null))}));
+  try { const f = await saveFile(`relentless-woche-${w}-fit.zip`, zipMany(files)); fwMsg = {w, t:`${files.length} Workouts gespeichert (${f}).`}; try { track('fit-woche'); } catch (e) { elog(e); } }
+  catch (e) { fwMsg = e && e.code === 'declined' ? null : {err:true, w, t:'Speichern nicht möglich.'}; }
+  render();
+}
+function fwBtn(w){
+  if (!S.p) return ''; const n = fwItems(w).length; if (!n) return '';
+  return `<div><button class="ghost w-full text-sm" style="min-height:44px" onclick="fwExport(${ja(w)})">Ganze Woche als .fit-Paket (${n} ${n === 1 ? 'Workout' : 'Workouts'})</button>${fwMsg && fwMsg.w === w ? `<p class="mt-1 text-sm" style="color:${esc(fwMsg.err ? '#c0392b' : 'var(--ok)')}">${fwMsg.err ? icWarn() : '✓'} ${esc(fwMsg.t)}</p>` : ''}</div>`;
+}
+function fwCard(){
+  if (!S.p) return ''; const w = S.wk || 1, tot = phases(S.p).slice(-1)[0].to, w2 = Math.min(tot, w + 1);
+  return `<section class="panel p-4" id="fx-fw"><h2 class="hd text-xl font-semibold">Ganze Woche aufs Gerät</h2><p class="mt-1 text-sm" style="color:var(--mute)">Eine ZIP-Datei mit je einem Workout (.fit) pro Radeinheit der Woche. Entpacken und die Dateien per USB in den Ordner GARMIN/NewFiles kopieren.</p><div class="mt-3 space-y-2">${fwBtn(w)}${w2 !== w ? fwBtn(w2).replace('Ganze Woche als', 'Nächste Woche als') : ''}</div></section>`;
+}
 async function zxExport(){
   const items = zxItems(zxKind, zxRange); if (!items.length) { zxMsg = {err:true, t:'Im gewählten Zeitraum gibt es keine passenden Einheiten.'}; return render(); }
   const slug = t => asc(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -8882,14 +8906,14 @@ function setPage(){
     + `<div class="mt-6">${x.dz || ''}</div>` + verLine();
 }
 /* ---------- Export ---------- */
-const EXP_PAGES = {'exp-ics':() => iaNoHead(icsCard()), 'exp-zwo':() => iaNoHead(zxCard()), 'exp-fit':() => iaNoHead(garminHelp())};
+const EXP_PAGES = {'exp-ics':() => iaNoHead(icsCard()), 'exp-zwo':() => iaNoHead(zxCard()), 'exp-fit':() => fwCard() + iaNoHead(garminHelp())};
 const EXP_T = {'exp-ics':'Kalender', 'exp-zwo':'Zwift', 'exp-fit':'Garmin-Gerät'};
 function expPage(){
   const n = (() => { try { return calItems(icsScope, true).length; } catch (e) { elog(e); return 0; } })(), d = typeof zxDiff === 'function' ? zxDiff() : null;
   return `<p class="text-sm" style="color:var(--mute)">Bring deine Einheiten in deinen Kalender, auf die Rolle oder auf deinen Radcomputer.</p>`
     + iaGrp('Ziel', iaRow('exp-ics', 'ics', 'Kalender', `Apple, Google, Outlook · ${n} Termine ab heute`)
       + iaRow('exp-zwo', 'zwo', 'Zwift', d ? 'Plan geändert: Workouts neu exportieren' : S.zxExp ? `Alle Einheiten als ZIP · zuletzt ${fmt(lstr(new Date(S.zxExp.at)))}` : 'Alle Einheiten auf einmal als ZIP', !!d)
-      + iaRow('exp-fit', 'fit', 'Garmin-Gerät', 'Einzelne Einheit als Workout (.fit), so kommt sie aufs Gerät'))
+      + iaRow('exp-fit', 'fit', 'Garmin-Gerät', 'Einzelne Einheit oder ganze Woche als Workout (.fit)'))
     + `<p class="mt-3 text-xs" style="color:var(--mute)">Einzelne Einheiten exportierst du direkt bei der Einheit im Wochenplan: „Garmin (.fit)“ oder „Zwift (.zwo)“.</p>`;
 }
 /* ---------- Übungen: nach Gruppe filtern ---------- */
@@ -13526,7 +13550,7 @@ function dashboard(){
       <button class="ghost !px-3.5 !py-1.5" onclick="goWeek(${ja(w+1)})" aria-label="Nächste Woche" ${w>=tot?'disabled style="opacity:.3"':''}>›</button></div>
       <p class="text-center text-sm" style="color:var(--mute)">${mm(tm)} geplant von ${hStd(tbWkH(p, w))} Std. verfügbar${tm > tbWkH(p, w) * 60 + 1 ? ' (mehr, weil Event- oder Pendeltage feststehen)' : ''}, TSS ~${tt}${Object.keys(strMap).length ? ', zusätzlich ' + Object.keys(strMap).length + ' × Krafttraining' : ''}${Object.keys(mobMap).length ? (Object.keys(strMap).length ? ' und ' : ', zusätzlich ') + Object.keys(mobMap).length + ' × Mobilität/Stabilität' : ''}${cur?'':'. Vorschau, wird zur Woche hin aktualisiert.'}</p><p class="mb-2 text-center text-xs" style="color:var(--mute)">Zeit nach Belastungsbereich: ${dist(plan)}</p>
       ${weekPanel(w, cur)}${impactCard()}${cycWeek(p, w, plan)}
-      ${mvModal()}${vaModal()}${blWeekSum(w)}${woNote(plan, w)}${rdWeekNote(p, w, plan, cur)}<div class="space-y-2.5">${plan.map((x, i) => dayCard(x, i, cur) + xrDayRows(w, i)).join('')}</div></section>`;
+      ${mvModal()}${vaModal()}${blWeekSum(w)}${woNote(plan, w)}${rdWeekNote(p, w, plan, cur)}<div class="space-y-2.5">${fwBtn(w)}${plan.map((x, i) => dayCard(x, i, cur) + xrDayRows(w, i)).join('')}</div></section>`;
   const T = {...ST_T, ...RC_T, ...PP_T, ...SET_T, ...EXP_T, ...EV_T, more:'Mehr', 'tool-tire':'Reifendruck', week:'Wochenplan', logbook:'Logbuch', 'lb-ride':'Fahrt', state:'Fortschritt', check:'Plan-Check', event:'Event', overview:'Gesamtplan', rides:'Fahrten bewerten', ex:'Übungen', export:'Export', plans:'Meine Pläne', settings:'Einstellungen', science:'Wissen', cycle:'Zyklus', ms:'Fitness-Checks'};
   foldFlat = page !== 'home';
   let body = '';
