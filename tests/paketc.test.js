@@ -145,3 +145,12 @@ test('Punkt 7: neue Pläne mit Ruhetag, laufende nur mit Vorschlag, Fahrten pro 
   a.$(`S = load(true); S.d = Object.assign(S.d, {mode:'light', hours:12, avail:[true, true, true, true, true, true, true]}); S.step = 3; render();`);
   ok(/Bei 12 Std\. plant die App etwa \d+( bis \d+)? Fahrten pro Woche\./.test(a.text()), 'Satz in Schritt 3'); a.noErrors();
 });
+
+test('Punkt 17: Event-Auswahl mit Name, Strecke, Höhenmetern und Suche', async () => {
+  const a = await boot(); a.$(`S = load(true); S.d = Object.assign(S.d, {mode:'light', goal:'event'}); S.step = 1; render();`);
+  const sel = a.w.document.getElementById('evSel'); ok(sel, 'Auswahl da');
+  ok([...sel.options].some(o => o.textContent === 'Ötztaler Radmarathon · 227 km · 5.500 hm'), 'Name · km · hm');
+  ok(a.w.document.querySelector('input[type=search]'), 'Suchfeld bei mehr als 20 Events');
+  a.w.evFilter('köln'); const n = [...a.w.document.getElementById('evSel').options].filter(o => o.value).length; ok(n >= 1 && n < 10, 'Suche filtert: ' + n);
+  a.w.evFilter(''); a.noErrors();
+});
