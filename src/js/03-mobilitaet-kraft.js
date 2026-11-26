@@ -25,19 +25,19 @@ Object.assign(EXI, {
     s:['Vierfüßlerstand: Hände unter den Schultern, Knie unter der Hüfte.', 'Eine Hand an den Hinterkopf legen, der Ellbogen zeigt zum Boden.', 'Drehe den Oberkörper auf, der Ellbogen wandert Richtung Decke, der Blick folgt.', 'Langsam zurück. 8 Wiederholungen pro Seite.'],
     f:['Die Bewegung kommt aus der Hüfte. Becken bleibt ruhig, nur der Oberkörper dreht.', 'Zu schnell. Langsam und mit Ausatmen aufdrehen.'],
     v:'', r:'Die Brustwirbelsäule ist auf dem Rad lange gebeugt. Mehr Drehfähigkeit hilft bei Schulterblick, Atmung und Nackenverspannungen.'},
-  catcow:{t:'Katze-Kuh', cap:['Katze: Rücken rund', 'Kuh: Rücken hohl, Blick nach vorn'], m:'Ganze Wirbelsäule',
+  catcow:{t:'Katze-Kuh', cap:['Katze: Rücken rund', 'Kuh: Rücken hohl, Blick leicht nach vorn'], m:'Ganze Wirbelsäule',
     s:['Vierfüßlerstand, Hände unter den Schultern, Knie unter der Hüfte.', 'Ausatmen: Rücken rund machen, Kinn zur Brust, Bauchnabel nach innen.', 'Einatmen: Rücken langsam durchhängen lassen, Brust nach vorn, Blick leicht nach vorn.', '10 langsame Wiederholungen, im Atemrhythmus.'],
     f:['Ruckartig. Fließend und langsam.', 'Nur der Nacken bewegt sich. Die Bewegung geht Wirbel für Wirbel durch den ganzen Rücken.'],
     v:'', r:'Löst den Rücken nach langen Ausfahrten und ist ein guter Start in jede Routine.'},
-  ham:{t:'Beinrückseite dehnen mit Band', cap:['Start: Bein schräg nach oben', 'Bein nahe der Senkrechten'], m:'Hintere Oberschenkelmuskulatur, Wade',
+  ham:{t:'Beinrückseite dehnen mit Band', cap:['Start: Bein schräg nach oben', 'Bein mit dem Band sanft heranziehen'], m:'Hintere Oberschenkelmuskulatur, Wade',
     s:['Rückenlage, ein Band oder Handtuch um den Fuß legen.', 'Das Bein gestreckt nach oben führen, das andere Bein liegt gestreckt am Boden.', 'Mit dem Band sanft ziehen, bis du hinten am Oberschenkel eine Dehnung spürst. Fußspitze zu dir ziehen dehnt zusätzlich die Wade.', '45 Sekunden halten, dann Seite wechseln.'],
     f:['Das Becken hebt ab. Das untere Bein und der Rücken bleiben am Boden.', 'Knie stark gebeugt. Nur so weit hochziehen, wie das Bein fast gestreckt bleibt.'],
     v:'', r:'Bewegliche Beinrückseiten erleichtern die Sitzposition und entlasten den unteren Rücken.'},
-  fig4:{t:'Gesäß-Dehnung in Rückenlage (Figur 4)', cap:['Start: Knöchel aufs Knie legen', 'Bein zur Brust ziehen'], m:'Gesäßmuskulatur, Piriformis',
+  fig4:{t:'Gesäß-Dehnung in Rückenlage (Figur 4)', cap:['Start: Knöchel oberhalb des Knies ablegen', 'Bein zur Brust ziehen'], m:'Gesäßmuskulatur, Piriformis',
     s:['Rückenlage, beide Füße am Boden. Lege den rechten Knöchel auf das linke Knie.', 'Greife hinter den linken Oberschenkel und ziehe ihn zur Brust.', 'Das rechte Knie drückt leicht nach außen. Du spürst die Dehnung im rechten Gesäß.', '45 Sekunden halten, dann Seite wechseln.'],
     f:['Kopf und Schultern heben ab. Kopf bleibt am Boden, notfalls ein Band zu Hilfe nehmen.', 'Zu viel Druck auf das Knie. Sanft dosieren.'],
     v:'', r:'Das Gesäß arbeitet beim Treten viel und verspannt leicht. Lockerheit hier beugt Hüft- und Rückenbeschwerden vor.'},
-  birddog:{t:'Bird Dog', cap:['Start: Vierfüßlerstand', 'Gegenarm und Gegenbein strecken'], m:'Rumpf, Rückenstrecker, Gesäß',
+  birddog:{t:'Bird Dog', cap:['Start: Vierfüßlerstand, Rücken gerade', 'Gegenarm und Gegenbein waagerecht strecken'], m:'Rumpf, Rückenstrecker, Gesäß',
     s:['Vierfüßlerstand, Rücken gerade, Bauch leicht angespannt.', 'Strecke den rechten Arm nach vorn und das linke Bein nach hinten, bis beide waagerecht sind.', '3 Sekunden halten, ohne dass das Becken kippt.', 'Zurück und Seite wechseln. 8 Wiederholungen pro Seite.'],
     f:['Das Becken dreht auf. Stell dir ein Glas Wasser auf dem unteren Rücken vor.', 'Hohlkreuz, weil das Bein zu hoch geht. Nur bis zur Waagerechten.'],
     v:'Schwerer: Ellbogen und Knie unter dem Körper zusammenführen, dann wieder strecken.', r:'Trainiert die Rumpfspannung, die das Becken auf dem Sattel ruhig hält.'},
@@ -136,7 +136,7 @@ function strUi(d){
 
 
 function load(fresh){
-  try { if (fresh) throw 0; const r = localStorage.getItem(K); if (r) { const o = secC(JSON.parse(r)); try { o.rev = Math.max(+o.rev || 0, +(localStorage.getItem('relentless.rev') || 0)); } catch (e) { elog(e); } delete o.strava; delete o.acts; delete o.syncs; o.pending = false; const dc = (o.d && o.d.commute) || []; o.d = Object.assign({weight:75, perDay:false, dayMin:[60,60,60,60,60,180,240], dist:227, hm:5500, commuter:dc.some(Boolean)}, o.d || {}); if (o.p) o.p = Object.assign({weight:75, perDay:false, dayMin:[60,60,60,60,60,180,240], dist:227, hm:5500}, o.p); return o; } } catch(e){ if (e !== 0) elog(e); /* 0 = bewusst frisch starten */ }
+  try { if (fresh) throw 0; const r = localStorage.getItem(K); if (r) { const o = secC(JSON.parse(r)); try { o.rev = Math.max(+o.rev || 0, +(localStorage.getItem('relentless.rev') || 0)); } catch (e) { elog(e); } delete o.strava; delete o.acts; delete o.syncs; o.pending = false; const dc = (o.d && o.d.commute) || []; o.d = Object.assign({weight:75, perDay:false, dayMin:[60,60,60,60,60,180,240], dist:227, hm:5500, commuter:dc.some(Boolean)}, o.d || {}); if (o.p) o.p = Object.assign({weight:75, perDay:false, dayMin:[60,60,60,60,60,180,240], dist:227, hm:5500}, o.p); try { hkMig(o); } catch (e) { elog(e); } return o; } } catch(e){ if (e !== 0) elog(e); /* 0 = bewusst frisch starten */ }
   return {step:1, d:{goal:'event', eventName:'', eventDate:iso(120), targetTime:'', ftp:250, ftpTarget:280, hours:8, endDate:iso(84), avail:[false,true,true,true,true,true,true], commute:[false,false,false,false,false,false,false], commuteMin:25, longDay:6, commuter:false, weight:75, perDay:false, dayMin:[60,60,60,60,60,180,240], dist:'', hm:''},
           p:null, plan:null, log:[], done:{}, note:'', rev:(() => { try { return +(localStorage.getItem('relentless.rev') || 0); } catch (e) { elog(e); return 0; } })()};
 }

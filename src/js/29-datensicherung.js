@@ -110,7 +110,7 @@ function importPlans(inp){
 async function bkTrkIn(o){ if (!o || !o.trk || typeof trkPut !== 'function') return 0; let n = 0; for (const [id, r] of Object.entries(o.trk)) { if (r && typeof r === 'object' && r.v === 1) { try { await trkPut(id, r); trkC[id] = r; n++; } catch (e) { elog(e); } } } return n; }
 function bkAddPlans(){
   const o = bkImp.o; bkImp = null; bkPre('Vor dem Laden einer Sicherung'); bkTrkIn(o).catch(e => elog(e));
-  const lib = readLib(); let n = 0; o.plans.forEach(e => { if (e && e.snap && e.snap.p && e.snap.p.goal) { const id = uid(); lib.plans[id] = {id, name:String(e.name || planName(e.snap.p)).slice(0, 60), created:e.created || Date.now(), updated:Date.now(), snap:e.snap}; n++; } });
+  const lib = readLib(); let n = 0; o.plans.forEach(e => { if (e && e.snap && e.snap.p && e.snap.p.goal) { hkMigP(e.snap.p); const id = uid(); lib.plans[id] = {id, name:String(e.name || planName(e.snap.p)).slice(0, 60), created:e.created || Date.now(), updated:Date.now(), snap:e.snap}; n++; } });
   try { localStorage.setItem(LIBK, JSON.stringify(lib)); } catch (e) { elog(e); storeErr = true; }
   impMsg = n ? n + (n === 1 ? ' Plan' : ' Pläne') + ' aus der Sicherung hinzugefügt.' : 'Keine Pläne in der Datei gefunden.'; try { track('sicherung-geladen'); } catch (e) { elog(e); } render();
 }

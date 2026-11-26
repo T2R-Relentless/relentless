@@ -6,7 +6,7 @@
    Z3 75–90 %, Z4 90–105 %, Z5 105–120 %, ab 120 % Z6 (rot). Farben angelehnt an die bekannte Workout-Darstellung aus Zwift
    (grau, blau, grün, gelb, orange, rot), als CSS-Variablen für Hell und Dunkel.
    Eine Zeichenfunktion für alle Stellen: wkSvg(x, {mode:'full'|'mini', h, T, ftp, act}). */
-const WK_Z = [[0, 55, 'Z1'], [55, 75, 'Z2'], [75, 90, 'Z3'], [90, 105, 'Z4'], [105, 120, 'Z5'], [120, 1e9, 'Z6']];
+const WK_Z = [[0, 56, 'Z1'], [56, 76, 'Z2'], [76, 91, 'Z3'], [91, 106, 'Z4'], [106, 121, 'Z5'], [121, 1e9, 'Z6']]; /* Paket C: Grenzen wie ZN */
 const wkZi = pc => { const k = WK_Z.findIndex(z => pc < z[1]); return k < 0 ? 5 : k; };
 const wkL = (de, en) => (typeof lang === 'function' && lang() === 'en' ? en : de);
 /* Abschnitt: d = Dauer in Sekunden, a/b = % FTP am Anfang/Ende (gleich bei festen Blöcken), lo/hi = Zielbereich, k = Art */
@@ -44,9 +44,10 @@ function wkBlocks(x){
   const steady = (m, lo, hi, k, extra) => { lo = lo || 56; hi = hi || 72; const mid = (lo + hi) / 2; out.push(wkB(m * 60, mid, mid, lo, hi, k || 'steady', {cad:x.cad, ...(extra || {})})); };
   if (x.parts) x.parts.forEach((q, j) => { const n0 = out.length; if (q.iv) wkIv(q.iv, q.m, out, x.cad); else steady(q.m, q.lo || x.lo, q.hi || x.hi); if (out[n0]) out[n0].part = q.lbl || (j ? 'Rückweg' : 'Hinweg'); });
   else if (x.vo2t && typeof vo2Blocks === 'function') vo2Blocks(x, out);
+  else if (x.t === 'test' && x.ramp) { out.push(wkB(10 * 60, 50, 60, 45, 65, 'wu')); out.push(wkB(20 * 60, 50, 130, 50, 130, 'test', {cad:x.cad})); out.push(wkB(10 * 60, 55, 45, 45, 60, 'cd')); if (x.m > 40.5) out.push(wkB((x.m - 40) * 60, 55, 55, 50, 60, 'easy')); }
   else if (x.iv) wkIv(x.iv, x.m, out, x.cad);
   else if (x.t === 'test') wkTest(x, out);
-  else if (x.t === 'race' || /^Eventtag/.test(x.n || '')) { const f = Math.max(.6, Math.min(1.02, 1 - .1 * Math.log(Math.max(1, x.m / 60)))) * (x.subPrio === 'C' ? 93 : 100); out.push(wkB(x.m * 60, f, f, Math.round(f - 5), Math.round(f + 5), 'race')); }
+  else if (x.t === 'race' || /^Eventtag/.test(x.n || '')) { const f = Math.max(.6, Math.min(1.02, ifEv(x.m))) * (x.subPrio === 'C' ? 93 : 100); out.push(wkB(x.m * 60, f, f, Math.round(f - 5), Math.round(f + 5), 'race')); }
   else if (x.t === 'long' && x.fin) { const f = x.fin, t = f.reps * f.work + (f.reps - 1) * f.rest, w = (f.lo + f.hi) / 2; steady(x.m - t, 56, 75);
     for (let k = 0; k < f.reps; k++) { out.push(wkB(f.work * 60, w, w, f.lo, f.hi, 'work', {no:k + 1, of:f.reps, cad:x.cad})); if (k < f.reps - 1) out.push(wkB(f.rest * 60, 55, 55, 50, 60, 'rest')); } }
   else if (x.t === 'long' && x.hi >= 82) { const t = Math.min(60, x.m * .25), a = Math.round((x.m - t) * .6); steady(a, 56, 75); out.push(wkB(t * 60, 83, 83, 76, 88, 'tempo', {cad:x.cad})); steady(x.m - t - a, 56, 75); }

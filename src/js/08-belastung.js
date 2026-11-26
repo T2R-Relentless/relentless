@@ -5,6 +5,10 @@
    und TSS = Stunden × IF² × 100. Rennen und Eventtag: haltbare Intensität IF(T) = 1 − 0,1 · ln(Std.), wie in der Zielzeit-Prognose.
    Gefahrene Fahrten ohne Leistungsdaten: aus dem Durchschnittspuls im Verhältnis zum Schwellenpuls (Zuordnung der Puls- zu den
    Leistungsbereichen nach Coggan), sonst aus dem Empfinden (RPE 1 bis 10, Session-RPE nach Foster et al. 2001), sonst wie bisher IF 0,65. */
+/* Paket C, Punkt 5 (Entscheidung 9 C): haltbare Intensität über die Dauer (min in Minuten). IF(T) = 1 − 0,10 · ln(T in Std.), ab 3 Std.
+   zusätzlich ein Abschlag für nachlassende Ermüdungsresistenz (Durability): − 0,04 · ln(T / 3 Std.). Dieselbe Annahme für Zielzeit (evCheck),
+   Eventtag-Belastung (tssSegs) und Pacing (paceTxt, evPace), damit die drei zusammenpassen. d = 0 ergibt die bisherige Formel. */
+function ifEv(min, d){ const h = Math.max(1, (Number(min) || 0) / 60); return 1 - .1 * Math.log(h) - (d == null ? .04 : d) * Math.max(0, Math.log(h / 3)); }
 function tssSegs(x){
   const S = [], add = (m, q) => { if (m > 0) S.push([m, q]); };
   const one = (iv, total) => {
@@ -21,7 +25,7 @@ function tssSegs(x){
   const mid = (o, dl, dh) => ((o.lo || dl) + (o.hi || dh)) / 2;
   if (x.parts) x.parts.forEach(q => { if (q.iv) one(q.iv, q.m); else add(q.m, mid(q, x.lo || 56, x.hi || 72)); });
   else if (x.iv) one(x.iv, x.m);
-  else if (x.t === 'race' || /^Eventtag/.test(x.n || '')) add(x.m, Math.max(.6, Math.min(1.02, 1 - .1 * Math.log(Math.max(1, x.m / 60)))) * (x.subPrio === 'C' ? 93 : 100));
+  else if (x.t === 'race' || /^Eventtag/.test(x.n || '')) add(x.m, Math.max(.6, Math.min(1.02, ifEv(x.m))) * (x.subPrio === 'C' ? 93 : 100));
   else if (x.t === 'long' && x.fin) { const f = x.fin, t = f.reps * f.work + (f.reps - 1) * f.rest; add(x.m - t, 65); for (let k = 0; k < f.reps; k++) { add(f.work, (f.lo + f.hi) / 2); if (k < f.reps - 1) add(f.rest, 55); } }
   else if (x.t === 'long' && x.hi >= 82) { const t = Math.min(60, x.m * .25); add(t, 83); add(x.m - t, 65); }
   else add(x.m, mid(x, 56, 72));

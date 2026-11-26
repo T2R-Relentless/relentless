@@ -40,6 +40,7 @@ Ohne Klicken (Terminal, Claude Code, GitHub-CI): `node tools/test.mjs` startet S
 | `uebungen-pilot.test.js` | Übungsfenster: Pilotfiguren (Felder, Bodenkontakt, Englisch), Videos für Pilot- und Kraftübungen, Rückfall auf die gezeichnete Figur mit passender Bildunterschrift |
 | `datenschutz.test.js` | F36: Statistik erst nach Zustimmung (keine GoatCounter-Anfrage vorher, Altdaten, Sicherung), Impressum und Datenschutz, Garmin-Daten löschen, Build-Datum getrennt von der Reihenfolge-ID, Installationshinweis ab dem 3. Besuch, einmalige Sicherungs-Erinnerung |
 | `uebungssequenz.test.js` | Übungssequenz auf Zeit: Seite je Zeitpunkt und Seitenansage, Spiegelung auf Seite 2 mit Ausnahmen, Ablauf ohne Antippen bis „Geschafft“, „Fertig“ früher weiter, Aussprache englischer Namen, Hinweis-Zeitplan, Satz- und Rumpfpausen, Englisch, Altdaten |
+| `paketc.test.js` | F35: Herkunft von FTP und Gewicht (Ableitung, Altdaten, Sicherung), sanfter Einstieg bei geschätztem FTP (Test am 2. Trainingstag, bis 85 %, Einsteiger Woche 3, Rampentest), Gewicht als Pflichtfeld, „geschätzt“ an vier Stellen, Sweet-Spot-Etikett, Eventtag-Abschlag (Ötztaler, Köln) |
 
 Die App läuft dabei in einem abgeschotteten Rahmen: eigener Speicher (deine echten Daten bleiben unberührt), angehaltene
 Uhr (Mittwoch, 11.11.2026, 9:30), reproduzierbarer Zufall, keine Aufrufe ins Internet, Downloads werden nur mitgeschrieben.

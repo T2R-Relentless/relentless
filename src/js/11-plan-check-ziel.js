@@ -10,13 +10,15 @@ const _psC = new Map();
 function planStats(p){
   const key = JSON.stringify({...p, course:p.course ? p.course.hm + ':' + p.course.seg.length + ':' + (p.course.laps || 1) : 0});
   if (_psC.has(key)) return _psC.get(key);
-  const ph = phases(p), tot = ph[ph.length - 1].to; let sum = 0, n = 0, maxL = 0;
+  const ph = phases(p), tot = ph[ph.length - 1].to, tpS = (ph.find(x => x.key === 'taper') || {from:tot + 1}).from; let sum = 0, n = 0, maxL = 0, maxL10 = 0, wkT = 0, weT = 0, L2 = 0;
   for (let w = 1; w <= tot; w++) {
-    const pl = genWeek(p, w, true), k = (ph.find(x => w >= x.from && w <= x.to) || {}).key;
+    const pl = genWeek(p, w, true), k = (ph.find(x => w >= x.from && w <= x.to) || {}).key, ev = x => /^(Eventtag|Deine Zieltour)/.test(x.n || '');
     if (k !== 'taper' && w > 1) { sum += pl.reduce((q, x) => q + (x.m || 0), 0); n++; }
-    pl.forEach(x => { if (x.t === 'long' && !/^(Eventtag|Deine Zieltour)/.test(x.n)) maxL = Math.max(maxL, x.m); });
+    pl.forEach(x => { if (x.t === 'long' && !ev(x)) { maxL = Math.max(maxL, x.m); if (w < tpS && w >= tpS - 10) maxL10 = Math.max(maxL10, x.m); } });
+    /* Paket C, Punkt 4: stärkste Woche und stärkstes Wochenende (Sa + So) vor dem Tapering */
+    if (k !== 'taper' && w < tpS) { const T = pl.map(x => ev(x) || x.sub ? 0 : tss(x)); wkT = Math.max(wkT, T.reduce((q, v) => q + v, 0)); weT = Math.max(weT, T[5] + T[6]); if (w >= tpS - 10) for (let j = 0; j < 6; j++) { const a = pl[j], b = pl[j + 1]; if (a && b && a.m >= 120 && b.m >= 120 && !ev(a) && !ev(b)) L2 = Math.max(L2, a.m + b.m); } }
   }
-  const out = {tot, hAvg:n ? sum / n / 60 : p.hours, maxL}; if (_psC.size > 30) _psC.clear(); _psC.set(key, out); return out;
+  const out = {tot, hAvg:n ? sum / n / 60 : p.hours, maxL, maxL10, wkT, weT, tpS, L2}; if (_psC.size > 30) _psC.clear(); _psC.set(key, out); return out;
 }
 /* FTP-Prognose: Faustmodell. Möglicher Zuwachs G (in %) hängt von den Wochenstunden und vom Leistungsniveau ab und nähert sich mit der Zeit einem Plateau. */
 function ftpProj(p, h, weeks){
@@ -41,8 +43,37 @@ const LEV = {
 };
 const levMult = (p, tev) => Object.keys(LEV).reduce((m, k) => m * (p.lev && p.lev[k] ? 1 + LEV[k].a(tev) / 100 : 1), 1);
 function paceTxt(p, pr){
-  const tev = pr && pr.tev ? pr.tev : 180, ifs = Math.max(.6, 1 - .1 * Math.log(Math.max(1, tev / 60))), hi = Math.round(ifs * 100), lo = hi - 8, cl = Math.min(100, hi + 10), W = x => Math.round(p.ftp * x / 100);
+  const tev = pr && pr.tev ? pr.tev : 180, ifs = Math.max(.6, ifEv(tev)), hi = Math.round(ifs * 100), lo = hi - 8, cl = Math.min(100, hi + 10), W = x => Math.round(p.ftp * x / 100);
+  /* Paket C, Punkt 5: ab 6 Std. Anstiege in der ersten Hälfte höchstens IF + 8, im letzten Drittel IF + 3, nie über 85 % */
+  if (tev >= 360) { const c1 = Math.min(85, hi + 8), c2 = Math.min(85, hi + 3);
+    return `Pacing-Plan: erste Stunde höchstens ${hi} % FTP, im Flachen ${lo} bis ${hi} %, an Anstiegen in der ersten Hälfte höchstens ${c1} %, im letzten Drittel höchstens ${c2} % (mit deinem heutigen FTP ${W(lo)} bis ${W(hi)} W, am Berg bis ${W(c1)} W, später bis ${W(c2)} W, nach einem neuen FTP-Test anpassen). In der zweiten Hälfte nur steigern, wenn es sich gut anfühlt.`; }
   return `Pacing-Plan: erste Stunde höchstens ${hi} % FTP, im Flachen ${lo} bis ${hi} %, an Anstiegen höchstens ${cl} % (mit deinem heutigen FTP ${W(lo)} bis ${W(hi)} W, am Berg bis ${W(cl)} W, nach einem neuen FTP-Test anpassen). In der zweiten Hälfte nur steigern, wenn es sich gut anfühlt.`;
+}
+/* ---------- Paket C, Punkt 3: ehrliche Prognose (Fachregeln 3.1 bis 3.8) ---------- */
+/* Eigene Zielzeit: nur Eingabe oder Übernahme per Knopf (tgtMan) bzw. die eigene Zielzeit beim Event (evMyT), nie die von der App gesetzte */
+const pcTgt = p => p && p.goal === 'event' ? (p.tgtMan ? tMin(p.targetTime) : p.evMyT > 0 ? +p.evMyT : 0) : 0;
+/* Spanne s = √(s_proj² + (k_F·u_F)² + (k_kg·u_kg)² + m²) */
+function pcRange(p, t0, F, kg, dr){
+  if (!t0 || !t0.t) return null; const t = t0.t;
+  const sP = t0.tl && t0.th ? (t0.th - t0.tl) / 2 / t : 0;
+  const tF = evTime(p, F * .95, kg, dr), tK = evTime(p, F, kg * 1.05, dr), kF = tF ? Math.abs(tF / t - 1) / .05 : 1, kK = tK ? Math.abs(tK / t - 1) / .05 : .5;
+  const hk = hkDerive(p).ftpHk, last = Object.values(p.res || {}).filter(r => r && r.adopted && r.date).map(r => r.date).sort().pop();
+  const lowRide = hk === 'geschaetzt' && p.ftpSrc === 'data', uF = hk === 'gemessen' ? (last && last >= addD(iso(0), -56) ? .03 : .05) : hk === 'eingegeben' ? .07 : lowRide ? .10 : .15, uK = hkKgEst(p) ? .12 : .02;
+  const e = EVS.find(x => x.id === p.evId), hmOpen = !(+p.hm > 0) && !(e && e.hm != null && e.hm > 0);
+  let first = ''; try { first = allActs().map(a => a.day).filter(Boolean).sort()[0] || ''; } catch (x) { elog(x); }
+  const m = (p.course && p.course.seg ? .05 : hmOpen ? .12 : .08) + (!first || first > addD(iso(0), -28) ? .03 : 0);
+  const s = Math.sqrt(sP * sP + (kF * uF) ** 2 + (kK * uK) ** 2 + m * m), r5 = x => Math.round(x / 5) * 5;
+  return {mid:r5(t), lo:r5(t * (1 - s)), hi:r5(t * (1 + s)), s, rough:s > .15, hk, kgE:hkKgEst(p), route:p.course && p.course.seg ? 'gpx' : hmOpen ? 'open' : 'hm'};
+}
+const PC_FTP = {gemessen:'gemessen', eingegeben:'eingegeben', geschaetzt:'geschätzt'};
+const pcWhy = r => `Aus FTP (${PC_FTP[r.hk]}), ${r.kgE ? 'Gewicht (Standardwert)' : 'Gewicht'} und ${r.route === 'gpx' ? 'Streckenprofil' : r.route === 'open' ? 'Distanz ohne Höhenmeter' : 'Distanz und Höhenmetern'}, ohne Pausen.`;
+/* Zeitlimit (3.8): nur mit Limit des Veranstalters; Pausen bei Marathons und RTF 3 Min. pro Std. über 3 Std., bei Rennen keine */
+function pcLimit(p, r, pr){
+  const lim = +p.evLim || 0; if (!lim || !r) return null;
+  const P = t => pr && pr.race ? 0 : Math.round(3 * Math.max(0, (t - 180) / 60)), slow = r.hi + P(r.hi), mid = r.mid + P(r.mid), gap = (lim - slow) / lim;
+  const e = EVS.find(x => x.id === p.evId), short = e ? EVS.filter(x => x.n === e.n && x.id !== e.id && x.km < e.km).sort((a, b) => b.km - a.km)[0] : null;
+  const k = mid > lim ? 'no' : slow > lim && mid > lim * .95 ? 'hard' : slow > lim ? 'risk' : gap < .1 ? 'tight' : 'ok'; /* langsame Prognose über dem Limit, Mitte knapp darunter: stark gefährdet */
+  return {k, lim, slow, mid, pause:P(r.hi), short};
 }
 /* Der Nutzer entscheidet: bewusst beibehaltenes Ziel (gilt nur für genau diesen Zielwert) */
 const tgtSig = p => p.goal === 'event' ? 'e|' + p.targetTime : 'f|' + p.ftpTarget;
@@ -51,7 +82,8 @@ function planCheck(p, live){
   const st = planStats(p), cw = live && hasStarted(p) ? curWeek(p) : 1, weeks = Math.max(0, st.tot - cw + 1), h = st.hAvg, pr = p.goal === 'event' ? evProfile(p) : null;
   const tev = pr ? pr.tev : 0, rec = hRec(p, tev), notes = [], kg = kgOf(p);
   const lRec = p.goal !== 'event' ? (p.goal === 'fitness' ? (p.ffocus === 'endur' && p.ftour ? Math.min(300, Math.round(p.ftour * .8 / 15) * 15) : p.ffocus === 'health' || p.ffocus === 'restart' ? 90 : p.ffocus === 'speed' ? 120 : 150) : 150) : tev <= 180 ? 150 : Math.min(360, Math.round(.7 * Math.min(tev, 420) / 15) * 15);
-  const pen = p.goal === 'event' && tev > 180 ? Math.max(0, Math.min(.05, (.7 - st.maxL / Math.min(tev, 420)) * .25)) : 0;
+  /* Paket C: Abschlag d (ifEv) und pen zusammen höchstens 10 % gegenüber IF(T), sonst würde doppelt abgezogen */
+  const pen = p.goal === 'event' ? evPen(tev, st.maxL) : 0;
   const base = ftpProj(p, h, weeks);
   const ratio = hAv(p) > 0 && h > 0 ? Math.min(1, h / hAv(p)) : .85, toH = x => Math.min(20, Math.ceil(x / ratio * 2) / 2);
   const boost = (hA, L, why) => { const H = toH(hA); if (H <= hAv(p) + .1 && !(L && p.perDay && (p.dayMin[p.longDay] || 0) < L)) return null; const dm = p.perDay ? boostDays(p, H, L) : null, nh = dm ? dsum({...p, dayMin:dm}) / 60 : H;
@@ -67,9 +99,9 @@ function planCheck(p, live){
   if (p.goal === 'event') (p.subs || []).forEach(s => { const dd = Math.round((new Date(p.eventDate) - new Date(s.date)) / 864e5); if (dd <= 0) notes.push({lv:1, t:`Zwischenevent „${esc(s.name)}“ liegt nicht vor dem Hauptevent (${fmt(s.date)}) und wird im Plan nicht berücksichtigt. Entferne es oder ändere das Datum.`, act:['subDel', s.id, 'Zwischenevent entfernen']}); else if (s.prio === 'B' && dd < 21) notes.push({lv:1, t:`Zwischenevent „${esc(s.name)}“ liegt nur ${dd} Tage vor dem Hauptevent. Fahre es besser als C-Rennen (kontrolliert, ohne volle Ausbelastung), damit du frisch ins Hauptevent gehst.`, act:['subC', s.id, 'Als C-Rennen einplanen']}); });
   if (p.startH > 0 && hAv(p) > p.startH * 1.6) notes.push({lv:1, t:`Großer Sprung im Umfang: bisher ${hStd(p.startH)} Std., geplant ${hStd(hAv(p))} Std. pro Woche. Der Plan steigert schrittweise, achte trotzdem auf Schlaf und Erholung.`});
   const sc = [];
-  let verdict = null, gap = null, relaxed = false;
+  let verdict = null, gap = null, relaxed = false, rg = null, lmt = null, gapC = null;
   if (p.goal === 'event') {
-    const tgt = (r => r ? +r[1] * 60 + +r[2] : 0)(/^(\d+):(\d{1,2})$/.exec(String(p.targetTime).trim()));
+    const tgt = pcTgt(p);
     const lm = levMult(p, tev), dr0 = evDraftOf(p, evKindOf(p, p.eventName), true), row = (l, eff, pj, pn, w, dr = dr0) => { const t = evTime(p, pj.mid * (1 - pn) * lm, w, dr), tl = evTime(p, pj.hi * (1 - pn) * lm, w, dr), th = evTime(p, pj.lo * (1 - pn) * lm, w, dr); return {l, eff, ftp:pj, t, tl, th}; };
     sc.push(row('Dein Plan', `${hStd(hAv(p))} Std. pro Woche verfügbar, längster Ride ${mm(st.maxL)}`, base, pen));
     const p2 = ftpProj(p, h + 2 * ratio, weeks); sc.push(row('Mehr Umfang', '+2 Std. pro Woche', p2, pen));
@@ -80,7 +112,25 @@ function planCheck(p, live){
     if (sc.length > 2) sc.push(row('Alles kombiniert', 'alle Maßnahmen oben', p2, 0, pr && pr.hk >= 10 && kg >= 62 ? kg - 2 : kg, pr && pr.race && pr.hk < 15 ? 'pel' : p.draft));
     const t0 = sc[0];
     if (!t0.t) notes.unshift({lv:3, t:'Für die Zielzeit-Prognose fehlen noch Distanz und Höhenmeter deines Events. Trag sie ein, dann prüft die App, ob deine Zielzeit zum Plan passt.', act:['editEv', 0, 'Strecke eintragen']});
-    verdict = !tgt || !t0.t ? null : t0.t && t0.t <= tgt ? 'ok' : t0.tl && t0.tl <= tgt ? 'mid' : 'high';
+    rg = pcRange(p, t0, base.mid * (1 - pen) * lm, kg, dr0); lmt = pcLimit(p, rg, pr);
+    /* Stufen (Fachregel 3): Z ≥ Mitte → Auf Kurs, schnelle Grenze ≤ Z < Mitte → Knapp, darunter → Ziel gefährdet. Ein Wechsel braucht mehr als 1 % und 3 Min. */
+    if (tgt && rg) { const st = Z => Z >= rg.mid ? 0 : Z >= rg.lo ? 1 : 2, prev = p.pcV, mg = Math.max(rg.mid * .01, 3); let r = st(tgt);
+      if (prev != null && prev !== r && prev >= 0 && prev <= 2) { const up = r < prev, B = up ? (prev === 2 ? rg.lo : rg.mid) : (prev === 0 ? rg.mid : rg.lo); if (up ? tgt < B + mg : tgt >= B - mg) r = prev; }
+      if (S.p && p === S.p) p.pcV = r; verdict = ['ok', 'mid', 'high'][r]; }
+    /* Punkt 4 (Fachregeln 4.1 bis 4.6): Vorbereitung auf die Eventdauer. Längste Fahrt der letzten 10 Wochen vor dem Tapering und
+       stärkste Woche bzw. stärkstes Wochenende im Verhältnis zur Eventtag-Belastung (erst ab 4 Std. Eventdauer). Nur Hinweis, nie automatisch. */
+    if (tev > 0 && t0.t) {
+      const Ls = tev > 420 ? 300 : lRec, L = st.maxL10 || st.maxL, gL = L >= Ls - 15 || (tev > 420 && st.L2 >= .8 * tev) ? 0 : L >= .8 * Ls ? 1 : 2; /* über 7 Std. reichen auch zwei lange Tage hintereinander (Fachregel 4.2) */
+      const evT = tss(D('long', 'Eventtag: x', tev, 60, 85)), rT = evT ? st.wkT / evT : 9, rW = evT ? st.weT / evT : 9, gT = tev < 240 ? 0 : rT >= 1 || rW >= .7 ? 0 : rT >= .75 || rW >= .5 ? 1 : 2;
+      gapC = {L, Ls, gL, gT, evT, wkT:Math.round(st.wkT), weT:Math.round(st.weT)};
+      if (gL || gT) {
+        const i = notes.findIndex(n => /^Beim Long Ride steckt/.test(n.t)), old = i >= 0 ? notes.splice(i, 1)[0] : null, e = EVS.find(x => x.id === p.evId), short = e ? EVS.filter(x => x.n === e.n && x.id !== e.id && x.km < e.km).sort((a, b) => b.km - a.km)[0] : null;
+        const we = p.avail && ((p.avail[5] && p.avail[6]) || (p.avail[6] && p.avail[0]));
+        notes.push({lv:Math.max(gL, gT) === 2 ? 2 : 1, gap:1, t:`<b>Vorbereitung auf die Eventdauer:</b> ${gL ? `Längste Fahrt ${hm2(L)} von empfohlenen ${hm2(Ls)} Std.` : `Längste Fahrt ${hm2(L)} Std., das passt.`}${gT ? ` Stärkste Woche etwa ${Math.round(Math.max(st.wkT, st.weT))}, Eventtag etwa ${evT} Belastungspunkte (TSS).` : ''} Das ist ein Hinweis zur Vorbereitung, kein Verletzungsrisiko.`,
+          acts:[old && old.act, we && !p.wkBlk && blkWorks(p) ? ['wkBlk', 1, '2–3 lange Wochenend-Blöcke einplanen'] : null, short ? ['evShort', short.id, `Kürzere Strecke: ${short.v || short.km + ' km'}`] : null].filter(Boolean),
+          hint:'Wochenend-Block: Samstag lang (mindestens 3 Std.), Sonntag 2 bis 2:30 Std. ruhig, einmal pro Belastungsblock, höchstens 3, nicht in Entlastungs- und Taperwochen. Blockwochen sind bis zu ein Viertel länger als deine übliche Wochenzeit.'});
+      }
+    }
     if (verdict && verdict !== 'ok') {
       const tP = x => evTime(p, ftpProj(p, x, weeks).mid * lm, null), hMax = Math.min(rec[1] * ratio, Math.max(h * 1.5, rec[0] * ratio)), L = pen > 0 || st.maxL < lRec - 15 ? lRec : 0;
       let hb = null; for (let x = Math.ceil(h * 2) / 2 + .5; x <= hMax; x += .5) { const t = tP(x); if (t && t <= tgt) { hb = x; break; } }
@@ -90,19 +140,19 @@ function planCheck(p, live){
       const tI = intOk(p, tev) && !p.intF ? evTime(p, ftpProj({...p, intF:true}, h, weeks).mid * (1 - pen) * lm, null) : null, aI = tI && t0.t && tI < t0.t - 1 ? ['intF', 1, `Intensität statt Umfang: gleiche Zeit, erwartet etwa ${hm2(tI)} Std.`, b ? 0 : 1] : null;
       const lvT = Object.keys(LEV).filter(k => !(p.lev && p.lev[k]) && LEV[k].a(tev) > 0).length ? ' Prüfe auch die Renntag-Hebel weiter unten.' : '';
       const lgT = tev > 180 && !(p.lev && Object.keys(p.lev).every(k => p.lev[k])) ? ' Bei mehr als 3 Std. Renndauer kommt die Ausdauer vor allem aus langen Fahrten, darum hilft hier der Long Ride mehr als zusätzliche Intervalle.' : '';
-      notes.unshift({lv:verdict === 'high' ? 2 : 1, t:`Zielzeit ${p.targetTime} Std.: ${verdict === 'mid' ? 'in Reichweite, wenn das Training gut läuft' : 'mit dem aktuellen Plan noch nicht ganz drin'}. Aktuell zeichnen sich etwa ${t0.t ? hm2(t0.t) : '–'} Std.${tx}${!b && sc.slice(1).some(x => x.t && x.t <= tgt) ? ' Mit den Maßnahmen unten wird sie realistischer.' : ''}${lgT}${lvT}`,
+      notes.unshift({lv:verdict === 'high' ? 2 : 1, t:`Zielzeit ${hm2(pcTgt(p))} Std.: ${verdict === 'mid' ? 'in Reichweite, wenn das Training gut läuft' : 'mit dem aktuellen Plan noch nicht ganz drin'}. Aktuell zeichnen sich etwa ${t0.t ? hm2(t0.t) : '–'} Std.${tx}${!b && sc.slice(1).some(x => x.t && x.t <= tgt) ? ' Mit den Maßnahmen unten wird sie realistischer.' : ''}${lgT}${lvT}`,
         acts:[b, aI, t0.t ? ['target', hm2(Math.ceil(t0.t / 5) * 5), `${b || aI ? 'Stattdessen ' : ''}Zielzeit auf ${hm2(Math.ceil(t0.t / 5) * 5)} setzen (passt zum aktuellen Plan)`] : null].filter(Boolean),
         hint:b ? 'Mehr Umfang nur übernehmen, wenn du die Zeit im Alltag wirklich hast. Gewicht und Windschatten aus dem Ausblick sind keine Planänderungen und werden nicht übernommen.' : ''});
     }
     if (tgt && t0.t && verdict && verdict !== 'ok' && ackOn(p)) {
-      const i = notes.findIndex(n => n.t.startsWith(`Zielzeit ${p.targetTime} Std.:`)), need = (evCheck(p) || {}).ftpNeed;
-      const an = {lv:1, t:`<b>Dein Ziel, deine Entscheidung:</b> Du hältst an ${p.targetTime} Std. fest. Mit diesem Plan erwartet die App etwa ${hm2(t0.t)} Std.${need ? ` Für dein Ziel brauchst du am Eventtag etwa ${need} W FTP, erwartet sind etwa ${base.mid} W.` : ''} Was das für dich bedeutet: Pacing-Plan und Verpflegung richten sich nach deiner Zielzeit. Fährst du dieses Tempo von Anfang an, kann die zweite Hälfte sehr hart werden. Entscheide unterwegs nach Gefühl und Watt, ob du es hältst.`, acts:[['ack', 0, 'Optionen wieder ansehen']]};
+      const i = notes.findIndex(n => n.t.startsWith(`Zielzeit ${hm2(pcTgt(p))} Std.:`)), need = (evCheck(p) || {}).ftpNeed;
+      const an = {lv:1, t:`<b>Dein Ziel, deine Entscheidung:</b> Du hältst an ${hm2(pcTgt(p))} Std. fest. Mit diesem Plan erwartet die App etwa ${hm2(t0.t)} Std.${need ? ` Für dein Ziel brauchst du am Eventtag etwa ${need} W FTP, erwartet sind etwa ${base.mid} W.` : ''} Was das für dich bedeutet: Pacing-Plan und Verpflegung richten sich nach deiner Zielzeit. Fährst du dieses Tempo von Anfang an, kann die zweite Hälfte sehr hart werden. Entscheide unterwegs nach Gefühl und Watt, ob du es hältst.`, acts:[['ack', 0, 'Optionen wieder ansehen']]};
       if (i >= 0) notes[i] = an; else notes.unshift(an);
     }
-    if (tgt && t0.t && tgt > t0.t * 1.05) {
+    if (tgt && t0.t && tgt > (rg ? rg.hi : t0.t) * 1.05) {
       let xl = null; for (let x = 1.5; x < h; x += .25) { const t = evTime(p, ftpProj(p, x, weeks).mid * (1 - pen) * lm, null); if (t && t <= tgt * .97) { xl = x; break; } }
       const Hl = xl ? Math.max(toH(xl), rec[0]) : null, less = Hl && Hl < hAv(p) - .4, tE = hm2(Math.ceil(t0.t / 5) * 5); relaxed = true;
-      notes.unshift({lv:0, t:`<b>Dein Ziel hat Puffer:</b> ${p.targetTime} Std. ist entspannter als die etwa ${hm2(t0.t)} Std., die dein Plan erwarten lässt. Das ist völlig in Ordnung, du entscheidest. Was das bedeutet: Dein Training bleibt auf dein Leistungspotenzial ausgelegt, du kommst also voraussichtlich früher ins Ziel. Pacing-Plan und Verpflegung richten sich nach deiner Zielzeit: ruhiger fahren und für eine längere Fahrzeit verpflegen.${less ? ` Für dein Ziel würden auch etwa ${hStd(Hl)} statt ${hStd(hAv(p))} Std. pro Woche reichen. Weniger empfiehlt die App für ein Event dieser Dauer nicht, damit du die Strecke gut durchstehst.` : ''}`,
+      notes.unshift({lv:0, t:`<b>Dein Ziel hat Puffer:</b> ${hm2(pcTgt(p))} Std. ist entspannter als die etwa ${hm2(t0.t)} Std., die dein Plan erwarten lässt. Das ist völlig in Ordnung, du entscheidest. Was das bedeutet: Dein Training bleibt auf dein Leistungspotenzial ausgelegt, du kommst also voraussichtlich früher ins Ziel. Pacing-Plan und Verpflegung richten sich nach deiner Zielzeit: ruhiger fahren und für eine längere Fahrzeit verpflegen.${less ? ` Für dein Ziel würden auch etwa ${hStd(Hl)} statt ${hStd(hAv(p))} Std. pro Woche reichen. Weniger empfiehlt die App für ein Event dieser Dauer nicht, damit du die Strecke gut durchstehst.` : ''}`,
         acts:[less ? ['setH', Hl, `Weniger trainieren: ${hStd(Hl)} statt ${hStd(hAv(p))} Std. pro Woche`] : null, ['target', tE, `Ehrgeiziger: Zielzeit ${tE} (passt zum aktuellen Plan)`]].filter(Boolean)});
     }
     gap = tgt;
@@ -125,11 +175,13 @@ function planCheck(p, live){
       }
     }
   }
-  if (p.test0 && !Object.values(p.res || {}).some(r => r.adopted)) notes.push({lv:0, t:`<b>Prognose mit Schätzwert:</b> Bis zu deinem Fitnesstest in Woche ${t0W(p)} rechnet die App mit ${p.ftp} W. Danach wird die Prognose genauer.`});
+  /* Paket C, Punkt 1: geschätzte Startwerte offen nennen */
+  { const fE = hkEst(p) && !noPwr(), kE = hkKgEst(p) && p.goal === 'event', tw = fE && p.test0 ? t0W(p) : 0;
+    if (fE || kE) notes.push({lv:0, hk:1, t:`<b>Prognose mit Schätzwerten:</b> ${fE ? `Dein FTP (${p.ftp} W) ist geschätzt.` : ''}${fE && kE ? ' ' : ''}${kE ? `Dein Gewicht (${f1(kgOf(p))} kg) ist ein Standardwert.` : ''} ${tw && tw >= cw ? `Nach deinem Fitnesstest in Woche ${tw} wird die Prognose genauer.` : fE && kE ? 'Mit einem Fitness-Check und deinem Gewicht wird die Prognose genauer.' : fE ? 'Mit einem Fitness-Check wird die Prognose genauer.' : 'Mit deinem Gewicht wird die Prognose genauer.'}`}); }
   let levs = [];
   if (p.goal === 'event' && sc[0] && sc[0].t) { const lm0 = levMult(p, tev), pf = base.mid * (1 - pen);
     levs = Object.keys(LEV).filter(k => LEV[k].a(tev) > 0).map(k => { const on = !!(p.lev && p.lev[k]), f = 1 + LEV[k].a(tev) / 100, pp = {...p, _prec:1}, a = evTime(pp, pf * (on ? lm0 / f : lm0), null), b2 = evTime(pp, pf * (on ? lm0 : lm0 * f), null); return {k, on, sv:a && b2 ? Math.max(0, a - b2) : 0, pct:LEV[k].a(tev)}; }); }
-  return {st, h, weeks, rec, lRec, pen, base, notes, sc, verdict, tev, pr, levs, intOn:!!p.intF && intOk(p, tev), relaxed, noDist:p.goal === 'event' && !(sc[0] && sc[0].t), ack:!!verdict && verdict !== 'ok' && ackOn(p)};
+  return {st, h, weeks, rec, lRec, pen, base, notes, sc, verdict, tev, pr, levs, intOn:!!p.intF && intOk(p, tev), relaxed, rg, lmt, gapC, prog:p.goal === 'event' && !pcTgt(p) && !!(sc[0] && sc[0].t), noDist:p.goal === 'event' && !(sc[0] && sc[0].t), ack:!!verdict && verdict !== 'ok' && ackOn(p)};
 }
 /* Zusätzliche Zeit auf die Tage verteilen: zuerst Long-Ride-Tag, dann Wochenende, dann Wochentage (mit Obergrenzen) */
 function boostDays(p, H, L){
@@ -157,6 +209,8 @@ function chOf0(t, kind, val){
   if (kind === 'subDel') ch.subs = (t.subs || []).filter(x => x.id !== val);
   if (kind === 'subC') ch.subs = (t.subs || []).map(x => x.id === val ? {...x, prio:'C'} : x);
   if (kind === 'levOn') ch.lev = {...(t.lev || {}), [val]:true};
+  if (kind === 'wkBlk') ch.wkBlk = !t.wkBlk;
+  if (kind === 'evShort') { const e = EVS.find(x => x.id === val); if (e) Object.assign(ch, {evId:e.id, eventName:e.n + (e.v ? ' ' + e.v : ''), dist:e.km, hm:e.hm || 0, course:undefined, noBuiltin:false, targetTime:'', tgtMan:false}); }
   if (kind === 'ack') ch.tgtAck = val ? tgtSig(t) : null;
   if (kind === 'setH') { const H = +val; if (t.perDay) { const f = H * 60 / Math.max(1, dsum(t)); ch.dayMin = t.dayMin.map((m, i) => t.avail[i] ? Math.max(30, Math.round(m * f / 15) * 15) : m); ch.hours = dsum({...t, dayMin:ch.dayMin}) / 60; } else ch.hours = H; }
   return ch;
@@ -164,6 +218,9 @@ function chOf0(t, kind, val){
 function applyChk(kind, val, mode){
   if (kind === 'editEv') { edit(); scrollTop0(); return; }
   const t = mode === 'dash' ? S.p : S.d, ch = chOf(t, kind, val);
+  /* Paket C: Wochenend-Blöcke in einem laufenden Plan erst ab der Folgewoche; vor jeder Übernahme ein Schnappschuss */
+  if (kind === 'wkBlk' && ch.wkBlk) ch.wkBlkFrom = mode === 'dash' ? (S.wk || 1) + 1 : (t.start && hasStarted(t) ? curWeek(t) + 1 : 1); /* auch beim Bearbeiten eines laufenden Plans erst ab der Folgewoche */
+  if (mode === 'dash' && Object.keys(ch).some(k => JSON.stringify(t[k]) !== JSON.stringify(ch[k]))) { try { bkPre('Vor dem Übernehmen aus dem Plan-Check'); } catch (e) { elog(e); } } /* nur bei echter Änderung */
   Object.assign(S.d, ch);
   if (mode === 'dash') { Object.assign(S.p, JSON.parse(JSON.stringify(ch))); if (S.p.perDay) S.p.hours = Math.max(.5, dsum(S.p) / 60); S.blocked = {}; S.plan = keepT(genWeek(S.p, S.wk)); analyze(); note('Plan-Check übernommen', 'Der Plan wurde mit der Empfehlung aus dem Plan-Check neu berechnet.', -2); }
   save(); render();
@@ -178,7 +235,7 @@ function actTxt(p, [k, v]){
 }
 function goalOpts(p, live){
   const c0 = planCheck(p, live); if (!c0.verdict || c0.verdict === 'ok') return null;
-  const ev = p.goal === 'event', tev = c0.tev, tgt = ev ? tMin(p.targetTime) : +p.ftpTarget;
+  const ev = p.goal === 'event', tev = c0.tev, tgt = ev ? pcTgt(p) : +p.ftpTarget;
   const res = q => { const c = planCheck(q, live); return {t:ev ? c.sc[0].t : null, ftp:c.base.mid}; }, ok = r => ev ? !!(r.t && r.t <= tgt) : r.ftp >= tgt, r0 = res(p);
   const levA = ev ? Object.keys(LEV).filter(k => !(p.lev && p.lev[k]) && LEV[k].a(tev) > 0).map(k => ['levOn', k]) : [], intA = intOk(p, tev) && !p.intF ? [['intF', 1]] : [];
   const longNeed = c0.st.maxL < c0.lRec - 15 && !p.longPri, longA = longNeed ? (p.perDay && (p.dayMin[p.longDay] || 0) < c0.lRec ? [['longDay', c0.lRec]] : [['longPri', 1]]) : [];
@@ -228,7 +285,7 @@ function goalModal(){
       <button class="${esc(main ? 'btn' : 'ghost !py-1.5 text-sm')} mt-3" onclick="pickGoal(${ja(i)})">${main ? 'Empfehlung übernehmen' : 'Diese Option wählen'}</button></div>`;
   return `<div class="exov" onclick="if(event.target===this)closeGoal()" role="dialog" aria-modal="true" aria-label="Ziel wieder erreichbar machen"><div class="exbox">
     <div class="flex items-start gap-3"><h3 class="hd flex-1 text-2xl font-semibold">Ziel wieder erreichbar machen</h3><button class="ghost !px-3 !py-1.5" onclick="closeGoal()" aria-label="Schließen" style="min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center">${icX()}</button></div>
-    <p class="mt-1 text-sm">${g.ev ? `Dein Ziel: <b>${esc(p.targetTime)} Std.</b> Erwartet mit dem aktuellen Plan: <b>${g.r0.t ? hm2(g.r0.t) : '–'} Std.</b>` : `Dein Ziel: <b>${g.tgt} W</b>. Erwartet mit dem aktuellen Plan: <b>${g.r0.ftp} W</b>.`}</p>
+    <p class="mt-1 text-sm">${g.ev ? `Dein Ziel: <b>${hm2(pcTgt(p))} Std.</b> Erwartet mit dem aktuellen Plan: <b>${g.r0.t ? hm2(g.r0.t) : '–'} Std.</b>` : `Dein Ziel: <b>${g.tgt} W</b>. Erwartet mit dem aktuellen Plan: <b>${g.r0.ftp} W</b>.`}</p>
     ${g.rec ? card(g.rec, i0, true) : ''}
     <p class="mt-4 font-semibold">Weitere Optionen</p><div class="mt-2 space-y-2">${g.O.map((o, i) => i === i0 ? '' : card(o, i, false)).join('')}</div>
     <div class="mt-4"><button class="ghost lbl w-full" onclick="keepGoal()">Mein Ziel beibehalten</button><p class="mt-2 text-xs" style="color:var(--mute)">Du entscheidest. Behältst du dein Ziel, zeigt dir die App im Plan-Check, was das bedeutet, und erinnert dich nicht mehr. Jede Option lässt sich später wieder ändern. Prognosen sind Schätzungen mit etwa ±10 % Unsicherheit.</p></div></div></div>`;
@@ -240,10 +297,22 @@ function levHtml(c, mode){
     <ul class="mt-2 space-y-2">${c.levs.map(x => `<li class="flex items-start gap-3 p-3" style="background:${esc(x.on ? '#e3f6f0' : 'var(--tint)')};border:1px solid ${esc(x.on ? '#0a8f6a' : 'var(--line)')}"><span style="color:var(--teal);margin-top:2px">${fic(LEV[x.k].ic, 22)}</span><span class="min-w-0 flex-1 text-sm"><b>${LEV[x.k].n}</b>${x.sv >= 1 ? ` <span style="color:var(--ok)">${x.on ? 'eingerechnet: ' : ''}etwa ${Math.round(x.sv)} Min.</span>` : ''}<br><span style="color:var(--mute)">${LEV[x.k].d}. Annahme: +${f1(x.pct)} % Dauerleistung.</span><br><button class="${esc(x.on ? 'ghost' : 'btn !w-auto')} lbl mt-2 !py-1.5" onclick="applyChk('lev', '${ja(x.k)}', '${ja(mode)}')">${x.on ? '✓ Im Plan · zurücknehmen' : 'In den Plan übernehmen'}</button></span></li>`).join('')}</ul>
     <details class="mt-2 text-xs" style="color:var(--mute)"><summary class="cursor-pointer font-semibold">Woher die Annahmen kommen</summary><p class="mt-2">Kohlenhydrate während langer Belastungen verbessern die Leistung gegen Ende messbar, wenn der Darm daran gewöhnt ist. Koffein (3 bis 6 mg pro kg) verbessert die Zeitfahrleistung in Meta-Analysen im Mittel um wenige Prozent, nicht bei allen gleich. Gleichmäßiges Pacing ist bei langen Ausdauerbelastungen effizienter als ein zu schneller Start. Die Prozentwerte sind bewusst vorsichtige Mittelwerte, keine Garantie. Übernommen heißt: Die App plant das Üben dafür in dein Training ein und rechnet den Effekt in die Zielzeit ein.</p></details>`;
 }
+/* Zeitlimit: Abstand der langsamen Prognose (mit Pausen) zum Limit */
+/* „Zielzeit festlegen“: Eingabefeld mit der Prognose-Mitte vorbelegen, übernehmen musst du selbst */
+function pcSetTgt(v, mode){
+  if (mode === 'dash' && typeof evOpen === 'function') { goPg('event'); evOpen('main'); if (evF) evF.myT = v; render(); dykFocus(null, '#evMyT'); return; }
+  S.d.targetTime = v; S.d.tgtMan = false; save(); nav(5); setTimeout(() => { const e = document.getElementById('tt'); if (e) { e.focus(); e.select && e.select(); } }, 80);
+}
+function pcLimHtml(l){
+  if (!l) return ''; const col = {ok:['#e3f6f0', '#0a8f6a'], tight:['#fff6dc', '#d9a400'], risk:['#fff1e6', '#c2410c'], hard:['#fdeceb', '#c0392b'], no:['#fdeceb', '#c0392b']}[l.k];
+  const t = {ok:'Deutlich im Zeitlimit.', tight:'Knapp im Zeitlimit: Pausen kurz halten.', risk:'Risiko beim Zeitlimit: Mit einem schwachen Tag wird es eng.', hard:'Zeitlimit stark gefährdet: Die Prognose liegt nur knapp darunter, mit Pausen und einem schwachen Tag wird es nicht reichen.', no:'Das Zeitlimit ist wahrscheinlich nicht erreichbar.'}[l.k];
+  return `<div class="mt-2 p-2.5 text-sm" style="background:${esc(col[0])};border-left:3px solid ${esc(col[1])}"><p><b>${t}</b> Limit ${hm2(l.lim)} Std., langsame Prognose mit Pausen ${hm2(l.slow)} Std.${l.pause ? ` (davon etwa ${l.pause} Min. Pausen)` : ''}.</p>${l.k === 'no' && l.short ? `<p class="mt-1">Eine kürzere Strecke desselben Events wäre realistischer: <span data-noi18n>${esc(l.short.n + (l.short.v ? ' ' + l.short.v : ''))}</span>.</p>` : ''}</div>`;
+}
 function checkCard(p, mode){
-  const c = planCheck(p, mode === 'dash'), C = {ok:['#e3f6f0', '#0a8f6a', 'Auf Kurs'], mid:['#fff6dc', '#d9a400', 'Ziel in Reichweite'], high:['#fff1e6', '#c2410c', 'Ziel braucht Anpassung']};
-  const v = c.noDist ? ['var(--tint)', 'var(--teal)', 'Zielzeit noch offen'] : c.ack ? C.mid : c.verdict ? C[c.verdict] : c.notes.some(n => n.lv === 2) ? C.high : c.notes.length ? C.mid : C.ok;
-  const head = c.noDist ? 'Zielzeit noch offen' : c.ack ? 'Ziel bewusst gewählt' : c.verdict ? v[2] : c.notes.length ? 'Feinschliff möglich' : 'Plan passt zum Ziel';
+  const c = planCheck(p, mode === 'dash'), C = {ok:['#e3f6f0', '#0a8f6a', 'Auf Kurs'], mid:['#fff6dc', '#9a6a00', p.goal === 'event' ? 'Knapp' : 'Ziel in Reichweite'], high:['#fff1e6', '#c2410c', p.goal === 'event' ? 'Ziel gefährdet' : 'Ziel braucht Anpassung']};
+  const v = c.noDist ? ['var(--tint)', 'var(--teal)', 'Zielzeit noch offen'] : c.prog ? ['var(--tint)', 'var(--teal)', 'Prognose'] : c.ack ? C.mid : c.verdict ? C[c.verdict] : c.notes.some(n => n.lv === 2) ? C.high : c.notes.filter(n => !n.hk).length ? C.mid : C.ok;
+  const vl = p.goal === 'event' && (hkEst(p) || hkKgEst(p)) ? ' (vorläufig)' : ''; /* Fachregel 3: geschätzte Werte */
+  const head = c.noDist ? 'Zielzeit noch offen' : c.prog ? 'Prognose' + vl : c.ack ? 'Ziel bewusst gewählt' : c.verdict ? v[2] + (p.goal === 'event' ? vl : '') : c.notes.filter(n => !n.hk).length ? 'Feinschliff möglich' : 'Plan passt zum Ziel';
   const nts = c.notes.map(n => `<li class="p-3" style="background:${esc(n.lv === 2 ? '#fff1e6' : n.lv === 0 ? '#e3f6f0' : n.lv === 3 ? 'var(--tint)' : '#fff6dc')};border-left:3px solid ${esc(n.lv === 2 ? '#c2410c' : n.lv === 0 ? '#0a8f6a' : n.lv === 3 ? 'var(--ice)' : '#d9a400')}"><p class="text-sm">${n.t}</p>${n.hint ? `<p class="mt-1 text-xs" style="color:var(--mute)">${n.hint}</p>` : ''}${(n.acts || (n.act ? [n.act] : [])).map(a => `<button class="${esc(a[3] ? 'btn !w-auto' : 'ghost')} lbl mt-2 mr-2 !py-1.5" onclick="applyChk('${ja(a[0])}', ${typeof a[1] === 'string' ? `'${ja(a[1])}'` : ja(a[1])}, '${ja(mode)}')">${a[2]}</button>`).join('')}</li>`).join('');
   const isEv = p.goal === 'event';
   const tbl = `<div class="mt-2 overflow-x-auto"><table class="w-full text-sm"><thead><tr style="color:var(--mute)" class="text-left text-xs"><th class="pr-2">Szenario</th><th class="pr-2">FTP am ${isEv ? 'Eventtag' : 'Zieltermin'}</th>${isEv && !c.noDist ? '<th>Zielzeit</th>' : ''}</tr></thead><tbody>${c.sc.map((s, i) => `<tr style="border-top:1px solid var(--line)${esc(i === 0 ? ';font-weight:600' : '')}"><td class="py-1.5 pr-2">${s.l}<br><span class="text-xs font-normal" style="color:var(--mute)">${s.eff}</span></td><td class="nw pr-2">${s.ftp.lo}–${s.ftp.hi} W</td>${isEv && !c.noDist ? `<td class="nw">${s.t ? hm2(s.t) : '–'} Std.<br><span class="text-xs font-normal" style="color:var(--mute)">${s.tl && s.th ? hm2(s.tl) + ' bis ' + hm2(s.th) : ''}</span></td>` : ''}</tr>`).join('')}</tbody></table></div>`;
@@ -252,8 +321,8 @@ function checkCard(p, mode){
     <p class="mt-2"><b>FTP-Prognose:</b> Möglicher Zuwachs = min(20 %, 1,5 % × Wochenstunden; mit „Intensität statt Umfang“ zählen unter 8 Std. bis zu 2 Std. zusätzlich) × Niveau-Faktor ${f1(c.base.lvl)} (je höher deine W/kg, desto kleiner), angenähert über die verbleibenden ${c.weeks} Wochen mit 1 − e^(−Wochen/12). Mehr Stunden als bisher trainiert erhöhen den Zuwachs leicht. Ergebnis: +${f1(c.base.g * 100)} %, Spanne 60 bis 140 % davon, weil Menschen sehr unterschiedlich auf Training reagieren. Das ist ein Faustmodell, keine Studie.</p>
     ${isEv ? `<p class="mt-2"><b>Long Ride:</b> Empfohlen sind etwa 70 % der Eventdauer, höchstens 6 Std. (${mm(c.lRec)}). Fehlt Länge, rechnet der Check bei Events über 3 Std. mit bis zu 5 % weniger Dauerleistung am Ende (Ermüdungsresistenz)${c.pen ? `, bei dir ${f1(c.pen * 100)} %` : ''}.</p>
     <p class="mt-2"><b>Zielzeit:</b> Leistungsbilanz nach Martin et al. 1998 mit der prognostizierten FTP, wie im Zielzeit-Check. Die Spanne ergibt sich aus der FTP-Spanne.</p>` : ''}</details>`;
-  const inner = `<div class="p-3" style="background:${esc(v[0])};border:1px solid ${esc(v[1])}"><p class="hd text-xl font-semibold" style="color:${esc(v[1])}">${head}</p><p class="mt-1 text-sm">${isEv ? `${c.sc[0].t ? `Erwartete Zielzeit mit deinem Plan: <b>${hm2(c.sc[0].t)} Std.</b>, ` : ''}FTP am Eventtag etwa ${c.base.mid} W (heute ${p.ftp} W).` : `Erwartete FTP am Zieltermin: <b>${c.base.mid} W</b> (${c.base.lo} bis ${c.base.hi} W, heute ${p.ftp} W).`}</p><p class="mt-1 text-sm">${c.noDist ? 'Sobald Distanz und Höhenmeter eingetragen sind, rechnet die App deine Zielzeit aus.' : c.ack ? 'Du kennst die Prognose und gehst es trotzdem an. Die App unterstützt dich dabei, und du kannst jederzeit umentscheiden.' : c.verdict === 'high' ? 'Kein Grund zur Sorge: Unten findest du Wege, wie du dein Ziel erreichst oder ein starkes Zwischenziel setzt.' : c.verdict === 'mid' ? 'Du bist nah dran. Mit den Hinweisen unten machst du es sicherer.' : c.relaxed ? 'Dein Ziel hat Puffer. Du entscheidest, ob du ihn nutzt oder weniger trainierst.' : 'Bleib dran: Regelmäßigkeit bringt dich am sichersten ans Ziel.'}</p></div>
-    ${c.verdict && c.verdict !== 'ok' ? `<button class="btn mt-3" onclick="openGoal('${ja(mode)}')">Optionen mit Empfehlung ansehen</button>` : ''}${goalMsg ? `<p class="mt-2 text-sm" style="color:var(--ok)">✓ ${esc(goalMsg)}</p>` : ''}
+  const inner = `<div id="fx-pc" class="p-3" style="background:${esc(v[0])};border:1px solid ${esc(v[1])}"><p class="hd text-xl font-semibold" style="color:${esc(v[1])}">${head}</p><p class="mt-1 text-sm">${isEv ? `${c.sc[0].t ? `Erwartete Zielzeit mit deinem Plan: <b>${hm2(c.sc[0].t)} Std.</b>${c.rg ? ` (${hm2(c.rg.lo)} bis ${hm2(c.rg.hi)} Std.)` : ''}, ` : ''}FTP am Eventtag etwa ${c.base.mid} W (heute ${p.ftp} W).` : `Erwartete FTP am Zieltermin: <b>${c.base.mid} W</b> (${c.base.lo} bis ${c.base.hi} W, heute ${p.ftp} W).`}</p>${c.rg ? `<p class="mt-1 text-xs" style="color:var(--mute)">${pcWhy(c.rg)}${c.rg.rough ? ' Grobe Schätzung: Mit einem Fitness-Check und deinem Gewicht wird sie deutlich genauer.' : ''}</p>` : ''}${pcLimHtml(c.lmt)}<p class="mt-1 text-sm">${c.noDist ? 'Sobald Distanz und Höhenmeter eingetragen sind, rechnet die App deine Zielzeit aus.' : c.prog ? 'Du hast keine eigene Zielzeit festgelegt. Deshalb zeigt die App nur die Prognose und kein Urteil.' : c.ack ? 'Du kennst die Prognose und gehst es trotzdem an. Die App unterstützt dich dabei, und du kannst jederzeit umentscheiden.' : c.verdict === 'high' ? 'Kein Grund zur Sorge: Unten findest du Wege, wie du dein Ziel erreichst oder ein starkes Zwischenziel setzt.' : c.verdict === 'mid' ? 'Du bist nah dran. Mit den Hinweisen unten machst du es sicherer.' : c.relaxed ? 'Dein Ziel hat Puffer. Du entscheidest, ob du ihn nutzt oder weniger trainierst.' : 'Bleib dran: Regelmäßigkeit bringt dich am sichersten ans Ziel.'}</p></div>
+    ${c.verdict && c.verdict !== 'ok' ? `<button class="btn mt-3" onclick="openGoal('${ja(mode)}')">Optionen mit Empfehlung ansehen</button>` : ''}${c.prog && c.rg ? `<button class="ghost mt-3" style="min-height:44px" onclick="pcSetTgt('${ja(hm2(c.rg.mid))}', '${ja(mode)}')">Zielzeit festlegen</button>` : ''}${goalMsg ? `<p class="mt-2 text-sm" style="color:var(--ok)">✓ ${esc(goalMsg)}</p>` : ''}
     ${c.intOn ? `<div class="mt-3 flex flex-wrap items-center gap-2 p-3 text-sm" style="background:var(--tint);border:1px solid var(--line)"><span class="flex-1"><b>Aktiv: Intensität statt Umfang.</b> 2 bis 3 harte Einheiten pro Woche bei gleicher Wochenzeit, dafür weniger lockere Grundlage.</span><button class="ghost !py-1.5 text-sm" onclick="applyChk('intF', 0, '${ja(mode)}')">Zurücknehmen</button></div>` : ''}
     ${isEv ? seasonCheckHtml(p, mode) : ''}${nts ? `<p class="mt-3 font-semibold">${isEv && seasonCheck(p) ? `Hinweise und Maßnahmen zum Saisonhöhepunkt <span data-noi18n>${esc(p.eventName || '')}</span>` : 'Hinweise und Maßnahmen'}</p><ul class="mt-2 space-y-2">${nts}</ul>` : '<p class="mt-3 text-sm" style="color:var(--ok)">✓ Umfang und Long Ride passen zum Ziel.</p>'}
     ${(() => { const lh = levHtml(c, mode); if (!lh) return ''; const tot = c.levs.filter(x => !x.on).reduce((q, x) => q + x.sv, 0), on = c.levs.filter(x => x.on).length; return `<details class="ckd"><summary><span>Renntag-Hebel<em>${tot >= 2 ? `bis zu ${Math.round(tot)} Min. schneller ohne mehr Training` : 'Schneller ohne mehr Training'}${on ? ` · ${on} übernommen` : ''}</em></span></summary><div class="ckb">${lh.replace(/<p class="mt-4 font-semibold">Renntag-Hebel[^<]*<\/p>/, '')}</div></details>`; })()}
@@ -299,7 +368,7 @@ function finish(){
   const st0 = editState(), md0 = S.d && S.d.mode; /* Art der Änderung: für Sicherungs-Erinnerung und Statistik */
   if (S.d && S.d.goal === 'event' && S.d.season === false && (S.d.subs || []).length) S.d.subs = [];
   goalMsg = ''; if (S.d.goal === 'event' && !String(S.d.eventName || '').trim()) S.d.eventName = 'Mein Event';
-  { const es = editState(); if (es === 'new' || es === 'goal') { S.d.ftpStart = rngClamp('ftp', S.d.ftp, 0); delete S.d.res; delete S.d.xTests; delete S.d.recW; } else if (S.p && !S.d.ftpStart) S.d.ftpStart = S.p.ftpStart || S.p.ftp; }
+  { const es = editState(); if (es === 'new' || es === 'goal') { S.d.ftpStart = rngClamp('ftp', S.d.ftp, 0); delete S.d.res; delete S.d.xTests; delete S.d.recW; } else if (S.p && !S.d.ftpStart) S.d.ftpStart = S.p.ftpStart || S.p.ftp; try { hkFinish(S.d, es); } catch (e) { elog(e); } }
   const d = S.d, oldAuto = S.p ? planName(S.p) : null, keepP = editState() === 'adj' && S.p && hasStarted(S.p), oldPlan = keepP ? S.plan : null;
   const keepS = !!(S.edit && S.p && hasStarted(S.p)), sd0 = sd40(d, d.startDate && d.startDate > iso(0) ? d.startDate : iso(0));
   const cmu = !!d.commuter, dm = [...d.dayMin], tot = d.avail.reduce((q, a, i) => q + (a ? (dm[i] || 0) : 0), 0);

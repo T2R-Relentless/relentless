@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skizze: Mehr-Menü (Paket C, Entscheidung 15)</title>
+<!-- Nur eine Skizze, nicht in der App eingebaut. Hell: skizze-mehr-menue.html, dunkel: skizze-mehr-menue.html#dunkel -->
+<style>
+  :root{--bg:#f2f7f8;--panel:#fff;--line:#d9e3e8;--ink:#0b1c49;--mute:#5b6f80;--tint:#eef5f7;--teal:#007f8d;--ice:#00bcb3;--brand:#071747}
+  html.dark{--bg:#0a1324;--panel:#111d33;--line:#25344f;--ink:#e6edf6;--mute:#93a5bb;--tint:#16243d;--teal:#3cc7c0;--brand:#071334}
+  *{box-sizing:border-box}
+  body,.bnav{max-width:375px}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+  .brand{background:var(--brand);color:#fff;padding:14px 16px;border-bottom:3px solid var(--ice);display:flex;align-items:center;gap:10px}
+  .brand b{font-size:22px;letter-spacing:.02em}.brand b i{color:var(--ice);font-style:normal}
+  .brand span{margin-left:auto;border:1px solid #fff6;padding:6px 10px;font-size:13px}
+  main{padding:12px 16px 90px}
+  .note{background:#fff6dc;border-left:3px solid #d9a400;padding:10px 12px;font-size:13px;color:#3b2a00;margin-bottom:6px}
+  html.dark .note{background:#3a3013;color:#ecc76a}
+  .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:700;color:var(--mute);margin:18px 0 8px}
+  .mlist{background:var(--panel);border:1px solid var(--line)}
+  .mrow{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 14px;border-top:1px solid var(--line)}
+  .mrow:first-child{border-top:0}
+  .mi{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--teal);flex:none}
+  .mrow .t{font-weight:600}.mrow .s{display:block;font-size:12px;color:var(--mute)}
+  .mrow .chev{margin-left:auto;color:var(--mute)}
+  .tag{font-size:11px;font-weight:700;padding:1px 6px;background:var(--tint);color:var(--teal);margin-left:6px}
+  details.tools{background:var(--panel);border:1px solid var(--line)}
+  details.tools summary{list-style:none;display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 14px;cursor:pointer;font-weight:600}
+  details.tools summary::-webkit-details-marker{display:none}
+  .moved{font-size:13px;color:var(--mute);margin-top:10px}
+  .bnav{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);text-align:center;font-size:12px;padding:6px 0 10px}
+  .bnav div{min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--mute)}
+  .bnav .on{color:var(--teal);font-weight:700}
+  svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<script>if (location.hash === '#dunkel') document.documentElement.classList.add('dark');</script>
+</head>
+<body>
+<div class="brand"><b>RELENTLESS<i>.</i></b><span>EN</span></div>
+<main>
+  <div class="note"><b>Skizze, nicht eingebaut.</b> Einsteiger sehen in den ersten 14 Tagen nur fünf Punkte. Alles andere liegt unter „Werkzeuge“. Plan-Check und Gesamtplan stehen künftig unter „Fortschritt“.</div>
+
+  <p class="eyebrow">Mehr</p>
+  <div class="mlist">
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span><span><span class="t">Fahrten bewerten</span><span class="s">Fahrt hochladen und bewerten lassen</span></span><span class="chev">›</span></div>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><path d="M4 18c3-9 13-9 16 0M12 4v4"/></svg></span><span><span class="t">Übungen</span><span class="s">Kraft, Rumpf und Mobilität mit Grafik</span></span><span class="chev">›</span></div>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><path d="M3 20 10 6l4 7 3-4 4 11z"/></svg></span><span><span class="t">Event und meine Pläne</span><span class="s">Zielzeit, Strecke, Plan anpassen</span></span><span class="chev">›</span></div>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></svg></span><span><span class="t">Export</span><span class="s">Kalender, Garmin (auch ganze Woche), Zwift</span></span><span class="chev">›</span></div>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span><span><span class="t">Einstellungen</span><span class="s">8 Std. pro Woche, FTP 205 W (geschätzt)</span></span><span class="chev">›</span></div>
+  </div>
+
+  <p class="eyebrow">Werkzeuge</p>
+  <details class="tools" open>
+    <summary><span class="mi"><svg viewBox="0 0 24 24"><path d="M14 7l3-3 3 3-3 3M17 4l-9 9M4 20l5-1 9-9-4-4-9 9z"/></svg></span><span>Werkzeuge <span class="tag">5</span><span class="s" style="display:block;font-size:12px;color:var(--mute);font-weight:400">Fitness-Checks, Zyklus, Reifendruck, Wissen, Team</span></span><span class="chev" style="margin-left:auto">▾</span></summary>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 13l3-3M10 3h4"/></svg></span><span><span class="t">Fitness-Checks</span><span class="s">Nächster Check: Woche 5</span></span><span class="chev">›</span></div>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><span class="t">Zyklus</span><span class="s">nur wenn eingeschaltet</span></span><span class="chev">›</span></div>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span><span><span class="t">Reifendruck</span><span class="s">Startwert vorn und hinten</span></span><span class="chev">›</span></div>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg></span><span><span class="t">Wissen</span><span class="s">Ernährung, Training, Gesundheit</span></span><span class="chev">›</span></div>
+    <div class="mrow"><span class="mi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg></span><span><span class="t">Team Relentless Riders</span><span class="s">Homepage</span></span><span class="chev">›</span></div>
+  </details>
+  <p class="moved">Nach „Fortschritt“ umgezogen: <b>Plan-Check</b> (Prognose, Urteil, Hinweise) und <b>Gesamtplan</b> (alle Wochen und Phasen). Nach 14 Tagen oder per Schalter in den Einstellungen sieht man wieder alle Punkte direkt.</p>
+</main>
+<nav class="bnav"><div>Heute</div><div>Woche</div><div>Logbuch</div><div>Fortschritt</div><div class="on">Mehr</div></nav>
+</body>
+</html>

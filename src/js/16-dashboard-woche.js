@@ -25,7 +25,7 @@ function logCardV1(){
 }
 /* ---------- Anpassungen innerhalb der Woche ---------- */
 const freeDay = j => S.plan[j].t === 'rest' && !S.plan[j].blocked && !S.blocked[j];
-const bdg = x => [x.blocked && 'gesperrt', x.moved && 'verschoben', x.cut && 'gekürzt'].filter(Boolean).map(t => `<b class="rounded-full px-2 text-xs" style="background:#ffd45c;color:#3b2a00">${t}</b>`).join('');
+const bdg = x => [x.blocked && 'gesperrt', x.moved && 'verschoben', x.cut && 'gekürzt', x.soft && !x.cut && 'sanfter Einstieg'].filter(Boolean).map(t => `<b class="rounded-full px-2 text-xs" style="background:#ffd45c;color:#3b2a00">${t}</b>`).join('');
 const unsplit = x => { if (!x.parts) return {...x}; const u = {...(x.unsplit || x)}; delete u.parts; delete u.unsplit; return u; };
 const note = (title, text, d) => { S.log.unshift({user:1, title, text, day:-2, d}); if (S.log.length > 20) S.log.length = 20; };
 function target(i){

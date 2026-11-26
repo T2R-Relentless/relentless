@@ -24,10 +24,10 @@ test('F24: Sweet Spot 3×12 als Blöcke, Rampen, Summe der Dauer, Zonenfarbe', a
   a.noErrors();
 });
 
-test('F24: Zonengrenzen der App (55/75/90/105/120 %)', async () => {
+test('F24: Zonengrenzen der App nach Coggan (bis 55/75/90/105/120 %, Paket C)', async () => {
   const a = await boot();
-  eq([0, 54.9, 55, 74.9, 75, 89.9, 90, 104.9, 105, 119.9, 120, 200].map(v => a.$('wkZi')(v)), [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]);
-  eq(a.$('VZ_ZP.slice(0, 6).map(z => z[1])'), [55, 75, 90, 105, 120, 150], 'gleiche Grenzen wie die Zonen der Fahrtauswertung');
+  eq([0, 55, 55.9, 56, 75.9, 76, 90.9, 91, 105.9, 106, 120.9, 121].map(v => a.$('wkZi')(v)), [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5]);
+  eq(a.$('VZ_ZP.slice(0, 6).map(z => z[1])'), [56, 76, 91, 106, 121, 151], 'gleiche Grenzen wie die Zonen der Fahrtauswertung');
 });
 
 test('F24: 30/15-Intervalle bleiben sichtbar (Mindestbreite), Zeitachse endet am Ende', async () => {
