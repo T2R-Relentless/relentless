@@ -95,7 +95,7 @@ function rdExtraOk(p, w, plan, i){
 function rdWeekNote(p, w, plan, cur){
   if (!p || !Array.isArray(plan)) return '';
   const free = plan.map((x, i) => !(x && x.m) && p.avail[i] ? i : -1).filter(i => i >= 0), off = plan.filter(x => !(x && x.m)).length;
-  const sug = cur && !p.rdMin && !p.rdNo && !p.rdOff ? (() => { try { return genWeek(p, w + 1).filter(x => !(x && x.m > 0)).length < rdMinShould(p); } catch (e) { elog(e); return false; } })() : false;
+  const sug = cur && !rdMinOf(p, w + 1) && !p.rdNo && !p.rdOff ? (() => { try { return genWeek(p, w + 1).filter(x => !(x && x.m > 0)).length < rdMinShould(p); } catch (e) { elog(e); return false; } })() : false;
   const ix = cur ? free.find(i => rdExtraOk(p, w, plan, i)) : undefined;
   if (!off && !sug) return '';
   let h = off ? `<p class="text-sm" style="color:var(--mute)">Diese Woche ${off === 1 ? 'hast du 1 freien Tag' : `hast du ${off} freie Tage`}. Erholung gehört zum Training.</p>` : '';
@@ -114,7 +114,7 @@ function rdExtra(i){
 }
 /* Schritt 3 der Schnellplanung (Fachregel 7.1): Fahrten pro Woche aus dem Generator (Belastungswochen 2 bis 8), nicht aus einer eigenen Formel */
 function rdRides(d){
-  try { const pv = {...mkPrev(d), rdMin:d.rdOff ? 0 : rdMinShould(d), rdFrom:1, sanft:undefined}, ph = phases(pv), n = [];
+  try { const pv = {...mkPrev(d), rdMin:d.rdOff ? 0 : rdMinShould(d), rdFrom:1, rdLog:undefined, sanft:undefined}, ph = phases(pv), n = [];
     for (let w = 2; w <= Math.min(8, ph[ph.length - 1].to); w++) { const P = ph.find(x => w >= x.from && w <= x.to); if (!P || P.rec || P.key === 'taper' || recWk(pv, w)) continue; n.push(genWeek(pv, w, true).filter(x => x && x.m > 0).length); }
     if (!n.length) return null; n.sort((a, b) => a - b); return {lo:n[0], hi:n[n.length - 1], med:n[Math.floor(n.length / 2)]};
   } catch (e) { elog(e); return null; }
@@ -124,19 +124,25 @@ function rdRidesTxt(d){
   const N = r.lo === r.hi ? String(r.lo) : `${r.lo} bis ${r.hi}`, M = nD - r.hi;
   return `<p class="mt-1 text-sm">Bei ${hStd(d.hours)} Std. plant die App etwa <b>${N} Fahrten pro Woche</b>.${M === 1 ? ' An dem übrigen gewählten Tag hast du frei.' : M > 1 ? ` An den übrigen ${M} gewählten Tagen hast du frei.` : ''}</p>`;
 }
-function rdTake(){ const p = S.p; if (!p) return; bkPre('Vor dem Einplanen von Ruhetagen'); p.rdMin = S.d.rdMin = rdMinShould(p); p.rdFrom = S.d.rdFrom = (S.wk || 1) + 1; note('Ruhetage eingeplant', `Ab Woche ${p.rdFrom} plant die App mindestens ${p.rdMin === 2 ? 'zwei freie Tage' : 'einen freien Tag'} pro Woche. Diese Woche bleibt, wie sie ist.`, -2); save(); render(); }
+/* Verlauf der Ruhetage: vergangene und laufende Woche bleiben, die Änderung gilt ab der Folgewoche */
+function rdLogSet(p, min){
+  const w = (S.wk || 1) + 1; if (!Array.isArray(p.rdLog) || !p.rdLog.length) p.rdLog = [[p.rdFrom || 1, p.rdMin || 0]];
+  p.rdLog = p.rdLog.filter(e => e[0] < w).concat([[w, min]]); p.rdMin = min; p.rdFrom = w;
+  if (S.d) { S.d.rdLog = JSON.parse(JSON.stringify(p.rdLog)); S.d.rdMin = min; S.d.rdFrom = w; }
+}
+function rdTake(){ const p = S.p; if (!p) return; bkPre('Vor dem Einplanen von Ruhetagen'); rdLogSet(p, rdMinShould(p)); note('Ruhetage eingeplant', `Ab Woche ${p.rdFrom} plant die App mindestens ${p.rdMin === 2 ? 'zwei freie Tage' : 'einen freien Tag'} pro Woche. Diese Woche bleibt, wie sie ist.`, -2); save(); render(); }
 /* Korrektur 7: Schalter „Mindestens ein Ruhetag pro Woche (empfohlen)“ in Schritt 3 und in den Einstellungen */
 const rdLbl = d => rdMinShould(d) === 2 ? 'Mindestens zwei Ruhetage pro Woche (empfohlen)' : 'Mindestens ein Ruhetag pro Woche (empfohlen)';
 const RD_OFF = 'Ohne Ruhetag plant die App an jedem gewählten Tag. Halte mindestens einen Tag ganz locker.';
 function rdToggleUi(d, live){
-  const on = !d.rdOff;
+  const on = live ? !d.rdOff && rdMinOf(d, (S.wk || 1) + 1) > 0 : !d.rdOff;
   return `<div class="mt-3"><button class="panel flex w-full items-center gap-3 p-3 text-left" style="min-height:44px;border-width:2px;${esc(on ? 'border-color:var(--ice)' : '')}" aria-pressed="${on}" onclick="${live ? 'rdSet(' + ja(!on) + ')' : 'rdDraft(' + ja(!on) + ')'}"><span class="min-w-0 flex-1 text-sm font-semibold">${rdLbl(d)}</span><span aria-hidden="true" style="flex:none;width:24px;height:24px;border:2px solid ${esc(on ? 'var(--ice)' : '#b9c9cf')};background:${esc(on ? 'var(--ice)' : '#fff')};color:#071747;display:flex;align-items:center;justify-content:center;font-weight:800">${on ? '✓' : ''}</span></button>${on ? '' : `<p class="mt-1 text-sm" style="color:#9a6a00">${RD_OFF}</p>`}${live ? '<p class="mt-1 text-xs" style="color:var(--mute)">Gilt ab nächster Woche, die laufende Woche bleibt.</p>' : ''}</div>`;
 }
 function rdDraft(on){ S.d.rdOff = on ? 0 : 1; save(); render(); }
 function rdSet(on){
   const p = S.p; if (!p) return; bkPre('Vor dem Ändern der Ruhetage');
-  p.rdOff = S.d.rdOff = on ? 0 : 1; p.rdMin = S.d.rdMin = on ? rdMinShould(p) : 0; p.rdFrom = S.d.rdFrom = (S.wk || 1) + 1;
+  p.rdOff = S.d.rdOff = on ? 0 : 1; rdLogSet(p, on ? rdMinShould(p) : 0);
   note('Ruhetage geändert', on ? `Ab Woche ${p.rdFrom} plant die App mindestens ${p.rdMin === 2 ? 'zwei freie Tage' : 'einen freien Tag'} pro Woche.` : `Ab Woche ${p.rdFrom} plant die App an jedem gewählten Tag. Halte mindestens einen Tag ganz locker.`, -2); save(); render();
 }
-function rdCard(){ const p = S.p; return p ? `<section class="panel p-4" id="fx-rdset"><h2 class="hd text-xl font-semibold">Ruhetage</h2>${rdToggleUi(p, true)}</section>` : ''; }
+function rdCard(){ const p = S.p; return p ? `<section class="panel p-4" id="fx-rdset"><p class="font-semibold">Ruhetage</p>${rdToggleUi(p, true)}</section>` : ''; }
 function rdSkip(){ if (!S.p) return; S.p.rdNo = S.d.rdNo = 1; save(); render(); }

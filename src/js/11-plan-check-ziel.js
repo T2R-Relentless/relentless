@@ -72,7 +72,7 @@ function pcLimit(p, r, pr){
   const lim = +p.evLim || 0; if (!lim || !r) return null;
   const P = t => pr && pr.race ? 0 : Math.round(3 * Math.max(0, (t - 180) / 60)), slow = r.hi + P(r.hi), mid = r.mid + P(r.mid), gap = (lim - slow) / lim;
   const e = EVS.find(x => x.id === p.evId), short = e ? EVS.filter(x => x.n === e.n && x.id !== e.id && x.km < e.km).sort((a, b) => b.km - a.km)[0] : null;
-  const k = mid > lim || (slow > lim && mid + 0 > lim * .95) ? 'no' : slow > lim ? 'risk' : gap < .1 ? 'tight' : 'ok'; /* langsame Prognose über dem Limit und Mitte nah dran: stärkere Stufe */
+  const k = mid > lim ? 'no' : slow > lim && mid > lim * .95 ? 'hard' : slow > lim ? 'risk' : gap < .1 ? 'tight' : 'ok'; /* langsame Prognose über dem Limit, Mitte knapp darunter: stark gefährdet */
   return {k, lim, slow, mid, pause:P(r.hi), short};
 }
 /* Der Nutzer entscheidet: bewusst beibehaltenes Ziel (gilt nur für genau diesen Zielwert) */
@@ -128,7 +128,7 @@ function planCheck(p, live){
         const we = p.avail && ((p.avail[5] && p.avail[6]) || (p.avail[6] && p.avail[0]));
         notes.push({lv:Math.max(gL, gT) === 2 ? 2 : 1, gap:1, t:`<b>Vorbereitung auf die Eventdauer:</b> ${gL ? `Längste Fahrt ${hm2(L)} von empfohlenen ${hm2(Ls)} Std.` : `Längste Fahrt ${hm2(L)} Std., das passt.`}${gT ? ` Stärkste Woche etwa ${Math.round(Math.max(st.wkT, st.weT))}, Eventtag etwa ${evT} Belastungspunkte (TSS).` : ''} Das ist ein Hinweis zur Vorbereitung, kein Verletzungsrisiko.`,
           acts:[old && old.act, we && !p.wkBlk && blkWorks(p) ? ['wkBlk', 1, '2–3 lange Wochenend-Blöcke einplanen'] : null, short ? ['evShort', short.id, `Kürzere Strecke: ${short.v || short.km + ' km'}`] : null].filter(Boolean),
-          hint:'Wochenend-Block: Samstag lang (mindestens 3 Std.), Sonntag 2 bis 2:30 Std. ruhig, einmal pro Belastungsblock, höchstens 3, nicht in Entlastungs- und Taperwochen.'});
+          hint:'Wochenend-Block: Samstag lang (mindestens 3 Std.), Sonntag 2 bis 2:30 Std. ruhig, einmal pro Belastungsblock, höchstens 3, nicht in Entlastungs- und Taperwochen. Blockwochen sind bis zu ein Viertel länger als deine übliche Wochenzeit.'});
       }
     }
     if (verdict && verdict !== 'ok') {
@@ -220,7 +220,7 @@ function applyChk(kind, val, mode){
   const t = mode === 'dash' ? S.p : S.d, ch = chOf(t, kind, val);
   /* Paket C: Wochenend-Blöcke in einem laufenden Plan erst ab der Folgewoche; vor jeder Übernahme ein Schnappschuss */
   if (kind === 'wkBlk' && ch.wkBlk) ch.wkBlkFrom = mode === 'dash' ? (S.wk || 1) + 1 : 1;
-  if (mode === 'dash') { try { bkPre('Vor dem Übernehmen aus dem Plan-Check'); } catch (e) { elog(e); } }
+  if (mode === 'dash' && Object.keys(ch).some(k => JSON.stringify(t[k]) !== JSON.stringify(ch[k]))) { try { bkPre('Vor dem Übernehmen aus dem Plan-Check'); } catch (e) { elog(e); } } /* nur bei echter Änderung */
   Object.assign(S.d, ch);
   if (mode === 'dash') { Object.assign(S.p, JSON.parse(JSON.stringify(ch))); if (S.p.perDay) S.p.hours = Math.max(.5, dsum(S.p) / 60); S.blocked = {}; S.plan = keepT(genWeek(S.p, S.wk)); analyze(); note('Plan-Check übernommen', 'Der Plan wurde mit der Empfehlung aus dem Plan-Check neu berechnet.', -2); }
   save(); render();
@@ -304,8 +304,8 @@ function pcSetTgt(v, mode){
   S.d.targetTime = v; S.d.tgtMan = false; save(); nav(5); setTimeout(() => { const e = document.getElementById('tt'); if (e) { e.focus(); e.select && e.select(); } }, 80);
 }
 function pcLimHtml(l){
-  if (!l) return ''; const col = {ok:['#e3f6f0', '#0a8f6a'], tight:['#fff6dc', '#d9a400'], risk:['#fff1e6', '#c2410c'], no:['#fdeceb', '#c0392b']}[l.k];
-  const t = {ok:'Deutlich im Zeitlimit.', tight:'Knapp im Zeitlimit: Pausen kurz halten.', risk:'Risiko beim Zeitlimit: Mit einem schwachen Tag wird es eng.', no:'Das Zeitlimit ist wahrscheinlich nicht erreichbar.'}[l.k];
+  if (!l) return ''; const col = {ok:['#e3f6f0', '#0a8f6a'], tight:['#fff6dc', '#d9a400'], risk:['#fff1e6', '#c2410c'], hard:['#fdeceb', '#c0392b'], no:['#fdeceb', '#c0392b']}[l.k];
+  const t = {ok:'Deutlich im Zeitlimit.', tight:'Knapp im Zeitlimit: Pausen kurz halten.', risk:'Risiko beim Zeitlimit: Mit einem schwachen Tag wird es eng.', hard:'Zeitlimit stark gefährdet: Die Prognose liegt nur knapp darunter, mit Pausen und einem schwachen Tag wird es nicht reichen.', no:'Das Zeitlimit ist wahrscheinlich nicht erreichbar.'}[l.k];
   return `<div class="mt-2 p-2.5 text-sm" style="background:${esc(col[0])};border-left:3px solid ${esc(col[1])}"><p><b>${t}</b> Limit ${hm2(l.lim)} Std., langsame Prognose mit Pausen ${hm2(l.slow)} Std.${l.pause ? ` (davon etwa ${l.pause} Min. Pausen)` : ''}.</p>${l.k === 'no' && l.short ? `<p class="mt-1">Eine kürzere Strecke desselben Events wäre realistischer: <span data-noi18n>${esc(l.short.n + (l.short.v ? ' ' + l.short.v : ''))}</span>.</p>` : ''}</div>`;
 }
 function checkCard(p, mode){

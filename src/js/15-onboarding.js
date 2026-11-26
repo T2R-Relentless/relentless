@@ -33,8 +33,10 @@ let snKgErr = false;
 function snKgFail(){ snKgErr = true; setTimeout(() => { const e = document.getElementById('kgIn'); if (e) e.focus(); }, 60); }
 function snKgField(d, lbl){
   const req = snKgReq(d), err = snKgErr && req && !snKgIn(d);
-  return '<div>' + field(req ? lbl + ', Pflicht' : lbl, `<input id="kgIn" type="number" inputmode="decimal" class="inp" placeholder="z. B. 75" value="${esc(snKgIn(d) ? d.weight : '')}" oninput="draft('weight',this.value)"${req ? ' aria-required="true"' : ''}${err ? ' aria-invalid="true" aria-describedby="kgErr" style="border-color:#c0392b;border-width:2px"' : ''}>`) + (err ? `<p id="kgErr" role="alert" class="mt-1 text-sm" style="color:#c0392b">${icWarn()}${SN_KGMSG}</p>` : '') + '</div>';
+  return '<div>' + field(req ? lbl + ', Pflicht' : lbl, `<input id="kgIn" type="number" inputmode="decimal" class="inp" placeholder="z. B. 75" value="${esc(snKgIn(d) ? d.weight : '')}" oninput="draft('weight',this.value)"${req ? ' aria-required="true"' : ''}${err ? ' aria-invalid="true" aria-describedby="kgErr" style="border-color:#c0392b;border-width:2px"' : ''}>`) + '</div>';
 }
+/* Fehlermeldung zum Gewicht in voller Breite unter beiden Feldern */
+const snKgErrHtml = d => snKgErr && snKgReq(d) && !snKgIn(d) ? `<p id="kgErr" role="alert" class="mt-2 text-sm" style="color:#c0392b">${icWarn()}${SN_KGMSG}</p>` : '';
 const SN_KGMSG = 'Bitte trag dein Gewicht ein. Bei mehr als 1.500 Höhenmetern hängt die Prognose stark davon ab.';
 /* Schnellplanung Schritt 2: Geschlecht, Alter und Erholung sind optional und eingeklappt, damit der Schritt kurz bleibt.
    Offen, sobald dort etwas eingetragen ist; der Zustand übersteht das Neuzeichnen (lightMore). */
@@ -131,7 +133,7 @@ function lightPage(d){
     + `${S.edit ? '' : '<button class="ghost mt-6 w-full !py-2 text-sm" onclick="chooseMode()">‹ Zurück zur Wahl der Planungsart</button>'}`;
   if (ls === 2) return head('Wie fit bist du gerade?', 'Daraus schätzt die App deinen Startwert. Ein grober Eindruck genügt.')
     + `<p class="mb-2 font-semibold">Wie würdest du dich einschätzen?</p><div class="space-y-2">${Object.entries(LVL).map(([k, v]) => lopt(lv === k && !(d.ftpKnown > 0), `lightSet('lvl','${ja(k)}')`, v[0], v[2])).join('')}</div>
-    <div class="panel mt-4 p-4"><div class="grid grid-cols-2 gap-3">${snKgField(d, 'Gewicht (kg)')}${field('FTP, falls bekannt (W)', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc(ftpE)}" value="${esc(d.ftpKnown || '')}" oninput="S.d.ftpKnown=Number(this.value)||0;save()">`)}</div>
+    <div class="panel mt-4 p-4"><div class="grid grid-cols-2 gap-3">${snKgField(d, 'Gewicht (kg)')}${field('FTP, falls bekannt (W)', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc(ftpE)}" value="${esc(d.ftpKnown || '')}" oninput="S.d.ftpKnown=Number(this.value)||0;save()">`)}</div>${snKgErrHtml(d)}
       <p class="mt-2 text-xs" style="color:var(--mute)">Kennst du deinen FTP, trag ihn ein. Sonst schätzt die App ihn aus deiner Einschätzung oben (hier etwa ${ftpE} W). ${snKgReq(d) ? 'Dein Gewicht braucht die App bei mehr als 1.500 Höhenmetern für eine brauchbare Prognose.' : 'Ohne Gewicht rechnet die App mit 75 kg (geschätzt).'}</p></div>
     <div class="mt-4 space-y-2">${pwAsk(d, true)}${d.pwMix && !d.noPwr ? pwMixHr(d) : ''}${d.noPwr ? `<div class="panel p-4">${field('Schwellenpuls, falls bekannt', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc((lthrEst() || {}).v || 'z. B. 165')}" value="${esc(d.lthr || '')}" onchange="setHr('lthr',this.value)">`)}<p class="mt-2 text-xs" style="color:var(--mute)">Kennst du ihn nicht, misst ihn der Fitnesstest in der ersten Woche: 30 Minuten gleichmäßig hart, dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Den FTP für die Prognose kannst du später im Plan über ein Bergzeitfahren schätzen lassen.</p></div>` : ''}${lopt(snT0(d), 'togTest0()', 'Mit einem Fitnesstest starten', d.noPwr ? 'Ein 30-Minuten-Test in der ersten Woche für deinen Schwellenpuls. Danach zeigen die Einheiten deine persönlichen Pulsbereiche. Empfohlen, wenn du ihn nicht kennst.' : snLow(d) ? 'Nach zwei ruhigen Wochen nur mit Grundlage folgt in Woche 3 ein kurzer Test. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, weil dein FTP sonst nur geschätzt ist.' : 'Ein kurzer Test am 2. Trainingstag. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, weil dein FTP sonst nur geschätzt ist.', LIC.test, true)}${snT0Ui(d)}</div>
     ${lightMoreUi(d)}`
@@ -411,7 +413,7 @@ function onboarding(){
       <div class="mt-4">${checkCard(mkPrev(d), 'draft')}</div>
       ${finalHint() ? `<p class="mt-6 text-sm" style="color:var(--mute)">${finalHint()}</p>` : ''}<div class="mt-3 flex gap-3">${back(N - 1)}${finalBtn('finish')}</div>`;
   if (s === 2) body = `<h2 class="hd text-3xl font-semibold">Dein aktueller Stand</h2><p class="mb-1 mt-1" style="color:var(--mute)">Von hier aus rechnet die App: Leistung und Gewicht bestimmen, was am Eventtag realistisch ist.</p><div class="mt-4 space-y-4">
-      <div class="grid grid-cols-2 gap-3">${snKgField(d, 'Körpergewicht (kg)')}</div>
+      <div class="grid grid-cols-2 gap-3">${snKgField(d, 'Körpergewicht (kg)')}</div>${snKgErrHtml(d)}
       ${ftpSrcUi(d)}
       ${sexUi(d)}
       ${ageUi(d)}</div>

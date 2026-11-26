@@ -181,3 +181,12 @@ test('Korrekturrunde 2: Ruhetag auch in der Eventwoche, Blöcke vor der Entlastu
   a.$('S.p.rdOff = 1; S.p.rdMin = 0;'); a.page('set-ali'); ok(/Ohne Ruhetag plant die App an jedem gewählten Tag/.test(a.text()), 'Schalter in den Einstellungen');
   ok(a.$('fwItems(S.wk).every(o => addD(S.p.start, (S.wk - 1) * 7 + o.i) >= iso(0))'), 'keine vergangenen Tage im Wochenpaket'); a.noErrors();
 });
+
+test('Korrekturrunde 3: Ruhetage aus- und wieder einschalten ändert keine vergangene oder laufende Woche', async () => {
+  const a = await boot(); makePlan(a, {goal:'event', eventName:'Testrennen', eventDate:'2027-07-20', ftp:250, hours:12, avail:[true, true, true, true, true, true, true]});
+  a.$('S.wk = 5; S.plan = genWeek(S.p, 5);'); const wk = a.$('S.wk');
+  const past = () => a.$(`JSON.stringify(Array.from({length:${wk}}, (_, k) => genWeek(S.p, k + 1)))`), before = past();
+  a.w.rdSet(false); a.$('S.wk = 5;'); eq(past(), before, 'aus: Wochen 1 bis S.wk unverändert'); eq(a.$(`rdMinOf(S.p, ${wk + 1})`), 0, 'aus ab Folgewoche'); eq(a.$(`rdMinOf(S.p, ${wk})`), 1, 'laufende Woche behält den Ruhetag');
+  a.$('S.wk = 5;'); a.w.rdSet(true); a.$('S.wk = 5;'); eq(past(), before, 'wieder an: Wochen 1 bis S.wk unverändert'); eq(a.$(`rdMinOf(S.p, ${wk + 1})`), 1); eq(a.$('S.p.rdLog'), [[1, 1], [wk + 1, 1]], 'Verlauf');
+  a.page('set-ali'); ok(/Mindestens ein Ruhetag pro Woche \(empfohlen\)/.test(a.text())); a.noErrors();
+});

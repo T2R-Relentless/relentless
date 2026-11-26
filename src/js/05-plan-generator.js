@@ -408,7 +408,8 @@ function genWeekCore(p, w, base){
    Samstag: längste Fahrt der letzten 4 Wochen + 45 Min. (+30 Min. je weiterem Block), mindestens 3, höchstens 6 Std.; Sonntag 2:00–2:30.
    Die Blockwoche hat höchstens 125 % der Minuten und der Belastung der Woche ohne Block: zuerst werden Grundlagenfahrten unter der Woche
    gekürzt oder gestrichen, dann die zweite harte Einheit. Die Rekom am Montag bleibt. Passt es nicht, gibt es in dieser Woche keinen Block. */
-const rdMinOf = (p, w) => p && p.rdMin > 0 && w >= (p.rdFrom || 1) ? p.rdMin : 0;
+/* Ruhetage je Woche: mit Verlauf p.rdLog [[ab Woche, rdMin], …] gilt der letzte Eintrag bis zur Woche w, sonst rdMin ab rdFrom (ältere Stände) */
+const rdMinOf = (p, w) => { if (!p) return 0; if (Array.isArray(p.rdLog) && p.rdLog.length) { let m = 0; p.rdLog.forEach(e => { if (Array.isArray(e) && e[0] <= w) m = +e[1] || 0; }); return m; } return p.rdMin > 0 && w >= (p.rdFrom || 1) ? p.rdMin : 0; };
 const blkRec = (p, ph, q) => { const P = ph.find(x => q >= x.from && q <= x.to); return !P || !!P.rec || P.key === 'taper' || recWk(p, q) || (p.recW || []).includes(q); };
 function blkWeeks(p){
   if (!p || !p.wkBlk || p.goal !== 'event' || !p.avail[5] || !p.avail[6] || !p.eventDate) return [];
@@ -418,7 +419,7 @@ function blkWeeks(p){
   return out.slice(-3);
 }
 /* Angebot nur, wenn mindestens ein Block in die Wochen passt (Zeitbudget, Ruhetage) */
-function blkWorks(p){ try { const q = {...p, wkBlk:true, wkBlkFrom:S.p && p === S.p ? (S.wk || 1) + 1 : 1}; return blkWeeks(q).some(w => /^Wochenend-Block/.test((genWeek(q, w, true)[5] || {}).n || '')); } catch (e) { elog(e); return false; } }
+function blkWorks(p){ try { const q = JSON.parse(JSON.stringify({...p, wkBlk:true})); q.wkBlkFrom = p.start && hasStarted(p) ? curWeek(p) + 1 : 1; /* eigene Kopie, nur kommende Wochen */ return blkWeeks(q).some(w => /^Wochenend-Block/.test((genWeek(q, w, true)[5] || {}).n || '')); } catch (e) { elog(e); return false; } }
 function blkWeek(res, p, w, k, rec, prof, p0){
   p0 = p0 || p; const L = blkWeeks(p0), n = L.indexOf(w); if (n < 0 || rec) return res;
   if (res.some(x => x && (x.sub || x.t === 'test' || /^Eventtag|^Aktivierung/.test(x.n || '')))) return res;

@@ -7407,9 +7407,7 @@
 "Die ganze Woche aufs Garmin-Gerät: Unter Export → Garmin-Gerät lädst du alle Einheiten der Woche als ein .fit-Paket.": "The whole week on your Garmin device: under Export → Garmin device you download all sessions of the week as one .fit package.",
 "Wochenpaket": "Week package",
 "Zielzeit {0} Std.: knapp, wenn das Training nicht ganz läuft.": "Target time {0} h: tight if training does not go quite to plan.",
-"Mindestens ein {0} pro Woche (empfohlen)": "At least one {0} per week (recommended)",
 "Mindestens zwei Ruhetage pro Woche (empfohlen)": "At least two rest days per week (recommended)",
-"Ohne {0} plant die App an jedem gewählten Tag.": "Without a {0} the app plans on every selected day.",
 "Halte mindestens einen Tag ganz locker.": "Keep at least one day very easy.",
 "Gilt ab nächster Woche, die laufende Woche bleibt.": "Applies from next week, the current week stays.",
 "Wochenend-Block: {0} lang (mindestens {1} Std.), {2} {3} bis {4} Std. ruhig, einmal pro Belastungsblock, höchstens {5}, nicht in Entlastungs- und Taperwochen.": "Weekend block: {0} long (at least {1} h), {2} {3} to {4} h easy, once per load block, at most {5}, not in recovery or taper weeks.",
@@ -7435,5 +7433,11 @@
 "Vorheriger Stand gesichert (Übernehmen aus dem Plan-Check).": "Previous state saved (applying from the plan check).",
 "Vor dem Übernehmen aus dem Plan-Check": "Before applying from the plan check",
 "Vorheriger Stand gesichert (Übernehmen der FTP-Schätzung).": "Previous state saved (applying the FTP estimate).",
-"Vor dem Übernehmen der FTP-Schätzung": "Before applying the FTP estimate"
+"Vor dem Übernehmen der FTP-Schätzung": "Before applying the FTP estimate",
+"Mindestens ein Ruhetag pro Woche (empfohlen)": "At least one rest day per week (recommended)",
+"Ohne Ruhetag plant die App an jedem gewählten Tag.": "Without a rest day the app plans on every selected day.",
+"Ohne Ruhetag plant die App an jedem gewählten Tag. Halte mindestens einen Tag ganz locker.": "Without a rest day the app plans on every selected day. Keep at least one day very easy.",
+"Höhenmeter fehlen: bitte eintragen": "Elevation gain missing: please enter it",
+"Blockwochen sind bis zu ein Viertel länger als deine übliche Wochenzeit.": "Block weeks are up to a quarter longer than your usual weekly time.",
+"Zeitlimit stark gefährdet: Die Prognose liegt nur knapp darunter, mit Pausen und einem schwachen Tag wird es nicht reichen.": "Time limit seriously at risk: the forecast is only just below it, with breaks and a weak day it will not be enough."
 }
