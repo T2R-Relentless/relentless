@@ -14,7 +14,7 @@ function writeLib(){
   lib.plans[S.pid] = {id:S.pid, name:S.pname || planName(S.p), manual:!!S.pnameManual, created:old.created || Date.now(), updated:Date.now(), snap:snapOf()}; lib.active = S.pid;
   localStorage.setItem(LIBK, JSON.stringify(lib));
 }
-function applySnap(snap){ PLAN_KEYS.forEach(k => delete S[k]); Object.assign(S, secC(JSON.parse(JSON.stringify(snap)))); S.done = S.done || {}; S.log = S.log || []; S.blocked = S.blocked || {}; S.actual = S.actual || {}; try { hkDerive(S.p); } catch (e) { elog(e); } }
+function applySnap(snap){ PLAN_KEYS.forEach(k => delete S[k]); Object.assign(S, secC(JSON.parse(JSON.stringify(snap)))); S.done = S.done || {}; S.log = S.log || []; S.blocked = S.blocked || {}; S.actual = S.actual || {}; try { hkMigP(S.p); } catch (e) { elog(e); } }
 function resetView(){ open = null; vw = null; askReset = false; renId = null; delId = null; impMsg = ''; }
 function switchTo(id){
   save(); const e = readLib().plans[id]; if (!e) return;
@@ -47,7 +47,7 @@ function importPlansV1(inp){
   const f = inp.files && inp.files[0]; if (!f) return; if (f.size > BK_MAX) { impMsg = 'Die Datei ist zu groß für eine Relentless-Sicherung.'; inp.value = ''; return render(); } const r = new FileReader();
   r.onload = () => { try {
     const o = bkParse(r.result);
-    const lib = readLib(); let n = 0; o.plans.forEach(e => { if (e && e.snap && e.snap.p && e.snap.p.goal) { hkDerive(e.snap.p); const id = uid(); lib.plans[id] = {id, name:String(e.name || planName(e.snap.p)).slice(0, 60), created:e.created || Date.now(), updated:Date.now(), snap:e.snap}; n++; } });
+    const lib = readLib(); let n = 0; o.plans.forEach(e => { if (e && e.snap && e.snap.p && e.snap.p.goal) { hkMigP(e.snap.p); const id = uid(); lib.plans[id] = {id, name:String(e.name || planName(e.snap.p)).slice(0, 60), created:e.created || Date.now(), updated:Date.now(), snap:e.snap}; n++; } });
     localStorage.setItem(LIBK, JSON.stringify(lib)); impMsg = n ? n + (n === 1 ? ' Plan' : ' Pläne') + ' aus der Sicherung hinzugefügt.' : 'Keine Pläne in der Datei gefunden.';
   } catch (e) { impMsg = (e && e.message) || 'Die Datei ist keine gültige Relentless-Sicherung.'; } inp.value = ''; render(); };
   r.readAsText(f);

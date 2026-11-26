@@ -125,7 +125,9 @@ function planCheck(p, live){
       }
     }
   }
-  if (p.test0 && !Object.values(p.res || {}).some(r => r.adopted)) notes.push({lv:0, t:`<b>Prognose mit Schätzwert:</b> Bis zu deinem Fitnesstest in Woche ${t0W(p)} rechnet die App mit ${p.ftp} W. Danach wird die Prognose genauer.`});
+  /* Paket C, Punkt 1: geschätzte Startwerte offen nennen */
+  { const fE = hkEst(p) && !noPwr(), kE = hkKgEst(p) && p.goal === 'event', tw = fE && p.test0 ? t0W(p) : 0;
+    if (fE || kE) notes.push({lv:0, hk:1, t:`<b>Prognose mit Schätzwerten:</b> ${fE ? `Dein FTP (${p.ftp} W) ist geschätzt.` : ''}${fE && kE ? ' ' : ''}${kE ? `Dein Gewicht (${f1(kgOf(p))} kg) ist ein Standardwert.` : ''} ${tw && tw >= cw ? `Nach deinem Fitnesstest in Woche ${tw} wird die Prognose genauer.` : fE && kE ? 'Mit einem Fitness-Check und deinem Gewicht wird die Prognose genauer.' : fE ? 'Mit einem Fitness-Check wird die Prognose genauer.' : 'Mit deinem Gewicht wird die Prognose genauer.'}`}); }
   let levs = [];
   if (p.goal === 'event' && sc[0] && sc[0].t) { const lm0 = levMult(p, tev), pf = base.mid * (1 - pen);
     levs = Object.keys(LEV).filter(k => LEV[k].a(tev) > 0).map(k => { const on = !!(p.lev && p.lev[k]), f = 1 + LEV[k].a(tev) / 100, pp = {...p, _prec:1}, a = evTime(pp, pf * (on ? lm0 / f : lm0), null), b2 = evTime(pp, pf * (on ? lm0 : lm0 * f), null); return {k, on, sv:a && b2 ? Math.max(0, a - b2) : 0, pct:LEV[k].a(tev)}; }); }
@@ -242,8 +244,8 @@ function levHtml(c, mode){
 }
 function checkCard(p, mode){
   const c = planCheck(p, mode === 'dash'), C = {ok:['#e3f6f0', '#0a8f6a', 'Auf Kurs'], mid:['#fff6dc', '#d9a400', 'Ziel in Reichweite'], high:['#fff1e6', '#c2410c', 'Ziel braucht Anpassung']};
-  const v = c.noDist ? ['var(--tint)', 'var(--teal)', 'Zielzeit noch offen'] : c.ack ? C.mid : c.verdict ? C[c.verdict] : c.notes.some(n => n.lv === 2) ? C.high : c.notes.length ? C.mid : C.ok;
-  const head = c.noDist ? 'Zielzeit noch offen' : c.ack ? 'Ziel bewusst gewählt' : c.verdict ? v[2] : c.notes.length ? 'Feinschliff möglich' : 'Plan passt zum Ziel';
+  const v = c.noDist ? ['var(--tint)', 'var(--teal)', 'Zielzeit noch offen'] : c.ack ? C.mid : c.verdict ? C[c.verdict] : c.notes.some(n => n.lv === 2) ? C.high : c.notes.filter(n => !n.hk).length ? C.mid : C.ok;
+  const head = c.noDist ? 'Zielzeit noch offen' : c.ack ? 'Ziel bewusst gewählt' : c.verdict ? v[2] : c.notes.filter(n => !n.hk).length ? 'Feinschliff möglich' : 'Plan passt zum Ziel';
   const nts = c.notes.map(n => `<li class="p-3" style="background:${esc(n.lv === 2 ? '#fff1e6' : n.lv === 0 ? '#e3f6f0' : n.lv === 3 ? 'var(--tint)' : '#fff6dc')};border-left:3px solid ${esc(n.lv === 2 ? '#c2410c' : n.lv === 0 ? '#0a8f6a' : n.lv === 3 ? 'var(--ice)' : '#d9a400')}"><p class="text-sm">${n.t}</p>${n.hint ? `<p class="mt-1 text-xs" style="color:var(--mute)">${n.hint}</p>` : ''}${(n.acts || (n.act ? [n.act] : [])).map(a => `<button class="${esc(a[3] ? 'btn !w-auto' : 'ghost')} lbl mt-2 mr-2 !py-1.5" onclick="applyChk('${ja(a[0])}', ${typeof a[1] === 'string' ? `'${ja(a[1])}'` : ja(a[1])}, '${ja(mode)}')">${a[2]}</button>`).join('')}</li>`).join('');
   const isEv = p.goal === 'event';
   const tbl = `<div class="mt-2 overflow-x-auto"><table class="w-full text-sm"><thead><tr style="color:var(--mute)" class="text-left text-xs"><th class="pr-2">Szenario</th><th class="pr-2">FTP am ${isEv ? 'Eventtag' : 'Zieltermin'}</th>${isEv && !c.noDist ? '<th>Zielzeit</th>' : ''}</tr></thead><tbody>${c.sc.map((s, i) => `<tr style="border-top:1px solid var(--line)${esc(i === 0 ? ';font-weight:600' : '')}"><td class="py-1.5 pr-2">${s.l}<br><span class="text-xs font-normal" style="color:var(--mute)">${s.eff}</span></td><td class="nw pr-2">${s.ftp.lo}–${s.ftp.hi} W</td>${isEv && !c.noDist ? `<td class="nw">${s.t ? hm2(s.t) : '–'} Std.<br><span class="text-xs font-normal" style="color:var(--mute)">${s.tl && s.th ? hm2(s.tl) + ' bis ' + hm2(s.th) : ''}</span></td>` : ''}</tr>`).join('')}</tbody></table></div>`;

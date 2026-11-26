@@ -129,7 +129,7 @@ function heroDay(p){ try { /* npOver gilt nur während dieses Aufbaus, siehe fin
   const st = x.parts ? x.parts.map(q => q.lbl + ': ' + q.st).join(' ') : x.st; heroIdx = i; npOver = x && x.rz && x.rz.rpe ? true : npFlag(i);
   return `<section class="hero" style="border-left-color:${esc(x.m ? T.c : 'var(--ice)')}"><p class="eyebrow" style="color:var(--ice)">${lbl}</p>
     <p class="hd mt-1 text-3xl font-semibold leading-tight ${esc(rideDn ? 'line-through' : '')}">${x.feel === 'sick' ? esc(x.n) : x.m ? esc(x.n) : sm || mb ? 'Radfrei · ' + esc([sm ? 'Kraft' : '', mb ? mb.n : ''].filter(Boolean).join(' und ')) : 'Radfrei'}</p>
-    ${x.m ? `<div class="hmeta"><b>${mm(x.m)}</b>${heroInt(x)}<span>${znLbl(x)} · TSS ~${tss(x)}</span></div>
+    ${x.m ? `<div class="hmeta"><b>${mm(x.m)}</b>${heroInt(x)}${S.p && hkEst(S.p) && !noPwr() && x.t !== 'test' ? '<span>FTP geschätzt</span>' : ''}<span>${znLbl(x)} · TSS ~${tss(x)}</span></div>
       ${heroIcons(x)}${x.feel === 'sick' ? '' : `<div class="mt-3" id="fx-wk">${wkSvg(x, {h:118})}</div>`}` : x.feel === 'sick' ? `<p class="mt-2 text-sm" style="opacity:.85">${esc(x.st)}</p>` : wkHero(i, x, strMap[i], mobMap[i])}
 
     ${x.m ? wkHero(i, x, sm, mb) : ''}

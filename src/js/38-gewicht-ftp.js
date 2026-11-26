@@ -24,8 +24,12 @@ function hkDerive(p){
   if (!['eingegeben', 'geschaetzt'].includes(p.kgHk)) p.kgHk = hkKgOf(p);
   return p;
 }
+/* Gespeicherter Plan aus der Zeit vor Paket C (ohne Herkunft): ifd = 0 hält die Wochen unverändert, denn der Generator rechnet die
+   Eventdauer (Long-Ride-Länge) dann wie bisher ohne Abschlag für Ermüdungsresistenz. Prognose, Eventtag-Belastung und Pacing nutzen
+   den neuen Abschlag auch hier (Entscheidung 9 C, Hinweis in „Neu in dieser Version“). */
+function hkMigP(p){ if (p && typeof p === 'object') { if (!p.ftpHk && p.ifd == null) p.ifd = 0; hkDerive(p); } return p; }
 /* Ganzer Zustand bzw. Schnappschuss: aktiver Plan und Entwurf */
-function hkMig(o){ if (o && typeof o === 'object') { if (o.p) hkDerive(o.p); if (o.d && o.p) { if (!o.d.ftpHk) o.d.ftpHk = o.p.ftpHk; if (!o.d.kgHk) o.d.kgHk = o.p.kgHk; } } return o; }
+function hkMig(o){ if (o && typeof o === 'object') { if (o.p) hkMigP(o.p); if (o.d && o.p) { if (!o.d.ftpHk) o.d.ftpHk = o.p.ftpHk; if (!o.d.kgHk) o.d.kgHk = o.p.kgHk; if (o.d.ifd == null && o.p.ifd != null) o.d.ifd = o.p.ifd; } } return o; }
 const hkEst = p => !!p && hkDerive(p).ftpHk === 'geschaetzt';
 const hkKgEst = p => !!p && hkDerive(p).kgHk === 'geschaetzt';
 /* Beim Anlegen oder Anpassen eines Plans (finish): Herkunft festlegen. Bleibt der FTP beim Anpassen gleich, bleibt auch seine Herkunft.
@@ -36,7 +40,32 @@ function hkFinish(d, es){
   const same = S.edit && S.p && Math.round(+d.ftp) === Math.round(+S.p.ftp);
   d.ftpHk = same ? hkDerive(S.p).ftpHk : hkFtpOf({...d, res:null, ftpStart:+d.ftp});
   if (!['eingegeben', 'geschaetzt'].includes(d.kgHk)) d.kgHk = hkKgOf(d);
+  if (es === 'new' || es === 'goal') d.ifd = .04;
   if (es === 'new' || es === 'goal') { if (d.ftpHk === 'geschaetzt' && !(S.edit && S.p && hasStarted(S.p))) d.sanft = 1; else delete d.sanft; }
+}
+/* Paket C, Punkt 1: geschätzte Werte zeigen. Einstellungen → Gewicht und FTP */
+function hkWfNote(){
+  const p = S.p || S.d; if (!p) return '';
+  const f = hkEst(p) && !noPwr() ? `<p class="text-sm"><b>Dein FTP ist geschätzt.</b> Die App rechnet mit ${Math.round(p.ftp)} W aus deiner Einschätzung. Ein Fitness-Check misst ihn, dann stimmen Wattbereiche und Prognose.</p>` : '';
+  const k = hkKgEst(p) ? `<p class="${f ? 'mt-2 ' : ''}text-sm"><b>Dein Gewicht ist ein Standardwert.</b> Die App rechnet mit ${wfFmt(kgOf(p), 0)} kg. Trag dein Gewicht oben ein oder bestätige den Wert.</p><button class="ghost mt-2 !w-auto" style="min-height:44px" onclick="hkKgOk()">Stimmt, ${wfFmt(kgOf(p), 0)} kg</button>` : '';
+  return f || k ? `<div class="mt-3 p-3" style="background:#fff6dc;border:1px solid #d9a400">${f}${k}</div>` : '';
+}
+function hkKgOk(){ hkSet('kgHk', 'eingegeben'); wfMsg = 'Gespeichert.'; wfMsgAt = Date.now(); save(); render(); }
+/* Heute: Hinweis, solange der FTP geschätzt ist (Entscheidung 5 B: höchstens einmal pro Woche nach „Später“) */
+const hkHm = d => Number(d && d.hm) > 0 ? Number(d.hm) : ((EVS.find(x => x.id === (d && d.evId)) || {}).hm || 0);
+function hkHomeCard(){
+  const p = S.p; if (!p || !hkEst(p) || noPwr() || (S.hkLater && S.hkLater > addD(iso(0), -7))) return '';
+  let nx = 0; try { nx = testsOn(p) || p.test0 ? testWeeks(p).find(w => w >= (S.wk || 1) && !(p.res || {})[w]) || 0 : 0; } catch (e) { elog(e); }
+  const kg = hkKgEst(p) && p.goal === 'event' && hkHm(p) > 1500;
+  return `<section class="panel p-4" style="border-left:4px solid #d9a400"><p class="font-semibold">Dein FTP ist geschätzt, Test einplanen</p><p class="mt-1 text-sm" style="color:var(--mute)">Die App rechnet mit ${Math.round(p.ftp)} W aus deiner Einschätzung. Bis ein Fitness-Check deinen Wert misst, fährst du die Intervalle nach Gefühl.${nx ? ` Dein Fitness-Check ist in Woche ${nx} eingeplant.` : ''}</p>${kg ? `<p class="mt-1 text-sm" style="color:var(--mute)">Auch dein Gewicht ist ein Standardwert (${wfFmt(kgOf(p), 0)} kg). Bei vielen Höhenmetern hängt die Prognose stark davon ab.</p>` : ''}
+    <div class="mt-3 flex flex-wrap gap-2">${!nx || nx > (S.wk || 1) + 1 ? `<button class="btn !w-auto !px-3" style="min-height:44px" onclick="hkPlanTest()">Test einplanen</button>` : ''}${nx ? `<button class="${nx > (S.wk || 1) + 1 ? 'ghost' : 'btn'} !w-auto !px-3" style="min-height:44px" onclick="goPg('ms')">Fitness-Checks ansehen</button>` : ''}${kg ? `<button class="ghost !w-auto !px-3" style="min-height:44px" onclick="wfGo()">Gewicht eintragen</button>` : ''}<button class="ghost !w-auto !px-3" style="min-height:44px" onclick="S.hkLater=iso(0);save();render()">Später</button></div></section>`;
+}
+/* Fitness-Check einplanen (Tipp = Zustimmung): diese Woche, wenn noch genug Tage bleiben, sonst nächste Woche. Vorher Schnappschuss. */
+function hkPlanTest(){
+  const p = S.p; if (!p) return; const tot = phases(p).slice(-1)[0].to, cw = S.wk || 1, w = hasStarted(p) && todayIdx() <= 4 ? cw : Math.min(tot, cw + 1);
+  try { bkPre('Vor dem Einplanen eines Fitness-Checks'); } catch (e) { elog(e); }
+  p.xTests = [...new Set([...(p.xTests || []), w])]; S.d.xTests = p.xTests;
+  note('Fitness-Check eingeplant', `Ein Fitness-Check ist in Woche ${w} eingeplant. Danach rechnet der Plan mit deinem gemessenen FTP, wenn du ihn übernimmst.`, -2); save(); render();
 }
 /* Neuer Wert: Plan und Entwurf gleich halten */
 function hkSet(k, v){ if (S.p) S.p[k] = v; if (S.d) S.d[k] = v; }
@@ -57,7 +86,8 @@ const wfLast = () => { const H = wfHist(); return H.length ? H[H.length - 1] : n
 function wfSub(){
   const c = wfCur(); if (!c.kg && !c.ftp) return 'Noch nicht eingetragen';
   const w = wfWkg(c.ftp, c.kg);
-  return [c.ftp ? `FTP ${Math.round(c.ftp)} W` : '', c.kg ? `${wfFmt(c.kg, c.kg % 1 ? 1 : 0)} kg` : '', w ? `${wfFmt(w, 1)} W/kg` : ''].filter(Boolean).join(' · ');
+  const p = S.p || S.d, fE = hkEst(p) && !noPwr(), kE = hkKgEst(p); /* Paket C: geschätzte Werte kennzeichnen */
+  return [c.ftp ? `FTP ${Math.round(c.ftp)} W${fE ? ' (geschätzt)' : ''}` : '', c.kg ? `${wfFmt(c.kg, c.kg % 1 ? 1 : 0)} kg${kE ? ' (geschätzt)' : ''}` : '', w ? `${wfFmt(w, 1)} W/kg` : ''].filter(Boolean).join(' · ');
 }
 let wfMsg = '', wfMsgAt = 0;
 function wfLive(){
@@ -87,6 +117,7 @@ function wfPage(){
   const lastTxt = last && last.at ? `Zuletzt geändert am ${fmt(lstr(new Date(last.at)))}` : last ? `Stand seit ${fmt(last.d)}` : 'Noch keine Änderung gespeichert';
   const rows = H.slice(-12).reverse().map(h => `<li class="flex items-center gap-2 py-2" style="border-top:1px solid var(--line)"><span class="flex-1 text-sm">${fmt(h.d)}</span><span class="text-sm font-semibold">${h.ftp ? Math.round(h.ftp) + ' W' : '–'}</span><span class="text-sm" style="min-width:4.5rem;text-align:right">${h.kg ? wfFmt(h.kg, 1) + ' kg' : '–'}</span><span class="text-sm" style="min-width:5rem;text-align:right;color:var(--mute)">${wfWkg(h.ftp, h.kg) ? wfFmt(wfWkg(h.ftp, h.kg), 2) + ' W/kg' : ''}</span></li>`).join('');
   return `<section class="panel p-4"><div class="grid grid-cols-2 gap-3">${field('Gewicht (kg)', `<input id="wfKg" type="text" inputmode="decimal" autocomplete="off" class="inp" style="min-height:44px" value="${esc(c.kg ? wfFmt(c.kg, c.kg % 1 ? 1 : 0) : '')}" oninput="wfLive()">`)}${field('FTP (W)', `<input id="wfFtp" type="number" inputmode="numeric" class="inp" style="min-height:44px" value="${esc(c.ftp ? Math.round(c.ftp) : '')}" oninput="wfLive()">`)}</div>
+    ${hkWfNote()}
     <p class="mt-3 text-sm">Leistung pro Kilo: <span id="wfWkg" class="font-semibold">${w ? wfFmt(w, 2) + ' W/kg' : '–'}</span></p>
     <p class="mt-1 text-xs" style="color:var(--mute)">${lastTxt}</p>
     <button class="btn mt-3" style="min-height:44px" onclick="wfSave()">Speichern</button>

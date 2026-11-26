@@ -12,6 +12,7 @@ function lightSet(k, v){ S.d[k] = v; if (k === 'hours') S.d.perDay = false; if (
 function lightDay(i){ const a = [...S.d.avail]; a[i] = !a[i]; if (a.filter(Boolean).length) S.d.avail = a; save(); render(); }
 function lightFinish(){
   const d = S.d, kg = d.weight > 0 ? d.weight : 75;
+  if (snKgReq(d) && !snKgIn(d)) { lightMsg = SN_KGMSG; S.step = 2; save(); render(); scrollTop0(); return; } /* Paket C: Gewicht ist ab 1.500 hm Pflicht */
   if (d.goal === 'event' && !(d.eventDate && d.eventDate >= addD(sdOf(d), 14))) { lightMsg = sdOf(d) > iso(0) ? 'Das Event muss mindestens 2 Wochen nach dem Planstart liegen.' : 'Bitte ein Eventdatum wählen, das mindestens 2 Wochen in der Zukunft liegt.'; return render(); }
   if (d.goal !== 'event' && !(d.endDate && d.endDate >= addD(sdOf(d), 14))) d.endDate = addD(sdOf(d), 84);
   if (d.goal === 'fitness' && !d.ffocus) d.ffocus = 'health';
@@ -22,6 +23,10 @@ function lightFinish(){
   lightMsg = ''; finish();
 }
 let lightMsg = '';
+/* Paket C, Punkt 1: Gewicht in Schritt 2 Pflicht, sobald das Event mehr als 1.500 Höhenmeter hat */
+const snKgReq = d => !!d && d.goal === 'event' && hkHm(d) > 1500;
+const snKgIn = d => !!d && d.weight > 0 && (d.kgHk ? d.kgHk === 'eingegeben' : hkKgOf(d) === 'eingegeben');
+const SN_KGMSG = 'Bitte trag dein Gewicht ein. Bei mehr als 1.500 Höhenmetern hängt die Prognose stark davon ab.';
 /* Schnellplanung Schritt 2: Geschlecht, Alter und Erholung sind optional und eingeklappt, damit der Schritt kurz bleibt.
    Offen, sobald dort etwas eingetragen ist; der Zustand übersteht das Neuzeichnen (lightMore). */
 let lightMore = false;
@@ -117,8 +122,8 @@ function lightPage(d){
     + `${S.edit ? '' : '<button class="ghost mt-6 w-full !py-2 text-sm" onclick="chooseMode()">‹ Zurück zur Wahl der Planungsart</button>'}`;
   if (ls === 2) return head('Wie fit bist du gerade?', 'Daraus schätzt die App deinen Startwert. Ein grober Eindruck genügt.')
     + `<p class="mb-2 font-semibold">Wie würdest du dich einschätzen?</p><div class="space-y-2">${Object.entries(LVL).map(([k, v]) => lopt(lv === k && !(d.ftpKnown > 0), `lightSet('lvl','${ja(k)}')`, v[0], v[2])).join('')}</div>
-    <div class="panel mt-4 p-4"><div class="grid grid-cols-2 gap-3">${field('Gewicht (kg)', `<input type="number" inputmode="decimal" class="inp" value="${esc(d.weight || '')}" oninput="draft('weight',this.value)">`)}${field('FTP, falls bekannt (W)', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc(ftpE)}" value="${esc(d.ftpKnown || '')}" oninput="S.d.ftpKnown=Number(this.value)||0;save()">`)}</div>
-      <p class="mt-2 text-xs" style="color:var(--mute)">Kennst du deinen FTP, trag ihn ein. Sonst schätzt die App ihn aus deiner Einschätzung oben (hier etwa ${ftpE} W).</p></div>
+    <div class="panel mt-4 p-4"><div class="grid grid-cols-2 gap-3">${field(snKgReq(d) ? 'Gewicht (kg), Pflicht' : 'Gewicht (kg)', `<input type="number" inputmode="decimal" class="inp" placeholder="75" value="${esc(snKgIn(d) ? d.weight : '')}" oninput="draft('weight',this.value)"${snKgReq(d) ? ' aria-required="true"' : ''}>`)}${field('FTP, falls bekannt (W)', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc(ftpE)}" value="${esc(d.ftpKnown || '')}" oninput="S.d.ftpKnown=Number(this.value)||0;save()">`)}</div>
+      <p class="mt-2 text-xs" style="color:var(--mute)">Kennst du deinen FTP, trag ihn ein. Sonst schätzt die App ihn aus deiner Einschätzung oben (hier etwa ${ftpE} W). ${snKgReq(d) ? 'Dein Gewicht braucht die App bei mehr als 1.500 Höhenmetern für eine brauchbare Prognose.' : 'Ohne Gewicht rechnet die App mit 75 kg (geschätzt).'}</p></div>
     <div class="mt-4 space-y-2">${pwAsk(d, true)}${d.pwMix && !d.noPwr ? pwMixHr(d) : ''}${d.noPwr ? `<div class="panel p-4">${field('Schwellenpuls, falls bekannt', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc((lthrEst() || {}).v || 'z. B. 165')}" value="${esc(d.lthr || '')}" onchange="setHr('lthr',this.value)">`)}<p class="mt-2 text-xs" style="color:var(--mute)">Kennst du ihn nicht, misst ihn der Fitnesstest in der ersten Woche: 30 Minuten gleichmäßig hart, dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Den FTP für die Prognose kannst du später im Plan über ein Bergzeitfahren schätzen lassen.</p></div>` : ''}${lopt(snT0(d), 'togTest0()', 'Mit einem Fitnesstest starten', d.noPwr ? 'Ein 30-Minuten-Test in der ersten Woche für deinen Schwellenpuls. Danach zeigen die Einheiten deine persönlichen Pulsbereiche. Empfohlen, wenn du ihn nicht kennst.' : snLow(d) ? 'Nach zwei ruhigen Wochen nur mit Grundlage folgt in Woche 3 ein kurzer Test. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, weil dein FTP sonst nur geschätzt ist.' : 'Ein kurzer Test am 2. Trainingstag. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, weil dein FTP sonst nur geschätzt ist.', LIC.test, true)}${snT0Ui(d)}</div>
     ${lightMoreUi(d)}`
     + navRow(1, 3);
@@ -142,6 +147,7 @@ function lightPage(d){
 function lightNav(n){
   const d = S.d;
   if (n > (S.step || 1) && (S.step || 1) === 1 && d.goal === 'event' && !(d.eventDate && d.eventDate >= iso(14))) { lightMsg = 'Bitte ein Eventdatum wählen, das mindestens 2 Wochen in der Zukunft liegt.'; return render(); }
+  if (n > 2 && (S.step || 1) <= 2 && snKgReq(d) && !snKgIn(d)) { lightMsg = SN_KGMSG; S.step = 2; return render(); }
   lightMsg = ''; nav(n);
 }
 
