@@ -4218,8 +4218,9 @@ function checkin(lv){
 const pendingCard = () => { if (!S.pending) return ''; const pi = S.pendInfo || {n:'Deine letzte Fahrt', tss:0, when:''};
   return `<div class="panel p-4"><h3 class="hd text-xl font-semibold">Wie fühlst du dich heute?</h3><p class="mb-3 mt-1 text-sm" style="color:var(--mute)">Deine Fahrt „${esc(pi.n)}“ (${pi.when}, TSS ${pi.tss}) war deutlich härter als geplant. Ob der Plan angepasst wird, entscheidet dein Befinden: Schlaf, Beinschwere, Stimmung.</p>
   <div class="grid gap-2">${[['fit','Erholt und motiviert'],['mid','Etwas müde'],['low','Ausgelaugt, schwere Beine, schlechter Schlaf']].map(([k, l]) => `<button onclick="checkin('${ja(k)}')" class="ghost text-left">${l}</button>`).join('')}</div></div>`; };
-const band = hi => hi <= 75 ? 'niedrig' : hi <= 105 ? 'moderat' : 'hoch';
-const dist = pl => { let lo = 0, mo = 0, hi = 0; pl.forEach(x => { const m = x.m || 0, a = x.wm || 0, b = x.wh || 0; mo += a; hi += b; lo += Math.max(0, m - a - b); }); const t = lo + mo + hi || 1; return `${Math.round(lo / t * 100)} % niedrig, ${Math.round(mo / t * 100)} % moderat, ${Math.round(hi / t * 100)} % hoch`; };
+/* Paket C (Fachregel 6.2): drei Bänder, niedrig bis 75 %, moderat bis 100 %, hoch darüber; gezählt je Abschnitt der Einheit (tssSegs) */
+const band = hi => hi <= 75 ? 'niedrig' : hi <= 100 ? 'moderat' : 'hoch';
+const dist = pl => { let lo = 0, mo = 0, hi = 0; pl.forEach(x => { if (!x || !(x.m > 0) || x.t === 'rest') return; let segs = []; try { segs = tssSegs(x); } catch (e) { elog(e); } if (!segs.length) segs = [[x.m, ((x.lo || 56) + (x.hi || 75)) / 2]]; segs.forEach(([m, q]) => { if (q <= 75.5) lo += m; else if (q <= 100.5) mo += m; else hi += m; }); }); const t = lo + mo + hi || 1; return `${Math.round(lo / t * 100)} % niedrig, ${Math.round(mo / t * 100)} % moderat, ${Math.round(hi / t * 100)} % hoch`; };
 const sources = () => fold('src', 'Wissenschaftliche Grundlage', `<div class="text-sm">
   <ul class="mt-3 list-disc space-y-2 pl-5" style="color:var(--mute)">
   <li>Pendeltage: Intervalle zuerst und am Stück, danach locker. Das folgt <a class="underline" target="_blank" rel="noopener" href="https://acuresearchbank.acu.edu.au/item/88y4v/skeletal-muscle-adaptation-and-performance-responses-to-once-a-day-versus-twice-every-second-day-endurance-training-regimens">Hansen et al.</a>: Wer hart nach einer lockeren Fahrt trainierte, hatte eine geringere Intensitätskapazität. Es ist eine Ableitung, keine direkte Studie zum Pendeln.</li>
@@ -5953,7 +5954,7 @@ function hrHint(){
 }
 function hrSettings(){
   const e = hrMaxEst(), lt = lthrEst(), hm = hrMaxOf(), L = lthrOf();
-  const zr = L ? [['Z1', 'Erholung', 0, 55], ['Z2', 'Grundlage', 56, 75], ['Z3', 'Tempo', 76, 90], ['Z4', 'Schwelle', 91, 105], ['Z5', 'VO2max', 106, 120]].map(([z, n, a, b]) => { const r = hrRng(a, b); return [z, n, a ? `${r[0]}–${r[1]}` : `bis ${r[1]}`]; }) : null;
+  const zr = L ? [['Z1', 'Erholung', 0, 55], ['Z2', 'Grundlage', 56, 75], ['Z3', 'Tempo', 76, 90], ['Sweet Spot', 'knapp unter der Schwelle', 88, 94], ['Z4', 'Schwelle', 91, 105], ['Z5', 'VO2max', 106, 120]].map(([z, n, a, b]) => { const r = hrRng(a, b); return [z, n, a ? `${r[0]}–${r[1]}` : `bis ${r[1]}`]; }) : null;
   return fold('hr', 'Herzfrequenz und Leistungsmesser', `<p class="text-sm font-semibold">Maximale Herzfrequenz</p>${hrInp('hrMaxI', 'hrMax', hm, e ? String(e.v) : 'z. B. 185')}${e && e.v !== hm ? `<p class="mt-1 text-xs" style="color:var(--mute)">Höchster Wert in deinen Fahrten: ${e.v} (${fmt(e.r.day)}). <button class="exl" onclick="setHr('hrMax', ${ja(e.v)})">Übernehmen</button></p>` : ''}
     <p class="mt-4 text-sm font-semibold">Schwellenpuls</p>${hrInp('lthrI', 'lthr', L, lt ? String(lt.v) : '')}${lt && lt.v !== L ? `<p class="mt-1 text-xs" style="color:var(--mute)">${lt.src === '20' ? `Geschätzt aus deinem höchsten 20-Minuten-Puls (${lt.r.h20}, ${fmt(lt.r.day)}) × 0,95: ${lt.v}.` : `Grob geschätzt als 88 % der maximalen Herzfrequenz: ${lt.v}. Genauer wird es mit einer harten 20-Minuten-Fahrt mit Puls.`} <button class="exl" onclick="setHr('lthr', ${ja(lt.v)})">Übernehmen</button></p>` : ''}
     ${hrMsg ? `<p class="mt-2 text-sm" style="color:#c0392b">${esc(hrMsg)}</p>` : ''}
@@ -6648,8 +6649,9 @@ function updInit(){
    Beim Einlesen einer Fahrt entsteht eine kompakte Zeitreihe (höchstens 600 Punkte, Watt, Puls, Höhe), die mit der Bewertung
    gespeichert wird (nur für die letzten 40 bewerteten Fahrten, damit der Speicher im Browser reicht). Die Sekundenwerte selbst
    werden nicht gespeichert, nur daraus berechnete Zonenzeiten und Bestwerte. */
-const VZ_ZP = [[0, 55, 'Z1', 'Erholung', '#9aa7b8'], [55, 75, 'Z2', 'Grundlage', '#00c2b2'], [75, 90, 'Z3', 'Tempo', '#4f9dde'], [90, 105, 'Z4', 'Schwelle', '#f2b134'], [105, 120, 'Z5', 'VO2max', '#f07d3a'], [120, 150, 'Z6', 'Anaerob', '#e0464e'], [150, 9999, 'Z7', 'Sprint', '#8e3bbf']];
-const VZ_ZH_L = [[0, 81, 'Z1', 'Erholung', '#9aa7b8'], [81, 90, 'Z2', 'Grundlage', '#00c2b2'], [90, 94, 'Z3', 'Tempo', '#4f9dde'], [94, 100, 'Z4', 'Schwelle', '#f2b134'], [100, 999, 'Z5', 'Hoch', '#e0464e']];
+/* Paket C (Fachregeln 6.3, 6.6): Grenzen aus der Zonentabelle ZN (Coggan), Leistung wie Puls. Die HFmax-Tabelle bleibt nur als grober Ersatz. */
+const VZ_ZP = [[0, 56, 'Z1', 'Erholung', '#9aa7b8'], [56, 76, 'Z2', 'Grundlage', '#00c2b2'], [76, 91, 'Z3', 'Tempo', '#4f9dde'], [91, 106, 'Z4', 'Schwelle', '#f2b134'], [106, 121, 'Z5', 'VO2max', '#f07d3a'], [121, 151, 'Z6', 'Anaerob', '#e0464e'], [151, 9999, 'Z7', 'Sprint', '#8e3bbf']];
+const VZ_ZH_L = [[0, 69, 'Z1', 'Erholung', '#9aa7b8'], [69, 84, 'Z2', 'Grundlage', '#00c2b2'], [84, 95, 'Z3', 'Tempo', '#4f9dde'], [95, 106, 'Z4', 'Schwelle', '#f2b134'], [106, 999, 'Z5', 'VO2max', '#e0464e']];
 const VZ_ZH_M = [[0, 60, 'Z1', 'Erholung', '#9aa7b8'], [60, 70, 'Z2', 'Grundlage', '#00c2b2'], [70, 80, 'Z3', 'Tempo', '#4f9dde'], [80, 90, 'Z4', 'Schwelle', '#f2b134'], [90, 999, 'Z5', 'Hoch', '#e0464e']];
 const VZ_PB = [['d5', 5, '5 Sek.'], ['m1', 60, '1 Min.'], ['m5', 300, '5 Min.'], ['m20', 1200, '20 Min.'], ['m60', 3600, '60 Min.']];
 
@@ -6771,7 +6773,7 @@ function vzZones(e){
     else { const easy = tz <= 1, below = arr.slice(0, tz).reduce((s, v) => s + v, 0) / Math.max(1, tot) * 100, above = arr.slice(tz + 1).reduce((s, v) => s + v, 0) / Math.max(1, tot) * 100;
       sum = `Ziel ${z[2]} ${z[3]}: ${Math.round(pin)} % der Fahrzeit dort` + (easy ? (above >= 15 ? `, ${Math.round(above)} % darüber. Für eine lockere Einheit war das zu viel Zeit in höheren Zonen.` : pin + below >= 75 ? '. Sauber locker gefahren.' : '.') : `${below >= 40 ? `, ${Math.round(below)} % darunter` : ''}.`); }
   }
-  const sub = useP && e.zh && e.zh.some(Boolean) ? (() => { const Zh = e.zhk === 'lthr' ? VZ_ZH_L : VZ_ZH_M, th = e.zh.reduce((s, v) => s + v, 0); return `<p class="mt-2 text-xs" style="color:var(--mute)">Puls-Zonen</p><div class="vz-stk">${e.zh.map((v, k) => v ? `<i style="width:${esc(v / th * 100)}%;background:${esc(Zh[k][4])}" title="${esc(Zh[k][2])} ${Math.round(v / th * 100)} %"></i>` : '').join('')}</div><div class="vz-stl">${Zh.map((z, k) => e.zh[k] / th >= .08 ? `<span>${z[2]} ${Math.round(e.zh[k] / th * 100)} %</span>` : '').join('')}</div>`; })() : '';
+  const sub = useP && e.zh && e.zh.some(Boolean) ? (() => { const Zh = e.zhk === 'lthr' ? VZ_ZH_L : VZ_ZH_M, th = e.zh.reduce((s, v) => s + v, 0); return `<p class="mt-2 text-xs" style="color:var(--mute)">${e.zhk === 'lthr' ? 'Puls-Zonen' : 'Puls-Zonen (grob, aus der maximalen Herzfrequenz)'}</p><div class="vz-stk">${e.zh.map((v, k) => v ? `<i style="width:${esc(v / th * 100)}%;background:${esc(Zh[k][4])}" title="${esc(Zh[k][2])} ${Math.round(v / th * 100)} %"></i>` : '').join('')}</div><div class="vz-stl">${Zh.map((z, k) => e.zh[k] / th >= .08 ? `<span>${z[2]} ${Math.round(e.zh[k] / th * 100)} %</span>` : '').join('')}</div>`; })() : '';
   return `<div class="mt-4"><p class="text-xs font-semibold" style="color:var(--mute)">Zeit in Zonen (${useP ? 'Watt' : 'Puls'})</p><div class="mt-1.5">${rows}</div>${sum ? `<p class="mt-1.5 text-xs">${sum}</p>` : ''}${sub}</div>`;
 }
 function vzRide(e){ try { return vzTrace(e) + vzZones(e); } catch (er) { elog(er); return ''; } }
@@ -7080,7 +7082,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && vzSt.full)
    Z3 75–90 %, Z4 90–105 %, Z5 105–120 %, ab 120 % Z6 (rot). Farben angelehnt an die bekannte Workout-Darstellung aus Zwift
    (grau, blau, grün, gelb, orange, rot), als CSS-Variablen für Hell und Dunkel.
    Eine Zeichenfunktion für alle Stellen: wkSvg(x, {mode:'full'|'mini', h, T, ftp, act}). */
-const WK_Z = [[0, 55, 'Z1'], [55, 75, 'Z2'], [75, 90, 'Z3'], [90, 105, 'Z4'], [105, 120, 'Z5'], [120, 1e9, 'Z6']];
+const WK_Z = [[0, 56, 'Z1'], [56, 76, 'Z2'], [76, 91, 'Z3'], [91, 106, 'Z4'], [106, 121, 'Z5'], [121, 1e9, 'Z6']]; /* Paket C: Grenzen wie ZN */
 const wkZi = pc => { const k = WK_Z.findIndex(z => pc < z[1]); return k < 0 ? 5 : k; };
 const wkL = (de, en) => (typeof lang === 'function' && lang() === 'en' ? en : de);
 /* Abschnitt: d = Dauer in Sekunden, a/b = % FTP am Anfang/Ende (gleich bei festen Blöcken), lo/hi = Zielbereich, k = Art */
@@ -13223,7 +13225,7 @@ function fuelCalc(p){
     <p class="mt-2 text-xs" style="color:var(--mute)">Richtwerte nach ${SRC.acsm} und ${SRC.jeuk}, berechnet mit deinem Gewicht und dem heutigen Plan. Individuelle Verträglichkeit geht vor.</p></div>${ev}`;
 }
 function wissenPage(p){
-  const ftp = p.ftp, Z = [['Z1', 'Aktive Erholung', '< 55 %', 0, 55], ['Z2', 'Grundlage', '56–75 %', 56, 75], ['Z3', 'Tempo', '76–90 %', 76, 90], ['Z4', 'Schwelle', '91–105 %', 91, 105], ['Z5', 'VO2max', '106–120 %', 106, 120], ['Z6', 'Anaerobe Kapazität', '121–150 %', 121, 150], ['Z7', 'Sprint, neuromuskulär', '> 150 %', 151, 0]];
+  const ftp = p.ftp, Z = [['Z1', 'Aktive Erholung', 'bis 55 %', 0, 55], ['Z2', 'Grundlage', '56–75 %', 56, 75], ['Z3', 'Tempo', '76–90 %', 76, 90], ['Sweet Spot', 'Knapp unter der Schwelle', '88–94 %', 88, 94], ['Z4', 'Schwelle', '91–105 %', 91, 105], ['Z5', 'VO2max', '106–120 %', 106, 120], ['Z6', 'Anaerobe Kapazität', '121–150 %', 121, 150], ['Z7', 'Sprint, neuromuskulär', '> 150 %', 151, 0]];
   const nav = [['w-calc', 'Verpflegungsrechner'], ['w-alltag', 'Ernährung im Alltag'], ['w-vor', 'Vor dem Training'], ['w-waehrend', 'Während der Fahrt'], ['w-nach', 'Nach dem Training'], ['w-supp', 'Supplemente'], ['w-energie', 'Energieverfügbarkeit'], ['w-sex', 'Frauen und Männer'], ['w-zeit', 'Wenig Zeit?'], ['w-train', 'Trainingsgrundlagen'], ['w-zonen', 'Zonen und Kennzahlen'], ['w-erh', 'Erholung und Schlaf'], ['w-race', 'Renntaktik'], ['w-src', 'Quellen']];
   return `<p class="text-sm" style="color:var(--mute)">Das Wichtigste aus Trainingslehre und Sporternährung, kurz erklärt. Der Schwerpunkt liegt auf Verpflegung, weil sie bei langen Ausfahrten oft über Erfolg oder Einbruch entscheidet.</p>
     <div class="flex flex-wrap gap-2">${nav.map(([id, l]) => `<button class="wnav" onclick="wGo('${ja(id)}')">${l}</button>`).join('')}</div>
@@ -13614,10 +13616,10 @@ function i18nDom(root){
 const GL = {
 de:[[/\bFTP\b/, 'FTP (Functional Threshold Power)', 'Die Leistung in Watt, die du etwa eine Stunde lang halten kannst. Alle Trainingsbereiche und Wattvorgaben richten sich danach.'],
  [/\bTSS\b/, 'TSS (Training Stress Score)', 'Maß für die Belastung einer Einheit aus Dauer und Intensität. Eine Stunde genau an deinem FTP ergibt 100 TSS, eine lockere Stunde etwa 40 bis 50.'],
- [/\bSweet Spot\b/, 'Sweet Spot', 'Intensität knapp unter der Schwelle, etwa 88 bis 94 % FTP. Bringt viel Trainingsreiz bei vertretbarer Ermüdung.'],
+ [/\bSweet Spot\b/, 'Sweet Spot', 'Sweet Spot: 88 bis 94 % deines FTP, knapp unter der Schwelle. Fordernd, kurze Sätze gehen noch. Bringt viel Trainingsreiz bei vertretbarer Ermüdung.'],
  [/\bVO2max\b/, 'VO2max', 'Maximale Sauerstoffaufnahme. VO2max-Intervalle (etwa 106 bis 120 % FTP, 3 bis 8 Minuten) heben deine Leistungsobergrenze an.'],
  [/\bSchwelle\b/, 'Schwelle', 'Der Bereich um deinen FTP, etwa 95 bis 105 %. Darüber steigt die Ermüdung schnell an.'],
- [/\bZ[1-5]\b|\bZone [1-5]\b/, 'Trainingszonen', 'Z1 sehr locker (unter 55 % FTP), Z2 Grundlage (56 bis 75 %), Z3 Tempo (76 bis 90 %), Z4 Schwelle (91 bis 105 %), Z5 VO2max (über 105 %).'],
+ [/\bZ[1-6]\b|\bZone [1-6]\b/, 'Trainingszonen', 'Z1 sehr locker (bis 55 % FTP), Z2 Grundlage (56 bis 75 %), Z3 Tempo (76 bis 90 %), Sweet Spot (88 bis 94 %), Z4 Schwelle (91 bis 105 %), Z5 VO2max (106 bis 120 %), Z6 anaerob und Sprint (über 120 %). Puls nach Coggan: Z2 69 bis 83 % des Schwellenpulses, Z4 95 bis 105 %.'],
  [/\bGrundlage(?:nausdauer)?\b/, 'Grundlage', 'Lockeres Ausdauertraining in Zone 2, bei dem du dich noch unterhalten kannst. Die Basis für alles andere.'],
  [/\bNP\b|\bNormalized Power\b/, 'NP (Normalized Power)', 'Gewichtete Durchschnittsleistung, die harte Phasen stärker zählt. Bildet die echte Belastung besser ab als der einfache Durchschnitt.'],
  [/\bCTL\b/, 'CTL (Fitness)', 'Durchschnittliche Tagesbelastung der letzten etwa 6 Wochen. Steigt, wenn du regelmäßig trainierst.'],
@@ -13643,10 +13645,10 @@ de:[[/\bFTP\b/, 'FTP (Functional Threshold Power)', 'Die Leistung in Watt, die d
  [/\bKohlenhydrat-Laden\b|\bKohlenhydrate laden\b/, 'Kohlenhydrat-Laden', 'In den 1 bis 2 Tagen vor einem langen Event 10 bis 12 g Kohlenhydrate pro kg essen, damit die Speicher voll sind.']],
 en:[[/\bFTP\b/, 'FTP (Functional Threshold Power)', 'The power in watts you can hold for about one hour. All training zones and power targets are based on it.'],
  [/\bTSS\b/, 'TSS (Training Stress Score)', 'Measures the load of a session from duration and intensity. One hour exactly at your FTP equals 100 TSS, an easy hour about 40 to 50.'],
- [/\bSweet Spot\b/i, 'Sweet Spot', 'Intensity just below threshold, about 88 to 94% of FTP. Lots of training stimulus with manageable fatigue.'],
+ [/\bSweet Spot\b/i, 'Sweet Spot', 'Sweet spot: 88 to 94% of your FTP, just below threshold. Demanding, short sentences are still possible. Lots of training stimulus with manageable fatigue.'],
  [/\bVO2max\b/, 'VO2max', 'Maximum oxygen uptake. VO2max intervals (about 106 to 120% of FTP, 3 to 8 minutes) raise your performance ceiling.'],
  [/\b[Tt]hreshold\b/, 'Threshold', 'The range around your FTP, about 95 to 105%. Above it, fatigue builds quickly.'],
- [/\bZ[1-5]\b|\bZone [1-5]\b/, 'Training zones', 'Z1 very easy (below 55% FTP), Z2 endurance (56 to 75%), Z3 tempo (76 to 90%), Z4 threshold (91 to 105%), Z5 VO2max (above 105%).'],
+ [/\bZ[1-6]\b|\bZone [1-6]\b/, 'Training zones', 'Z1 very easy (up to 55% FTP), Z2 endurance (56 to 75%), Z3 tempo (76 to 90%), sweet spot (88 to 94%), Z4 threshold (91 to 105%), Z5 VO2max (106 to 120%), Z6 anaerobic and sprint (above 120%). Heart rate after Coggan: Z2 69 to 83% of threshold heart rate, Z4 95 to 105%.'],
  [/\b[Ee]ndurance\b/, 'Endurance', 'Easy aerobic riding in zone 2 where you can still hold a conversation. The foundation for everything else.'],
  [/\bNP\b|\bNormalized Power\b/, 'NP (Normalized Power)', 'Weighted average power that counts hard efforts more. Reflects the real load better than the plain average.'],
  [/\bCTL\b/, 'CTL (fitness)', 'Average daily training load over roughly the last 6 weeks. Rises when you train consistently.'],

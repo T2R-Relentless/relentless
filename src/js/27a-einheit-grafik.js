@@ -6,7 +6,7 @@
    Z3 75–90 %, Z4 90–105 %, Z5 105–120 %, ab 120 % Z6 (rot). Farben angelehnt an die bekannte Workout-Darstellung aus Zwift
    (grau, blau, grün, gelb, orange, rot), als CSS-Variablen für Hell und Dunkel.
    Eine Zeichenfunktion für alle Stellen: wkSvg(x, {mode:'full'|'mini', h, T, ftp, act}). */
-const WK_Z = [[0, 55, 'Z1'], [55, 75, 'Z2'], [75, 90, 'Z3'], [90, 105, 'Z4'], [105, 120, 'Z5'], [120, 1e9, 'Z6']];
+const WK_Z = [[0, 56, 'Z1'], [56, 76, 'Z2'], [76, 91, 'Z3'], [91, 106, 'Z4'], [106, 121, 'Z5'], [121, 1e9, 'Z6']]; /* Paket C: Grenzen wie ZN */
 const wkZi = pc => { const k = WK_Z.findIndex(z => pc < z[1]); return k < 0 ? 5 : k; };
 const wkL = (de, en) => (typeof lang === 'function' && lang() === 'en' ? en : de);
 /* Abschnitt: d = Dauer in Sekunden, a/b = % FTP am Anfang/Ende (gleich bei festen Blöcken), lo/hi = Zielbereich, k = Art */

@@ -94,7 +94,7 @@ function hrHint(){
 }
 function hrSettings(){
   const e = hrMaxEst(), lt = lthrEst(), hm = hrMaxOf(), L = lthrOf();
-  const zr = L ? [['Z1', 'Erholung', 0, 55], ['Z2', 'Grundlage', 56, 75], ['Z3', 'Tempo', 76, 90], ['Z4', 'Schwelle', 91, 105], ['Z5', 'VO2max', 106, 120]].map(([z, n, a, b]) => { const r = hrRng(a, b); return [z, n, a ? `${r[0]}–${r[1]}` : `bis ${r[1]}`]; }) : null;
+  const zr = L ? [['Z1', 'Erholung', 0, 55], ['Z2', 'Grundlage', 56, 75], ['Z3', 'Tempo', 76, 90], ['Sweet Spot', 'knapp unter der Schwelle', 88, 94], ['Z4', 'Schwelle', 91, 105], ['Z5', 'VO2max', 106, 120]].map(([z, n, a, b]) => { const r = hrRng(a, b); return [z, n, a ? `${r[0]}–${r[1]}` : `bis ${r[1]}`]; }) : null;
   return fold('hr', 'Herzfrequenz und Leistungsmesser', `<p class="text-sm font-semibold">Maximale Herzfrequenz</p>${hrInp('hrMaxI', 'hrMax', hm, e ? String(e.v) : 'z. B. 185')}${e && e.v !== hm ? `<p class="mt-1 text-xs" style="color:var(--mute)">Höchster Wert in deinen Fahrten: ${e.v} (${fmt(e.r.day)}). <button class="exl" onclick="setHr('hrMax', ${ja(e.v)})">Übernehmen</button></p>` : ''}
     <p class="mt-4 text-sm font-semibold">Schwellenpuls</p>${hrInp('lthrI', 'lthr', L, lt ? String(lt.v) : '')}${lt && lt.v !== L ? `<p class="mt-1 text-xs" style="color:var(--mute)">${lt.src === '20' ? `Geschätzt aus deinem höchsten 20-Minuten-Puls (${lt.r.h20}, ${fmt(lt.r.day)}) × 0,95: ${lt.v}.` : `Grob geschätzt als 88 % der maximalen Herzfrequenz: ${lt.v}. Genauer wird es mit einer harten 20-Minuten-Fahrt mit Puls.`} <button class="exl" onclick="setHr('lthr', ${ja(lt.v)})">Übernehmen</button></p>` : ''}
     ${hrMsg ? `<p class="mt-2 text-sm" style="color:#c0392b">${esc(hrMsg)}</p>` : ''}
