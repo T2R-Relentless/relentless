@@ -60,7 +60,7 @@ en:[[/\bFTP\b/, 'FTP (Functional Threshold Power)', 'The power in watts you can 
  [/\b[Cc]arb loading\b/, 'Carb loading', 'Eating 10 to 12 g of carbohydrates per kg in the 1 to 2 days before a long event so your stores are full.']]};
 function glDom(root){
   if (!root || S.gloss === false) return; const L = GL[lang()], seen = new Set();
-  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n => { const p = n.parentElement; return !p || p.closest('button,a,select,option,label,input,textarea,svg,script,style,.gl,[data-noi18n],.gltip') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }});
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n => { const p = n.parentElement; return !p || p.closest('button,a,select,option,label,input,textarea,svg,script,style,.gl,[data-noi18n],[data-nogl],.gltip') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }});
   const ns = []; while (w.nextNode()) ns.push(w.currentNode);
   ns.forEach(n => {
     let best = null; L.forEach((g, i) => { if (seen.has(i)) return; const m = g[0].exec(n.nodeValue); if (m && (!best || m.index < best.m.index)) best = {m, i}; });

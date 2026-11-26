@@ -8,7 +8,8 @@ const GM_HOSTS = ['host:Garmin_f_r_Relentless', 'host:garmin'];
 let gmBusy = false, gmMsg = null, gmProg = '', gmNews = [];
 const gmMode = () => (S.gm && (S.gm.mode === 'mcp' || S.gm.mode === 'web')) ? S.gm.mode : null;
 /* Web-App (z. B. auf Netlify): Garmin über den eigenen Vermittler /api/garmin (Netlify Function) erreichen.
-   Der Schlüssel liegt nur im Browser dieses Geräts (nicht im Plan, nicht in Sicherungen) und geht nur an diese Adresse. */
+   Der Schlüssel liegt nur im Browser dieses Geräts (nicht im Plan; in der Sicherungsdatei nur, wenn S.bkKey gewählt ist) und
+   geht bei jedem Abruf nur an diese Adresse (/api/garmin), die ihn an Garmin durchreicht, ohne ihn zu speichern. */
 const GM_KEY = 'relentless.garmin.key';
 let gmWebOk = null, gmKeyIn = '';
 const gmInClaude = () => !!(window.claude && window.claude.use);
@@ -132,6 +133,21 @@ async function gmConnect(target){
   if (gmMsg && !gmMsg.ok) { S.gm = {...S.gm, mode:null}; save(); render(); }
 }
 function gmOff(){ gmKeySet(''); S.gm = {}; gmMsg = null; save(); render(); }
+/* F36: Verbindung trennen und alles löschen, was die App für Garmin im Gerät speichert: Schlüssel, Eingabe, Verbindungsstand
+   (S.gm mit Abgleichstand und bekannten Aktivitäten) und die Wahl „Schlüssel in die Sicherungsdatei“. Übernommene Fahrten
+   bleiben (Trainingsdaten). Erst nach Rückfrage. */
+let gmWipeAsk = false;
+const gmHasData = () => !!(gmKey() || gmMode() || (S.gm && Object.keys(S.gm).length) || S.bkKey);
+function gmWipe(){ const md = gmMode(); gmKeySet(''); gmKeyIn = ''; S.gm = {}; S.bkKey = false; gmWipeAsk = false; gmBusy = false; gmProg = '';
+  gmMsg = {ok:true, t:md === 'mcp' ? 'Verbindung getrennt. Den Schlüssel in der Claude-Erweiterung löschst du unter Claude → Einstellungen → Erweiterungen.' : 'Verbindung getrennt, Schlüssel auf diesem Gerät gelöscht. Widerrufe ihn zusätzlich bei Garmin.'};
+  try { track('garmin-geloescht'); } catch (e) { elog(e); } save(); render(); }
+function gmWipeUi(){
+  if (!gmHasData()) return '';
+  if (!gmWipeAsk) return `<button id="gmWipeB" class="ghost mt-3 !w-auto text-sm" style="min-height:44px;border-color:#c0392b;color:#c0392b" onclick="gmWipeAsk=true;render()">Verbindung trennen und Schlüssel löschen</button>`;
+  return `<div class="mt-3 p-3 text-sm" role="alertdialog" aria-label="Garmin-Daten löschen" style="border:1px solid #c0392b"><p class="font-semibold">Garmin-Verbindung trennen und Schlüssel löschen?</p>
+    <ul class="mt-1 space-y-1 text-sm" style="list-style:disc;padding-left:1.1rem;color:var(--mute)"><li>Gelöscht werden der Schlüssel, der Abgleichstand und die Wahl, den Schlüssel in Sicherungsdateien aufzunehmen.</li><li>Deine übernommenen Fahrten bleiben erhalten.</li><li>Sicher wertlos wird der Schlüssel erst, wenn du ihn bei Garmin widerrufst: <a class="underline" target="_blank" rel="noopener" href="https://connect.garmin.com/app/settings/personalApiToken">connect.garmin.com → Einstellungen → Persönlicher API-Schlüssel</a>.</li><li>Früher gespeicherte Sicherungsdateien mit Schlüssel enthalten ihn weiter.</li>${gmInClaude() ? '<li>In der Claude-Desktop-App liegt der Schlüssel in der Erweiterung „Garmin für Relentless“. Lösche ihn dort.</li>' : ''}</ul>
+    <div class="mt-3 flex flex-wrap gap-2"><button class="btn !w-auto" style="min-height:44px;background:#c0392b;border-color:#c0392b;color:#fff!important" onclick="gmWipe()">Ja, löschen</button><button class="ghost" style="min-height:44px" onclick="gmWipeAsk=false;render()">Abbrechen</button></div></div>`;
+}
 function gmHelp(code){
   if (!gmInClaude()) {
     if (code === 'auth' || code === 'nokey') return 'Erstelle unter connect.garmin.com → Einstellungen → Persönlicher API-Schlüssel einen neuen Schlüssel und füge ihn hier ein.';
@@ -146,6 +162,7 @@ function gmHelp(code){
   return '';
 }
 function gmCard(target){
+  gmNorm();
   /* Außerhalb von Claude (z. B. als Web-App auf dem iPhone) gibt es keine Garmin-Verbindung: Garmin sperrt Webseiten */
   if (!gmInClaude() && !gmMode()) {
     if (gmWebOk === null) gmProbe();
@@ -157,14 +174,14 @@ function gmCard(target){
       <li>Bei Garmin einen persönlichen API-Schlüssel erstellen: <a class="underline" target="_blank" rel="noopener" href="https://connect.garmin.com/app/settings/personalApiToken">connect.garmin.com → Einstellungen → Persönlicher API-Schlüssel</a>, Gültigkeit am besten 1 Jahr.</li>
       <li>Den Schlüssel kopieren, hier einfügen und auf „Verbinden“ tippen.</li></ol>
     <input type="password" autocomplete="off" spellcheck="false" class="inp mt-2" placeholder="Garmin-API-Schlüssel" aria-label="Garmin-API-Schlüssel" oninput="gmKeyIn=this.value">
-    <p class="mt-2 text-xs" style="color:var(--mute)">Der Schlüssel bleibt nur auf diesem Gerät und geht nur an Garmin, über den Server dieser App. Er landet nicht in Sicherungen und nicht im Plan. Die App liest nur deine Aktivitätsliste und die Originaldateien, sie schreibt nichts in dein Garmin-Konto.</p>
-    <button class="btn mt-2 !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmConnect('${ja(target)}')">${gmBusy ? 'Verbinde …' : 'Verbinden'}</button>${busy}${msg}</div>`;
+    <p class="mt-2 text-sm" style="color:var(--mute)">Der Schlüssel wird nur auf diesem Gerät gespeichert. Bei jedem Abruf schickt die App ihn verschlüsselt an den Vermittler dieser App bei Netlify (/api/garmin). Er liest damit deine Aktivitäten bei Garmin und gibt sie direkt an dich weiter. Der Vermittler speichert weder Schlüssel noch Fahrten. In eine Sicherungsdatei kommt der Schlüssel nur, wenn du das unter Sicherung ausdrücklich wählst. Die App liest nur deine Aktivitätsliste und die Originaldateien, sie schreibt nichts in dein Garmin-Konto.</p>
+    <button class="btn mt-2 !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmConnect('${ja(target)}')">${gmBusy ? 'Verbinde …' : 'Verbinden'}</button>${busy}${msg}${gmWipeUi()}</div>`;
   }
   const md = gmMode(), g = S.gm || {}, msg = gmMsg ? `<p class="mt-2 text-sm" style="color:${esc(gmMsg.ok ? 'var(--ok)' : '#c0392b')}">${gmMsg.ok ? '✓' : icWarn()} ${esc(gmMsg.t)}</p>${!gmMsg.ok && gmHelp(gmMsg.code) ? `<p class="mt-1 text-xs" style="color:var(--mute)">${gmHelp(gmMsg.code)}</p>` : ''}` : '';
   const busy = gmBusy ? `<p class="mt-2 text-sm" style="color:var(--mute)">${esc(gmProg)}</p>` : '';
   if (md) return `<div class="mt-3 p-3" style="border:1px solid var(--line);border-left:3px solid var(--teal)"><p class="text-sm font-semibold">Garmin Connect verbunden</p>
     <p class="mt-1 text-xs" style="color:var(--mute)">${g.last ? `Zuletzt abgeglichen: ${fmt(lstr(new Date(g.last)))}, ${new Date(g.last).toTimeString().slice(0, 5)} Uhr. ` : ''}Neue Radfahrten werden beim Öffnen der App${md === 'mcp' ? ' in der Claude-Desktop-App' : ''} automatisch übernommen und ${target === 'hist' ? 'für die Auswertung genutzt' : 'der Einheit am selben Tag zugeordnet und bewertet'}.</p>
-    <div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmSync('${ja(target)}')">${gmBusy ? 'Gleicht ab …' : 'Jetzt abgleichen'}</button><button class="ghost !py-2 text-sm" onclick="gmOff()">Trennen</button></div>${busy}${msg}</div>`;
+    <div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmSync('${ja(target)}')">${gmBusy ? 'Gleicht ab …' : 'Jetzt abgleichen'}</button></div>${busy}${msg}${md === 'web' ? '<p class="mt-2 text-sm" style="color:var(--mute)">Dein Schlüssel liegt nur auf diesem Gerät. Bei jedem Abruf geht er über den Vermittler dieser App (/api/garmin) an Garmin, gespeichert wird er dort nicht.</p>' : ''}${gmWipeUi()}</div>`;
   return `<div class="mt-3 p-3" style="border:1px solid var(--line)"><p class="text-sm font-semibold">Fahrten direkt aus Garmin Connect holen</p>
     <p class="mt-1 text-xs" style="color:var(--mute)">Die App holt deine Radfahrten mit Watt, Puls und Höhenprofil selbst aus Garmin Connect. Garmin sperrt Zugriffe aus Webseiten, deshalb läuft die Verbindung über eine kleine Erweiterung in der Claude-Desktop-App. Einmalig einrichten:</p>
     <ol class="mt-2 space-y-1 text-xs" style="list-style:decimal;padding-left:1.2rem;color:var(--mute)">
@@ -175,7 +192,10 @@ function gmCard(target){
     <button class="btn mt-2 !w-auto !py-2 text-sm" ${gmBusy ? 'disabled' : ''} onclick="gmConnect('${ja(target)}')">Verbinden</button>${busy}${msg}</div>`;
 }
 /* Beim Öffnen: neue Fahrten still nachholen (höchstens alle 3 Stunden) */
+/* F36: Nach dem Laden oder Wiederherstellen ohne Schlüssel im Gerät: getrennt anzeigen, Schlüssel nicht in Sicherungen vormerken */
+function gmNorm(){ try { if (gmInClaude() || gmKey()) return; let ch = false; if (S.gm && S.gm.mode === 'web') { S.gm = {}; ch = true; } if (S.bkKey) { S.bkKey = false; ch = true; } if (ch) save(); } catch (e) { elog(e); } }
 function gmAuto(force){
+  gmNorm();
   try { if (S.gm && S.gm.mode && !['mcp', 'web'].includes(S.gm.mode)) S.gm = {}; if (S.gm && S.gm.mode === 'web' && (gmInClaude() || !gmKey())) S.gm = {}; const g = S.gm || {}; if (!g.mode || !g.ok || gmBusy) return; if (g.last && Date.now() - new Date(g.last) < (force ? 10 : 20) * 60e3) return;
     setTimeout(() => gmSync(S.p && S.step === 0 ? 'man' : 'hist', true), force ? 300 : 1500); } catch (e) { elog(e); }
 }
@@ -252,13 +272,13 @@ function gtModal(){
     li(3, `<b>Kopieren:</b> Den angezeigten Schlüssel vollständig kopieren.`),
     gmInClaude()
       ? li(4, `<b>Erweiterung einrichten:</b> Die Datei <b data-noi18n>garmin-relentless.mcpb</b> aus dem Chat doppelklicken. Claude installiert „Garmin für Relentless“ und fragt einmalig nach dem Schlüssel. Danach hier auf „Verbinden“ tippen.`)
-      : li(4, `<b>Hier einfügen und verbinden:</b> Den Schlüssel unten einfügen und auf „Verbinden“ tippen. Er bleibt nur auf diesem Gerät.`)
+      : li(4, `<b>Hier einfügen und verbinden:</b> Den Schlüssel unten einfügen und auf „Verbinden“ tippen. Gespeichert wird er nur auf diesem Gerät, bei jedem Abruf geht er über den Vermittler dieser App an Garmin.`)
   ].join('');
   const input = gmInClaude() ? '' : `<input type="password" autocomplete="off" spellcheck="false" class="inp mt-3" placeholder="Garmin-API-Schlüssel" aria-label="Garmin-API-Schlüssel" oninput="gmKeyIn=this.value">`;
   return `<div class="exov" onclick="if(event.target===this)gtClose()" role="dialog" aria-modal="true" aria-label="Garmin-API-Schlüssel einrichten"><div class="exbox" style="max-width:460px">
     <p class="eyebrow mb-2">In 4 Schritten</p><h3 class="hd text-2xl font-semibold">Garmin verbinden</h3>
     <ol class="mt-3 space-y-3" style="list-style:none;padding:0">${steps}</ol>${input}
-    <p class="mt-3 text-xs" style="color:var(--mute)">Die App liest nur deine Aktivitätsliste und die Originaldateien. Sie schreibt nichts in dein Garmin-Konto. Du kannst die Verbindung jederzeit unter Fahrten trennen und den Schlüssel bei Garmin widerrufen.</p>
+    <p class="mt-3 text-xs" style="color:var(--mute)">Die App liest nur deine Aktivitätsliste und die Originaldateien. Sie schreibt nichts in dein Garmin-Konto. Du kannst die Verbindung jederzeit unter Einstellungen → Garmin Connect trennen, den Schlüssel dort löschen und ihn bei Garmin widerrufen.</p>
     <div class="mt-4 flex flex-wrap gap-2"><button class="btn !w-auto" ${gmBusy ? 'disabled' : ''} onclick="gtConnect()">${gmBusy ? 'Verbinde …' : 'Verbinden'}</button><button class="ghost" onclick="gtClose()">Später</button></div>${busy}${msg}${never}</div></div>`;
 }
 
@@ -268,7 +288,12 @@ try { window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); 
 async function instGo(){ if (!instEvt) return; track('app-installieren-getippt'); const e = instEvt; instEvt = null; try { await e.prompt(); } catch (er) { elog(er); } render(); }
 const INST_KEY = 'relentless.inst.hide';
 try { if (localStorage.getItem(INST_KEY) === '1') instHide = true; } catch (e) { elog(e); }
-let instHelp = false;
+let instHelp = false, instForce = false;
+/* F36: Hinweis erst ab dem 3. Besuch (ein Besuch = eine Sitzung des Browsers), nach „×“ nie wieder (INST_KEY), und nicht
+   mehr schwebend über der Seite, sondern im Seitenfluss oben: So liegt er nie über einem Hauptknopf. */
+const INST_VIS = 'relentless.inst.visits';
+let instVisits = 0;
+try { instVisits = +localStorage.getItem(INST_VIS) || 0; if (!sessionStorage.getItem(INST_VIS)) { instVisits++; localStorage.setItem(INST_VIS, String(instVisits)); sessionStorage.setItem(INST_VIS, '1'); } } catch (e) { elog(e); }
 const instOs = () => { try { const u = navigator.userAgent || ''; return /android/i.test(u) ? 'android' : (/iphone|ipad|ipod/i.test(u) || (/macintosh/i.test(u) && navigator.maxTouchPoints > 1)) ? 'ios' : ''; } catch (e) { elog(e); return ''; } };
 const instAlone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { elog(e); return false; } };
 const instWeb = () => { try { return /^https?:$/.test(location.protocol) && !(window.claude && window.claude.use) && !/claude|anthropic/.test(location.hostname); } catch (e) { elog(e); return false; } };
@@ -284,9 +309,10 @@ function instSteps(){
 const instBanner = () => {
   if (instHide || instAlone()) return '';
   if (!S.p || S.step) return ''; /* nicht während der Planerstellung: der Hinweis lag dort über Karten und Feldern */
+  if (instVisits < 3 && !instForce) return '';
   if (!instEvt && !(instWeb() && instOs())) return '';
   const help = instHelp && !instEvt ? `<ol style="margin:10px 0 2px;padding-left:20px;color:#cfdaf0;font-size:13px;line-height:1.45">${instSteps()}</ol>` : '';
-  return `<div class="text-sm" style="background:#071747;color:#fff;padding:10px 12px 10px 16px;position:fixed;left:12px;right:12px;bottom:calc(84px + var(--nlb, env(safe-area-inset-bottom,0px)));z-index:60;box-shadow:0 10px 30px rgba(7,23,71,.35);max-width:560px;margin:0 auto"><div class="flex items-center gap-2"><span class="min-w-0 flex-1 font-semibold">Relentless als App installieren</span><button class="text-sm font-semibold" style="background:#00c2b2;color:#071747;padding:8px 14px" onclick="instTap()">${instEvt ? 'Installieren' : instHelp ? 'Schließen' : 'So geht’s'}</button><button style="color:#cfdaf0;min-width:44px;min-height:44px;margin:-6px -8px -6px 0;display:flex;align-items:center;justify-content:center" aria-label="Hinweis ausblenden" onclick="instClose()">${ic('close', 18)}</button></div>${help}</div>`;
+  return `<div class="text-sm" role="region" aria-label="App installieren" style="background:#071747;color:#fff;padding:6px 12px 6px 16px"><div class="flex items-center gap-2"><span class="min-w-0 flex-1 font-semibold">Relentless als App installieren</span><button class="text-sm font-semibold" style="background:#00c2b2;color:#071747;padding:8px 14px;min-height:44px" onclick="instTap()">${instEvt ? 'Installieren' : instHelp ? 'Schließen' : 'So geht’s'}</button><button style="color:#cfdaf0;min-width:44px;min-height:44px;margin:-6px -8px -6px 0;display:flex;align-items:center;justify-content:center" aria-label="Hinweis ausblenden" onclick="instClose()">${ic('close', 18)}</button></div>${help}</div>`;
 };
 const instBannerOld = () => instEvt && !instHide ? `<div class="flex items-center gap-2 text-sm" style="background:#071747;color:#fff;padding:10px 12px 10px 16px;position:fixed;left:12px;right:12px;bottom:calc(84px + var(--nlb, env(safe-area-inset-bottom,0px)));z-index:60;box-shadow:0 10px 30px rgba(7,23,71,.35);max-width:560px;margin:0 auto"><span class="min-w-0 flex-1 font-semibold">Relentless als App installieren</span><button class="text-sm font-semibold" style="background:#00c2b2;color:#071747;padding:8px 14px" onclick="instGo()">Installieren</button><button class="text-sm" style="min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;color:#cfdaf0;padding:8px 6px" aria-label="Hinweis schließen" onclick="instHide=true;render()">${icX()}</button></div>` : '';
 
