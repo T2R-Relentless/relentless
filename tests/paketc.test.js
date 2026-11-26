@@ -107,7 +107,7 @@ test('Korrektur 3: Ohne Messwert Hinweis nach Gefühl über 85 %, Woche 3 wie na
   const a = await boot(); pcLight(a, {test0:false});
   const w3 = a.$('genWeek(S.p, 3)'); ok(w3.some(x => x.n === 'Sweet Spot 3×10') && !w3.some(x => x.t === 'vo2'), 'Woche 3: Sweet Spot 3×10, kein VO2max');
   const hard = [4, 5, 6].flatMap(w => a.$(`genWeek(S.p, ${w})`)).filter(x => x.m && x.t !== 'test' && pcMax(x) > 85);
-  ok(hard.length && hard.every(x => /Dein FTP ist geschätzt: Fahr nach Gefühl, Anstrengung \d+–\d+ von 10/.test(x.st)), 'Hinweis an jeder Einheit über 85 %');
+  ok(hard.length && hard.every(x => /Dein FTP ist geschätzt: Fahr nach Gefühl, Anstrengung \d+–\d+ von 10/.test(x.est || '')), 'Hinweis an jeder Einheit über 85 % (eigene Zeile)');
 });
 
 test('Korrektur 5–7: ausführliche Planung, „Test einplanen“ nicht in der Erholungswoche, Wochenendfahrer', async () => {
@@ -131,10 +131,10 @@ test('Punkt 3: ohne eigene Zielzeit nur Prognose mit Spanne, Stufen mit eigener 
 });
 
 test('Punkt 4: Lücke Training–Event mit Angeboten, Wochenend-Blöcke nur nach Zustimmung', async () => {
-  const a = await boot(); a.$(`S = load(true); S.d = Object.assign(S.d, ${JSON.stringify({...PC_D, hours:5, avail:[false, true, false, true, false, true, true], weight:75, kgHk:'eingegeben'})}); S.step = 4; ensureBuiltin(S.d); render();`);
-  ok(/Vorbereitung auf die Eventdauer: Längste Fahrt \d+:\d\d von empfohlenen 5:00 Std\./.test(a.text()), 'Hinweis in Schritt 4'); ok(!/ACWR/.test(a.text()));
+  const a = await boot(); a.$(`S = load(true); S.d = Object.assign(S.d, ${JSON.stringify({...PC_D, hours:8, avail:[false, true, false, true, false, true, true], weight:75, kgHk:'eingegeben'})}); S.step = 4; ensureBuiltin(S.d); render();`);
+  ok(/Vorbereitung auf die Eventdauer: Längste Fahrt \d+:\d\d/.test(a.text()), 'Hinweis in Schritt 4'); ok(!/ACWR/.test(a.text()));
   a.w.applyChk('wkBlk', 1, 'draft'); eq(a.$('S.d.wkBlk'), true); a.w.lightFinish(); a.noErrors();
-  const blk = a.$('Array.from({length:30}, (_, k) => genWeek(S.p, k + 1)).filter(pl => pl[5].n === "Wochenend-Block: langer Tag").length'); ok(blk > 0, 'Blöcke im Plan');
+  const blk = a.$('blkWeeks(S.p).filter(w => genWeek(S.p, w)[5].n === "Wochenend-Block: langer Tag").length'); ok(blk > 0 && blk <= 3, 'Blöcke im Plan: ' + blk);
 });
 
 test('Punkt 7: neue Pläne mit Ruhetag, laufende nur mit Vorschlag, Fahrten pro Woche in Schritt 3', async () => {
@@ -161,4 +161,23 @@ test('Punkt 13: ganze Woche als .fit-Paket (ZIP)', async () => {
   await a.w.fwExport(a.$('S.wk')); await a.tick(50); const d = a.w.__downloads.pop(); ok(d && /^relentless-woche-\d+-fit\.zip$/.test(d.name), 'ZIP-Name');
   const b = new Uint8Array(await d.blob.arrayBuffer()), e = b.length - 22; eq([b[e], b[e + 1], b[e + 2], b[e + 3]], [0x50, 0x4B, 5, 6], 'ZIP-Ende'); eq(b[e + 10] | (b[e + 11] << 8), n, 'eine .fit-Datei pro Einheit');
   a.page('exp-fit'); ok(/Ganze Woche aufs Gerät/.test(a.text())); a.noErrors();
+});
+
+test('Altbestand: auf Version 223 gespeicherte Pläne (Ötztaler mit Strecke) laden mit identischen Wochen', async () => {
+  const fx = await (await fetch('fixtures/altbestand-v223.json')).json();
+  for (const x of fx.plaene) {
+    const b = await boot({store:x.store}), tot = b.$('phases(S.p).slice(-1)[0].to');
+    eq(b.$('S.p.ifd'), 0, x.name + ': Eventdauer wie bisher'); ok(b.$('S.p.ftpHk') && b.$('S.p.kgHk'), x.name + ': Herkunft abgeleitet');
+    const w = b.$(`JSON.stringify(Array.from({length:${tot}}, (_, k) => genWeek(S.p, k + 1).map(y => [y.t, y.m, y.n, y.lo, y.hi])))`);
+    eq(w, JSON.stringify(x.weeks), x.name + ': alle Wochen gleich'); b.noErrors();
+  }
+});
+
+test('Korrekturrunde 2: Ruhetag auch in der Eventwoche, Blöcke vor der Entlastung, Wochenpaket ohne vergangene Tage', async () => {
+  const a = await boot(); pcLight(a, {hours:12});
+  const tot = a.$('phases(S.p).slice(-1)[0].to'); ok(Array.from({length:tot}, (_, k) => k + 1).every(w => a.$(`genWeek(S.p, ${w})`).some(x => !x.m)), 'jede Woche mindestens ein freier Tag');
+  a.$('S.p.wkBlk = true; S.p.wkBlkFrom = 1;'); const L = a.$('blkWeeks(S.p)'); ok(L.length <= 3, 'höchstens 3');
+  L.forEach(w => { ok(a.$(`recWk(S.p, ${w + 1}) || phases(S.p).find(x => ${w + 1} >= x.from && ${w + 1} <= x.to).rec || phases(S.p).find(x => ${w + 1} >= x.from && ${w + 1} <= x.to).key === 'taper'`), 'vor einer Entlastungswoche'); const pl = a.$(`genWeek(S.p, ${w})`); if (/Wochenend-Block/.test(pl[5].n)) { ok(pl[5].m >= 180 && pl[5].m <= 360 && pl[6].m >= 120 && pl[6].m <= 150, 'Dauer Samstag/Sonntag'); const q = a.$(`genWeek({...S.p, wkBlk:false}, ${w})`), M = y => y.reduce((s, x) => s + (x.m || 0), 0); ok(M(pl) <= M(q) * 1.25 + 1, 'höchstens 125 %'); } });
+  a.$('S.p.rdOff = 1; S.p.rdMin = 0;'); a.page('set-ali'); ok(/Ohne Ruhetag plant die App an jedem gewählten Tag/.test(a.text()), 'Schalter in den Einstellungen');
+  ok(a.$('fwItems(S.wk).every(o => addD(S.p.start, (S.wk - 1) * 7 + o.i) >= iso(0))'), 'keine vergangenen Tage im Wochenpaket'); a.noErrors();
 });

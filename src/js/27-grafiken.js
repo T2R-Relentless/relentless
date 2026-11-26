@@ -120,14 +120,16 @@ function vzZones(e){
   let tz = useP ? vzTargetZone(e) : null; if (!useP && e.x && ['base', 'long', 'rec', 'com'].includes(e.x.t)) tz = e.x.t === 'rec' ? 0 : 1;
   const rows = Z.map((z, k) => { const v = arr[k], pc = tot ? v / tot * 100 : 0, on = k === tz; return `<div class="vz-zr${esc(on ? ' on' : '')}"><span class="vz-zl"><b>${z[2]}</b> ${z[3]}</span><span class="vz-zb"><i style="width:${esc(mx ? Math.max(v ? 1.5 : 0, v / mx * 100) : 0)}%;background:${esc(z[4])}"></i></span><span class="vz-zv">${pc >= 1 ? Math.round(pc) + ' %' : v ? '<1 %' : '–'}</span></div>`; }).join('');
   let sum = '';
-  if (tz != null && tz >= 0) {
+  /* Paket C: Pulszonen aus der maximalen Herzfrequenz sind nur grob, darum kein Urteil */
+  if (!useP && e.zhk !== 'lthr') sum = 'Mit deinem Schwellenpuls wird die Auswertung genauer.';
+  else if (tz != null && tz >= 0) {
     const pin = tot ? arr[tz] / tot * 100 : 0, z = Z[tz];
     if (e.iv && e.iv.length && useP) { const plan = e.iv.length * (e.iv[0].d || 0), got = arr.slice(tz).reduce((s, v) => s + v, 0); sum = plan ? `Ziel: ${Math.round(plan / 60)} Min. in ${z[2]} ${z[3]} oder höher. Gefahren: ${Math.round(got / 60)} Min.` : ''; }
     else { const easy = tz <= 1, below = arr.slice(0, tz).reduce((s, v) => s + v, 0) / Math.max(1, tot) * 100, above = arr.slice(tz + 1).reduce((s, v) => s + v, 0) / Math.max(1, tot) * 100;
       sum = `Ziel ${z[2]} ${z[3]}: ${Math.round(pin)} % der Fahrzeit dort` + (easy ? (above >= 15 ? `, ${Math.round(above)} % darüber. Für eine lockere Einheit war das zu viel Zeit in höheren Zonen.` : pin + below >= 75 ? '. Sauber locker gefahren.' : '.') : `${below >= 40 ? `, ${Math.round(below)} % darunter` : ''}.`); }
   }
   const sub = useP && e.zh && e.zh.some(Boolean) ? (() => { const Zh = e.zhk === 'lthr' ? VZ_ZH_L : VZ_ZH_M, th = e.zh.reduce((s, v) => s + v, 0); return `<p class="mt-2 text-xs" style="color:var(--mute)">${e.zhk === 'lthr' ? 'Puls-Zonen' : 'Puls-Zonen (grob, aus der maximalen Herzfrequenz)'}</p><div class="vz-stk">${e.zh.map((v, k) => v ? `<i style="width:${esc(v / th * 100)}%;background:${esc(Zh[k][4])}" title="${esc(Zh[k][2])} ${Math.round(v / th * 100)} %"></i>` : '').join('')}</div><div class="vz-stl">${Zh.map((z, k) => e.zh[k] / th >= .08 ? `<span>${z[2]} ${Math.round(e.zh[k] / th * 100)} %</span>` : '').join('')}</div>`; })() : '';
-  return `<div class="mt-4"><p class="text-xs font-semibold" style="color:var(--mute)">Zeit in Zonen (${useP ? 'Watt' : 'Puls'})</p><div class="mt-1.5">${rows}</div>${sum ? `<p class="mt-1.5 text-xs">${sum}</p>` : ''}${sub}</div>`;
+  return `<div class="mt-4"><p class="text-xs font-semibold" style="color:var(--mute)">Zeit in Zonen (${useP ? 'Watt' : e.zhk === 'lthr' ? 'Puls' : 'Puls, grob aus der maximalen Herzfrequenz'})</p><div class="mt-1.5">${rows}</div>${sum ? `<p class="mt-1.5 text-xs">${sum}</p>` : ''}${sub}</div>`;
 }
 function vzRide(e){ try { return vzTrace(e) + vzZones(e); } catch (er) { elog(er); return ''; } }
 

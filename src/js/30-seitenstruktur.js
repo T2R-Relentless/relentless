@@ -105,7 +105,8 @@ function zxItems(kind, range){
 let fwMsg = null, fwW = null;
 function fwItems(w){
   const p = S.p; if (!p) return []; const cur = w === S.wk && S.plan, pl = cur ? S.plan : genWeek(p, w), out = [];
-  pl.forEach((x, i) => { if (!x || !(x.m > 0) || x.t === 'rest' || x.t === 'race' || /^Eventtag/.test(x.n || '') || (cur && S.done && S.done[i])) return;
+  const day = i => addD(p.start, (w - 1) * 7 + i), end = endOf(p);
+  pl.forEach((x, i) => { if (!x || !(x.m > 0) || x.t === 'rest' || x.t === 'race' || /^Eventtag/.test(x.n || '') || (cur && S.done && S.done[i]) || day(i) < iso(0) || day(i) > end) return; /* keine vergangenen Tage, nichts nach dem Planende */
     if (x.parts) x.parts.forEach((q, k) => out.push({i, k, x, label:(q.lbl === 'Hinweg' ? 'Hin ' : 'Rueck ') + x.n})); else out.push({i, k:-1, x, label:x.n}); });
   return out;
 }
@@ -119,7 +120,7 @@ async function fwExport(w){
 }
 function fwBtn(w){
   if (!S.p) return ''; const n = fwItems(w).length; if (!n) return '';
-  return `<div><button class="ghost w-full text-sm" style="min-height:44px" onclick="fwExport(${ja(w)})">Ganze Woche als .fit-Paket (${n} ${n === 1 ? 'Workout' : 'Workouts'})</button>${fwMsg && fwMsg.w === w ? `<p class="mt-1 text-sm" style="color:${esc(fwMsg.err ? '#c0392b' : 'var(--ok)')}">${fwMsg.err ? icWarn() : '✓'} ${esc(fwMsg.t)}</p>` : ''}</div>`;
+  return `<div class="mt-3"><button class="ghost w-full text-sm" style="min-height:44px" onclick="fwExport(${ja(w)})">Ganze Woche als .fit-Paket (${n} ${n === 1 ? 'Workout' : 'Workouts'})</button>${fwMsg && fwMsg.w === w ? `<p class="mt-1 text-sm" style="color:${esc(fwMsg.err ? '#c0392b' : 'var(--ok)')}">${fwMsg.err ? icWarn() : '✓'} ${esc(fwMsg.t)}</p>` : ''}</div>`;
 }
 function fwCard(){
   if (!S.p) return ''; const w = S.wk || 1, tot = phases(S.p).slice(-1)[0].to, w2 = Math.min(tot, w + 1);
@@ -255,7 +256,7 @@ function iaSetParts(){
 }
 const SET_PAGES = {
   'set-lang':() => { const x = iaSetParts(); return iaNoHead(x.lang || '') + iaNoHead(x.theme || '') + elogUi(); },
-  'set-ali':() => { const x = iaSetParts(); return iaNoHead(x.ali || '') + tbCard() + vacCard() + (x.shift || ''); },
+  'set-ali':() => { const x = iaSetParts(); return iaNoHead(x.ali || '') + rdCard() + tbCard() + vacCard() + (x.shift || ''); },
   'set-hr':() => iaNoHead(iaSetParts().hr || ''),
   'set-wf':() => wfPage() + cmpUi(),
   'set-age':() => agPage(),

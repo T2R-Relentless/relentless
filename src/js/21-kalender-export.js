@@ -10,7 +10,7 @@ function calItems(scope, raw){
       const d = icsDate(p, w, i); if (d < today || (p.startDate && d < p.startDate)) return;
       const ext = [sm[i] ? `Kraft ${sm[i].m} Min.` : '', mb[i] ? `${mb[i].n} ${mb[i].m} Min.` : ''].filter(Boolean), dur = (x.m || 0) || ((sm[i] ? sm[i].m : 0) + (mb[i] ? mb[i].m : 0));
       if (!dur) return;
-      const T = t => raw ? String(t || '') : trTxt(String(t || '')).replace(/<[^>]+>/g, ''), st = x.parts ? x.parts.map(q => T(q.lbl) + ': ' + T(q.st)).join(' ') : T(x.st);
+      const T = t => raw ? String(t || '') : trTxt(String(t || '')).replace(/<[^>]+>/g, ''), st = x.parts ? x.parts.map(q => T(q.lbl) + ': ' + T(q.st)).join(' ') : T(x.st) + (x.est ? ' ' + T(x.est) : '');
       const sum = x.m ? `${T(x.n)} · ${T(mm(x.m))}` : ext.map(T).join(' + ');
       const desc = x.m ? `${T(mm(x.m))}, ${T(intDesc(x))} (${znLbl(x)}), TSS ~${tss(x)}. ${st}${ext.length ? ' ' + T('Dazu:') + ' ' + ext.map(T).join(', ') : ''}` : T('Übungen findest du in der App unter Übungen.');
       out.push({w, i, d, dur, sum, desc, we:i >= 5});

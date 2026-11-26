@@ -46,7 +46,7 @@ function testWeeks0(p){
   if (w0 && !out.includes(w0)) out.push(w0);
   return out.sort((a, b) => a - b);
 }
-const TESTX = (p) => noPwr() ? {...TESTX0(), n:'Fitness-Check: Schwellenpuls', m:65, st:'15 Min. einfahren, darin 3×1 Min. zügig · 5 Min. locker · 30 Min. so hart, wie du es gleichmäßig durchhältst, nach 10 Minuten Rundentaste drücken · 10 Min. ausfahren. Dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Fährst du die 30 Minuten an einem gleichmäßigen Anstieg, kann die App aus Zeit und Höhenmetern zusätzlich deinen FTP schätzen.', tip:'Ausgeruht starten und die ersten 5 Minuten nicht überziehen. Allein fahren, nicht in der Gruppe.'} : TESTX0();
+const TESTX = (p) => noPwr() ? {...TESTX0(p), n:'Fitness-Check: Schwellenpuls', m:65, st:'15 Min. einfahren, darin 3×1 Min. zügig · 5 Min. locker · 30 Min. so hart, wie du es gleichmäßig durchhältst, nach 10 Minuten Rundentaste drücken · 10 Min. ausfahren. Dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Fährst du die 30 Minuten an einem gleichmäßigen Anstieg, kann die App aus Zeit und Höhenmetern zusätzlich deinen FTP schätzen.', tip:'Ausgeruht starten und die ersten 5 Minuten nicht überziehen. Allein fahren, nicht in der Gruppe.'} : TESTX0(p);
 const TESTX0 = (p) => (p || S.p || S.d || {}).testArt === 'ramp' ? snRamp() : ({...D('test', 'Fitness-Check: 20-Min-Test', 60, 95, 105, '90–100 U/min', '20 Min. einfahren, darin 3×1 Min. zügig (100–110 %) · 5 Min. locker · 20 Min. so hart, wie du es gleichmäßig durchhältst · 10 Min. ausfahren. Merk dir die Durchschnittsleistung der 20 Minuten.', 'Ausgeruht starten und die ersten 5 Minuten nicht überziehen. Ein Rampentest, zum Beispiel in Zwift, geht auch.'), iv:{reps:1, work:20, rest:0, lo:95, hi:105, wu:25, cd:15}, wh:20, test:1});
 /* Offener Fitnesstest: krankheitsbedingt ausgefallen (p.testDue, frühestens 7 Tage nach dem Kranktag) oder in einer
    Testwoche nicht gemacht. Er wird nachgeholt, bis ein Ergebnis da ist oder ein Test als erledigt markiert wurde. */
@@ -176,7 +176,7 @@ function snWeek(res, p, w){
 /* Korrektur 3a: Solange der FTP geschätzt ist, bekommt jede Einheit über 85 % den Hinweis „nach Gefühl“ (Detail, Kalender, Export lesen st) */
 function snEstNote(res, p){
   if (!Array.isArray(res) || !p || !hkEst(p) || noPwr()) return res;
-  return res.map(x => { if (!x || snFix(x) || snMax(x) <= 85 || /Dein FTP ist geschätzt/.test(x.st || '')) return x; const z = znOf(x); return {...x, st:(x.st || '') + ` Dein FTP ist geschätzt: Fahr nach Gefühl, Anstrengung ${z.rpe} von 10. Passt das Gefühl nicht zu den Watt, gilt das Gefühl.`}; });
+  return res.map(x => { if (!x || snFix(x) || snMax(x) <= 85 || x.est) return x; const z = znOf(x); return {...x, est:`Dein FTP ist geschätzt: Fahr nach Gefühl, Anstrengung ${z.rpe} von 10. Passt das Gefühl nicht zu den Watt, gilt das Gefühl.`}; }); /* eigene Zeile (x.est), damit der Ablauf übersetzbar bleibt */
 }
 function expAt(p, w){
   const last = Object.entries(p.res || {}).map(([k, v]) => ({w:+k, ...v})).filter(x => x.w < w && x.ftp > 0 && x.adopted).sort((a, b) => b.w - a.w)[0];

@@ -41,7 +41,7 @@ function hkFinish(d, es){
   d.ftpHk = same ? hkDerive(S.p).ftpHk : hkFtpOf({...d, res:null, ftpStart:+d.ftp});
   if (!same && es === 'new' && d.mode !== 'light' && (d.ftpSrc || 'manual') === 'manual' && d.ftpUi && !d.ftpSet) d.ftpHk = 'geschaetzt'; /* vorbelegtes Feld gesehen, aber nie angefasst */
   if (!['eingegeben', 'geschaetzt'].includes(d.kgHk)) d.kgHk = hkKgOf(d);
-  if (es === 'new' || es === 'goal') { d.ifd = .04; d.rdMin = d.lvl === 'new' || rhyOf(d) === '2:1' ? 2 : 1; d.rdFrom = 1; } /* Punkt 7: Ruhetage für neue Pläne */
+  if (es === 'new' || es === 'goal') { d.ifd = .04; if (d.rdOff) d.rdMin = 0; else d.rdMin = d.lvl === 'new' || rhyOf(d) === '2:1' ? 2 : 1; d.rdFrom = 1; } /* Punkt 7: Ruhetage für neue Pläne */
   if (es === 'new' || es === 'goal') { if (d.ftpHk === 'geschaetzt' && !(S.edit && S.p && hasStarted(S.p))) d.sanft = 1; else delete d.sanft; }
 }
 /* Paket C, Punkt 1: geschätzte Werte zeigen. Einstellungen → Gewicht und FTP */

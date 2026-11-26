@@ -78,7 +78,7 @@ function dykFocus(id, sel){ setTimeout(() => { try { const el = id ? document.ge
   if (tg) { tg.classList.add('dyk-hit'); setTimeout(() => tg.classList.remove('dyk-hit'), 1800); } } catch (e) { elog(e); } }, 80); }
 /* Woche öffnen und gleich den Bereich „Diese Woche nicht alles machbar?“ (Tage sperren, Pendeln) aufklappen */
 function dykLim(){ if (typeof evOpen !== 'function') return; goPg('event'); evOpen('main'); dykFocus(null, '#evLim'); }
-function dykRd(){ navGo('week'); dykFocus('fx-rd'); }
+function dykRd(){ navGo('week'); dykFocus(document.getElementById('fx-rd') ? 'fx-rd' : 'fx-wkd'); } /* fx-wkd: Tagesliste der Woche, gibt es immer */
 function dykWeek(){ S.fold = S.fold || {}; S.fold.wp = true; navGo('week'); dykFocus('fx-wp'); }
 function dykGarmin(){ try { if (typeof gtOpen !== 'undefined') { gtOpen = true; gtStep = 1; render(); return; } } catch (e) { elog(e); } goPg('rides'); }
 const dykList = () => DYK.filter(t => { try { return t[4](); } catch (e) { elog(e); return false; } }).concat(typeof cmpDyk === 'function' ? cmpDyk() : []); /* F21: Vergleiche */
