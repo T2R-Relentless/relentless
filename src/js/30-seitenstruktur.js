@@ -55,7 +55,7 @@ function statePage(){
   const now = hasStarted(p) ? stateCard() : '<section class="panel p-4"><p class="text-sm" style="color:var(--mute)">Der Plan hat noch nicht begonnen. Ab dem Start siehst du hier, wie deine Woche läuft.</p></section>';
   const ch = (() => { try { return chkHead(p); } catch (e) { elog(e); return ['öffnen', null]; } })(), tot = (() => { try { return phases(p).slice(-1)[0].to; } catch (e) { elog(e); return 0; } })();
   return hrHint() + now
-    + grp('Plan', stRow('check', 'Plan-Check', ch[0], ch[1]) + stRow('overview', 'Gesamtplan', `${tot} Wochen bis ${fmt(endOf(p))}`) + (hasStarted(p) ? stRow('slog', 'Anpassungen', o.slog) : ''))
+    + `<p class="eyebrow mb-2 mt-5">Plan</p><div class="mlist" id="fx-stplan">` + stRow('check', 'Plan-Check', ch[0], ch[1]) + stRow('overview', 'Gesamtplan', `${tot} Wochen bis ${fmt(endOf(p))}`) + (hasStarted(p) ? stRow('slog', 'Anpassungen', o.slog) : '') + `</div>`
     + grp('Entwicklung', stRow('sform', p.goal === 'event' ? 'Formkurve bis zum Event' : 'Formkurve', o.sform) + stRow('shist', 'Verlauf und Wochenumfang', o.shist))
     + grp('Leistung', stRow('sprof', 'Leistungsprofil', o.sprof) + stRow('svo2', 'VO2max', `<span data-noi18n>${esc(vo2Sub())}</span>`) + stRow('sperf', 'FTP und Leistung', o.sperf) + stRow('spb', 'Bestwerte', o.spb)) + (typeof mmProgCard === 'function' ? mmProgCard() : '')
     + grp('Rückblicke', stRow('rc', 'Woche, Monat, Jahr', rcSub()));
@@ -300,7 +300,7 @@ function exPage(){
   const lib = exLibrary(), parts = lib.split(/(?=<section class="panel p-4"><h2 class="hd text-xl font-semibold">)/).filter(Boolean);
   return rtCards() + `<p class="mt-4 text-sm" style="color:var(--mute)">Alle Übungen aus Kraft-, Stabilitäts- und Mobilitätstraining. Tippe auf eine Übung für Erklärung und Grafik.</p><div class="mt-3 flex flex-wrap gap-2">${tabs}</div>${iaNoHead(parts[exGrp] || parts[0] || '')}`;
 }
-/* ---------- Fahrten bewerten: Garmin kompakt, Anpassungen nur noch unter Fortschritt ---------- */
+/* ---------- Fahrten analysieren: Garmin kompakt, Anpassungen nur noch unter Fortschritt ---------- */
 function ridesGm(){
   if (S.gm && S.gm.mode) return `<section class="panel p-4"><p class="hd text-xl font-semibold">Garmin Connect</p>${gmCard('man')}</section>`;
   return `<div class="mlist">${iaRow('set-gm', 'gm', 'Garmin Connect verbinden', 'Fahrten automatisch holen statt Dateien hochladen')}</div>`;

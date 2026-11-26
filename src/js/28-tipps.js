@@ -28,7 +28,7 @@ const DYK = [
   ['sqk', 'Bei Übungen mit Wiederholungen gibt die Sequenz den Takt vor: Töne und kurze Worte wie „runter“ und „hoch“ zeigen das Tempo, dazu zählt sie mit und sagt die letzten drei an. Abschalten lässt sich das in den Einstellungen der Sequenz.', 'Takt einstellen', "dykSet('settings','sqk')", () => true],
   ['sqt', 'Die Übungssequenz läuft ganz auf Zeit: Wiederholungen im passenden Tempo, ein kurzer Übergang beim Seitenwechsel und wechselnde Ausführungshinweise während der Übung. Mit „Fertig – weiter“ geht es früher weiter.', 'Hinweise einstellen', "dykSet('settings','sqh')", () => true],
   ['mob', 'Unter Mehr → Übungen findest du Mobilitätsroutinen für vor und nach der Fahrt, für Ruhetage und für den Schreibtisch.', 'Übungen ansehen', "goPg('ex')", () => true],
-  ['tire', 'Unter Mehr → Werkzeuge berechnet der Reifendruckrechner einen Startwert für vorn und hinten, passend zu Gewicht, Reifenbreite, Felge und Untergrund.', 'Reifendruck berechnen', "navGo('more');goPg('tool-tire')", () => true],
+  ['tire', 'Unter Mehr → Extras berechnet der Reifendruckrechner einen Startwert für vorn und hinten, passend zu Gewicht, Reifenbreite, Felge und Untergrund.', 'Reifendruck berechnen', "navGo('more');goPg('tool-tire')", () => true],
   ['trace', 'In jeder Fahrtbewertung siehst du den Verlauf deiner Fahrt mit dem Zielbereich der Intervalle und darunter, wie viel Zeit du in welcher Zone warst.', 'Fahrten ansehen', "dykRides()", () => true],
   ['garmin', 'Mit einem persönlichen API-Schlüssel von Garmin holt die App deine Fahrten selbst ab und bewertet sie. Kein Exportieren mehr.', 'Einrichten', "dykGarmin()", () => !(S.gm && S.gm.mode) && typeof gmWebOk !== 'undefined' && (gmWebOk === true || !!(window.claude && window.claude.use))],
   ['rpe', 'Nach jeder bewerteten Fahrt fragt die App, wie anstrengend es war und wie du dich fühlst. Dein Empfinden fließt in die Anpassung ein: Fühlt sich eine leichte Einheit hart an, nimmt die App Tempo raus.', '', '', () => true],
@@ -66,6 +66,8 @@ const DYK = [
   ['dark', 'Die App gibt es auch im dunklen Design, angenehm am Abend.', 'Darstellung', "dykSet('settings','theme')", () => S.theme !== 'dark'],
   ['en', 'Die App spricht auch Englisch: Tippe oben auf „EN“.', '', '', () => true],
   ['inst', 'Leg die App auf deinen Home-Bildschirm. Dann startet sie wie eine echte App, ohne Browserleiste und auch offline.', 'So geht’s', "dykInst()", () => dykWeb() && !dykAlone() && typeof instOs === 'function' && !!instOs()],
+  /* F37: neues Mehr-Menü */
+  ['f37', 'Plan-Check und Gesamtplan findest du jetzt unter Fortschritt im Abschnitt „Plan“. Auf Heute führen zwei Knöpfe unter deinem Ziel direkt hin. Unter Mehr stehen die wichtigsten Punkte fest, alles Weitere unter „Extras“.', 'Zu Fortschritt', "dykSt()", () => !!S.p],
   ['team', 'Neuigkeiten, Ausfahrten und Termine des Teams findest du auf teamrelentlessriders.de, verlinkt unter Mehr → Team.', 'Zur Homepage', "dykTeam()", () => true],
 ];
 /* Ziel eines Hinweises: [Unterseite, Abschnitt, Eingabefeld]. Der Knopf landet direkt am Feld, nicht nur oben auf der Seite. */
@@ -97,10 +99,12 @@ function dykClose(){ dykPut({hide:iso(0)}); render(); }
 function dykOff(on){ dykPut({off:!on}); render(); }
 const dykIsOff = () => !!dykGet().off;
 function dykInst(){ instHide = false; instHelp = true; try { localStorage.removeItem('relentless.inst.hide'); } catch (e) { elog(e); } render(); }
+/* F37: Fortschritt öffnen und zum Abschnitt „Plan“ (Plan-Check, Gesamtplan) springen */
+function dykSt(){ navGo('state'); dykFocus('fx-stplan'); }
 function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
 /* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
    Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */
-const DYK_FN = {dykLim:() => dykLim(), dykRd:() => dykRd(), goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), dykTp:() => dykTp(), dykRz:() => dykRz(), dykRzDay:() => dykRzDay(), dykMf:() => dykMf(), dykEv:() => dykEv(), dykImp:() => dykImp(), dykTss:() => dykTss(), render:() => render()};
+const DYK_FN = {dykLim:() => dykLim(), dykRd:() => dykRd(), goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykSt:() => dykSt(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), dykTp:() => dykTp(), dykRz:() => dykRz(), dykRzDay:() => dykRzDay(), dykMf:() => dykMf(), dykEv:() => dykEv(), dykImp:() => dykImp(), dykTss:() => dykTss(), render:() => render()};
 function dykRun(st){
   let m = st.match(/^heroTab\s*=\s*'(\w+)'$/); if (m) { heroTab = m[1]; return; }
   m = st.match(/^(\w+)\((.*)\)$/); const f = m && Object.prototype.hasOwnProperty.call(DYK_FN, m[1]) ? DYK_FN[m[1]] : null;
