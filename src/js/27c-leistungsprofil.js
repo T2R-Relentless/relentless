@@ -400,7 +400,7 @@ async function mmFillGo(){
   try { if (typeof impVo2Pre === 'function') impVo2Pre(); } catch (e) { elog(e); } const L = mmTodo(); if (!L.length) return; mmFill = {run:1, i:0, n:L.length, ok:0, fail:0, msg:'', v:0}; render();
   for (const a of L) {
     if (!mmFill.run) break; mmFill.i++; render();
-    try { const {r} = await gmRide({id:a.gid, n:''}); const old = S.mm && S.mm[a.id], rec = old && old.s === 'f' ? old : mmCalc(r); if (rec) { if (rec !== old) mmPut(a.id, rec, {d:a.d, n:a.n}); try { if (typeof impVo2 === 'function' && !impVo2Done(a.id) && impVo2(a, r)) mmFill.v++; } catch (er) { elog(er); } mmFill.ok++; } else { const o = S.mm[a.id]; if (o) o.nf = 1; else S.mm[a.id] = {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a', nf:1}; } }
+    try { const {r} = await gmRide({id:a.gid, n:''}); const old = S.mm && S.mm[a.id], rec = old && old.s === 'f' ? old : mmCalc(r); if (rec) { if (rec !== old) mmPut(a.id, rec, {d:a.d, n:a.n}); try { if (typeof impVo2 === 'function' && !impVo2Done(a.id) && impVo2(a, r)) mmFill.v++; } catch (er) { elog(er); } try { if (typeof vo2rKeep === 'function' && !vo2rHas(a.id)) vo2rKeep(a, r); } catch (er) { elog(er); } mmFill.ok++; } else { const o = S.mm[a.id]; if (o) o.nf = 1; else S.mm[a.id] = {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a', nf:1}; } }
     catch (e) { elog(e); mmFill.fail++; if (typeof GmErr === 'function' && e instanceof GmErr && e.code !== 'tool') { mmFill.msg = e.message; break; } }
     if (mmFill.i % 5 === 0) { try { save(); } catch (e) { elog(e); } }
   }

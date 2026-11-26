@@ -123,6 +123,8 @@ function summarize(r, fname){
   try { if (typeof mmKeep === 'function') mmKeep(out, r); } catch (e) { elog(e); }
   /* F27: VO2max aus geplantem Test (Rampe, 5 min) oder aus einem neuen 5-min-Bestwert */
   try { if (typeof vo2FromRide === 'function') vo2FromRide(out, r); } catch (e) { elog(e); }
+  /* F38: Rohdaten für den VO2max-Trend aus Fahrten (rechnet Drift und Temperatur selbst, braucht perfExt nicht) */
+  try { if (typeof vo2rKeep === 'function') vo2rKeep(out, r); } catch (e) { elog(e); }
   return Object.assign(out, perfExt(sec1, hr1, tc1, np));
 }
 async function uploadRides(inp){
