@@ -299,7 +299,7 @@ function finish(){
   const st0 = editState(), md0 = S.d && S.d.mode; /* Art der Änderung: für Sicherungs-Erinnerung und Statistik */
   if (S.d && S.d.goal === 'event' && S.d.season === false && (S.d.subs || []).length) S.d.subs = [];
   goalMsg = ''; if (S.d.goal === 'event' && !String(S.d.eventName || '').trim()) S.d.eventName = 'Mein Event';
-  { const es = editState(); if (es === 'new' || es === 'goal') { S.d.ftpStart = rngClamp('ftp', S.d.ftp, 0); delete S.d.res; delete S.d.xTests; delete S.d.recW; } else if (S.p && !S.d.ftpStart) S.d.ftpStart = S.p.ftpStart || S.p.ftp; }
+  { const es = editState(); if (es === 'new' || es === 'goal') { S.d.ftpStart = rngClamp('ftp', S.d.ftp, 0); delete S.d.res; delete S.d.xTests; delete S.d.recW; } else if (S.p && !S.d.ftpStart) S.d.ftpStart = S.p.ftpStart || S.p.ftp; try { hkFinish(S.d, es); } catch (e) { elog(e); } }
   const d = S.d, oldAuto = S.p ? planName(S.p) : null, keepP = editState() === 'adj' && S.p && hasStarted(S.p), oldPlan = keepP ? S.plan : null;
   const keepS = !!(S.edit && S.p && hasStarted(S.p)), sd0 = sd40(d, d.startDate && d.startDate > iso(0) ? d.startDate : iso(0));
   const cmu = !!d.commuter, dm = [...d.dayMin], tot = d.avail.reduce((q, a, i) => q + (a ? (dm[i] || 0) : 0), 0);

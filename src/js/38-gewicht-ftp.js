@@ -3,7 +3,44 @@
    Jede Änderung landet mit Datum im Verlauf S.wf (gehört zum normalen Speicher und damit zu Spiegel, Schnappschüssen
    und Sicherungsdatei). Eine neue FTP läuft über setFtpNow: kommende Einheiten rechnen ihre Wattbereiche aus der
    aktuellen FTP, gespeicherte Bewertungen behalten ihren damaligen Wert (Feld ftp der Bewertung). */
-const wfNum = v => { const n = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) ? n : 0; };
+/* ---------- Paket C (Fachregel 2.1): Herkunft von FTP und Gewicht ----------
+   ftpHk: 'gemessen' (übernommener Fitness-Check, FTP aus Fahrten mit Sicherheit ab „mittel“), 'eingegeben' (selbst eingetragen)
+   oder 'geschaetzt' (aus der Selbsteinschätzung). kgHk: 'eingegeben' oder 'geschaetzt' (Standardwert 75 kg).
+   Eine einzige Ableitung für alles, was das Feld noch nicht hat (load, Sicherungsdatei, Planwechsel). Sie füllt nur die beiden
+   Felder, am Plan selbst ändert sich nichts. Nur Funktionsdeklarationen: load() läuft schon beim Start in 04. */
+function hkFtpOf(p){
+  if (!p) return 'geschaetzt';
+  if (Object.values(p.res || {}).some(r => r && r.adopted)) return 'gemessen';
+  if (p.mode === 'light') return p.ftpKnown > 0 || (p.ftpStart > 0 && p.ftp > 0 && Math.round(p.ftp) !== Math.round(p.ftpStart)) ? 'eingegeben' : 'geschaetzt';
+  const src = p.ftpSrc || 'manual';
+  if (src === 'data') return p.ftpConf === 'mittel' || p.ftpConf === 'hoch' ? 'gemessen' : 'geschaetzt';
+  if (src === 'manual') return 'eingegeben';
+  return p.ftpStart > 0 && p.ftp > 0 && Math.round(p.ftp) !== Math.round(p.ftpStart) ? 'eingegeben' : 'geschaetzt';
+}
+function hkKgOf(p){ return p && p.weight > 0 && Math.round(p.weight * 10) !== 750 ? 'eingegeben' : 'geschaetzt'; }
+function hkDerive(p){
+  if (!p || typeof p !== 'object') return p;
+  if (!['gemessen', 'eingegeben', 'geschaetzt'].includes(p.ftpHk)) p.ftpHk = hkFtpOf(p);
+  if (!['eingegeben', 'geschaetzt'].includes(p.kgHk)) p.kgHk = hkKgOf(p);
+  return p;
+}
+/* Ganzer Zustand bzw. Schnappschuss: aktiver Plan und Entwurf */
+function hkMig(o){ if (o && typeof o === 'object') { if (o.p) hkDerive(o.p); if (o.d && o.p) { if (!o.d.ftpHk) o.d.ftpHk = o.p.ftpHk; if (!o.d.kgHk) o.d.kgHk = o.p.kgHk; } } return o; }
+const hkEst = p => !!p && hkDerive(p).ftpHk === 'geschaetzt';
+const hkKgEst = p => !!p && hkDerive(p).kgHk === 'geschaetzt';
+/* Beim Anlegen oder Anpassen eines Plans (finish): Herkunft festlegen. Bleibt der FTP beim Anpassen gleich, bleibt auch seine Herkunft.
+   sanft = 1: neuer Plan mit geschätztem FTP, dann gilt der sanfte Einstieg (Fachregeln 2.3 bis 2.7). Ältere Pläne haben das Feld nicht
+   und bleiben unverändert. */
+function hkFinish(d, es){
+  if (d.mode !== 'light' && d.ftpSrc === 'data') { try { const a = anaCalc(), f = a && a.best; d.ftpConf = f && a.ftpV && Math.round(+d.ftp) === Math.round(a.ftpV) ? ((f.fe && f.fe.conf) || (f.cp && f.cp.conf) || '') : ''; } catch (e) { elog(e); } }
+  const same = S.edit && S.p && Math.round(+d.ftp) === Math.round(+S.p.ftp);
+  d.ftpHk = same ? hkDerive(S.p).ftpHk : hkFtpOf({...d, res:null, ftpStart:+d.ftp});
+  if (!['eingegeben', 'geschaetzt'].includes(d.kgHk)) d.kgHk = hkKgOf(d);
+  if (es === 'new' || es === 'goal') { if (d.ftpHk === 'geschaetzt' && !(S.edit && S.p && hasStarted(S.p))) d.sanft = 1; else delete d.sanft; }
+}
+/* Neuer Wert: Plan und Entwurf gleich halten */
+function hkSet(k, v){ if (S.p) S.p[k] = v; if (S.d) S.d[k] = v; }
+const wfNum = v =>{ const n = Number(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) ? n : 0; };
 const wfFmt = (v, d) => (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d});
 function wfCur(){ const p = S.p || {}, d = S.d || {}; return {kg:wfNum(p.weight || d.weight), ftp:wfNum(p.ftp || d.ftp)}; }
 const wfWkg = (ftp, kg) => ftp > 0 && kg > 0 ? ftp / kg : 0;
@@ -37,7 +74,7 @@ function wfSave(){
   wfHist();
   /* Eine neue FTP ändert den Plan: vorher Schnappschuss, danach 10 Minuten „Rückgängig“ */
   if (S.p && dF) bkPre('Vor dem Ändern der FTP');
-  S.d.weight = kg; if (S.p) S.p.weight = kg;
+  S.d.weight = kg; if (S.p) S.p.weight = kg; if (dK) hkSet('kgHk', 'eingegeben');
   S.wf.push({d:iso(0), at:Date.now(), ftp, kg});
   if (S.wf.length > 400) S.wf = S.wf.slice(-400);
   wfMsg = dF ? `Gespeichert. Die Wattbereiche aller kommenden Einheiten rechnen jetzt mit ${ftp} W, vergangene Fahrten behalten ihren damaligen Wert.` : 'Gespeichert.';

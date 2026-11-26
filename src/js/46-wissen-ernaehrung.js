@@ -148,13 +148,13 @@ Object.assign(FIC, {
   cadence:'<circle cx="12" cy="12" r="8"/><path d="M12 4v3M12 12l4-3"/>',
   pause:'<path d="M8 5v14M16 5v14"/>'
 });
-const ZTXT = {Z1:'sehr locker', Z2:'locker, Unterhaltung möglich', Z3:'zügig, kurze Sätze', Z4:'hart, an der Schwelle', Z5:'sehr hart, kaum sprechen'};
+const ZTXT = {Z1:'sehr locker', Z2:'locker, Unterhaltung möglich', Z3:'zügig, kurze Sätze', Z4:'hart, an der Schwelle', Z5:'sehr hart, kaum sprechen', Z6:'maximal und nur kurz'};
 function fuelNums(x){
   const m = x.m || 0, hard = ['sst', 'thr', 'vo2'].includes(x.t), onT = m <= 60 ? 0 : m <= 90 ? (hard ? 30 : 0) : m <= 150 ? Math.round(m / 60 * 45 / 5) * 5 : Math.round(m / 60 * 70 / 10) * 10;
   return {onT, bott:Math.min(2, Math.max(1, Math.round(m / 60))), gels:m > 150 ? Math.round(m / 60) : m > 90 ? 1 : 0, bars:m > 150 ? Math.ceil(m / 60 / 2) : m > 90 ? 1 : 0, every:m > 90, salt:m > 150, drink:hard && m <= 90 ? 'Sportgetränk' : m > 90 ? 'Sportgetränk' : 'Wasser'};
 }
 function heroIcons(x){
-  const z = zone(x.hi), v = x.iv, f = fuelNums(x);
+  const z = znLbl(x), v = x.iv, f = fuelNums(x);
   const row = (k, main, sub) => `<div class="hrow">${fic(k, 20)}<div><p class="hrm">${main}</p>${sub ? `<p class="hrs">${sub}</p>` : ''}</div></div>`;
   const zt = x.t === 'sst' ? 'Sweet Spot: fordernd, aber kontrolliert' : x.t === 'race' ? 'Rennen: nach Gefühl und Rennverlauf' : ZTXT[z] ? ZTXT[z][0].toUpperCase() + ZTXT[z].slice(1) : z;
   const ride = [v ? row('repeat', `${(v.sets || 1) > 1 ? v.sets + ' Serien à ' : ''}${v.reps}× ${durT(v.work)} bei ${noPwr() ? (hrRng(v.lo, v.hi) ? 'Puls ' + hrTxt(hrRng(v.lo, v.hi)) : 'Empfinden ' + rpeTxt(x)) : v.lo + '–' + v.hi + ' %'}`, `${v.reps > 1 ? durT(v.rest) + ' locker dazwischen · ' : ''}${v.wu} Min. ein- und ${v.cd} Min. ausfahren`) : null,

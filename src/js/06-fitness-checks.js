@@ -105,7 +105,9 @@ function saveTest(w, i){
   queueCheer({key:'test|' + S.p.start + '|' + w + '|' + ftp, kind:'test', w}); testMsg = ''; save(); render(); track('fitness-check-eingetragen');
 }
 function delTest(w){ const r = {...(S.p.res || {})}; delete r[w]; S.p.res = S.d.res = r; save(); render(); }
-function setFtpNow(v, w){
+function setFtpNow(v, w, hk){
+  /* Paket C: Herkunft des neuen Werts. Übernommener Fitness-Check = gemessen, sonst wie übergeben, ohne Angabe eingegeben */
+  try { hkSet('ftpHk', ['gemessen', 'eingegeben', 'geschaetzt'].includes(hk) ? hk : w != null && S.p && S.p.res && S.p.res[w] ? 'gemessen' : 'eingegeben'); } catch (e) { elog(e); }
   /* jede FTP-Übernahme (Test, Schätzung, Einstellungen) landet im Verlauf Gewicht und FTP (38-gewicht-ftp.js) */
   try { wfHist(); const L = S.wf[S.wf.length - 1], c = wfCur();
   if (!L || Math.round(L.ftp) !== Math.round(v) || L.d !== iso(0)) S.wf.push({d:iso(0), at:Date.now(), ftp:Math.round(v), kg:c.kg || 0}); } catch (e) { elog(e); }
