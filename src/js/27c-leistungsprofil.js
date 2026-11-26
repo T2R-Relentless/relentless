@@ -252,7 +252,9 @@ function mmFtpSug(est, cur){
 function mmFtpTake(v){
   v = Math.round(+v); if (!(v >= 50 && v <= 600) || !S.p) return;
   try { bkPre(wkL('Vor dem Übernehmen der FTP-Schätzung', 'Before applying the FTP estimate')); } catch (e) { elog(e); }
-  S.mmIgn = null; setFtpNow(v); try { track('ftp-aus-leistungsprofil'); } catch (e) { elog(e); }
+  /* Paket C (Korrektur 4): mit Beleg für maximale Anstrengung gemessen, sonst geschätzt */
+  let hk = 'geschaetzt'; try { const e = mmFtpEst(); if (e && e.ev && Math.abs(Math.round(e.v) - v) <= 1) hk = 'gemessen'; } catch (e) { elog(e); }
+  S.mmIgn = null; setFtpNow(v, null, hk); try { track('ftp-aus-leistungsprofil'); } catch (e) { elog(e); }
 }
 function mmFtpTest(){
   if (!S.p || !hasStarted(S.p)) { goPg('ms'); return; }

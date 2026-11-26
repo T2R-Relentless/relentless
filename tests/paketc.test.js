@@ -85,3 +85,36 @@ test('Eventtag: Abschlag ab 3 Std. für Zielzeit, Belastung und Pacing (Ötztale
   ok(Math.abs(k.tss - 300) <= 6, 'Köln TSS etwa 300, erhalten ' + k.tss); ok(/an Anstiegen höchstens 94 %/.test(k.pace), 'Köln: Pacing wie bisher');
   eq(a.$('Math.round(ifEv(120) * 1000)'), a.$('Math.round(ifEv(120, 0) * 1000)'), 'unter 3 Std. kein Abschlag');
 });
+
+test('Korrektur 1: Testwoche bleibt nach der Übernahme sanft (Hobby und Ambitioniert mit 12 Std.)', async () => {
+  for (const o of [{}, {lvl:'amb', hours:12}]) {
+    const a = await boot(); pcLight(a, o); const ti = a.$('genWeek(S.p, 1).findIndex(x => x.t === "test")');
+    a.$("S.p.res = {1:{date:'2026-11-17', kind:'20', val:240, ftp:228, base:S.p.ftp, st:'base'}}; S.d.res = S.p.res; setFtpNow(228, 1);");
+    const w1 = a.$('genWeek(S.p, 1)'), n = w1[ti + 1];
+    ok(!n.m || (n.m <= 60 && pcMax(n) <= 75), 'Tag nach dem Test höchstens 60 Min. Zone 1–2'); ok(w1.slice(ti + 1).every(x => pcMax(x) <= 85), 'bis Sonntag nichts über 85 % ' + JSON.stringify(o));
+  }
+});
+
+test('Korrektur 2: Long Ride +15 Min. pro Woche ab dem Wert nach Niveau, nie über dem Generator', async () => {
+  const a = await boot(); pcLight(a);
+  const L = [1, 2, 3, 5, 6, 7].map(w => a.$(`genWeek(S.p, ${w}).find(x => x.t === 'long').m`));
+  ok(L.every((m, k) => m <= [120, 135, 150, 180, 195, 210][k]), 'Grenzen eingehalten: ' + L); eq(L.slice(0, 3), [120, 135, 150]);
+  eq(a.$("genWeek(S.p, 1).find(x => x.t === 'long').soft"), 1, 'Etikett „sanfter Einstieg“');
+  pcLight(a, {lvl:'new'}); eq(a.$("genWeek(S.p, 1).find(x => x.t === 'long').m"), 90, 'Einsteiger 1:30');
+});
+
+test('Korrektur 3: Ohne Messwert Hinweis nach Gefühl über 85 %, Woche 3 wie nach dem Test', async () => {
+  const a = await boot(); pcLight(a, {test0:false});
+  const w3 = a.$('genWeek(S.p, 3)'); ok(w3.some(x => x.n === 'Sweet Spot 3×10') && !w3.some(x => x.t === 'vo2'), 'Woche 3: Sweet Spot 3×10, kein VO2max');
+  const hard = [4, 5, 6].flatMap(w => a.$(`genWeek(S.p, ${w})`)).filter(x => x.m && x.t !== 'test' && pcMax(x) > 85);
+  ok(hard.length && hard.every(x => /Dein FTP ist geschätzt: Fahr nach Gefühl, Anstrengung \d+–\d+ von 10/.test(x.st)), 'Hinweis an jeder Einheit über 85 %');
+});
+
+test('Korrektur 5–7: ausführliche Planung, „Test einplanen“ nicht in der Erholungswoche, Wochenendfahrer', async () => {
+  const a = await boot(); a.$(`S = load(true); S.d.mode = 'full'; S.step = 2; render();`);
+  eq([a.$('S.d.ftpSrc'), a.$('!!S.d.test0')], ['test', true], 'Test vorausgewählt');
+  a.w.setFtpSrc('manual'); a.$("Object.assign(S.d, {goal:'event', eventName:'Testrennen', eventDate:'2027-03-20', hours:8}); S.step = 1;"); a.w.finish(); eq(a.$('S.p.ftpHk'), 'geschaetzt', 'vorbelegter FTP zählt nicht als eingetragen');
+  pcLight(a); a.$('S.p.recW = [S.wk]; S.p.xTests = []; S.p.test0 = false;'); a.page(null); ok(!/Test einplanen<\/button>/.test(a.w.document.getElementById('app').innerHTML), 'kein Knopf in der Erholungswoche');
+  pcLight(a, {avail:[false, false, false, false, false, true, true], hours:5}); const w1 = a.$('genWeek(S.p, 1)');
+  eq([w1[5].t, w1[6].t], ['long', 'test'], 'Long Ride am Samstag, Test am Sonntag'); ok(w1[5].m <= 120, 'höchstens 2 Std. davor'); a.noErrors();
+});

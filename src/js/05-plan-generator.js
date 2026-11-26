@@ -191,7 +191,7 @@ function evProfCard(p, compact){
 
 /* Woche w erzeugen. Reihenfolge: Zeitbudget des Monats anwenden (Punkt 7, tbApply), Woche bauen (genWeekCore), dann
    gespeicherte Änderungen kommender Wochen einspielen (B4, woApply; nur für den aktiven Plan, nicht für Statistik-Läufe mit base). */
-function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base), Q = !base && p && S.p && p === S.p ? sickCarry(woApply(P, w), p, w) : P; return rzApply(Q, p, w); /* F29: angenommene Reisen gehören wie Urlaub zum Plan, auch in der Vergleichsbasis */ }
+function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base), Q = !base && p && S.p && p === S.p ? sickCarry(woApply(P, w), p, w) : P; return snEstNote(rzApply(Q, p, w), p); /* Paket C: Hinweis bei geschätztem FTP. F29: angenommene Reisen gehören wie Urlaub zum Plan, auch in der Vergleichsbasis */ }
 /* Einheit auf Hin- und Rückweg verteilen (auch für nachträglich gewählte Pendeltage) */
 function splitComDay(p, x, i){
   const L = legOf(p, i), cp = capOf(p, i), y = {...x, unsplit: x};

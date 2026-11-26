@@ -26,6 +26,8 @@ let lightMsg = '';
 /* Paket C, Punkt 1: Gewicht in Schritt 2 Pflicht, sobald das Event mehr als 1.500 Höhenmeter hat */
 const snKgReq = d => !!d && d.goal === 'event' && hkHm(d) > 1500;
 const snKgIn = d => !!d && d.weight > 0 && (d.kgHk ? d.kgHk === 'eingegeben' : hkKgOf(d) === 'eingegeben');
+/* Ausführliche Planung (Korrektur 5): Gewicht steht in Schritt 2, die Höhenmeter oft erst in Schritt 4. Fehlt es, zurück zu Schritt 2. */
+function snKgNav(){ const d = S.d; if (!d || d.mode === 'light' || (S.step || 1) < 2 || !snKgReq(d) || snKgIn(d)) return ''; S.step = 2; return SN_KGMSG; }
 const SN_KGMSG = 'Bitte trag dein Gewicht ein. Bei mehr als 1.500 Höhenmetern hängt die Prognose stark davon ab.';
 /* Schnellplanung Schritt 2: Geschlecht, Alter und Erholung sind optional und eingeklappt, damit der Schritt kurz bleibt.
    Offen, sobald dort etwas eingetragen ist; der Zustand übersteht das Neuzeichnen (lightMore). */
@@ -395,7 +397,7 @@ function onboarding(){
       <div class="mt-4">${checkCard(mkPrev(d), 'draft')}</div>
       ${finalHint() ? `<p class="mt-6 text-sm" style="color:var(--mute)">${finalHint()}</p>` : ''}<div class="mt-3 flex gap-3">${back(N - 1)}${finalBtn('finish')}</div>`;
   if (s === 2) body = `<h2 class="hd text-3xl font-semibold">Dein aktueller Stand</h2><p class="mb-1 mt-1" style="color:var(--mute)">Von hier aus rechnet die App: Leistung und Gewicht bestimmen, was am Eventtag realistisch ist.</p><div class="mt-4 space-y-4">
-      <div class="grid grid-cols-2 gap-3">${field('Körpergewicht (kg)',`<input type="number" inputmode="decimal" class="inp" value="${esc(d.weight)}" oninput="draft('weight',this.value)">`)}</div>
+      <div class="grid grid-cols-2 gap-3">${field(snKgReq(d) ? 'Körpergewicht (kg), Pflicht' : 'Körpergewicht (kg)',`<input type="number" inputmode="decimal" class="inp" placeholder="75" value="${esc(snKgIn(d) ? d.weight : '')}" oninput="draft('weight',this.value)"${snKgReq(d) ? ' aria-required="true"' : ''}>`)}</div>
       ${ftpSrcUi(d)}
       ${sexUi(d)}
       ${ageUi(d)}</div>

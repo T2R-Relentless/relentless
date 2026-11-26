@@ -1,5 +1,5 @@
 /* ---------- Aktionen ---------- */
-function draft(k, v){ if (k === 'eventDate') S.d.evDateEst = false; if (k === 'weight') S.d.kgHk = Number(v) > 0 ? 'eingegeben' : 'geschaetzt'; if ((k === 'dist' || k === 'hm') && S.d.course) { if (S.d.course.builtin) S.d.noBuiltin = true; delete S.d.course; } S.d[k] = (['ftp','ftpTarget','hours','commuteMin','weight','dist','hm','startH','longMin'].includes(k)) ? Number(v) : v; save(); evUpd(); rngHint(k, v); if (formMsg && !rngFirst(S.d)) { formMsg = ''; render(); } }
+function draft(k, v){ if (k === 'eventDate') S.d.evDateEst = false; if (k === 'weight') S.d.kgHk = Number(v) > 0 ? 'eingegeben' : 'geschaetzt'; if (k === 'ftp' && !ftpChip) S.d.ftpSet = 1; if ((k === 'dist' || k === 'hm') && S.d.course) { if (S.d.course.builtin) S.d.noBuiltin = true; delete S.d.course; } S.d[k] = (['ftp','ftpTarget','hours','commuteMin','weight','dist','hm','startH','longMin'].includes(k)) ? Number(v) : v; save(); evUpd(); rngHint(k, v); if (formMsg && !rngFirst(S.d)) { formMsg = ''; render(); } }
 const kgOf = p => p.weight > 0 ? p.weight : 75;
 const isComm = p => p.commuter === undefined ? p.commute.some(Boolean) : !!p.commuter;
 const legOf = (p, i) => comLeg(p);

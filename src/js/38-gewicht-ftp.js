@@ -39,6 +39,7 @@ function hkFinish(d, es){
   if (d.mode !== 'light' && d.ftpSrc === 'data') { try { const a = anaCalc(), f = a && a.best; d.ftpConf = f && a.ftpV && Math.round(+d.ftp) === Math.round(a.ftpV) ? ((f.fe && f.fe.conf) || (f.cp && f.cp.conf) || '') : ''; } catch (e) { elog(e); } }
   const same = S.edit && S.p && Math.round(+d.ftp) === Math.round(+S.p.ftp);
   d.ftpHk = same ? hkDerive(S.p).ftpHk : hkFtpOf({...d, res:null, ftpStart:+d.ftp});
+  if (!same && es === 'new' && d.mode !== 'light' && (d.ftpSrc || 'manual') === 'manual' && d.ftpUi && !d.ftpSet) d.ftpHk = 'geschaetzt'; /* vorbelegtes Feld gesehen, aber nie angefasst */
   if (!['eingegeben', 'geschaetzt'].includes(d.kgHk)) d.kgHk = hkKgOf(d);
   if (es === 'new' || es === 'goal') d.ifd = .04;
   if (es === 'new' || es === 'goal') { if (d.ftpHk === 'geschaetzt' && !(S.edit && S.p && hasStarted(S.p))) d.sanft = 1; else delete d.sanft; }
@@ -58,11 +59,24 @@ function hkHomeCard(){
   let nx = 0; try { nx = testsOn(p) || p.test0 ? testWeeks(p).find(w => w >= (S.wk || 1) && !(p.res || {})[w]) || 0 : 0; } catch (e) { elog(e); }
   const kg = hkKgEst(p) && p.goal === 'event' && hkHm(p) > 1500;
   return `<section class="panel p-4" style="border-left:4px solid #d9a400"><p class="font-semibold">Dein FTP ist geschätzt, Test einplanen</p><p class="mt-1 text-sm" style="color:var(--mute)">Die App rechnet mit ${Math.round(p.ftp)} W aus deiner Einschätzung. Bis ein Fitness-Check deinen Wert misst, fährst du die Intervalle nach Gefühl.${nx ? ` Dein Fitness-Check ist in Woche ${nx} eingeplant.` : ''}</p>${kg ? `<p class="mt-1 text-sm" style="color:var(--mute)">Auch dein Gewicht ist ein Standardwert (${wfFmt(kgOf(p), 0)} kg). Bei vielen Höhenmetern hängt die Prognose stark davon ab.</p>` : ''}
-    <div class="mt-3 flex flex-wrap gap-2">${!nx || nx > (S.wk || 1) + 1 ? `<button class="btn !w-auto !px-3" style="min-height:44px" onclick="hkPlanTest()">Test einplanen</button>` : ''}${nx ? `<button class="${nx > (S.wk || 1) + 1 ? 'ghost' : 'btn'} !w-auto !px-3" style="min-height:44px" onclick="goPg('ms')">Fitness-Checks ansehen</button>` : ''}${kg ? `<button class="ghost !w-auto !px-3" style="min-height:44px" onclick="wfGo()">Gewicht eintragen</button>` : ''}<button class="ghost !w-auto !px-3" style="min-height:44px" onclick="S.hkLater=iso(0);save();render()">Später</button></div></section>`;
+    <div class="mt-3 flex flex-wrap gap-2">${(!nx || nx > (S.wk || 1) + 1) && hkTestOk(p) ? `<button class="btn !w-auto !px-3" style="min-height:44px" onclick="hkPlanTest()">Test einplanen</button>` : ''}${nx ? `<button class="${nx > (S.wk || 1) + 1 ? 'ghost' : 'btn'} !w-auto !px-3" style="min-height:44px" onclick="goPg('ms')">Fitness-Checks ansehen</button>` : ''}${kg ? `<button class="ghost !w-auto !px-3" style="min-height:44px" onclick="wfGo()">Gewicht eintragen</button>` : ''}<button class="ghost !w-auto !px-3" style="min-height:44px" onclick="S.hkLater=iso(0);save();render()">Später</button></div></section>`;
+}
+/* Korrektur 6: kein „Test einplanen“ bei Krankheits-Folgetagen, Wiedereinstieg, Befinden „krank“ oder „richtig platt“ in den letzten
+   48 Std. und in Erholungswochen */
+function hkTestOk(p){
+  try { const w = S.wk || 1, t = hasStarted(p) ? todayIdx() : 0, pl = S.plan || [], bad = x => x && (x.feel === 'sick' || x.feel === 'heavy');
+    if (p.sickNext && p.sickNext.w === w) return false;
+    if (reentOf(p, w)) return false;
+    if (bad(pl[t]) || (t > 0 ? bad(pl[t - 1]) : S.prevPlan && S.prevPlan.w === w - 1 && bad((S.prevPlan.plan || [])[6]))) return false;
+    if (pl.some((x, k) => k < t && x && x.feel === 'sick')) return false;
+    const P = phases(p).find(x => w >= x.from && w <= x.to);
+    if (recWk(p, w) || (p.recW || []).includes(w) || (P && P.rec)) return false;
+  } catch (e) { elog(e); }
+  return true;
 }
 /* Fitness-Check einplanen (Tipp = Zustimmung): diese Woche, wenn noch genug Tage bleiben, sonst nächste Woche. Vorher Schnappschuss. */
 function hkPlanTest(){
-  const p = S.p; if (!p) return; const tot = phases(p).slice(-1)[0].to, cw = S.wk || 1, w = hasStarted(p) && todayIdx() <= 4 ? cw : Math.min(tot, cw + 1);
+  const p = S.p; if (!p || !hkTestOk(p)) return; const tot = phases(p).slice(-1)[0].to, cw = S.wk || 1, w = hasStarted(p) && todayIdx() <= 4 ? cw : Math.min(tot, cw + 1);
   try { bkPre('Vor dem Einplanen eines Fitness-Checks'); } catch (e) { elog(e); }
   p.xTests = [...new Set([...(p.xTests || []), w])]; S.d.xTests = p.xTests;
   note('Fitness-Check eingeplant', `Ein Fitness-Check ist in Woche ${w} eingeplant. Danach rechnet der Plan mit deinem gemessenen FTP, wenn du ihn übernimmst.`, -2); save(); render();

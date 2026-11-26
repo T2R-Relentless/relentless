@@ -7284,5 +7284,9 @@
 "diese Woche": "this week",
 "Der nötige FTP ist Normalized Power geteilt durch den Anteil des FTP, den man über die Dauer halten kann: IF = {0} − {1} · ln(Dauer in Std.), ab {2} Std. Ab {3} Std. zieht die App zusätzlich {4} · ln(Dauer ÷ {5} Std.) ab, weil die Leistung über viele Stunden nachlässt (zum Beispiel {6} bei {7} Std., {8} bei {9} Std.).": "The required FTP is normalized power divided by the share of FTP you can hold for the duration: IF = {0} − {1} · ln(duration in h), from {2} h. From {3} h the app additionally subtracts {4} · ln(duration ÷ {5} h), because power fades over many hours (for example {6} at {7} h, {8} at {9} h).",
 "Pacing-Plan: erste Stunde höchstens {0} % FTP, im Flachen {1} bis {2} %, an Anstiegen in der ersten Hälfte höchstens {3} %, im letzten Drittel höchstens {4} % (mit deinem heutigen FTP {5} bis {6} W, am Berg bis {7} W, später bis {8} W, nach einem neuen FTP-Test anpassen).": "Pacing plan: first hour at most {0}% FTP, on the flat {1} to {2}%, on climbs in the first half at most {3}%, in the last third at most {4}% (with your current FTP {5} to {6} W, on climbs up to {7} W, later up to {8} W; adjust after a new FTP test).",
-"Grundlage: haltbarer Anteil der FTP über die erwartete Fahrzeit (IF ≈ {0} − {1} · ln Std., ab {2} Std. mit Abschlag für nachlassende Ermüdungsresistenz).": "Basis: sustainable share of FTP over the expected riding time (IF ≈ {0} − {1} · ln h, from {2} h with a deduction for fading fatigue resistance)."
+"Grundlage: haltbarer Anteil der FTP über die erwartete Fahrzeit (IF ≈ {0} − {1} · ln Std., ab {2} Std. mit Abschlag für nachlassende Ermüdungsresistenz).": "Basis: sustainable share of FTP over the expected riding time (IF ≈ {0} − {1} · ln h, from {2} h with a deduction for fading fatigue resistance).",
+"sanfter Einstieg": "gentle start",
+"Dein FTP ist geschätzt: Fahr nach Gefühl, Anstrengung {0}–{1} von {2}.": "Your FTP is estimated: ride by feel, effort {0}–{1} out of {2}.",
+"Passt das Gefühl nicht zu den Watt, gilt das Gefühl.": "If the feeling does not match the watts, go by feel.",
+"Körpergewicht (kg), Pflicht": "Body weight (kg), required"
 }

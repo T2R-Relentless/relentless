@@ -96,14 +96,24 @@ function placeTest(res, p, w){
      danach ein lockerer Tag. Long Ride in Woche 1 höchstens 1:30 (Einsteiger), 2:00 (Hobby) bzw. 2:30 (Ambitioniert), Woche 2 höchstens +15 Min. */
 const snLow = p => !!p && (p.lvl === 'new' || (p.goal === 'fitness' && p.ffocus === 'restart'));
 const snCapW = p => Math.max(2, t0W(p) || 0);
-const snCap = (p, w) => !!(p && p.sanft && w <= snCapW(p) && hkEst(p));
+/* Korrektur 1: Die Testwoche bleibt sanft, auch nachdem der Wert übernommen ist (setFtpNow → replanCyc erzeugt sie neu) */
+const snCap = (p, w) => { if (!p || !p.sanft) return false; const w0 = t0W(p); return !!((w0 && w <= w0) || (w <= snCapW(p) && hkEst(p))); };
 function snMax(x){ if (!x || !x.m) return 0; let h = x.hi || 0; const v = x.iv; if (v) h = Math.max(h, v.hi || 0, v.rhi || 0); if (x.fin) h = Math.max(h, x.fin.hi || 0); (x.parts || []).forEach(q => { h = Math.max(h, q.hi || 0, q.iv ? q.iv.hi || 0 : 0); }); return h; }
 const snFix = x => !x || !x.m || x.t === 'test' || x.sub || x.rz || /^Eventtag|^Aktivierung/.test(x.n || '');
 function snRamp(){ return {...D('test', 'Fitness-Check: Rampentest', 45, 50, 130, '85–95 U/min', '10 Min. locker einfahren · Rampentest auf der Rolle: Die Leistung steigt jede Minute um etwa 20 W, beginnend bei etwa 50 % FTP, bis du die Trittfrequenz nicht mehr halten kannst · 10 Min. ausfahren. Merk dir die Leistung deiner besten Minute.', 'Ausgeruht starten. Die Rampe dauert meist 15 bis 25 Minuten, hart werden nur die letzten zwei bis drei. Viele Rollen-Apps haben einen fertigen Rampentest.'), iv:{reps:1, work:20, rest:0, lo:50, hi:130, wu:10, cd:10}, wh:5, test:1, ramp:1}; }
 function snTestDay(res, p, ok){
   const td = res.map((x, j) => ({x, j})).filter(({x, j}) => x.m > 0 && ok(j) && !snFix(x)).map(o => o.j);
-  for (let k = 1; k < Math.min(4, td.length); k++) { const j = td[k], prev = res[j - 1]; if (!(prev && prev.m > 120)) return j; }
-  return td.length ? td[Math.min(1, td.length - 1)] : -1;
+  let j = -1;
+  for (let k = 1; k < Math.min(4, td.length); k++) { const q = td[k], prev = res[q - 1]; if (!(prev && prev.m > 120)) { j = q; break; } }
+  if (j < 0) j = td.length ? td[Math.min(1, td.length - 1)] : -1;
+  /* Korrektur 7: Fällt der 2. Trainingstag auf den Sonntag, kommt der Test auf einen freien verfügbaren Wochentag.
+     Gibt es keinen, rückt der Long Ride auf den Samstag (in Woche 1 höchstens 2 Std.) und der Test bleibt am Sonntag. */
+  if (j === 6) {
+    const k = [0, 1, 2, 3, 4].find(q => p.avail[q] && res[q] && !res[q].m && ok(q) && !(res[q - 1] && res[q - 1].m > 120));
+    if (k != null) return k;
+    if (res[6] && res[6].t === 'long' && !snFix(res[6]) && ok(5) && !(res[5] && snFix(res[5]))) { res[5] = {...res[6]}; }
+  }
+  return j;
 }
 const SN_INTRO = () => D('base', 'Einführungsfahrt', 60, 56, 75, '85–95 U/min', 'Locker in Zone 2, ganze Sätze müssen möglich sein. Prüf dabei Rad, Wattmesser und Rolle, damit beim Test alles funktioniert.', 'Heute geht es nur ums Ankommen, nicht ums Training.');
 const SN_BASE = m => D('base', 'Grundlage Z2', m, 56, 75, '85–95 U/min', 'Gleichmäßig in Zone 2, Gespräch muss möglich sein. Ohne gemessenen FTP fährst du nach Gefühl: ganz locker, ganze Sätze gehen.', 'Lieber zu leicht als zu hart.');
@@ -111,15 +121,24 @@ const SN_TEMPO = () => ({...D('sst', 'Tempo 3×10', 65, 76, 85, '85–95 U/min',
 const SN_SST = () => ({...D('sst', 'Sweet Spot 3×10', 65, 88, 94, '85–95 U/min', '15 Min. einfahren · 3×10 Min. @ 88–94 % · 5 Min. locker dazwischen · 10 Min. ausfahren', 'Der erste Sweet Spot mit deinem gemessenen FTP: lieber am unteren Rand bleiben.'), wm:30, iv:{reps:3, work:10, rest:5, lo:88, hi:94, wu:15, cd:10}});
 const SN_LONG = {new:90, hob:120, amb:150};
 function snLongCap(p){ if (p.longMin > 0) return 0; const k = p.lvl && SN_LONG[p.lvl] ? p.lvl : (() => { const q = (p.ftp || 200) / kgOf(p) / lvlF(p); return q < 2.35 ? 'new' : q < 3 ? 'hob' : 'amb'; })(); return SN_LONG[k]; }
+/* Korrektur 2: Grenze für den Long Ride in Woche w: L + 15 × (w − 1), L nach Niveau. Reicht die Zeit bis zum Tapering damit nicht bis zur
+   empfohlenen längsten Fahrt, ab Woche 3 +30 Min. pro Woche. 0 = keine Grenze. */
+function snLongLim(p, w){
+  const L = p && p.sanft ? snLongCap(p) : 0; if (!L) return 0;
+  let rec = 150; try { if (p.goal === 'event') { const pr = evProfile(p), tev = pr ? pr.tev : 0; rec = tev <= 180 ? 150 : Math.min(360, Math.round(.7 * Math.min(tev, 420) / 15) * 15); } else if (p.goal === 'fitness') rec = p.ffocus === 'endur' && p.ftour ? Math.min(300, Math.round(p.ftour * .8 / 15) * 15) : p.ffocus === 'health' || p.ffocus === 'restart' ? 90 : p.ffocus === 'speed' ? 120 : 150; } catch (e) { elog(e); }
+  let tpS = 99; try { const ph = phases(p), t = ph.find(x => x.key === 'taper'); tpS = t ? t.from : ph[ph.length - 1].to + 1; } catch (e) { elog(e); }
+  const slow = 1 + Math.ceil(Math.max(0, rec - L) / 15) >= tpS, lim = slow && w >= 3 ? L + 15 + 30 * (w - 2) : L + 15 * (w - 1);
+  return lim >= Math.max(rec, 480) ? 0 : lim;
+}
 function snWeek(res, p, w){
   if (!p || !p.sanft) return res;
-  const cap = snCap(p, w), w0 = t0W(p), after = !cap && w0 && w === w0 + 1, low = snLow(p);
-  if (!cap && !after && w > 2) return res;
+  const w0 = t0W(p), cap = snCap(p, w), after = !cap && w === (w0 ? w0 + 1 : 3), low = snLow(p);
+  const L = snLongCap(p), lim = snLongLim(p, w);
+  if (!cap && !after && !(lim && res.some(x => x && x.t === 'long' && !snFix(x) && x.m > lim))) return res;
   let out = res.map(x => ({...x}));
-  const L = snLongCap(p), long = j => out[j].t === 'long' && !snFix(out[j]);
-  /* Long Ride: Woche 1 nach Niveau, danach bis zur Woche nach dem Starttest höchstens +15 Min. pro Woche (Einsteiger: Testwoche 3, Woche 4) */
-  if (L) { const lim = w === 1 ? L : w <= Math.max(2, w0 + 1) ? (() => { let m1 = 0; try { const b = genWeek(p, w - 1, true).find(x => x.t === 'long' && !snFix(x)); m1 = b ? b.m : L; } catch (e) { elog(e); m1 = L; } return m1 + 15; })() : 0;
-    if (lim) out = out.map((x, j) => long(j) && x.m > lim ? {...x, m:lim, cut:1} : x); }
+  const long = j => out[j].t === 'long' && !snFix(out[j]);
+  /* Korrektur 2: Long Ride höchstens L + 15 Min. pro Woche (nie über dem Wert des Generators) */
+  if (lim) out = out.map((x, j) => long(j) && x.m > lim ? {...x, m:lim, soft:1} : x);
   if (cap) {
     let first = true;
     out = out.map(x => {
@@ -153,6 +172,11 @@ function snWeek(res, p, w){
   const minRest = snLow(p) || rhyN(p) === 3 ? 2 : 1; /* nie den letzten Ruhetag füllen (Fachregel 7.2) */
   out.forEach((x, j) => { if (left < 45 || x.m || x.vac || !p.avail[j] || capOf(p, j) < 45 || !okD(j) || out.filter(y => !(y && y.m)).length <= minRest) return; const m = Math.min(mx, capOf(p, j), Math.max(45, Math.round(left / 15) * 15)); out[j] = SN_BASE(m); left -= m; });
   return out;
+}
+/* Korrektur 3a: Solange der FTP geschätzt ist, bekommt jede Einheit über 85 % den Hinweis „nach Gefühl“ (Detail, Kalender, Export lesen st) */
+function snEstNote(res, p){
+  if (!Array.isArray(res) || !p || !hkEst(p) || noPwr()) return res;
+  return res.map(x => { if (!x || snFix(x) || snMax(x) <= 85 || /Dein FTP ist geschätzt/.test(x.st || '')) return x; const z = znOf(x); return {...x, st:(x.st || '') + ` Dein FTP ist geschätzt: Fahr nach Gefühl, Anstrengung ${z.rpe} von 10. Passt das Gefühl nicht zu den Watt, gilt das Gefühl.`}; });
 }
 function expAt(p, w){
   const last = Object.entries(p.res || {}).map(([k, v]) => ({w:+k, ...v})).filter(x => x.w < w && x.ftp > 0 && x.adopted).sort((a, b) => b.w - a.w)[0];
