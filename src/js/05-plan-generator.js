@@ -367,14 +367,16 @@ function genWeekCore(p, w, base){
   /* M4: Eine Grundlagenfahrt ist nie länger als der Long Ride der Woche */
   const lgMax = () => { const L = p.longDay >= 0 ? out[p.longDay] : null; return L && L.t === 'long' ? Math.max(60, L.m) : 120; };
   let rides = out.filter(Boolean).length; const need = k === 'taper' ? Math.min(5, av.filter(Boolean).length - 1) : 0;
+  /* Paket C, Punkt 7 (Fachregel 7.2): neue Pläne behalten mindestens rdMin freie Tage pro Woche (Einsteiger und Rhythmus 2:1: zwei) */
+  const rdM = rdMinOf(p0, w), rdFull = () => rdM > 0 && out.filter(x => !x).length <= rdM;
   [0,1,2,3,4,5,6].filter(i => av[i] && !out[i]).forEach(i => {
-    const more = sum < target - 20, cp = cap(i); if (cp < 30) return;
+    const more = sum < target - 20, cp = cap(i); if (cp < 30 || rdFull()) return;
     if (more || rides < need) { const m = Math.min(cp, more ? Math.min(120, lgMax(), Math.max(45, Math.round((target - sum) / 15) * 15)) : 30); out[i] = baseVar(m, i); sum += m; rides++; }
   });
   /* Zusätzliche Zeit an Pendeltagen (Zeit pro Tag): als Umweg auf dem Heimweg nutzen, wenn noch Umfang fehlt */
   /* M4: Sind alle Trainingstage belegt und fehlt noch Wochenzeit, werden die vorhandenen Einheiten verlängert: erst der Long Ride (bis zur
      Hälfte der Wochenzeit, bei höchstens zwei Trainingstagen 60 %, und höchstens ein Viertel über dem Zielwert aus dem Event), dann Grundlagenfahrten, zuletzt das Ausfahren der Intervalleinheiten. */
-  if (k !== 'taper' && sum < target - 20 && ![0,1,2,3,4,5,6].some(i => av[i] && !out[i] && cap(i) >= 30)) {
+  if (k !== 'taper' && sum < target - 20 && (rdFull() || ![0,1,2,3,4,5,6].some(i => av[i] && !out[i] && cap(i) >= 30))) {
     const li = p.longDay, L = li >= 0 ? out[li] : null;
     if (L && L.t === 'long' && !L.parts) { const mx = Math.min(cap(li), ty === 'ultra' ? 480 : 390, Math.round(target * (nDays <= 2 ? .6 : .5) / 15) * 15, Math.max(L.m, Math.round(lb * Math.max(1, Math.min(1.4, hE / 8)) * 1.25 / 15) * 15)), add = Math.floor(Math.min(mx - L.m, target - sum) / 15) * 15; if (add >= 15) { out[li] = {...L, m:L.m + add}; sum += add; } }
     out.forEach((x, i) => { if (!x || x.t !== 'base' || x.parts) return; const add = Math.floor(Math.min(Math.min(cap(i), 120, lgMax()) - x.m, target - sum) / 15) * 15; if (add >= 15) { out[i] = {...x, m:x.m + add}; sum += add; } });
@@ -400,11 +402,13 @@ function genWeekCore(p, w, base){
 /* Paket C, Punkt 4 (Fachregel 4.5): „2–3 lange Wochenend-Blöcke“ (p.wkBlk, nur nach Zustimmung im Plan-Check). Im Aufbau und in der
    Spitze jede dritte Woche: Samstag lang (mindestens 3 Std. bzw. die Hälfte der Eventdauer), Sonntag 2:30 ruhig. Nicht in Entlastungs- und
    Taperwochen, bei Einsteigern nicht in den ersten 6 Wochen, nur mit Samstag und Sonntag als Trainingstage. */
+const rdMinOf = (p, w) => p && p.rdMin > 0 && w >= (p.rdFrom || 1) ? p.rdMin : 0;
 function blkWeek(res, p, w, k, rec, prof){
   if (!p || !p.wkBlk || p.goal !== 'event' || rec || !(k === 'build' || k === 'peak') || w % 3 || (p.lvl === 'new' && w <= 6) || !p.avail[5] || !p.avail[6]) return res;
   if (res.some(x => x && (x.sub || x.t === 'test' || /^Eventtag|^Aktivierung/.test(x.n || '')))) return res;
   const tev = prof && prof.tev ? prof.tev : 300, m1 = Math.min(360, capOf(p, 5), Math.max(180, Math.round(tev * .5 / 15) * 15)), m2 = Math.min(150, capOf(p, 6));
   if (m1 < 120 || m2 < 60) return res;
+  const frei = res.filter(x => !(x && x.m)).length - [5, 6].filter(j => !(res[j] && res[j].m)).length; if (frei < Math.max(1, rdMinOf(p, w))) return res; /* Ruhetage bleiben */
   const out = res.slice();
   out[5] = D('long', 'Wochenend-Block: langer Tag', m1, 56, 75, '85–95 U/min', 'Lang und ruhig in Zone 2, Verpflegung wie am Eventtag (60–90 g Kohlenhydrate pro Std.). Morgen folgt der zweite Tag.', 'Der Block übt lange Tage hintereinander, ohne eine Einzelfahrt über 6 Std.');
   out[6] = D('base', 'Wochenend-Block: zweiter Tag', m2, 56, 75, '85–95 U/min', 'Mit müden Beinen ruhig in Zone 2, Gespräch muss möglich sein.', 'So gewöhnst du dich an lange Tage hintereinander.');

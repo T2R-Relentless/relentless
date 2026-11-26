@@ -69,3 +69,60 @@ function paUi(e){
     ${ed ? `<div class="mt-2 space-y-2">${pr.alts.map((a, k) => `<button class="ghost lbl w-full text-left" style="min-height:44px" onclick="paAccept('${ja(e.id)}',${ja(k)})">${esc(a.l)}</button>`).join('')}<button class="text-sm" style="color:var(--mute);background:none;border:0;min-height:44px" onclick="paEdit=null;render()">Abbrechen</button></div>`
       : `<div class="mt-2 flex flex-wrap gap-2">${bt(`paAccept('${ja(e.id)}')`, 'Annehmen', true)}${bt(`paDecline('${ja(e.id)}')`, 'Ablehnen')}${pr.alts.length > 1 ? bt(`paEdit='${ja(e.id)}';render()`, 'Anpassen') : ''}</div>`}</div>`;
 }
+
+/* ---------- Paket C, Punkt 7: Ruhetage und „Lockere Zusatzfahrt“ (Fachregeln 7.1 bis 7.6, Entscheidung 11) ----------
+   Neue Pläne behalten mindestens einen Ruhetag (p.rdMin, Einsteiger und Rhythmus 2:1 zwei). Laufende Pläne ohne rdMin bekommen nur einen
+   Vorschlag ab der Folgewoche, mit Schnappschuss. Über der Tagesliste steht einmal pro Woche die Zahl der freien Tage, dazu höchstens ein
+   Angebot für eine lockere Zusatzfahrt (immer mit Prüfung und Zustimmung). */
+let rdAsk = null;
+const rdMinShould = p => p && (p.lvl === 'new' || rhyOf(p) === '2:1') ? 2 : 1;
+const RD_X = () => D('rec', 'Lockere Zusatzfahrt', 45, 45, 55, '90–100 U/min', 'Locker und flach, 30 bis 60 Min., unter 56 % FTP, Anstrengung höchstens 3 von 10, ohne Intervalle.', 'Freiwillig. Ein freier Tag ist genauso wertvoll.');
+/* Darf an Tag i eine lockere Zusatzfahrt angeboten werden? (Fachregel 7.5) */
+function rdExtraOk(p, w, plan, i){
+  try {
+    const t = todayIdx(), x = plan[i]; if (i < t || !x || x.m || x.feel || x.vac || !p.avail[i]) return false;
+    if (plan.filter(y => !(y && y.m)).length - 1 < Math.max(rdMinOf(p, w) || 0, rdMinShould(p))) return false;
+    const bud = tbWkH(p, w) * 60, m = plan.reduce((q, y) => q + (y && y.m || 0), 0); if (m + 45 > bud * 1.1) return false;
+    const P = phases(p).find(z => w >= z.from && w <= z.to); if (recWk(p, w) || (p.recW || []).includes(w) || (P && (P.rec || P.key === 'taper'))) return false;
+    const day = addD(p.start, (w - 1) * 7 + i), near = d => d && d >= day && d <= addD(day, 2);
+    if ((p.goal === 'event' && near(p.eventDate)) || (p.subs || []).some(s => (s.prio === 'A' || s.prio === 'B') && near(s.date))) return false;
+    const bad = y => y && (y.feel === 'sick' || y.feel === 'heavy' || y.feel === 'tired' || y.feel === 'neck');
+    if (bad(plan[t]) || bad(plan[t - 1]) || (p.sickNext && p.sickNext.w === w) || reentOf(p, w)) return false;
+    if (plan[i - 1] && plan[i - 1].t === 'test') return false;
+    return true;
+  } catch (e) { elog(e); return false; }
+}
+function rdWeekNote(p, w, plan, cur){
+  if (!p || !Array.isArray(plan)) return '';
+  const free = plan.map((x, i) => !(x && x.m) && p.avail[i] ? i : -1).filter(i => i >= 0), off = plan.filter(x => !(x && x.m)).length;
+  const sug = cur && !p.rdMin && !p.rdNo ? (() => { try { return genWeek(p, w + 1).every(x => x && x.m > 0); } catch (e) { elog(e); return false; } })() : false;
+  const ix = cur ? free.find(i => rdExtraOk(p, w, plan, i)) : undefined;
+  if (!off && !sug) return '';
+  let h = off ? `<p class="text-sm" style="color:var(--mute)">Diese Woche ${off === 1 ? 'hast du 1 freien Tag' : `hast du ${off} freie Tage`}. Erholung gehört zum Training.</p>` : '';
+  if (ix != null) h += rdAsk === ix ? rdAskUi(p, w, plan, ix) : `<button class="ghost mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="rdAsk=${ja(ix)};render()">Lockere Zusatzfahrt am ${DAYS[ix]} einplanen (freiwillig)</button><p class="mt-1 text-xs" style="color:var(--mute)">Ein freier Tag ist genauso wertvoll.</p>`;
+  if (sug) h += `<div class="mt-2 p-3 text-sm" style="background:#fff6dc;border-left:3px solid #d9a400"><p><b>Nächste Woche hat keinen Ruhetag.</b> Mindestens ein freier Tag pro Woche hilft der Erholung. Soll die App ab nächster Woche ${rdMinShould(p) === 2 ? 'zwei freie Tage' : 'einen freien Tag'} einplanen? Die Wochenzeit bleibt, die übrigen Fahrten werden etwas länger.</p><div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !px-3" style="min-height:44px" onclick="rdTake()">Ab nächster Woche übernehmen</button><button class="ghost !w-auto !px-3" style="min-height:44px" onclick="rdSkip()">Nein, danke</button></div></div>`;
+  return `<div class="panel p-3">${h}</div>`;
+}
+function rdAskUi(p, w, plan, i){
+  const P = plan.map((x, j) => j === i ? RD_X() : x), wr = paCheck(P, plan, {budget:Math.round(tbWkH(p, w) * 60)}).warns;
+  return `<div class="mt-2 p-3 text-sm" style="background:var(--tint);border:1px solid var(--line)"><p><b>Lockere Zusatzfahrt am ${DAYS[i]}:</b> 30 bis 60 Min. flach und locker, Anstrengung höchstens 3 von 10. Sie zählt zu Wochenzeit und Belastung.</p>${wr.length ? `<ul class="mt-1 list-disc pl-5">${wr.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}<div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !px-3" style="min-height:44px" onclick="rdExtra(${ja(i)})">Einplanen</button><button class="ghost !w-auto !px-3" style="min-height:44px" onclick="rdAsk=null;render()">Abbrechen</button></div></div>`;
+}
+function rdExtra(i){
+  rdAsk = null; if (!S.p || !S.plan || !rdExtraOk(S.p, S.wk, S.plan, i)) return render();
+  bkPre('Vor dem Einplanen einer Zusatzfahrt'); S.plan[i] = {...RD_X(), adapted:true, orig:S.plan[i]};
+  S.log.unshift({title:'Lockere Zusatzfahrt eingeplant', day:i, text:`Am ${DAYS[i]}: 45 Min. locker und flach, freiwillig.`}); if (S.log.length > 20) S.log.length = 20; flashIdx = i; save(); render();
+}
+/* Schritt 3 der Schnellplanung (Fachregel 7.1): Fahrten pro Woche aus dem Generator (Belastungswochen 2 bis 8), nicht aus einer eigenen Formel */
+function rdRides(d){
+  try { const pv = {...mkPrev(d), rdMin:rdMinShould(d), rdFrom:1, sanft:undefined}, ph = phases(pv), n = [];
+    for (let w = 2; w <= Math.min(8, ph[ph.length - 1].to); w++) { const P = ph.find(x => w >= x.from && w <= x.to); if (!P || P.rec || P.key === 'taper' || recWk(pv, w)) continue; n.push(genWeek(pv, w, true).filter(x => x && x.m > 0).length); }
+    if (!n.length) return null; n.sort((a, b) => a - b); return {lo:n[0], hi:n[n.length - 1], med:n[Math.floor(n.length / 2)]};
+  } catch (e) { elog(e); return null; }
+}
+function rdRidesTxt(d){
+  const r = rdRides(d), nD = d.avail.filter(Boolean).length; if (!r) return '';
+  const N = r.lo === r.hi ? String(r.lo) : `${r.lo} bis ${r.hi}`, M = nD - r.hi;
+  return `<p class="mt-1 text-sm">Bei ${hStd(d.hours)} Std. plant die App etwa <b>${N} Fahrten pro Woche</b>.${M === 1 ? ' An dem übrigen gewählten Tag hast du frei.' : M > 1 ? ` An den übrigen ${M} gewählten Tagen hast du frei.` : ''}</p>`;
+}
+function rdTake(){ const p = S.p; if (!p) return; bkPre('Vor dem Einplanen von Ruhetagen'); p.rdMin = S.d.rdMin = rdMinShould(p); p.rdFrom = S.d.rdFrom = (S.wk || 1) + 1; note('Ruhetage eingeplant', `Ab Woche ${p.rdFrom} plant die App mindestens ${p.rdMin === 2 ? 'zwei freie Tage' : 'einen freien Tag'} pro Woche. Diese Woche bleibt, wie sie ist.`, -2); save(); render(); }
+function rdSkip(){ if (!S.p) return; S.p.rdNo = S.d.rdNo = 1; save(); render(); }

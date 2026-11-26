@@ -136,3 +136,12 @@ test('Punkt 4: Lücke Training–Event mit Angeboten, Wochenend-Blöcke nur nach
   a.w.applyChk('wkBlk', 1, 'draft'); eq(a.$('S.d.wkBlk'), true); a.w.lightFinish(); a.noErrors();
   const blk = a.$('Array.from({length:30}, (_, k) => genWeek(S.p, k + 1)).filter(pl => pl[5].n === "Wochenend-Block: langer Tag").length'); ok(blk > 0, 'Blöcke im Plan');
 });
+
+test('Punkt 7: neue Pläne mit Ruhetag, laufende nur mit Vorschlag, Fahrten pro Woche in Schritt 3', async () => {
+  const a = await boot(); pcLight(a, {hours:14, lvl:'amb', ftpKnown:280});
+  eq(a.$('S.p.rdMin'), 1); ok([2, 3, 5, 6, 7].every(w => a.$(`genWeek(S.p, ${w})`).some(x => !x.m)), 'jede Woche mindestens ein freier Tag');
+  a.$('delete S.p.rdMin; delete S.p.rdFrom; S.p.rdNo = 0;'); const sug = a.$('rdWeekNote(S.p, S.wk, S.plan, true)');
+  if (a.$('genWeek(S.p, S.wk + 1).every(x => x.m > 0)')) { ok(/Nächste Woche hat keinen Ruhetag/.test(sug), 'Vorschlag'); a.w.rdTake(); eq(a.$('S.p.rdFrom'), a.$('S.wk') + 1, 'erst ab der Folgewoche'); ok(a.$('bkUndo') && /Ruhetagen/.test(a.$('bkUndo.why')), 'Schnappschuss'); }
+  a.$(`S = load(true); S.d = Object.assign(S.d, {mode:'light', hours:12, avail:[true, true, true, true, true, true, true]}); S.step = 3; render();`);
+  ok(/Bei 12 Std\. plant die App etwa \d+( bis \d+)? Fahrten pro Woche\./.test(a.text()), 'Satz in Schritt 3'); a.noErrors();
+});
