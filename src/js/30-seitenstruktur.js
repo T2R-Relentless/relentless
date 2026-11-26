@@ -36,9 +36,10 @@ const ST_ICO = {
   spb:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3a3 3 0 0 1-3 4M7 5H4a3 3 0 0 0 3 4"/>',
   svo2:'<path d="M12 21c-4-3-8-6-8-11a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5-4 8-8 11z"/><path d="M7 12h3l1-2 2 4 1-2h3"/>',
   sprof:'<path d="M12 3l8 5v8l-8 5-8-5V8z"/><path d="M12 8l4 3-1 5h-6l-1-5z"/>',
-  slog:'<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>'
+  slog:'<path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l2 2 3-4"/>',
+  check:ICO.check, overview:ICO.overview /* F37: Plan-Check und Gesamtplan stehen unter Fortschritt */
 };
-function stRow(k, t, sub){ return `<button class="mrow" onclick="goPg('${ja(k)}')"><span class="mi">${svgI(ST_ICO[k])}</span><span class="min-w-0 flex-1"><span class="block font-semibold">${t}</span><span class="block text-xs" style="color:var(--mute)">${sub}</span></span><span aria-hidden="true" style="color:var(--mute)">›</span></button>`; }
+function stRow(k, t, sub, col){ return `<button class="mrow" onclick="goPg('${ja(k)}')"><span class="mi">${svgI(ST_ICO[k])}</span><span class="min-w-0 flex-1"><span class="block font-semibold">${t}</span><span class="block text-xs" style="color:${esc(col || 'var(--mute)')}">${sub}</span></span><span aria-hidden="true" style="color:var(--mute)">›</span></button>`; }
 function stSubs(){
   const p = S.p, o = {};
   try { const tot = phases(p).slice(-1)[0].to; o.shist = `Woche ${Math.min(S.wk || 1, tot)} von ${tot}, FTP-Verlauf, Wochenrückblicke`; } catch (e) { elog(e); o.shist = 'FTP-Verlauf und Wochenrückblicke'; }
@@ -52,11 +53,12 @@ function stSubs(){
 function statePage(){
   const p = S.p, o = stSubs(), grp = (t, rows) => `<p class="eyebrow mb-2 mt-5">${t}</p><div class="mlist">${rows}</div>`;
   const now = hasStarted(p) ? stateCard() : '<section class="panel p-4"><p class="text-sm" style="color:var(--mute)">Der Plan hat noch nicht begonnen. Ab dem Start siehst du hier, wie deine Woche läuft.</p></section>';
+  const ch = (() => { try { return chkHead(p); } catch (e) { elog(e); return ['öffnen', null]; } })(), tot = (() => { try { return phases(p).slice(-1)[0].to; } catch (e) { elog(e); return 0; } })();
   return hrHint() + now
+    + `<p class="eyebrow mb-2 mt-5">Plan</p><div class="mlist" id="fx-stplan">` + stRow('check', 'Plan-Check', ch[0], ch[1]) + stRow('overview', 'Gesamtplan', `${tot} Wochen bis ${fmt(endOf(p))}`) + (hasStarted(p) ? stRow('slog', 'Anpassungen', o.slog) : '') + `</div>`
     + grp('Entwicklung', stRow('sform', p.goal === 'event' ? 'Formkurve bis zum Event' : 'Formkurve', o.sform) + stRow('shist', 'Verlauf und Wochenumfang', o.shist))
     + grp('Leistung', stRow('sprof', 'Leistungsprofil', o.sprof) + stRow('svo2', 'VO2max', `<span data-noi18n>${esc(vo2Sub())}</span>`) + stRow('sperf', 'FTP und Leistung', o.sperf) + stRow('spb', 'Bestwerte', o.spb)) + (typeof mmProgCard === 'function' ? mmProgCard() : '')
-    + grp('Rückblicke', stRow('rc', 'Woche, Monat, Jahr', rcSub()))
-    + (hasStarted(p) ? grp('Plan', stRow('slog', 'Anpassungen', o.slog)) : '');
+    + grp('Rückblicke', stRow('rc', 'Woche, Monat, Jahr', rcSub()));
 }
 /* Die Seite hat schon eine Überschrift: die erste Überschrift der Karte entfällt */
 const stNoHead = h => String(h || '').replace(/<h2 class="hd text-xl font-semibold">[^<]*<\/h2>|<p class="hd text-xl font-semibold">[^<]*<\/p>/, '');
@@ -160,10 +162,12 @@ const zxMap = items => Object.fromEntries(items.map(q => [q.day, [asc(q.x.n).tri
 let zxMemo = {k:null, v:null};
 function zxDiff(){
   const ex = S.zxExp; if (!ex || !S.p || !S.plan) return null;
-  const k = JSON.stringify([ex.at, S.wk, S.plan, S.p.ftp, S.p.recW, S.p.subs, S.p.hours, S.p.tb && S.p.tb.on ? S.p.tb : 0, S.p.avail, S.p.start, S.p.lev, S.p.res, iso(0)]);
+  const k = JSON.stringify([ex.at, S.wk, S.plan, S.done, S.p.ftp, S.p.recW, S.p.subs, S.p.hours, S.p.tb && S.p.tb.on ? S.p.tb : 0, S.p.avail, S.p.start, S.p.lev, S.p.res, iso(0)]);
   if (zxMemo.k === k) return zxMemo.v;
   const today = iso(0), now = zxMap(zxItems(ex.kind, 'all').filter(q => q.day <= ex.last)), ch = [];
-  Object.entries(ex.m).forEach(([d, v]) => { if (d < today) return; const n = now[d]; if (!n) ch.push({d, t:'entfällt', n:v[0]}); else if (n[1] !== v[1]) ch.push({d, t:'geändert', n:n[0]}); });
+  /* Erledigte Einheiten der laufenden Woche fehlen in zxItems absichtlich; sie gelten nicht als „entfallen“ */
+  const dn = new Set(); try { if (S.done && S.p.start) { const b0 = new Date(S.p.start + 'T12:00:00'); b0.setDate(b0.getDate() + (S.wk - 1) * 7); Object.keys(S.done).forEach(i => { if (!S.done[i]) return; const d = new Date(b0); d.setDate(d.getDate() + +i); dn.add(lstr(d)); }); } } catch (e) { elog(e); }
+  Object.entries(ex.m).forEach(([d, v]) => { if (d < today || dn.has(d)) return; const n = now[d]; if (!n) ch.push({d, t:'entfällt', n:v[0]}); else if (n[1] !== v[1]) ch.push({d, t:'geändert', n:n[0]}); });
   Object.entries(now).forEach(([d, v]) => { if (d >= today && !ex.m[d]) ch.push({d, t:'neu', n:v[0]}); });
   ch.sort((a, b) => a.d.localeCompare(b.d)); const r = ch.length ? {ch, sig:JSON.stringify(ch)} : null; zxMemo = {k, v:r}; return r;
 }
@@ -277,7 +281,7 @@ function setPage(){
   const n = Object.keys(readLib().plans).length;
   return iaGrp('Allgemein', iaRow('set-lang', 'lang', 'Sprache, Darstellung, Hilfen', `${lang() === 'en' ? 'English' : 'Deutsch'} · ${th}`) + iaRow('set-sq', 'sq', 'Übungsablauf und Töne', (() => { const c = sqCfg(); return [c.snd ? 'Töne an' : 'Töne aus', c.voice ? 'Ansage an' : '', `Übergang ${c.tr} Sek.`].filter(Boolean).join(' · '); })()) + iaRow('set-health', 'hr', 'Gesundheitshinweis', S.hlthOk ? 'Gelesen' : 'Bitte einmal lesen', !S.hlthOk))
     + iaGrp('Training', iaRow('set-ali', 'ali', 'Alltag und Planstart', tbSub() || alltag) + iaRow('set-rz', 'rz', 'Reisemodus', `<span data-noi18n>${esc(rzSub1())}</span>`) + iaRow('set-wf', 'wf', 'Gewicht und FTP', esc(wfSub())) + iaRow('set-age', 'age', 'Alter und Erholung', agSub()) + iaRow('set-hr', 'hr', 'Herzfrequenz und Leistungsmesser', hr, !hrMaxOf() && !lthrOf()) + iaRow('set-wx', 'wx', 'Wetter und Kleidung', wx))
-    + iaGrp('Verbindungen und Daten', iaRow('set-gm', 'gm', 'Garmin Connect', gm) + iaRow('plans', 'data', 'Pläne und Sicherung', `${n} ${n === 1 ? 'Plan' : 'Pläne'}${S.bkAt ? ', letzte Sicherung ' + fmt(lstr(new Date(S.bkAt))) : ', noch keine Sicherung'}`, !S.bkAt) + (x.priv ? iaRow('set-priv', 'priv', 'Datenschutz', (typeof trOff === 'function' && trOff()) ? 'Anonyme Statistik aus' : 'Anonyme Statistik an') : ''))
+    + iaGrp('Verbindungen und Daten', iaRow('set-gm', 'gm', 'Garmin Connect', gm) + iaRow('plans', 'data', 'Pläne und Sicherung', `${n} ${n === 1 ? 'Plan' : 'Pläne'}${S.bkAt ? ', letzte Sicherung ' + fmt(lstr(new Date(S.bkAt))) : ', noch keine Sicherung'}`, !S.bkAt) + (x.priv ? iaRow('set-priv', 'priv', 'Datenschutz', (c => c === 'ja' ? 'Anonyme Statistik an' : c === 'nein' ? 'Anonyme Statistik aus' : 'Statistik: noch nicht entschieden')(typeof trConsent === 'function' ? trConsent() : '')) : ''))
     + `<div class="mt-6">${x.dz || ''}</div>` + verLine();
 }
 /* ---------- Export ---------- */
@@ -298,7 +302,7 @@ function exPage(){
   const lib = exLibrary(), parts = lib.split(/(?=<section class="panel p-4"><h2 class="hd text-xl font-semibold">)/).filter(Boolean);
   return rtCards() + `<p class="mt-4 text-sm" style="color:var(--mute)">Alle Übungen aus Kraft-, Stabilitäts- und Mobilitätstraining. Tippe auf eine Übung für Erklärung und Grafik.</p><div class="mt-3 flex flex-wrap gap-2">${tabs}</div>${iaNoHead(parts[exGrp] || parts[0] || '')}`;
 }
-/* ---------- Fahrten bewerten: Garmin kompakt, Anpassungen nur noch unter Fortschritt ---------- */
+/* ---------- Fahrten analysieren: Garmin kompakt, Anpassungen nur noch unter Fortschritt ---------- */
 function ridesGm(){
   if (S.gm && S.gm.mode) return `<section class="panel p-4"><p class="hd text-xl font-semibold">Garmin Connect</p>${gmCard('man')}</section>`;
   return `<div class="mlist">${iaRow('set-gm', 'gm', 'Garmin Connect verbinden', 'Fahrten automatisch holen statt Dateien hochladen')}</div>`;
@@ -313,7 +317,8 @@ const EV_ICO = {
   pace:'<circle cx="12" cy="13" r="8"/><path d="M12 13l4-3M12 3v2"/>',
   fuel:'<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z"/>',
   subs:'<path d="M5 21V4h11l-2 4 2 4H5"/><path d="M19 9v6M16 12h6"/>',
-  goal:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>'
+  goal:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  check:ICO.check, plans:ICO.plans /* F37: Mehr → „Event und meine Pläne“ führt hierher, deshalb auch die Pläne */
 };
 let evFT = null, evFTon = false;
 const evPh = (when, title) => /^(Wochen davor|2 Tage vorher|Tag vorher|Vorabend)$/.test(String(when)) ? 0 : title === 'Danach' ? 2 : 1;
@@ -327,12 +332,13 @@ function evPage(){
   return `<section class="panel p-5">${goalCard(false)}</section>${evCycNote(p)}`
     + `<p class="eyebrow mb-2 mt-5">Vorbereitung auf das Event</p><div class="mlist">`
     + (efList(p).length > 1 ? evRow('ev-saison', 'goal', 'Saisonübersicht', 'Zielzeit, Form und Pacing für jedes Event') : '')
-    + evRow('check', 'goal', 'Plan-Check', (p.targetTime ? 'Zielzeit: ' : '') + ch[0], ch[1])
+    + evRow('check', 'check', 'Plan-Check', (p.targetTime ? 'Zielzeit: ' : '') + ch[0], ch[1])
     + evRow('ev-prof', 'prof', 'Anforderungsprofil', epSub(p) || prof)
     + (pace ? evRow('ev-pace', 'pace', 'Pacing-Plan', pace) : '')
     + evRow('ev-fuel', 'fuel', 'Ernährungsstrategie', fuel)
     + evRow('ev-subs', 'subs', 'Saison und Events', (() => { const si = seasonInfo(p); return L.length ? `${si.multi ? si.nA + ' Formhöhepunkte · ' : ''}${L.length} weitere${L.length === 1 ? 's Event' : ' Events'}, nächstes: <span data-noi18n>${esc(L[0].name)}</span> am ${fmt(L[0].date)}` : 'Noch keine weiteren Events'; })())
-    + `</div>`;
+    + `</div>`
+    + `<p class="eyebrow mb-2 mt-5">Pläne</p><div class="mlist">` + (n => evRow('plans', 'plans', 'Meine Pläne', `Plan anpassen, ${n} gespeichert`))((() => { try { return Object.keys(readLib().plans).length; } catch (e) { elog(e); return 0; } })()) + `</div>`;
 }
 function evFuelPage(){
   const sp = efFuelPage(); if (sp) return sp;

@@ -1,4 +1,4 @@
-/* ---------- F22: Reifendruckrechner (Mehr → Werkzeuge → Reifendruck) ----------
+/* ---------- F22: Reifendruckrechner (Mehr → Extras → Reifendruck) ----------
    Eigenes Modell, keine Herstellerformel:
    1. Ziel ist eine Reifeneinfederung von etwa 15 % der Reifenhöhe unter Last (Frank Berto, „Tire pressure and handling“,
       Bicycle Quarterly 2006); auf Schotter 18 %, im Cyclocross 25 % (mehr Grip und Komfort, mehr Durchschlagrisiko).

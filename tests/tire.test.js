@@ -44,8 +44,8 @@ test('Mindestdruck mit Warnung, keine Empfehlung ohne Angaben', async () => {
   eq(a.w.tpCalc({...BASE, w:0}), null);
 });
 
-test('Seite unter Mehr → Werkzeuge: Fahrergewicht aus F7, Eingaben gespeichert, zwei Profile', async () => {
-  const a = await boot(); makePlan(a, {goal:'event', eventName:'Testrennen', eventDate:'2027-07-10', weight:68}); ok(/Werkzeuge\s+Reifendruck/i.test(a.page('more')), 'Eintrag unter Mehr');
+test('Seite unter Mehr → Extras: Fahrergewicht aus F7, Eingaben gespeichert, zwei Profile', async () => {
+  const a = await boot(); makePlan(a, {goal:'event', eventName:'Testrennen', eventDate:'2027-07-10', weight:68}); a.page('more'); ok(/Reifendruck/.test(a.$(`document.getElementById('fx-extras').textContent`)), 'Eintrag unter Mehr → Extras');
   let t = a.page('tool-tire'); ok(/Empfohlener Startwert/i.test(t) && /Startwert – nach Gefühl/.test(t), 'Ergebnis und Hinweis'); ok(/76 kg Gesamtgewicht/.test(t), '68 kg Fahrer + 8 kg Rad');
   a.w.tpSet('w', '32'); a.w.tpSet('act', 'gravel'); a.w.tpSet('wet', true); eq(a.$('S.tire.prof.road.w'), 32); eq(a.$('S.tire.prof.gravel.wet'), true);
   const b = await boot({store:a.store()}); eq(b.$('S.tire.prof.road.w'), 32, 'nach Neustart erhalten'); b.page('tool-tire'); await b.en(); b.page('tool-tire'); b.noErrors();

@@ -35,14 +35,14 @@ let PGP = {};
 const scEl = () => document.documentElement.classList.contains('sa-wrap') ? document.getElementById('sc') : null;
 function scrollTop0(){ const e = scEl(); if (e) e.scrollTop = 0; else window.scrollTo(0, 0); }
 try { if ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) document.documentElement.classList.add('sa-wrap'); } catch (e) { elog(e); }
-function goPg(k){ if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); scrollTop0(); }
+function goPg(k){ mrTlOpen = false; if (k !== 'logbook') lbHint = ''; if (pg && !TABS.includes(pg) && k && k !== pg) PGP[k] = pg; else if (k) delete PGP[k]; if (pg == null || TABS.includes(pg)) pgFrom = pg; pg = k || null; open = null; render(); scrollTop0(); }
 const ICO = {
   'tool-tire':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21"/>',
   week:'<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   state:'<path d="M3 12h4l3-7 4 14 3-7h4"/>',
   check:'<path d="M4 12l5 5L20 6"/>',
   event:'<path d="M5 21V4h11l-2 4 2 4H5"/>',
-  overview:'<path d="M3 18h18M5 18V9M10 18V5M15 18v-7M20 18v-4"/>',
+  overview:'<path d="M4 3v18"/><path d="M4 6h7M8 11h8M12 16h8"/>', /* F37: Phasen als Balken über die Zeit, eigenes Symbol (nicht wie „Verlauf und Wochenumfang“) */
   rides:'<circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l5-8h4l3 8M9 8h4"/>',
   ex:'<path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/>',
   export:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
@@ -77,7 +77,7 @@ function planLine(){
   const lib = readLib(), ids = Object.keys(lib.plans), nm = S.pname || planName(S.p);
   const menu = planMenu ? `<div style="width:100%;margin-top:8px;background:#0f2160;border:1px solid rgba(255,255,255,.18)">${ids.map(id => `<button onclick="planMenu=false;${id === S.pid ? 'render()' : `switchTo('${ja(id)}')`}" style="display:flex;width:100%;align-items:center;gap:8px;padding:10px 12px;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.1);color:#fff;text-align:left;font-size:.9rem"><span style="width:16px;color:var(--ice);font-weight:800">${id === S.pid ? '✓' : ''}</span><span data-noi18n style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${esc(id === S.pid ? 'font-weight:700' : '')}">${esc(lib.plans[id].name)}</span></button>`).join('')}
     <div style="display:flex;gap:16px;padding:10px 12px"><button onclick="planMenu=false;goPg('plans')" style="background:none;border:0;padding:0;color:var(--ice);font-weight:700;font-size:.85rem">Pläne verwalten</button><button onclick="planMenu=false;newPlan()" style="background:none;border:0;padding:0;color:var(--ice);font-weight:700;font-size:.85rem">+ Neuer Plan</button></div></div>` : '';
-  return `<div style="width:100%;margin-top:4px"><button onclick="planMenu=!planMenu;render()" aria-expanded="${planMenu}" aria-haspopup="true" style="background:none;border:0;padding:2px 0;color:#9fe3df;font-weight:600;font-size:.85rem;text-align:left;max-width:100%"><span data-noi18n>${esc(nm)}</span> ${planMenu ? '▴' : '▾'}<span style="color:#9fb4c8;font-weight:400"> · ${ids.length} ${ids.length === 1 ? 'Plan' : 'Pläne'}</span></button>${menu}</div>`;
+  return `<div style="width:100%;margin-top:4px"><button onclick="planMenu=!planMenu;render()" aria-expanded="${planMenu}" aria-haspopup="true" style="background:none;border:0;padding:2px 0;min-height:44px;color:#9fe3df;font-weight:600;font-size:.85rem;text-align:left;max-width:100%"><span data-noi18n>${esc(nm)}</span> ${planMenu ? '▴' : '▾'}<span style="color:#9fb4c8;font-weight:400"> · ${ids.length} ${ids.length === 1 ? 'Plan' : 'Pläne'}</span></button>${menu}</div>`;
 }
 /* Kraft- und Mobilitätsübungen als Fenster */
 let wkShow = null;

@@ -152,7 +152,7 @@ function impactCard(){
       else li.push('Zielzeit: Deine Zielzeit ist jetzt sehr ehrgeizig. Ein kleiner Puffer nimmt Druck raus.');
     } else if (p.goal === 'ftp' && p.ftpTarget > p.ftp) {
       const nt = Math.min((() => { try { return planCheck(p, true).base.mid; } catch (e) { elog(e); return 9999; } })(), p.ftp + Math.round((p.ftpTarget - p.ftp) * (1 - r.pct / 100 * .8))); li.push(`Ziel-FTP: ${p.ftpTarget} W sind jetzt sehr ehrgeizig. Gut erreichbar sind etwa ${nt} W, auch das ist ein klarer Fortschritt.`); btn = `<button onclick="applyGoal('ftpTarget',${ja(nt)})" class="ghost mt-3 !py-2 text-sm">Ziel-FTP auf ${nt} W setzen</button>`;
-    } else li.push(`Zeitraum: Verlängere ihn um etwa ${Math.max(1, Math.ceil(r.lost / r.avg))} Woche(n) über Mehr → Meine Pläne → „Plan anpassen“, damit die Grundlage reicht.`);
+    } else li.push(`Zeitraum: Verlängere ihn um etwa ${Math.max(1, Math.ceil(r.lost / r.avg))} Woche(n) unter Mehr bei deinen Plänen mit „Plan anpassen“, damit die Grundlage reicht.`);
   }
   return `<div class="mb-3 rounded-2xl p-4" style="background:${esc(C[0])};border:1px solid ${esc(C[1])}"><h3 class="hd mb-1 text-xl font-semibold" style="color:${esc(C[2])}">Auswirkungen auf deinen Plan: ${C[3]}</h3>
     <ul class="list-disc space-y-1 pl-5 text-sm leading-relaxed" style="color:${esc(C[2])}">${li.map(x => `<li>${x}</li>`).join('')}</ul><p class="mt-2 text-xs" style="opacity:.75">Faustwerte zur Orientierung, kein validiertes Prognosemodell.</p>${btn}</div>`;
