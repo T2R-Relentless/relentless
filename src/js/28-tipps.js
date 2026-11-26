@@ -57,6 +57,12 @@ const DYK = [
   ['rzday', 'Auf Reisen entscheidest du jeden Tag selbst: Unter der Einheit wählst du zwischen dem, was vor Ort geht, zum Beispiel Lauf draußen, Hotel-Ergometer, Kraft im Zimmer oder Pause.', 'Zur Tageswahl', "dykRzDay()", () => { try { const d = iso(0), t = rzOn() && rzAt(d); return !!(t && t.status === 'applied' && d > rzDep(t) && d < rzRet(t)); } catch (e) { return false; } }],
   ['rz', 'Oft auf Dienstreise oder im Urlaub ohne Rad? Der Reisemodus passt deinen Plan an Reisen und Zeitzonen an, mit Übungen fürs Hotelzimmer.', 'Reisemodus ansehen', "dykRz()", () => { try { return !rzOn(); } catch (e) { return false; } }],
   ['gloss', 'Fachbegriffe wie FTP oder TSS sind gepunktet unterstrichen. Tippe darauf, dann erscheint eine kurze Erklärung.', '', '', () => S.gloss !== false],
+  /* Paket C (F35) */
+  ['hk', 'Ist dein FTP oder dein Gewicht nur geschätzt, sagt die App das jetzt offen. Unter Einstellungen → Gewicht und FTP siehst du, welche Werte geschätzt sind, und kannst sie eintragen oder bestätigen.', 'Gewicht und FTP', "dykSet('settings','wf')", () => !!S.p && (hkEst(S.p) || hkKgEst(S.p))],
+  ['pcp', 'Der Plan-Check urteilt nur über eine Zielzeit, die du selbst festgelegt hast: Auf Kurs, Knapp oder Ziel gefährdet. Ohne eigene Zielzeit zeigt er eine Prognose mit Spanne und sagt, woher sie kommt.', 'Plan-Check öffnen', "dykSet('check','pc')", () => !!S.p && S.p.goal === 'event'],
+  ['lim', 'Hat dein Event ein Zeitlimit? Trag es beim Event ein. Dann zeigt der Plan-Check, wie viel Puffer du mit Pausen hast.', 'Zeitlimit eintragen', "dykLim()", () => !!S.p && S.p.goal === 'event' && !S.p.evLim],
+  ['rd', 'An freien Tagen kannst du eine lockere Zusatzfahrt einplanen, freiwillig und mit Prüfung, ob sie in deine Woche passt. Ein freier Tag ist genauso wertvoll.', 'Zur Woche', "dykRd()", () => !!S.p && hasStarted(S.p)],
+  ['fw', 'Die ganze Woche aufs Garmin-Gerät: Unter Export → Garmin-Gerät lädst du alle Einheiten der Woche als ein .fit-Paket.', 'Wochenpaket', "dykSet('exp-fit','fw')", () => !!S.p],
   ['dark', 'Die App gibt es auch im dunklen Design, angenehm am Abend.', 'Darstellung', "dykSet('settings','theme')", () => S.theme !== 'dark'],
   ['en', 'Die App spricht auch Englisch: Tippe oben auf „EN“.', '', '', () => true],
   ['inst', 'Leg die App auf deinen Home-Bildschirm. Dann startet sie wie eine echte App, ohne Browserleiste und auch offline.', 'So geht’s', "dykInst()", () => dykWeb() && !dykAlone() && typeof instOs === 'function' && !!instOs()],
@@ -71,6 +77,8 @@ function dykFocus(id, sel){ setTimeout(() => { try { const el = id ? document.ge
   if (tg) tg.scrollIntoView({block:'start'}); if (f) try { f.focus({preventScroll:true}); } catch (e) { elog(e); }
   if (tg) { tg.classList.add('dyk-hit'); setTimeout(() => tg.classList.remove('dyk-hit'), 1800); } } catch (e) { elog(e); } }, 80); }
 /* Woche öffnen und gleich den Bereich „Diese Woche nicht alles machbar?“ (Tage sperren, Pendeln) aufklappen */
+function dykLim(){ if (typeof evOpen !== 'function') return; goPg('event'); evOpen('main'); dykFocus(null, '#evLim'); }
+function dykRd(){ navGo('week'); dykFocus('fx-rd'); }
 function dykWeek(){ S.fold = S.fold || {}; S.fold.wp = true; navGo('week'); dykFocus('fx-wp'); }
 function dykGarmin(){ try { if (typeof gtOpen !== 'undefined') { gtOpen = true; gtStep = 1; render(); return; } } catch (e) { elog(e); } goPg('rides'); }
 const dykList = () => DYK.filter(t => { try { return t[4](); } catch (e) { elog(e); return false; } }).concat(typeof cmpDyk === 'function' ? cmpDyk() : []); /* F21: Vergleiche */
@@ -92,7 +100,7 @@ function dykInst(){ instHide = false; instHelp = true; try { localStorage.remove
 function dykTeam(){ window.open('https://teamrelentlessriders.de', '_blank', 'noopener'); }
 /* Aktionen der Tipps ohne eval/new Function: Die Sicherheitsregeln der Website (CSP ohne 'unsafe-eval') blockieren sonst jeden Knopf.
    Erlaubt sind nur die hier genannten Aufrufe mit Text-Argumenten und heroTab='…'. */
-const DYK_FN = {goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), dykTp:() => dykTp(), dykRz:() => dykRz(), dykRzDay:() => dykRzDay(), dykMf:() => dykMf(), dykEv:() => dykEv(), dykImp:() => dykImp(), dykTss:() => dykTss(), render:() => render()};
+const DYK_FN = {dykLim:() => dykLim(), dykRd:() => dykRd(), goPg:a => goPg(a), navGo:a => navGo(a), dykSet:(a, b) => dykSet(a, b), dykRides:() => dykRides(), dykGarmin:() => dykGarmin(), dykInst:() => dykInst(), dykTeam:() => dykTeam(), dykWeek:() => dykWeek(), dykProf:() => dykProf(), dykTrack:() => dykTrack(), dykMm:() => dykMm(), dykVo2:() => dykVo2(), dykTp:() => dykTp(), dykRz:() => dykRz(), dykRzDay:() => dykRzDay(), dykMf:() => dykMf(), dykEv:() => dykEv(), dykImp:() => dykImp(), dykTss:() => dykTss(), render:() => render()};
 function dykRun(st){
   let m = st.match(/^heroTab\s*=\s*'(\w+)'$/); if (m) { heroTab = m[1]; return; }
   m = st.match(/^(\w+)\((.*)\)$/); const f = m && Object.prototype.hasOwnProperty.call(DYK_FN, m[1]) ? DYK_FN[m[1]] : null;

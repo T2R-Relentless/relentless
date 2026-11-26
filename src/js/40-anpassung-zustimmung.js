@@ -101,7 +101,7 @@ function rdWeekNote(p, w, plan, cur){
   let h = off ? `<p class="text-sm" style="color:var(--mute)">Diese Woche ${off === 1 ? 'hast du 1 freien Tag' : `hast du ${off} freie Tage`}. Erholung gehört zum Training.</p>` : '';
   if (ix != null) h += rdAsk === ix ? rdAskUi(p, w, plan, ix) : `<button class="ghost mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="rdAsk=${ja(ix)};render()">Lockere Zusatzfahrt am ${DAYS[ix]} einplanen (freiwillig)</button><p class="mt-1 text-xs" style="color:var(--mute)">Ein freier Tag ist genauso wertvoll.</p>`;
   if (sug) h += `<div class="mt-2 p-3 text-sm" style="background:#fff6dc;border-left:3px solid #d9a400"><p><b>Nächste Woche hat keinen Ruhetag.</b> Mindestens ein freier Tag pro Woche hilft der Erholung. Soll die App ab nächster Woche ${rdMinShould(p) === 2 ? 'zwei freie Tage' : 'einen freien Tag'} einplanen? Die Wochenzeit bleibt, die übrigen Fahrten werden etwas länger.</p><div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto !px-3" style="min-height:44px" onclick="rdTake()">Ab nächster Woche übernehmen</button><button class="ghost !w-auto !px-3" style="min-height:44px" onclick="rdSkip()">Nein, danke</button></div></div>`;
-  return `<div class="panel p-3">${h}</div>`;
+  return `<div class="panel p-3" id="fx-rd">${h}</div>`;
 }
 function rdAskUi(p, w, plan, i){
   const P = plan.map((x, j) => j === i ? RD_X() : x), wr = paCheck(P, plan, {budget:Math.round(tbWkH(p, w) * 60)}).warns;
