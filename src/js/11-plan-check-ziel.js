@@ -219,7 +219,7 @@ function applyChk(kind, val, mode){
   if (kind === 'editEv') { edit(); scrollTop0(); return; }
   const t = mode === 'dash' ? S.p : S.d, ch = chOf(t, kind, val);
   /* Paket C: Wochenend-Blöcke in einem laufenden Plan erst ab der Folgewoche; vor jeder Übernahme ein Schnappschuss */
-  if (kind === 'wkBlk' && ch.wkBlk) ch.wkBlkFrom = mode === 'dash' ? (S.wk || 1) + 1 : 1;
+  if (kind === 'wkBlk' && ch.wkBlk) ch.wkBlkFrom = mode === 'dash' ? (S.wk || 1) + 1 : (t.start && hasStarted(t) ? curWeek(t) + 1 : 1); /* auch beim Bearbeiten eines laufenden Plans erst ab der Folgewoche */
   if (mode === 'dash' && Object.keys(ch).some(k => JSON.stringify(t[k]) !== JSON.stringify(ch[k]))) { try { bkPre('Vor dem Übernehmen aus dem Plan-Check'); } catch (e) { elog(e); } } /* nur bei echter Änderung */
   Object.assign(S.d, ch);
   if (mode === 'dash') { Object.assign(S.p, JSON.parse(JSON.stringify(ch))); if (S.p.perDay) S.p.hours = Math.max(.5, dsum(S.p) / 60); S.blocked = {}; S.plan = keepT(genWeek(S.p, S.wk)); analyze(); note('Plan-Check übernommen', 'Der Plan wurde mit der Empfehlung aus dem Plan-Check neu berechnet.', -2); }
