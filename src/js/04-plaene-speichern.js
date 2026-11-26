@@ -14,14 +14,14 @@ function writeLib(){
   lib.plans[S.pid] = {id:S.pid, name:S.pname || planName(S.p), manual:!!S.pnameManual, created:old.created || Date.now(), updated:Date.now(), snap:snapOf()}; lib.active = S.pid;
   localStorage.setItem(LIBK, JSON.stringify(lib));
 }
-function applySnap(snap){ PLAN_KEYS.forEach(k => delete S[k]); Object.assign(S, secC(JSON.parse(JSON.stringify(snap)))); S.done = S.done || {}; S.log = S.log || []; S.blocked = S.blocked || {}; S.actual = S.actual || {}; }
+function applySnap(snap){ PLAN_KEYS.forEach(k => delete S[k]); Object.assign(S, secC(JSON.parse(JSON.stringify(snap)))); S.done = S.done || {}; S.log = S.log || []; S.blocked = S.blocked || {}; S.actual = S.actual || {}; try { hkMigP(S.p); } catch (e) { elog(e); } }
 function resetView(){ open = null; vw = null; askReset = false; renId = null; delId = null; impMsg = ''; }
 function switchTo(id){
   save(); const e = readLib().plans[id]; if (!e) return;
   applySnap(e.snap); S.pid = id; S.pname = e.name; S.pnameManual = !!e.manual; S.newFrom = null; S.edit = false; S.step = 0; resetView(); save(); render(); scrollTop0();
 }
 function newPlan(){
-  save(); const src = S.p || S.d || {}, keep = load(true).d; ['weight', 'ftp', 'sex', 'cycMode', 'cycLast', 'cycLen', 'cycSym', 'cycAdapt', 'hrMax', 'lthr', 'noPwr', 'lvl', 'strPlace', 'strLvl'].forEach(k => { if (src[k] != null) keep[k] = src[k]; }); keep.mode = null;
+  save(); const src = S.p || S.d || {}, keep = load(true).d; ['weight', 'kgHk', 'ftp', 'sex', 'cycMode', 'cycLast', 'cycLen', 'cycSym', 'cycAdapt', 'hrMax', 'lthr', 'noPwr', 'lvl', 'strPlace', 'strLvl'].forEach(k => { if (src[k] != null) keep[k] = src[k]; }); keep.mode = null;
   if (typeof rzDraftGone === 'function') rzDraftGone(); S.newFrom = S.pid || null; PLAN_KEYS.forEach(k => delete S[k]); S.p = null; S.plan = null; S.done = {}; S.log = []; S.blocked = {}; S.actual = {}; S.note = '';
   S.pid = null; S.pname = ''; S.pnameManual = false; S.d = keep; S.edit = false; S.step = 1; resetView(); save(); render(); scrollTop0();
 }
@@ -47,7 +47,7 @@ function importPlansV1(inp){
   const f = inp.files && inp.files[0]; if (!f) return; if (f.size > BK_MAX) { impMsg = 'Die Datei ist zu groß für eine Relentless-Sicherung.'; inp.value = ''; return render(); } const r = new FileReader();
   r.onload = () => { try {
     const o = bkParse(r.result);
-    const lib = readLib(); let n = 0; o.plans.forEach(e => { if (e && e.snap && e.snap.p && e.snap.p.goal) { const id = uid(); lib.plans[id] = {id, name:String(e.name || planName(e.snap.p)).slice(0, 60), created:e.created || Date.now(), updated:Date.now(), snap:e.snap}; n++; } });
+    const lib = readLib(); let n = 0; o.plans.forEach(e => { if (e && e.snap && e.snap.p && e.snap.p.goal) { hkMigP(e.snap.p); const id = uid(); lib.plans[id] = {id, name:String(e.name || planName(e.snap.p)).slice(0, 60), created:e.created || Date.now(), updated:Date.now(), snap:e.snap}; n++; } });
     localStorage.setItem(LIBK, JSON.stringify(lib)); impMsg = n ? n + (n === 1 ? ' Plan' : ' Pläne') + ' aus der Sicherung hinzugefügt.' : 'Keine Pläne in der Datei gefunden.';
   } catch (e) { impMsg = (e && e.message) || 'Die Datei ist keine gültige Relentless-Sicherung.'; } inp.value = ''; render(); };
   r.readAsText(f);

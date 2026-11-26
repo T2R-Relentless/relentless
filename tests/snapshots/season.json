@@ -9,9 +9,9 @@
    "kind": "race",
    "n": "Frühjahrsklassiker",
    "pace": [
-    180,
-    209,
-    268
+    177,
+    207,
+    266
    ],
    "t": 245,
    "tAmb": 240
@@ -50,18 +50,18 @@
   },
   {
    "form": {
-    "ctl": 64,
+    "ctl": 63,
     "tsb": 12
    },
    "ftp": 297,
    "kind": "race",
    "n": "Hauptrennen",
    "pace": [
-    172,
-    202,
-    261
+    166,
+    196,
+    255
    ],
-   "t": 325,
+   "t": 330,
    "tAmb": null
   }
  ]

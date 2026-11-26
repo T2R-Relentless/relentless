@@ -29,7 +29,7 @@ function fuelCalc(p){
     <p class="mt-2 text-xs" style="color:var(--mute)">Richtwerte nach ${SRC.acsm} und ${SRC.jeuk}, berechnet mit deinem Gewicht und dem heutigen Plan. Individuelle Verträglichkeit geht vor.</p></div>${ev}`;
 }
 function wissenPage(p){
-  const ftp = p.ftp, Z = [['Z1', 'Aktive Erholung', '< 55 %', 0, 55], ['Z2', 'Grundlage', '56–75 %', 56, 75], ['Z3', 'Tempo', '76–90 %', 76, 90], ['Z4', 'Schwelle', '91–105 %', 91, 105], ['Z5', 'VO2max', '106–120 %', 106, 120], ['Z6', 'Anaerobe Kapazität', '121–150 %', 121, 150], ['Z7', 'Sprint, neuromuskulär', '> 150 %', 151, 0]];
+  const ftp = p.ftp, Z = [['Z1', 'Aktive Erholung', 'bis 55 %', 0, 55], ['Z2', 'Grundlage', '56–75 %', 56, 75], ['Z3', 'Tempo', '76–90 %', 76, 90], ['Sweet Spot', 'Knapp unter der Schwelle', '88–94 %', 88, 94], ['Z4', 'Schwelle', '91–105 %', 91, 105], ['Z5', 'VO2max', '106–120 %', 106, 120], ['Z6', 'Anaerobe Kapazität', '121–150 %', 121, 150], ['Z7', 'Sprint, neuromuskulär', '> 150 %', 151, 0]];
   const nav = [['w-calc', 'Verpflegungsrechner'], ['w-alltag', 'Ernährung im Alltag'], ['w-vor', 'Vor dem Training'], ['w-waehrend', 'Während der Fahrt'], ['w-nach', 'Nach dem Training'], ['w-supp', 'Supplemente'], ['w-energie', 'Energieverfügbarkeit'], ['w-sex', 'Frauen und Männer'], ['w-zeit', 'Wenig Zeit?'], ['w-train', 'Trainingsgrundlagen'], ['w-zonen', 'Zonen und Kennzahlen'], ['w-erh', 'Erholung und Schlaf'], ['w-race', 'Renntaktik'], ['w-src', 'Quellen']];
   return `<p class="text-sm" style="color:var(--mute)">Das Wichtigste aus Trainingslehre und Sporternährung, kurz erklärt. Der Schwerpunkt liegt auf Verpflegung, weil sie bei langen Ausfahrten oft über Erfolg oder Einbruch entscheidet.</p>
     <div class="flex flex-wrap gap-2">${nav.map(([id, l]) => `<button class="wnav" onclick="wGo('${ja(id)}')">${l}</button>`).join('')}</div>
@@ -148,13 +148,13 @@ Object.assign(FIC, {
   cadence:'<circle cx="12" cy="12" r="8"/><path d="M12 4v3M12 12l4-3"/>',
   pause:'<path d="M8 5v14M16 5v14"/>'
 });
-const ZTXT = {Z1:'sehr locker', Z2:'locker, Unterhaltung möglich', Z3:'zügig, kurze Sätze', Z4:'hart, an der Schwelle', Z5:'sehr hart, kaum sprechen'};
+const ZTXT = {Z1:'sehr locker', Z2:'locker, Unterhaltung möglich', Z3:'zügig, kurze Sätze', Z4:'hart, an der Schwelle', Z5:'sehr hart, kaum sprechen', Z6:'maximal und nur kurz'};
 function fuelNums(x){
   const m = x.m || 0, hard = ['sst', 'thr', 'vo2'].includes(x.t), onT = m <= 60 ? 0 : m <= 90 ? (hard ? 30 : 0) : m <= 150 ? Math.round(m / 60 * 45 / 5) * 5 : Math.round(m / 60 * 70 / 10) * 10;
   return {onT, bott:Math.min(2, Math.max(1, Math.round(m / 60))), gels:m > 150 ? Math.round(m / 60) : m > 90 ? 1 : 0, bars:m > 150 ? Math.ceil(m / 60 / 2) : m > 90 ? 1 : 0, every:m > 90, salt:m > 150, drink:hard && m <= 90 ? 'Sportgetränk' : m > 90 ? 'Sportgetränk' : 'Wasser'};
 }
 function heroIcons(x){
-  const z = zone(x.hi), v = x.iv, f = fuelNums(x);
+  const z = znLbl(x), v = x.iv, f = fuelNums(x);
   const row = (k, main, sub) => `<div class="hrow">${fic(k, 20)}<div><p class="hrm">${main}</p>${sub ? `<p class="hrs">${sub}</p>` : ''}</div></div>`;
   const zt = x.t === 'sst' ? 'Sweet Spot: fordernd, aber kontrolliert' : x.t === 'race' ? 'Rennen: nach Gefühl und Rennverlauf' : ZTXT[z] ? ZTXT[z][0].toUpperCase() + ZTXT[z].slice(1) : z;
   const ride = [v ? row('repeat', `${(v.sets || 1) > 1 ? v.sets + ' Serien à ' : ''}${v.reps}× ${durT(v.work)} bei ${noPwr() ? (hrRng(v.lo, v.hi) ? 'Puls ' + hrTxt(hrRng(v.lo, v.hi)) : 'Empfinden ' + rpeTxt(x)) : v.lo + '–' + v.hi + ' %'}`, `${v.reps > 1 ? durT(v.rest) + ' locker dazwischen · ' : ''}${v.wu} Min. ein- und ${v.cd} Min. ausfahren`) : null,
@@ -261,7 +261,7 @@ function dashboard(){
       <button class="ghost !px-3.5 !py-1.5" onclick="goWeek(${ja(w+1)})" aria-label="Nächste Woche" ${w>=tot?'disabled style="opacity:.3"':''}>›</button></div>
       <p class="text-center text-sm" style="color:var(--mute)">${mm(tm)} geplant von ${hStd(tbWkH(p, w))} Std. verfügbar${tm > tbWkH(p, w) * 60 + 1 ? ' (mehr, weil Event- oder Pendeltage feststehen)' : ''}, TSS ~${tt}${Object.keys(strMap).length ? ', zusätzlich ' + Object.keys(strMap).length + ' × Krafttraining' : ''}${Object.keys(mobMap).length ? (Object.keys(strMap).length ? ' und ' : ', zusätzlich ') + Object.keys(mobMap).length + ' × Mobilität/Stabilität' : ''}${cur?'':'. Vorschau, wird zur Woche hin aktualisiert.'}</p><p class="mb-2 text-center text-xs" style="color:var(--mute)">Zeit nach Belastungsbereich: ${dist(plan)}</p>
       ${weekPanel(w, cur)}${impactCard()}${cycWeek(p, w, plan)}
-      ${mvModal()}${vaModal()}${blWeekSum(w)}${woNote(plan, w)}<div class="space-y-2.5">${plan.map((x, i) => dayCard(x, i, cur) + xrDayRows(w, i)).join('')}</div></section>`;
+      ${mvModal()}${vaModal()}${blWeekSum(w)}${woNote(plan, w)}${rdWeekNote(p, w, plan, cur)}<div class="space-y-2.5" id="fx-wkd">${fwBtn(w)}${plan.map((x, i) => dayCard(x, i, cur) + xrDayRows(w, i)).join('')}</div></section>`;
   const T = {...ST_T, ...RC_T, ...PP_T, ...SET_T, ...EXP_T, ...EV_T, more:'Mehr', 'tool-tire':'Reifendruck', week:'Wochenplan', logbook:'Logbuch', 'lb-ride':'Fahrt', state:'Fortschritt', check:'Plan-Check', event:'Event', overview:'Gesamtplan', rides:'Fahrten bewerten', ex:'Übungen', export:'Export', plans:'Meine Pläne', settings:'Einstellungen', science:'Wissen', cycle:'Zyklus', ms:'Fitness-Checks'};
   foldFlat = page !== 'home';
   let body = '';

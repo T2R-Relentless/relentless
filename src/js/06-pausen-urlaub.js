@@ -67,7 +67,7 @@ function reentFtpCard(){
   return `<section class="panel p-4" style="border-left:4px solid var(--teal)"><p class="font-semibold">FTP nach der Pause</p><p class="mt-1 text-sm">Nach vier Wochen oder mehr ohne Training liegt der FTP meist einige Prozent niedriger. Mit einem etwas niedrigeren Wert passen die Wattvorgaben besser, bis ein Fitness-Check Klarheit bringt.</p>
     <div class="mt-3 flex flex-wrap gap-2"><button class="btn !w-auto !px-3" style="min-height:44px" onclick="reentFtpGo(true)">FTP auf ${r.ftp} W senken, Check in Woche ${r.w}</button><button class="ghost !w-auto !px-3" style="min-height:44px" onclick="reentFtpGo(false)">FTP behalten</button></div></section>`;
 }
-function reentFtpGo(ok){ const r = reentFtp; reentFtp = null; if (!r) return render(); if (ok) { S.p.xTests = [...new Set([...(S.p.xTests || []), r.w])]; S.d.xTests = S.p.xTests; setFtpNow(r.ftp); return; } render(); }
+function reentFtpGo(ok){ const r = reentFtp; reentFtp = null; if (!r) return render(); if (ok) { S.p.xTests = [...new Set([...(S.p.xTests || []), r.w])]; S.d.xTests = S.p.xTests; setFtpNow(r.ftp, null, 'geschaetzt'); return; } render(); }
 /* Wiedereinstieg im Generator: Umfang begrenzen, harte Einheiten reduzieren */
 function reentHard(hard, re, SST){ if (!re) return hard; if (re.lvl >= 2) return hard.length ? [SST] : []; return hard.slice(0, 1); }
 /* Krankheit am Wochenende: Folgetage der nächsten Woche locker */

@@ -1,5 +1,5 @@
 /* ---------- Aktionen ---------- */
-function draft(k, v){ if (k === 'eventDate') S.d.evDateEst = false; if ((k === 'dist' || k === 'hm') && S.d.course) { if (S.d.course.builtin) S.d.noBuiltin = true; delete S.d.course; } S.d[k] = (['ftp','ftpTarget','hours','commuteMin','weight','dist','hm','startH','longMin'].includes(k)) ? Number(v) : v; save(); evUpd(); rngHint(k, v); if (formMsg && !rngFirst(S.d)) { formMsg = ''; render(); } }
+function draft(k, v){ if (k === 'eventDate') S.d.evDateEst = false; if (k === 'weight') S.d.kgHk = Number(v) > 0 ? 'eingegeben' : 'geschaetzt'; if (k === 'ftp' && !ftpChip) S.d.ftpSet = 1; if ((k === 'dist' || k === 'hm') && S.d.course) { if (S.d.course.builtin) S.d.noBuiltin = true; delete S.d.course; } S.d[k] = (['ftp','ftpTarget','hours','commuteMin','weight','dist','hm','startH','longMin'].includes(k)) ? Number(v) : v; save(); evUpd(); rngHint(k, v); if (formMsg && !rngFirst(S.d)) { formMsg = ''; render(); } }
 const kgOf = p => p.weight > 0 ? p.weight : 75;
 const isComm = p => p.commuter === undefined ? p.commute.some(Boolean) : !!p.commuter;
 const legOf = (p, i) => comLeg(p);
@@ -61,16 +61,25 @@ function pickEv(id){
   }
   save(); render();
 }
+/* Paket C, Punkt 17: Einträge mit Name, Strecke und Höhenmetern; ab mehr als 20 Events ein Suchfeld; „hm offen“ mit Hinweis */
+let evQ = '';
+const evOptTxt = e => { const en = lang() === 'en', v = e.v ? String(e.v).replace(/\s*\([^)]*km\)/, '') : ''; return `${e.n}${v ? ' ' + v : ''} · ${en ? String(e.km) : f1(e.km)} km · ${e.hm != null ? (en ? e.hm.toLocaleString('en-GB') + ' m' : e.hm.toLocaleString('de-DE') + ' hm') : (en ? 'elevation open' : 'hm offen')}`; };
+function evOpts(d, q){
+  q = String(q || '').trim().toLowerCase(); const groups = [];
+  EVS.filter(e => !q || e.id === d.evId || (e.n + ' ' + (e.v || '') + ' ' + (e.c || '')).toLowerCase().includes(q)).forEach(e => { let g = groups.find(x => x.n === e.n); if (!g) groups.push(g = {n:e.n, c:e.c, l:[]}); g.l.push(e); });
+  return `<option value="">${lang() === 'en' ? 'Own event / enter manually' : 'Eigenes Event / manuell eintragen'}</option>` + groups.map(g => `<optgroup label="${esc(g.n)} (${esc(g.c)})">${g.l.map(e => `<option value="${esc(e.id)}"${d.evId === e.id ? ' selected' : ''}>${esc(evOptTxt(e))}</option>`).join('')}</optgroup>`).join('');
+}
+function evFilter(v){ evQ = v; const el = document.getElementById('evSel'); if (el) el.innerHTML = evOpts(S.d, v); const c = document.getElementById('evCnt'); if (c) c.textContent = evCntTxt(v); }
+const evCntTxt = q => { const n = EVS.filter(e => !String(q || '').trim() || (e.n + ' ' + (e.v || '') + ' ' + (e.c || '')).toLowerCase().includes(String(q).trim().toLowerCase())).length; return lang() === 'en' ? `${n} ${n === 1 ? 'event' : 'events'} found` : `${n} ${n === 1 ? 'Event' : 'Events'} gefunden`; };
 function evPick(d){
-  const groups = []; EVS.forEach(e => { let g = groups.find(x => x.n === e.n); if (!g) groups.push(g = {n:e.n, c:e.c, l:[]}); g.l.push(e); });
-  const cur = EVS.find(x => x.id === d.evId);
-  const opts = '<option value="">Eigenes Event / manuell eintragen</option>' + groups.map(g => `<optgroup label="${esc(g.n)} (${g.c})">${g.l.map(e => `<option value="${esc(e.id)}"${d.evId === e.id ? ' selected' : ''}>${esc(e.v || f1(e.km) + ' km')}${e.hm != null ? ' · ' + e.hm.toLocaleString('de-DE') + ' hm' : ' · hm offen'}</option>`).join('')}</optgroup>`).join('');
+  const cur = EVS.find(x => x.id === d.evId), opts = evOpts(d, evQ);
+  const srch = EVS.length > 20 ? field('Event suchen', `<input type="search" class="inp" style="min-height:44px" value="${esc(evQ)}" placeholder="z. B. Ötztaler" oninput="evFilter(this.value)" aria-label="Event suchen"><p id="evCnt" class="mt-1 text-xs" style="color:var(--mute)" aria-live="polite" data-noi18n>${esc(evQ ? evCntTxt(evQ) : '')}</p>`) : '';
   let info = '';
   if (cur) {
     const dt = cur.d ? 'Termin: ' + dOnly(cur.d).toLocaleDateString('de-DE', {day:'2-digit', month:'long', year:'numeric'}) : (cur.dn || 'Termin beim Veranstalter prüfen');
-    info = `<div class="p-3 text-sm" style="background:#e6f7f6;border:1px solid var(--ice);color:var(--ink)"><b><span data-noi18n>${esc(cur.n)}</span>${cur.v ? ', <span>' + esc(cur.v) + '</span>' : ''}</b><br>${esc(dt)}${cur.d && cur.dn ? '<br>' + esc(cur.dn) : ''}<br>${f1(cur.km)} km${cur.hm != null ? ', ' + cur.hm.toLocaleString('de-DE') + ' hm' : ', Höhenmeter bitte selbst eintragen'}<br><span style="color:var(--mute)">${esc(cur.o || '')}</span>${cur.d ? '' : evDateGuess(cur) ? `<br><b>Vorläufig übernommen: ${new Date(evDateGuess(cur) + 'T12:00:00').toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'})}</b> (${cur.est ? 'aus dem bekannten Eventwochenende' : cur.pyRule === 'date' ? 'Vorjahrestermin, gleiches Datum' : 'Vorjahrestermin, gleicher Wochentag'}). <b>Bitte Eventdatum unten selbst setzen, sobald der Termin feststeht.</b>` : '<br><b>Bitte Eventdatum unten selbst setzen.</b>'}</div>`;
+    info = `<div class="p-3 text-sm" style="background:#e6f7f6;border:1px solid var(--ice);color:var(--ink)"><b><span data-noi18n>${esc(cur.n)}</span>${cur.v ? ', <span>' + esc(cur.v) + '</span>' : ''}</b><br>${esc(dt)}${cur.d && cur.dn ? '<br>' + esc(cur.dn) : ''}<br>${f1(cur.km)} km${cur.hm != null ? ', ' + cur.hm.toLocaleString('de-DE') + ' hm' : ''}<br><span style="color:var(--mute)">${esc(cur.o || '')}</span>${cur.d ? '' : evDateGuess(cur) ? `<br><b>Vorläufig übernommen: ${new Date(evDateGuess(cur) + 'T12:00:00').toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long', year:'numeric'})}</b> (${cur.est ? 'aus dem bekannten Eventwochenende' : cur.pyRule === 'date' ? 'Vorjahrestermin, gleiches Datum' : 'Vorjahrestermin, gleicher Wochentag'}). <b>Bitte Eventdatum unten selbst setzen, sobald der Termin feststeht.</b>` : '<br><b>Bitte Eventdatum unten selbst setzen.</b>'}${cur.hm == null ? `<div class="mt-2">${field('Höhenmeter fehlen: bitte eintragen', `<input type="number" inputmode="numeric" class="inp" style="min-height:44px" value="${esc(+d.hm > 0 ? d.hm : '')}" placeholder="z. B. 1200" oninput="draft('hm',this.value)">`)}</div>` : ''}</div>`;
   }
-  return field('Event-Vorschlag (DACH-Jedermannrennen)', `<select class="inp" onchange="pickEv(this.value)">${opts}</select>`) + info + '<p class="text-xs" style="color:var(--mute)">Stand Oktober 2026. Termine und Strecken ändern sich, bitte vor der Anmeldung beim Veranstalter prüfen.</p>';
+  return srch + field('Event-Vorschlag (DACH-Jedermannrennen)', `<select id="evSel" class="inp" data-noi18n onchange="pickEv(this.value)">${opts}</select>`) + info + '<p class="text-xs" style="color:var(--mute)">Stand Oktober 2026. Termine und Strecken ändern sich, bitte vor der Anmeldung beim Veranstalter prüfen.</p>';
 }
 /* Zielzeit-Check: Leistungsbilanz nach Martin et al. 1998, siehe modelInfo() */
 

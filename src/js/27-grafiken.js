@@ -2,8 +2,9 @@
    Beim Einlesen einer Fahrt entsteht eine kompakte Zeitreihe (höchstens 600 Punkte, Watt, Puls, Höhe), die mit der Bewertung
    gespeichert wird (nur für die letzten 40 bewerteten Fahrten, damit der Speicher im Browser reicht). Die Sekundenwerte selbst
    werden nicht gespeichert, nur daraus berechnete Zonenzeiten und Bestwerte. */
-const VZ_ZP = [[0, 55, 'Z1', 'Erholung', '#9aa7b8'], [55, 75, 'Z2', 'Grundlage', '#00c2b2'], [75, 90, 'Z3', 'Tempo', '#4f9dde'], [90, 105, 'Z4', 'Schwelle', '#f2b134'], [105, 120, 'Z5', 'VO2max', '#f07d3a'], [120, 150, 'Z6', 'Anaerob', '#e0464e'], [150, 9999, 'Z7', 'Sprint', '#8e3bbf']];
-const VZ_ZH_L = [[0, 81, 'Z1', 'Erholung', '#9aa7b8'], [81, 90, 'Z2', 'Grundlage', '#00c2b2'], [90, 94, 'Z3', 'Tempo', '#4f9dde'], [94, 100, 'Z4', 'Schwelle', '#f2b134'], [100, 999, 'Z5', 'Hoch', '#e0464e']];
+/* Paket C (Fachregeln 6.3, 6.6): Grenzen aus der Zonentabelle ZN (Coggan), Leistung wie Puls. Die HFmax-Tabelle bleibt nur als grober Ersatz. */
+const VZ_ZP = [[0, 56, 'Z1', 'Erholung', '#9aa7b8'], [56, 76, 'Z2', 'Grundlage', '#00c2b2'], [76, 91, 'Z3', 'Tempo', '#4f9dde'], [91, 106, 'Z4', 'Schwelle', '#f2b134'], [106, 121, 'Z5', 'VO2max', '#f07d3a'], [121, 151, 'Z6', 'Anaerob', '#e0464e'], [151, 9999, 'Z7', 'Sprint', '#8e3bbf']];
+const VZ_ZH_L = [[0, 69, 'Z1', 'Erholung', '#9aa7b8'], [69, 84, 'Z2', 'Grundlage', '#00c2b2'], [84, 95, 'Z3', 'Tempo', '#4f9dde'], [95, 106, 'Z4', 'Schwelle', '#f2b134'], [106, 999, 'Z5', 'VO2max', '#e0464e']];
 const VZ_ZH_M = [[0, 60, 'Z1', 'Erholung', '#9aa7b8'], [60, 70, 'Z2', 'Grundlage', '#00c2b2'], [70, 80, 'Z3', 'Tempo', '#4f9dde'], [80, 90, 'Z4', 'Schwelle', '#f2b134'], [90, 999, 'Z5', 'Hoch', '#e0464e']];
 const VZ_PB = [['d5', 5, '5 Sek.'], ['m1', 60, '1 Min.'], ['m5', 300, '5 Min.'], ['m20', 1200, '20 Min.'], ['m60', 3600, '60 Min.']];
 
@@ -119,14 +120,16 @@ function vzZones(e){
   let tz = useP ? vzTargetZone(e) : null; if (!useP && e.x && ['base', 'long', 'rec', 'com'].includes(e.x.t)) tz = e.x.t === 'rec' ? 0 : 1;
   const rows = Z.map((z, k) => { const v = arr[k], pc = tot ? v / tot * 100 : 0, on = k === tz; return `<div class="vz-zr${esc(on ? ' on' : '')}"><span class="vz-zl"><b>${z[2]}</b> ${z[3]}</span><span class="vz-zb"><i style="width:${esc(mx ? Math.max(v ? 1.5 : 0, v / mx * 100) : 0)}%;background:${esc(z[4])}"></i></span><span class="vz-zv">${pc >= 1 ? Math.round(pc) + ' %' : v ? '<1 %' : '–'}</span></div>`; }).join('');
   let sum = '';
-  if (tz != null && tz >= 0) {
+  /* Paket C: Pulszonen aus der maximalen Herzfrequenz sind nur grob, darum kein Urteil */
+  if (!useP && e.zhk !== 'lthr') sum = 'Mit deinem Schwellenpuls wird die Auswertung genauer.';
+  else if (tz != null && tz >= 0) {
     const pin = tot ? arr[tz] / tot * 100 : 0, z = Z[tz];
     if (e.iv && e.iv.length && useP) { const plan = e.iv.length * (e.iv[0].d || 0), got = arr.slice(tz).reduce((s, v) => s + v, 0); sum = plan ? `Ziel: ${Math.round(plan / 60)} Min. in ${z[2]} ${z[3]} oder höher. Gefahren: ${Math.round(got / 60)} Min.` : ''; }
     else { const easy = tz <= 1, below = arr.slice(0, tz).reduce((s, v) => s + v, 0) / Math.max(1, tot) * 100, above = arr.slice(tz + 1).reduce((s, v) => s + v, 0) / Math.max(1, tot) * 100;
       sum = `Ziel ${z[2]} ${z[3]}: ${Math.round(pin)} % der Fahrzeit dort` + (easy ? (above >= 15 ? `, ${Math.round(above)} % darüber. Für eine lockere Einheit war das zu viel Zeit in höheren Zonen.` : pin + below >= 75 ? '. Sauber locker gefahren.' : '.') : `${below >= 40 ? `, ${Math.round(below)} % darunter` : ''}.`); }
   }
-  const sub = useP && e.zh && e.zh.some(Boolean) ? (() => { const Zh = e.zhk === 'lthr' ? VZ_ZH_L : VZ_ZH_M, th = e.zh.reduce((s, v) => s + v, 0); return `<p class="mt-2 text-xs" style="color:var(--mute)">Puls-Zonen</p><div class="vz-stk">${e.zh.map((v, k) => v ? `<i style="width:${esc(v / th * 100)}%;background:${esc(Zh[k][4])}" title="${esc(Zh[k][2])} ${Math.round(v / th * 100)} %"></i>` : '').join('')}</div><div class="vz-stl">${Zh.map((z, k) => e.zh[k] / th >= .08 ? `<span>${z[2]} ${Math.round(e.zh[k] / th * 100)} %</span>` : '').join('')}</div>`; })() : '';
-  return `<div class="mt-4"><p class="text-xs font-semibold" style="color:var(--mute)">Zeit in Zonen (${useP ? 'Watt' : 'Puls'})</p><div class="mt-1.5">${rows}</div>${sum ? `<p class="mt-1.5 text-xs">${sum}</p>` : ''}${sub}</div>`;
+  const sub = useP && e.zh && e.zh.some(Boolean) ? (() => { const Zh = e.zhk === 'lthr' ? VZ_ZH_L : VZ_ZH_M, th = e.zh.reduce((s, v) => s + v, 0); return `<p class="mt-2 text-xs" style="color:var(--mute)">${e.zhk === 'lthr' ? 'Puls-Zonen' : 'Puls-Zonen (grob, aus der maximalen Herzfrequenz)'}</p><div class="vz-stk">${e.zh.map((v, k) => v ? `<i style="width:${esc(v / th * 100)}%;background:${esc(Zh[k][4])}" title="${esc(Zh[k][2])} ${Math.round(v / th * 100)} %"></i>` : '').join('')}</div><div class="vz-stl">${Zh.map((z, k) => e.zh[k] / th >= .08 ? `<span>${z[2]} ${Math.round(e.zh[k] / th * 100)} %</span>` : '').join('')}</div>`; })() : '';
+  return `<div class="mt-4"><p class="text-xs font-semibold" style="color:var(--mute)">Zeit in Zonen (${useP ? 'Watt' : e.zhk === 'lthr' ? 'Puls' : 'Puls, grob aus der maximalen Herzfrequenz'})</p><div class="mt-1.5">${rows}</div>${sum ? `<p class="mt-1.5 text-xs">${sum}</p>` : ''}${sub}</div>`;
 }
 function vzRide(e){ try { return vzTrace(e) + vzZones(e); } catch (er) { elog(er); return ''; } }
 

@@ -12,16 +12,32 @@ function lightSet(k, v){ S.d[k] = v; if (k === 'hours') S.d.perDay = false; if (
 function lightDay(i){ const a = [...S.d.avail]; a[i] = !a[i]; if (a.filter(Boolean).length) S.d.avail = a; save(); render(); }
 function lightFinish(){
   const d = S.d, kg = d.weight > 0 ? d.weight : 75;
+  if (snKgReq(d) && !snKgIn(d)) { lightMsg = ''; S.step = 2; snKgFail(); save(); render(); return; } /* Paket C: Gewicht ist ab 1.500 hm Pflicht */
   if (d.goal === 'event' && !(d.eventDate && d.eventDate >= addD(sdOf(d), 14))) { lightMsg = sdOf(d) > iso(0) ? 'Das Event muss mindestens 2 Wochen nach dem Planstart liegen.' : 'Bitte ein Eventdatum wählen, das mindestens 2 Wochen in der Zukunft liegt.'; return render(); }
   if (d.goal !== 'event' && !(d.endDate && d.endDate >= addD(sdOf(d), 14))) d.endDate = addD(sdOf(d), 84);
   if (d.goal === 'fitness' && !d.ffocus) d.ffocus = 'health';
-  d.ftp = d.ftpKnown > 0 ? d.ftpKnown : Math.round(LVL[d.lvl || 'hob'][1] * lvlF(d) * kg / 5) * 5;
+  d.ftp = d.ftpKnown > 0 ? d.ftpKnown : Math.round(LVL[d.lvl || 'hob'][1] * lvlF(d) * kg / 5) * 5; d.test0 = snT0(d);
   d.perDay = false; d.commuter = false; d.commute = d.commute.map(() => false); d.strN = d.strN || 0;
   const av = d.avail; d.longDay = av[6] ? 6 : av[5] ? 5 : av.lastIndexOf(true);
   if (d.goal === 'event') { if (!d.eventName) d.eventName = 'Mein Event'; try { const ed = (EVS.find(x => x.id === d.evId) || {}).dur, a = ed ? null : ambTarget({...d, targetTime:'5:00'}); if (ed) d.targetTime = hm2(ed); else if (!d.tgtMan && a && (a.tPlan || a.t)) d.targetTime = hm2(a.tPlan || a.t); } catch (e) { elog(e); } }
   lightMsg = ''; finish();
 }
 let lightMsg = '';
+/* Paket C, Punkt 1: Gewicht in Schritt 2 Pflicht, sobald das Event mehr als 1.500 Höhenmeter hat */
+const snKgReq = d => !!d && d.goal === 'event' && hkHm(d) > 1500;
+const snKgIn = d => !!d && d.weight > 0 && (d.kgHk ? d.kgHk === 'eingegeben' : hkKgOf(d) === 'eingegeben');
+/* Ausführliche Planung (Korrektur 5): Gewicht steht in Schritt 2, die Höhenmeter oft erst in Schritt 4. Fehlt es, zurück zu Schritt 2. */
+function snKgNav(){ const d = S.d; if (!d || d.mode === 'light' || (S.step || 1) < 2 || !snKgReq(d) || snKgIn(d)) return ''; S.step = 2; snKgFail(); return SN_KGMSG; }
+/* Gewichtsfeld mit Fehlerzustand (Korrektur 21): roter Rand, aria-invalid, Meldung mit role="alert" direkt am Feld, Fokus */
+let snKgErr = false;
+function snKgFail(){ snKgErr = true; setTimeout(() => { const e = document.getElementById('kgIn'); if (e) e.focus(); }, 60); }
+function snKgField(d, lbl){
+  const req = snKgReq(d), err = snKgErr && req && !snKgIn(d);
+  return '<div>' + field(req ? lbl + ', Pflicht' : lbl, `<input id="kgIn" type="number" inputmode="decimal" class="inp" placeholder="z. B. 75" value="${esc(snKgIn(d) ? d.weight : '')}" oninput="draft('weight',this.value)"${req ? ' aria-required="true"' : ''}${err ? ' aria-invalid="true" aria-describedby="kgErr" style="border-color:#c0392b;border-width:2px"' : ''}>`) + '</div>';
+}
+/* Fehlermeldung zum Gewicht in voller Breite unter beiden Feldern */
+const snKgErrHtml = d => snKgErr && snKgReq(d) && !snKgIn(d) ? `<p id="kgErr" role="alert" class="mt-2 text-sm" style="color:#c0392b">${icWarn()}${SN_KGMSG}</p>` : '';
+const SN_KGMSG = 'Bitte trag dein Gewicht ein. Bei mehr als 1.500 Höhenmetern hängt die Prognose stark davon ab.';
 /* Schnellplanung Schritt 2: Geschlecht, Alter und Erholung sind optional und eingeklappt, damit der Schritt kurz bleibt.
    Offen, sobald dort etwas eingetragen ist; der Zustand übersteht das Neuzeichnen (lightMore). */
 let lightMore = false;
@@ -117,9 +133,9 @@ function lightPage(d){
     + `${S.edit ? '' : '<button class="ghost mt-6 w-full !py-2 text-sm" onclick="chooseMode()">‹ Zurück zur Wahl der Planungsart</button>'}`;
   if (ls === 2) return head('Wie fit bist du gerade?', 'Daraus schätzt die App deinen Startwert. Ein grober Eindruck genügt.')
     + `<p class="mb-2 font-semibold">Wie würdest du dich einschätzen?</p><div class="space-y-2">${Object.entries(LVL).map(([k, v]) => lopt(lv === k && !(d.ftpKnown > 0), `lightSet('lvl','${ja(k)}')`, v[0], v[2])).join('')}</div>
-    <div class="panel mt-4 p-4"><div class="grid grid-cols-2 gap-3">${field('Gewicht (kg)', `<input type="number" inputmode="decimal" class="inp" value="${esc(d.weight || '')}" oninput="draft('weight',this.value)">`)}${field('FTP, falls bekannt (W)', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc(ftpE)}" value="${esc(d.ftpKnown || '')}" oninput="S.d.ftpKnown=Number(this.value)||0;save()">`)}</div>
-      <p class="mt-2 text-xs" style="color:var(--mute)">Kennst du deinen FTP, trag ihn ein. Sonst schätzt die App ihn aus deiner Einschätzung oben (hier etwa ${ftpE} W).</p></div>
-    <div class="mt-4 space-y-2">${pwAsk(d, true)}${d.pwMix && !d.noPwr ? pwMixHr(d) : ''}${d.noPwr ? `<div class="panel p-4">${field('Schwellenpuls, falls bekannt', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc((lthrEst() || {}).v || 'z. B. 165')}" value="${esc(d.lthr || '')}" onchange="setHr('lthr',this.value)">`)}<p class="mt-2 text-xs" style="color:var(--mute)">Kennst du ihn nicht, misst ihn der Fitnesstest in der ersten Woche: 30 Minuten gleichmäßig hart, dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Den FTP für die Prognose kannst du später im Plan über ein Bergzeitfahren schätzen lassen.</p></div>` : ''}${lopt(!!d.test0, 'togTest0()', 'Mit einem Fitnesstest starten', d.noPwr ? 'Ein 30-Minuten-Test in der ersten Woche für deinen Schwellenpuls. Danach zeigen die Einheiten deine persönlichen Pulsbereiche. Empfohlen, wenn du ihn nicht kennst.' : 'Ein 20-Minuten-Test in der ersten Woche. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, wenn du deinen FTP nicht kennst.', LIC.test, true)}</div>
+    <div class="panel mt-4 p-4"><div class="grid grid-cols-2 gap-3">${snKgField(d, 'Gewicht (kg)')}${field('FTP, falls bekannt (W)', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc(ftpE)}" value="${esc(d.ftpKnown || '')}" oninput="S.d.ftpKnown=Number(this.value)||0;save()">`)}</div>${snKgErrHtml(d)}
+      <p class="mt-2 text-xs" style="color:var(--mute)">Kennst du deinen FTP, trag ihn ein. Sonst schätzt die App ihn aus deiner Einschätzung oben (hier etwa ${ftpE} W). ${snKgReq(d) ? 'Dein Gewicht braucht die App bei mehr als 1.500 Höhenmetern für eine brauchbare Prognose.' : 'Ohne Gewicht rechnet die App mit 75 kg (geschätzt).'}</p></div>
+    <div class="mt-4 space-y-2">${pwAsk(d, true)}${d.pwMix && !d.noPwr ? pwMixHr(d) : ''}${d.noPwr ? `<div class="panel p-4">${field('Schwellenpuls, falls bekannt', `<input type="number" inputmode="numeric" class="inp" placeholder="${esc((lthrEst() || {}).v || 'z. B. 165')}" value="${esc(d.lthr || '')}" onchange="setHr('lthr',this.value)">`)}<p class="mt-2 text-xs" style="color:var(--mute)">Kennst du ihn nicht, misst ihn der Fitnesstest in der ersten Woche: 30 Minuten gleichmäßig hart, dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Den FTP für die Prognose kannst du später im Plan über ein Bergzeitfahren schätzen lassen.</p></div>` : ''}${lopt(snT0(d), 'togTest0()', 'Mit einem Fitnesstest starten', d.noPwr ? 'Ein 30-Minuten-Test in der ersten Woche für deinen Schwellenpuls. Danach zeigen die Einheiten deine persönlichen Pulsbereiche. Empfohlen, wenn du ihn nicht kennst.' : snLow(d) ? 'Nach zwei ruhigen Wochen nur mit Grundlage folgt in Woche 3 ein kurzer Test. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, weil dein FTP sonst nur geschätzt ist.' : 'Ein kurzer Test am 2. Trainingstag. Danach rechnet der Plan mit deinem echten Wert. Empfohlen, weil dein FTP sonst nur geschätzt ist.', LIC.test, true)}${snT0Ui(d)}</div>
     ${lightMoreUi(d)}`
     + navRow(1, 3);
   if (ls === 3) { const nD = d.avail.filter(Boolean).length, per = nD ? Math.round(d.hours * 60 / nD) : 0, ld = d.avail[6] ? 6 : d.avail[5] ? 5 : d.avail.lastIndexOf(true);
@@ -129,19 +145,27 @@ function lightPage(d){
       <div class="mt-4" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">${[[3, 'Einstieg'], [5, 'Regelmäßig'], [8, 'Ambitioniert'], [12, 'Sehr viel']].map(([h, l]) => `<button onclick="lightSet('hours',${ja(h)})" class="py-2 text-center" style="border:1px solid ${Number(d.hours) === h ? 'var(--ice)' : 'var(--line)'};background:${Number(d.hours) === h ? '#e6f7f6' : '#fff'}"><span class="block font-semibold">${h} Std.</span><span class="block text-xs" style="color:var(--mute)">${l}</span></button>`).join('')}</div></div>
     <div class="panel mt-4 p-4"><p class="font-semibold">An welchen Tagen kannst du fahren?</p><p class="mb-3 text-xs" style="color:var(--mute)">Tippe die Tage an. Gewählt: ${nD} ${nD === 1 ? 'Tag' : 'Tage'}.</p>
       <div class="grid gap-1.5" style="grid-template-columns:repeat(7,minmax(0,1fr))">${SD.map((x, i) => `<button onclick="lightDay(${ja(i)})" class="text-center" style="padding:10px 0;border:2px solid ${esc(d.avail[i] ? 'var(--ice)' : 'var(--line)')};background:${esc(d.avail[i] ? 'var(--ice)' : '#fff')};color:${esc(d.avail[i] ? '#071747' : 'var(--mute)')}" aria-pressed="${d.avail[i]}"><span class="block text-sm font-semibold">${x}</span><span class="block text-xs" style="height:14px">${d.avail[i] ? '✓' : ''}</span></button>`).join('')}</div>
-      ${nD ? `<p class="mt-3 text-sm">Das sind im Schnitt etwa <b>${mm(per)}</b> pro Trainingstag.${ld >= 0 ? ` Der Long Ride liegt am ${DAYS[ld]} und ist länger, die anderen Tage sind kürzer.` : ''}</p>${per > 150 ? '<p class="mt-1 text-sm" style="color:#9a6a00">Das ist viel pro Tag. Mehr Trainingstage oder etwas weniger Stunden machen die Woche entspannter.</p>' : per < 35 ? '<p class="mt-1 text-sm" style="color:#9a6a00">Sehr kurze Einheiten. Weniger Tage mit etwas mehr Zeit bringen meist mehr.</p>' : ''}` : ''}</div>
+      ${nD ? rdRidesTxt(d) : ''}${nD ? rdToggleUi(d, false) : ''}${nD ? `<p class="mt-3 text-sm">Das sind im Schnitt etwa <b>${mm(per)}</b> pro Trainingstag.${ld >= 0 ? ` Der Long Ride liegt am ${DAYS[ld]} und ist länger, die anderen Tage sind kürzer.` : ''}</p>${per > 150 ? '<p class="mt-1 text-sm" style="color:#9a6a00">Das ist viel pro Tag. Mehr Trainingstage oder etwas weniger Stunden machen die Woche entspannter.</p>' : per < 35 ? '<p class="mt-1 text-sm" style="color:#9a6a00">Sehr kurze Einheiten. Weniger Tage mit etwas mehr Zeit bringen meist mehr.</p>' : ''}` : ''}</div>
     <p class="mb-2 mt-4 font-semibold">Kurze Übungen für Beweglichkeit und Rumpf dazu?</p><div class="space-y-2">${lopt(!d.mobN, "lightSet('mobN',0)", 'Nein, nur Radfahren', '')}${lopt(d.mobN === 2, "lightSet('mobN',2)", 'Ja, 2× pro Woche', 'Je etwa 15 Minuten Dehnen und Rumpfstabilität, ohne Geräte. Gut gegen Rücken- und Nackenbeschwerden.')}</div>`
     + navRow(2, 4); }
   const sum = [ev ? `<span data-noi18n>${esc(d.eventName || (lang() === 'en' ? 'My event' : 'Mein Event'))}</span>${d.eventDate ? ', ' + fmt(d.eventDate) : ''}` : `Fitter werden bis ${fmt(d.endDate || addD(sdOf(d), 84))}`, `${(LVL[lv] || [''])[0]}${d.ftpKnown > 0 ? ', FTP ' + d.ftpKnown + ' W' : ''}${d.noPwr ? ', ohne Leistungsmesser' : ''}${d.test0 ? ', mit Fitnesstest' : ''}`, `${d.hours} Std. pro Woche, ${SD.filter((x, i) => d.avail[i]).join(', ')}`];
   return head(showStart ? 'Wann geht es los?' : 'Fast geschafft', 'Ein kurzer Blick auf deine Angaben, dann erstellt die App deinen Plan.')
     + (showStart ? `<div class="panel p-4">${startUi(d)}</div>` : '')
     + `<div class="panel mt-4 p-4"><p class="eyebrow mb-2">Deine Angaben</p>${sum.map((t, i) => `<div class="flex items-center justify-between gap-3 py-1.5 text-sm" style="${esc(i ? 'border-top:1px solid var(--line)' : '')}"><span>${t}</span><button class="underline shrink-0" style="color:var(--teal)" onclick="lightNav(${ja(i + 1)})">Ändern</button></div>`).join('')}</div>
+    ${ev ? lightGapUi(d) : ''}
     <p class="mt-4 text-sm" style="color:var(--mute)">Die App plant den Long Ride ans Wochenende, ${ev ? 'schätzt eine realistische Zielzeit' : 'baut die Ausdauer schrittweise auf'} und lässt Pendeln und Krafttraining weg. Alles davon kannst du später ergänzen.</p>`
     + navRow(3, 0);
+}
+/* Paket C, Punkt 4 (Fachregel 4.5): Lücke zwischen Training und Event schon in Schritt 4 zeigen, mit Angeboten (nur nach Tipp) */
+function lightGapUi(d){
+  let n = null; try { n = planCheck(mkPrev(d), false).notes.find(x => x.gap); } catch (e) { elog(e); }
+  const acts = n ? [...(n.acts || []).filter(a => a[0] !== 'longDay' && a[0] !== 'longPri'), ['more', 0, 'Mehr Wochenzeit einplanen']] : [];
+  return n ? `<div class="mt-4 p-3 text-sm" style="background:#fff6dc;border-left:3px solid #d9a400"><p>${n.t}</p>${n.hint ? `<p class="mt-1 text-xs" style="color:var(--mute)">${n.hint}</p>` : ''}<div class="mt-2 flex flex-wrap gap-2">${acts.map(a => `<button class="ghost !w-auto !px-3 text-sm" style="min-height:44px" onclick="${a[0] === 'more' ? 'lightNav(3)' : `applyChk('${ja(a[0])}', ${typeof a[1] === 'string' ? `'${ja(a[1])}'` : ja(a[1])}, 'draft')`}">${a[2]}</button>`).join('')}</div>${d.wkBlk ? '<p class="mt-2 text-xs" style="color:var(--ok)">✓ Wochenend-Blöcke sind eingeplant.</p>' : ''}</div>` : '';
 }
 function lightNav(n){
   const d = S.d;
   if (n > (S.step || 1) && (S.step || 1) === 1 && d.goal === 'event' && !(d.eventDate && d.eventDate >= iso(14))) { lightMsg = 'Bitte ein Eventdatum wählen, das mindestens 2 Wochen in der Zukunft liegt.'; return render(); }
+  if (n > 2 && (S.step || 1) <= 2 && snKgReq(d) && !snKgIn(d)) { lightMsg = ''; S.step = 2; snKgFail(); return render(); }
   lightMsg = ''; nav(n);
 }
 
@@ -389,7 +413,7 @@ function onboarding(){
       <div class="mt-4">${checkCard(mkPrev(d), 'draft')}</div>
       ${finalHint() ? `<p class="mt-6 text-sm" style="color:var(--mute)">${finalHint()}</p>` : ''}<div class="mt-3 flex gap-3">${back(N - 1)}${finalBtn('finish')}</div>`;
   if (s === 2) body = `<h2 class="hd text-3xl font-semibold">Dein aktueller Stand</h2><p class="mb-1 mt-1" style="color:var(--mute)">Von hier aus rechnet die App: Leistung und Gewicht bestimmen, was am Eventtag realistisch ist.</p><div class="mt-4 space-y-4">
-      <div class="grid grid-cols-2 gap-3">${field('Körpergewicht (kg)',`<input type="number" inputmode="decimal" class="inp" value="${esc(d.weight)}" oninput="draft('weight',this.value)">`)}</div>
+      <div class="grid grid-cols-2 gap-3">${snKgField(d, 'Körpergewicht (kg)')}</div>${snKgErrHtml(d)}
       ${ftpSrcUi(d)}
       ${sexUi(d)}
       ${ageUi(d)}</div>

@@ -46,8 +46,8 @@ function testWeeks0(p){
   if (w0 && !out.includes(w0)) out.push(w0);
   return out.sort((a, b) => a - b);
 }
-const TESTX = () => noPwr() ? {...TESTX0(), n:'Fitness-Check: Schwellenpuls', m:65, st:'15 Min. einfahren, darin 3×1 Min. zügig · 5 Min. locker · 30 Min. so hart, wie du es gleichmäßig durchhältst, nach 10 Minuten Rundentaste drücken · 10 Min. ausfahren. Dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Fährst du die 30 Minuten an einem gleichmäßigen Anstieg, kann die App aus Zeit und Höhenmetern zusätzlich deinen FTP schätzen.', tip:'Ausgeruht starten und die ersten 5 Minuten nicht überziehen. Allein fahren, nicht in der Gruppe.'} : TESTX0();
-const TESTX0 = () => ({...D('test', 'Fitness-Check: 20-Min-Test', 60, 95, 105, '90–100 U/min', '20 Min. einfahren, darin 3×1 Min. zügig (100–110 %) · 5 Min. locker · 20 Min. so hart, wie du es gleichmäßig durchhältst · 10 Min. ausfahren. Merk dir die Durchschnittsleistung der 20 Minuten.', 'Ausgeruht starten und die ersten 5 Minuten nicht überziehen. Ein Rampentest, zum Beispiel in Zwift, geht auch.'), iv:{reps:1, work:20, rest:0, lo:95, hi:105, wu:25, cd:15}, wh:20, test:1});
+const TESTX = (p) => noPwr() ? {...TESTX0(p), n:'Fitness-Check: Schwellenpuls', m:65, st:'15 Min. einfahren, darin 3×1 Min. zügig · 5 Min. locker · 30 Min. so hart, wie du es gleichmäßig durchhältst, nach 10 Minuten Rundentaste drücken · 10 Min. ausfahren. Dein Schwellenpuls ist der Durchschnittspuls der letzten 20 Minuten. Fährst du die 30 Minuten an einem gleichmäßigen Anstieg, kann die App aus Zeit und Höhenmetern zusätzlich deinen FTP schätzen.', tip:'Ausgeruht starten und die ersten 5 Minuten nicht überziehen. Allein fahren, nicht in der Gruppe.'} : TESTX0(p);
+const TESTX0 = (p) => (p || S.p || S.d || {}).testArt === 'ramp' ? snRamp() : ({...D('test', 'Fitness-Check: 20-Min-Test', 60, 95, 105, '90–100 U/min', '20 Min. einfahren, darin 3×1 Min. zügig (100–110 %) · 5 Min. locker · 20 Min. so hart, wie du es gleichmäßig durchhältst · 10 Min. ausfahren. Merk dir die Durchschnittsleistung der 20 Minuten.', 'Ausgeruht starten und die ersten 5 Minuten nicht überziehen. Ein Rampentest, zum Beispiel in Zwift, geht auch.'), iv:{reps:1, work:20, rest:0, lo:95, hi:105, wu:25, cd:15}, wh:20, test:1});
 /* Offener Fitnesstest: krankheitsbedingt ausgefallen (p.testDue, frühestens 7 Tage nach dem Kranktag) oder in einer
    Testwoche nicht gemacht. Er wird nachgeholt, bis ein Ergebnis da ist oder ein Test als erledigt markiert wurde. */
 function testDoneSince(p, w){
@@ -76,14 +76,107 @@ function placeTest(res, p, w){
   const due = testOwed(p), wd0 = addD(p.start, (w - 1) * 7), dueW = !testWeeks(p).includes(w) && testDueWeek(p, w);
   if ((!testWeeks(p).includes(w) && !dueW) || res.some(x => x.sub || /^Eventtag/.test(x.n || '') || x.t === 'test')) return res;
   const so = w === 1 ? startOff(p) : 0, ok = j => j >= so && !res[j].parts && capOf(p, j) >= 55 && (!dueW || testWeeks(p).includes(w) || addD(wd0, j) >= due);
-  let i = res.findIndex((x, j) => ok(j) && HARD.includes(x.t));
+  let i = p.sanft && w === t0W(p) && !dueW ? snTestDay(res, p, ok) : -1;
+  if (i < 0) i = res.findIndex((x, j) => ok(j) && HARD.includes(x.t));
   if (i < 0) i = res.findIndex((x, j) => ok(j) && x.t === 'base' && !(res[j - 1] && res[j - 1].t === 'long'));
   if (i < 0) i = res.findIndex((x, j) => ok(j) && (x.t === 'base' || x.t === 'rec' || x.t === 'tempo'));
   /* Sind alle Trainingstage Pendeltage (geteilt), weicht der Test auf den Long-Ride-Tag oder einen freien verfügbaren Tag aus: nie im Stadtverkehr */
   if (i < 0) i = res.findIndex((x, j) => ok(j) && x.t === 'long');
   if (i < 0) i = res.findIndex((x, j) => ok(j) && p.avail[j] && !x.m);
   if (i < 0) return res;
-  const out = res.slice(); out[i] = TESTX(); if (dueW && !testWeeks(p).includes(w)) out[i] = {...out[i], n:'Fitness-Check (nachgeholt): 20-Min-Test', st:out[i].st + ' Der Test wird nachgeholt, weil er zuletzt ausgefallen ist. Er ist wichtig, damit deine Trainingsbereiche stimmen.'}; return out;
+  const out = res.slice(); out[i] = TESTX(p); if (dueW && !testWeeks(p).includes(w)) out[i] = {...out[i], n:out[i].ramp ? 'Fitness-Check (nachgeholt): Rampentest' : 'Fitness-Check (nachgeholt): 20-Min-Test', st:out[i].st + ' Der Test wird nachgeholt, weil er zuletzt ausgefallen ist. Er ist wichtig, damit deine Trainingsbereiche stimmen.'}; return out;
+}
+/* ---------- Paket C, Punkt 2: sanfter Einstieg bei geschätztem FTP (Fachregeln 2.2 bis 2.7, Entscheidungen 4 B und 5 B) ----------
+   Gilt nur für Pläne mit p.sanft (neu angelegt mit geschätztem FTP), ältere Pläne bleiben unverändert.
+   - Einsteiger und Wiedereinstieg: zwei Wochen nur Grundlage, der Starttest folgt in Woche 3 (t0W).
+   - Bis zum ersten Messwert, mindestens in den Wochen 1 und 2 (bzw. bis zur Testwoche): keine Belastung über 85 % FTP außer dem Test.
+     Woche 1 nur Grundlage und Rekom, ab Woche 2 statt Sweet Spot „Tempo 3×10“ bei 76–85 % nach Empfinden.
+   - Ist der Messwert übernommen: in der Woche nach dem Test eine harte Einheit, Sweet Spot auf der untersten Stufe (3×10), kein VO2max.
+   - Testtag: 2. Trainingstag, nie am Tag nach einer Fahrt über 2 Std. (spätestens 4. Trainingstag). Davor eine Einführungsfahrt,
+     danach ein lockerer Tag. Long Ride in Woche 1 höchstens 1:30 (Einsteiger), 2:00 (Hobby) bzw. 2:30 (Ambitioniert), Woche 2 höchstens +15 Min. */
+const snLow = p => !!p && (p.lvl === 'new' || (p.goal === 'fitness' && p.ffocus === 'restart'));
+const snCapW = p => Math.max(2, t0W(p) || 0);
+/* Korrektur 1: Die Testwoche bleibt sanft, auch nachdem der Wert übernommen ist (setFtpNow → replanCyc erzeugt sie neu) */
+const snCap = (p, w) => { if (!p || !p.sanft) return false; const w0 = t0W(p); return !!((w0 && w <= w0) || (w <= snCapW(p) && hkEst(p))); };
+function snMax(x){ if (!x || !x.m) return 0; let h = x.hi || 0; const v = x.iv; if (v) h = Math.max(h, v.hi || 0, v.rhi || 0); if (x.fin) h = Math.max(h, x.fin.hi || 0); (x.parts || []).forEach(q => { h = Math.max(h, q.hi || 0, q.iv ? q.iv.hi || 0 : 0); }); return h; }
+const snFix = x => !x || !x.m || x.t === 'test' || x.sub || x.rz || /^Eventtag|^Aktivierung/.test(x.n || '');
+function snRamp(){ return {...D('test', 'Fitness-Check: Rampentest', 45, 50, 130, '85–95 U/min', '10 Min. locker einfahren · Rampentest auf der Rolle: Die Leistung steigt jede Minute um etwa 20 W, beginnend bei etwa 50 % FTP, bis du die Trittfrequenz nicht mehr halten kannst · 10 Min. ausfahren. Merk dir die Leistung deiner besten Minute.', 'Ausgeruht starten. Die Rampe dauert meist 15 bis 25 Minuten, hart werden nur die letzten zwei bis drei. Viele Rollen-Apps haben einen fertigen Rampentest.'), iv:{reps:1, work:20, rest:0, lo:50, hi:130, wu:10, cd:10}, wh:5, test:1, ramp:1}; }
+function snTestDay(res, p, ok){
+  const td = res.map((x, j) => ({x, j})).filter(({x, j}) => x.m > 0 && ok(j) && !snFix(x)).map(o => o.j);
+  let j = -1;
+  for (let k = 1; k < Math.min(4, td.length); k++) { const q = td[k], prev = res[q - 1]; if (!(prev && prev.m > 120)) { j = q; break; } }
+  if (j < 0) j = td.length ? td[Math.min(1, td.length - 1)] : -1;
+  /* Korrektur 7: Fällt der 2. Trainingstag auf den Sonntag, kommt der Test auf einen freien verfügbaren Wochentag.
+     Gibt es keinen, rückt der Long Ride auf den Samstag (in Woche 1 höchstens 2 Std.) und der Test bleibt am Sonntag. */
+  if (j === 6) {
+    const k = [0, 1, 2, 3, 4].find(q => p.avail[q] && res[q] && !res[q].m && ok(q) && !(res[q - 1] && res[q - 1].m > 120));
+    if (k != null) return k;
+    if (res[6] && res[6].t === 'long' && !snFix(res[6]) && ok(5) && !(res[5] && snFix(res[5]))) { res[5] = {...res[6]}; }
+  }
+  return j;
+}
+const SN_INTRO = () => D('base', 'Einführungsfahrt', 60, 56, 75, '85–95 U/min', 'Locker in Zone 2, ganze Sätze müssen möglich sein. Prüf dabei Rad, Wattmesser und Rolle, damit beim Test alles funktioniert.', 'Heute geht es nur ums Ankommen, nicht ums Training.');
+const SN_BASE = m => D('base', 'Grundlage Z2', m, 56, 75, '85–95 U/min', 'Gleichmäßig in Zone 2, Gespräch muss möglich sein. Ohne gemessenen FTP fährst du nach Gefühl: ganz locker, ganze Sätze gehen.', 'Lieber zu leicht als zu hart.');
+const SN_TEMPO = () => ({...D('sst', 'Tempo 3×10', 65, 76, 85, '85–95 U/min', '15 Min. einfahren · 3×10 Min. @ 76–85 % · 5 Min. locker dazwischen · 10 Min. ausfahren', 'Nach Gefühl: Anstrengung etwa 5 von 10, kurze Sätze müssen möglich sein. Passt das Gefühl nicht zu den Watt, gilt das Gefühl, denn dein FTP ist noch geschätzt.'), wm:30, iv:{reps:3, work:10, rest:5, lo:76, hi:85, wu:15, cd:10}});
+const SN_SST = () => ({...D('sst', 'Sweet Spot 3×10', 65, 88, 94, '85–95 U/min', '15 Min. einfahren · 3×10 Min. @ 88–94 % · 5 Min. locker dazwischen · 10 Min. ausfahren', 'Der erste Sweet Spot mit deinem gemessenen FTP: lieber am unteren Rand bleiben.'), wm:30, iv:{reps:3, work:10, rest:5, lo:88, hi:94, wu:15, cd:10}});
+const SN_LONG = {new:90, hob:120, amb:150};
+function snLongCap(p){ if (p.longMin > 0) return 0; const k = p.lvl && SN_LONG[p.lvl] ? p.lvl : (() => { const q = (p.ftp || 200) / kgOf(p) / lvlF(p); return q < 2.35 ? 'new' : q < 3 ? 'hob' : 'amb'; })(); return SN_LONG[k]; }
+/* Korrektur 2: Grenze für den Long Ride in Woche w: L + 15 × (w − 1), L nach Niveau. Reicht die Zeit bis zum Tapering damit nicht bis zur
+   empfohlenen längsten Fahrt, ab Woche 3 +30 Min. pro Woche. 0 = keine Grenze. */
+function snLongLim(p, w){
+  const L = p && p.sanft ? snLongCap(p) : 0; if (!L) return 0;
+  let rec = 150; try { if (p.goal === 'event') { const pr = evProfile(p), tev = pr ? pr.tev : 0; rec = tev <= 180 ? 150 : Math.min(360, Math.round(.7 * Math.min(tev, 420) / 15) * 15); } else if (p.goal === 'fitness') rec = p.ffocus === 'endur' && p.ftour ? Math.min(300, Math.round(p.ftour * .8 / 15) * 15) : p.ffocus === 'health' || p.ffocus === 'restart' ? 90 : p.ffocus === 'speed' ? 120 : 150; } catch (e) { elog(e); }
+  let tpS = 99; try { const ph = phases(p), t = ph.find(x => x.key === 'taper'); tpS = t ? t.from : ph[ph.length - 1].to + 1; } catch (e) { elog(e); }
+  const slow = 1 + Math.ceil(Math.max(0, rec - L) / 15) >= tpS, lim = slow && w >= 3 ? L + 15 + 30 * (w - 2) : L + 15 * (w - 1);
+  return lim >= Math.max(rec, 480) ? 0 : lim;
+}
+function snWeek(res, p, w){
+  if (!p || !p.sanft) return res;
+  const w0 = t0W(p), cap = snCap(p, w), after = !cap && w === (w0 ? w0 + 1 : 3), low = snLow(p);
+  const L = snLongCap(p), lim = snLongLim(p, w);
+  if (!cap && !after && !(lim && res.some(x => x && x.t === 'long' && !snFix(x) && x.m > lim))) return res;
+  let out = res.map(x => ({...x}));
+  const long = j => out[j].t === 'long' && !snFix(out[j]);
+  /* Korrektur 2: Long Ride höchstens L + 15 Min. pro Woche (nie über dem Wert des Generators) */
+  if (lim) out = out.map((x, j) => long(j) && x.m > lim ? {...x, m:lim, soft:1} : x);
+  if (cap) {
+    let first = true;
+    out = out.map(x => {
+      if (snFix(x)) return x;
+      if (HARD.includes(x.t) || snMax(x) > 85) {
+        if (x.t === 'long') return {...x, hi:Math.min(x.hi || 75, 75), fin:undefined, n:'Long Ride', st:'Konstant in Zone 2, nach Gefühl ganz locker. Ab der ersten Stunde 30–60 g Kohlenhydrate pro Std.'};
+        if (first && w >= 2 && !low && !(w0 && w <= w0)) { first = false; return SN_TEMPO(); }
+        return SN_BASE(Math.max(45, Math.min(120, Math.round(x.m / 15) * 15)));
+      }
+      if (x.t === 'base' && /Sprints/.test(x.n || '')) return SN_BASE(x.m);
+      return x;
+    });
+    /* Testwoche: Einführungsfahrt am ersten Trainingstag vor dem Test, lockerer Tag danach */
+    const ti = out.findIndex(x => x.t === 'test');
+    if (ti >= 0 && w === w0) {
+      const f = out.findIndex(x => x.m > 0 && !snFix(x));
+      if (f >= 0 && f < ti && out[f].t !== 'long' && !out[f].parts) out[f] = {...SN_INTRO(), m:Math.max(45, Math.min(75, Math.round(out[f].m / 15) * 15))};
+      const n = out[ti + 1]; if (n && n.m > 0 && !snFix(n) && !n.parts && (HARD.includes(n.t) || n.m > 60)) out[ti + 1] = n.t === 'long' ? {...n, m:Math.min(n.m, 60), cut:1} : {...REC, m:Math.min(60, Math.max(30, n.m))};
+      out[ti] = {...out[ti], st:out[ti].st + ' Vor deinem ersten Maximaltest: Hast du Vorerkrankungen, klär das vorher ärztlich ab. Brich ab bei Brustschmerz, Schwindel oder ungewöhnlicher Atemnot.'};
+    }
+  } else if (after) {
+    /* Woche nach dem übernommenen Starttest: eine harte Einheit auf der untersten Stufe, kein VO2max */
+    let first = true;
+    out = out.map(x => { if (snFix(x) || !HARD.includes(x.t)) return x; if (first) { first = false; return SN_SST(); } return SN_BASE(Math.max(45, Math.min(120, Math.round(x.m / 15) * 15))); });
+  }
+  /* Umfang wie bisher (Fachregel 2.6): fehlende Zeit auf Grundlagenfahrten und freie Trainingstage verteilen, nie direkt nach dem Test */
+  const sum = a => a.reduce((q, x) => q + (x && x.m || 0), 0), ti = out.findIndex(x => x.t === 'test'), so = w === 1 ? startOff(p) : 0, mx = Math.min(120, L || 120);
+  let left = sum(res) - sum(out);
+  const okD = j => j >= so && !(ti >= 0 && j === ti + 1) && !vacDay(p, w, j);
+  out.forEach((x, j) => { if (left < 15 || x.t !== 'base' || x.n === 'Einführungsfahrt' || snFix(x) || x.parts || !okD(j)) return; const add = Math.floor(Math.min(left, mx - x.m, capOf(p, j) - x.m) / 15) * 15; if (add >= 15) { out[j] = {...x, m:x.m + add}; left -= add; } });
+  const minRest = snLow(p) || rhyN(p) === 3 ? 2 : 1; /* nie den letzten Ruhetag füllen (Fachregel 7.2) */
+  out.forEach((x, j) => { if (left < 45 || x.m || x.vac || !p.avail[j] || capOf(p, j) < 45 || !okD(j) || out.filter(y => !(y && y.m)).length <= minRest) return; const m = Math.min(mx, capOf(p, j), Math.max(45, Math.round(left / 15) * 15)); out[j] = SN_BASE(m); left -= m; });
+  return out;
+}
+/* Korrektur 3a: Solange der FTP geschätzt ist, bekommt jede Einheit über 85 % den Hinweis „nach Gefühl“ (Detail, Kalender, Export lesen st) */
+function snEstNote(res, p){
+  if (!Array.isArray(res) || !p || !hkEst(p) || noPwr()) return res;
+  return res.map(x => { if (!x || snFix(x) || snMax(x) <= 85 || x.est) return x; const z = znOf(x); return {...x, est:`Dein FTP ist geschätzt: Fahr nach Gefühl, Anstrengung ${z.rpe} von 10. Passt das Gefühl nicht zu den Watt, gilt das Gefühl.`}; }); /* eigene Zeile (x.est), damit der Ablauf übersetzbar bleibt */
 }
 function expAt(p, w){
   const last = Object.entries(p.res || {}).map(([k, v]) => ({w:+k, ...v})).filter(x => x.w < w && x.ftp > 0 && x.adopted).sort((a, b) => b.w - a.w)[0];
@@ -92,6 +185,9 @@ function expAt(p, w){
   const pj = ftpProj({...p, ftp:b0.ftp}, h, Math.max(0, w - b0.w)), tol = b0.ftp * .02;
   return {lo:Math.round(pj.lo - tol), mid:pj.mid, hi:Math.round(pj.hi + tol), base:b0.ftp, from:b0.w};
 }
+/* Fachregel 2.9: Plausibilität vor der Übernahme (über ±35 % zur Schätzung bzw. unter 1,3 oder über 5,5 W/kg) */
+let snAsk = null;
+function snOdd(r, p){ if (!r || !(r.ftp > 0) || !p) return false; const wkg = r.ftp / kgOf(p), b = r.base || p.ftp; return wkg < 1.3 || wkg > 5.5 || (r.st === 'base' && b > 0 && Math.abs(r.ftp / b - 1) > .35); }
 let testKind = '20', testMsg = '', testKindOwn = false, testKindAuto = false;
 /* testKindOwn: Testart selbst gewählt, dann bleibt sie, auch wenn eine Fahrt als Rampentest erkannt ist */
 function setTestKind(k){ testKind = k; testKindOwn = true; testKindAuto = false; render(); }
@@ -105,7 +201,10 @@ function saveTest(w, i){
   queueCheer({key:'test|' + S.p.start + '|' + w + '|' + ftp, kind:'test', w}); testMsg = ''; save(); render(); track('fitness-check-eingetragen');
 }
 function delTest(w){ const r = {...(S.p.res || {})}; delete r[w]; S.p.res = S.d.res = r; save(); render(); }
-function setFtpNow(v, w){
+function setFtpNow(v, w, hk){
+  /* Paket C: Herkunft des neuen Werts. Übernommener Fitness-Check = gemessen, sonst wie übergeben, ohne Angabe eingegeben */
+  if (w != null && S.p && S.p.res && S.p.res[w]) { try { bkPre('Vor dem Übernehmen des Fitness-Checks'); } catch (e) { elog(e); } } /* Fachregel 2.8: Schnappschuss, danach „Rückgängig“ */
+  try { hkSet('ftpHk', ['gemessen', 'eingegeben', 'geschaetzt'].includes(hk) ? hk : w != null && S.p && S.p.res && S.p.res[w] ? 'gemessen' : 'eingegeben'); } catch (e) { elog(e); }
   /* jede FTP-Übernahme (Test, Schätzung, Einstellungen) landet im Verlauf Gewicht und FTP (38-gewicht-ftp.js) */
   try { wfHist(); const L = S.wf[S.wf.length - 1], c = wfCur();
   if (!L || Math.round(L.ftp) !== Math.round(v) || L.d !== iso(0)) S.wf.push({d:iso(0), at:Date.now(), ftp:Math.round(v), kg:c.kg || 0}); } catch (e) { elog(e); }
@@ -122,7 +221,8 @@ function testRes(w, compact){
   const s = ST[r.st], d = r.ftp - p.ftp, pct = Math.round((r.ftp / p.ftp - 1) * 100);
   const how = r.kind === '20' ? `20-Min-Test: ${r.val} W × 0,95` : r.kind === 'ramp' ? `Rampentest: beste Minute ${r.val} W × 0,75` : r.kind === 'climb' ? `Bergzeitfahren: geschätzt ${r.val} W am Anstieg` : 'FTP direkt eingetragen';
   const txt = r.st === 'base' ? 'Ab jetzt rechnet der Plan mit deinem gemessenen Wert statt mit einer Schätzung, wenn du ihn übernimmst. Die nächsten Fitness-Checks zeigen, wie du dich davon aus entwickelst.' : r.st === 'ahead' ? 'Dein Training wirkt richtig gut. Wenn du magst, prüf im Plan-Check, ob dein Ziel ehrgeiziger sein darf.' : r.st === 'on' ? 'Genau im erwarteten Bereich: Der Plan wirkt, bleib dran.' : 'Kein Grund zur Sorge: Müdigkeit, wenig Schlaf, Stress, ein Infekt oder ein schlechter Tag verfälschen einen Test leicht. Behalte deinen bisherigen FTP vorerst und entscheide, wie es weitergeht.';
-  const adopt = !r.adopted && Math.abs(d) >= 3 ? `<button class="${esc(r.st === 'behind' ? 'ghost' : 'btn !w-auto')} lbl mt-2 mr-2 !py-1.5" onclick="setFtpNow(${ja(r.ftp)}, ${ja(w)})">${r.st === 'behind' ? 'Trotzdem übernehmen' : 'FTP übernehmen'}: ${p.ftp} → ${r.ftp} W (${pct > 0 ? '+' : ''}${pct} %)</button>` : r.adopted ? '<p class="mt-2 text-sm" style="color:var(--ok)">✓ Als FTP übernommen. Alle Wattvorgaben sind angepasst.</p>' : '';
+  const odd = !r.adopted && snOdd(r, p), ask = odd && snAsk != null && snAsk == w;
+  const adopt = ask ? `<div class="mt-2 p-3 text-sm" style="background:#fff6dc;border:1px solid #d9a400" role="alert"><p><b>Test richtig eingetragen? Gleichmäßig gefahren?</b> Der Wert liegt ${r.ftp / kgOf(p) < 1.3 || r.ftp / kgOf(p) > 5.5 ? `bei ${f1(r.ftp / kgOf(p))} W/kg und damit außerhalb des üblichen Bereichs` : `${Math.round(Math.abs(r.ftp / (r.base || p.ftp) - 1) * 100)} % ${r.ftp > (r.base || p.ftp) ? 'über' : 'unter'} der Schätzung`}. Häufige Ursachen sind ein Tippfehler oder ein zu schneller Start.</p><div class="mt-2 flex flex-wrap gap-2"><button class="btn !w-auto" onclick="snAsk=null;setFtpNow(${ja(r.ftp)}, ${ja(w)})">Ja, Wert stimmt: übernehmen</button><button class="ghost" onclick="snAsk=null;delTest(${ja(w)})">Ergebnis löschen</button></div></div>` : !r.adopted && Math.abs(d) >= 3 && odd ? `<button class="${esc(r.st === 'behind' ? 'ghost' : 'btn !w-auto')} lbl mt-2 mr-2 !py-1.5" onclick="snAsk=${ja(w)};render()">${r.st === 'behind' ? 'Trotzdem übernehmen' : 'FTP übernehmen'}: ${p.ftp} → ${r.ftp} W (${pct > 0 ? '+' : ''}${pct} %)</button>` : !r.adopted && Math.abs(d) >= 3 ? `<button class="${esc(r.st === 'behind' ? 'ghost' : 'btn !w-auto')} lbl mt-2 mr-2 !py-1.5" onclick="setFtpNow(${ja(r.ftp)}, ${ja(w)})">${r.st === 'behind' ? 'Trotzdem übernehmen' : 'FTP übernehmen'}: ${p.ftp} → ${r.ftp} W (${pct > 0 ? '+' : ''}${pct} %)</button>` : r.adopted ? '<p class="mt-2 text-sm" style="color:var(--ok)">✓ Als FTP übernommen. Alle Wattvorgaben sind angepasst.</p>' : '';
   const beh = r.st === 'behind' ? `<button class="btn !w-auto lbl mt-2 mr-2 !py-1.5" onclick="addRecW()">Erholungswoche einlegen</button><button class="ghost lbl mt-2 mr-2 !py-1.5" onclick="retest(${ja(w)})">Check in 2 Wochen wiederholen</button><button class="ghost lbl mt-2 mr-2 !py-1.5" onclick="openGoal('dash')">Optionen für mein Ziel</button>` : '';
   return `<div class="p-3" style="background:${esc(s[2])};border:1px solid ${esc(s[1])}"><p class="text-sm"><b style="color:${esc(s[1])}">${s[0]}</b> · Woche ${w}, ${fmt(r.date)}</p>
     <p class="hd mt-1 text-2xl font-semibold">FTP etwa ${r.ftp} W</p><p class="text-xs" style="color:var(--mute)">${how}.${r.st === 'base' ? ` Geschätzt waren ${r.base} W.` : ` Erwartet waren ${r.lo} bis ${r.hi} W.`}</p>
@@ -138,6 +238,7 @@ function testBox(w, i, cur){
   /* Als Rampentest erkannt und kein sauberer 20-Min-Block: Rampentest vorwählen, solange du die Testart nicht selbst gewählt hast */
   const isRmp = !!(auto && exeRampOk(auto, true));
   if (!testKindOwn) { if (isRmp) { testKind = 'ramp'; testKindAuto = true; } else if (testKindAuto) { testKind = '20'; testKindAuto = false; } }
+  if (!testKindOwn && !testKindAuto) testKind = p.testArt === 'ramp' ? 'ramp' : '20'; /* Paket C: Testart des Plans */
   const pre = auto ? (testKind === '20' ? auto.m20 : testKind === 'ramp' ? (auto.rmp || auto.m1) : '') : '';
   return `<div class="p-3" style="background:#fdf2f8;border:1px solid #e11d74"><p class="font-semibold">Fitness-Check – bist du auf Kurs?</p>
     <p class="mt-1 text-sm">Erwartet für diese Woche: <b>${e.lo} bis ${e.hi} W</b> FTP (aktuell im Plan: ${p.ftp} W). Liegt dein Ergebnis darin oder darüber, bist du auf Kurs.</p>

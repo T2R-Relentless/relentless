@@ -60,7 +60,7 @@ function zwoXml(p, x, part, name){
     }
     b.push(`<Cooldown Duration="${sec(cd)}" PowerLow="${r2(60)}" PowerHigh="${r2(45)}"/>`);
   } else { const lo = (part && part.lo) || x.lo, hi = (part && part.hi) || x.hi; b.push(`<SteadyState Duration="${sec(part ? part.m : x.m)}" Power="${r2((lo + hi) / 2)}"/>`); }
-  const desc = (part ? part.st : x.st) || '';
+  const desc = ((part ? part.st : x.st) || '') + (x.est ? '\n' + x.est : '');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<workout_file>\n  <author>Relentless</author>\n  <name>${E(name)}</name>\n  <description>${E(desc)}</description>\n  <sportType>bike</sportType>\n  <tags/>\n  <workout>\n    ${b.join('\n    ')}\n  </workout>\n</workout_file>\n`;
 }
 function exportFit(i, k, fmt){
@@ -109,8 +109,8 @@ function setTab(i, k){ dtab[strWeek + '-' + i] = k; render(); }
 const MINI = {ride:'<circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l5-8h4l3 8"/>', str:'<path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/>', mob:'<path d="M4 18c3-9 13-9 16 0M12 4v4"/>', stab:'<path d="M3 17h18M5 17l3-5h10"/>'};
 const mini = (k, c) => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${c || 'currentColor'}" stroke-width="2" stroke-linecap="square" aria-hidden="true" style="flex:none">${MINI[k]}</svg>`;
 /* Ruhetag an einem Tag, den die Person als Trainingstag angegeben hat: kurz sagen, dass das gewollt ist */
-const restWhy = (x, i) => x && x.t === 'rest' && !x.m && x.n === 'Ruhetag' && !x.feel && S.p && Array.isArray(S.p.avail) && S.p.avail[i]
-  ? '<span class="mt-1 block text-xs" style="color:var(--mute)">Du hättest Zeit, der Plan setzt hier bewusst eine Pause. Erholung gehört zum Training.</span>' : '';
+/* Paket C, Punkt 7: Der Ruhetag-Hinweis steht nur noch einmal pro Woche über der Tagesliste (rdWeekNote) */
+const restWhy = () => '';
 /* Aktionen einer Einheit: „Erledigt“ als Hauptknopf, alle Änderungen gesammelt unter „Einheit anpassen“ */
 let dayAdjOpen = null;
 function dayActs(x, i, cur, dn){
@@ -139,9 +139,9 @@ function dayCard(x, i, cur = true){ try { /* npOver gilt nur während dieses Auf
     let tab = dtab[strWeek + '-' + i]; if (!tabs.some(q => q[0] === tab)) tab = tabs[0][0];
     const ride = `${rzDayUi(x, i, cur, dstrW(i))}${x.m ? `<div class="grid grid-cols-3 gap-2 text-center">
       ${intTiles(x, (v, l) => `<div class="rounded-lg p-2" style="background:var(--tint)"><div class="hd text-lg font-semibold">${v}</div><div class="text-xs" style="color:var(--mute)">${l}</div></div>`)}
-      <div class="rounded-lg p-2" style="background:var(--tint)"><div class="hd text-lg font-semibold">${zone(x.hi)}</div><div class="text-xs" style="color:var(--mute)">Zone, ${band(x.hi)}</div></div></div>
+      <div class="rounded-lg p-2" style="background:var(--tint)"><div class="hd text-lg font-semibold">${znLbl(x)}</div><div class="text-xs" style="color:var(--mute)">Zone, ${znOf(x).b}</div></div></div>
       ${rzNoBike(x) ? '' : `<p><b>Trittfrequenz:</b> ${x.cad}</p>${cur && typeof npToggle === 'function' ? npToggle(i, false) : ''}`}` : ''}
-    ${cur && S.actual && S.actual[i] && !exeGet(exeWk(), i) ? `<p><b>Gefahren:</b> ${mm(Math.round(S.actual[i].sec / 60))}, TSS ${S.actual[i].tss}</p>` : ''}${exeBlock(x, i, cur)}${x.m ? wkSvg(x) : ''}${x.parts ? x.parts.map(q => `<p><b>${q.lbl} (${mm(q.m)}):</b> ${q.st}</p>`).join('') : `<p><b>Ablauf:</b> ${x.st}</p>`}${x.t === 'test' ? testBox(typeof strWeek === 'number' ? strWeek : S.wk, i, cur) : ''}<p style="color:var(--mute)">Tipp: ${x.tip}</p>${cloDetails(x, i, cur)}<details class="evfuel"><summary>Verpflegung für diesen Tag</summary><div class="mt-2">${fuelTip(x, i, S.p)}</div></details>
+    ${cur && S.actual && S.actual[i] && !exeGet(exeWk(), i) ? `<p><b>Gefahren:</b> ${mm(Math.round(S.actual[i].sec / 60))}, TSS ${S.actual[i].tss}</p>` : ''}${exeBlock(x, i, cur)}${x.m ? wkSvg(x) : ''}${x.parts ? x.parts.map(q => `<p><b>${q.lbl} (${mm(q.m)}):</b> ${q.st}</p>`).join('') : `<p><b>Ablauf:</b> ${x.st}</p>`}${x.est ? `<p style="color:#9a6a00">${x.est}</p>` : ''}${x.t === 'test' ? testBox(typeof strWeek === 'number' ? strWeek : S.wk, i, cur) : ''}<p style="color:var(--mute)">Tipp: ${x.tip}</p>${cloDetails(x, i, cur)}<details class="evfuel"><summary>Verpflegung für diesen Tag</summary><div class="mt-2">${fuelTip(x, i, S.p)}</div></details>
     ${dayActs(x, i, cur, dn)}${x.m && !rzNoBike(x) ? `<div class="-mx-4 border-t px-4 pt-3" style="border-color:var(--line)"><p class="eyebrow mb-2">Downloads</p><div class="ddl">${exportBtns(x, i)}</div></div>` : ''}${exMsg && exMsg.i === i && cur === (vw === null) ? `<p class="text-sm" style="color:var(--ok)">${exMsg.err ? icWarn() + 'Download nicht möglich.' : '✓ ' + esc(exMsg.f) + ' gespeichert. ' + (/zwo/.test(exMsg.f) ? 'Lege die .zwo-Datei in Dokumente/Zwift/Workouts.' : 'Kopiere die .fit-Datei per USB nach GARMIN/NewFiles.')}</p>` : ''}`;
     const order = tabs.length > 1 ? `<p class="text-xs" style="color:var(--mute)"><b style="color:var(--ink)">Tagesablauf:</b> ${[x.m ? 'zuerst Rad' : '', sm ? (x.m ? (['sst','thr','vo2','long','race'].includes(x.t) ? 'Kraft mit einigen Stunden Abstand, zum Beispiel abends' : 'danach Kraft') : 'Kraft') : '', mb ? (mb.n === 'Mobilität' ? 'Mobilität zum Schluss oder abends' : 'Stabilität im Anschluss oder abends') : ''].filter(Boolean).join(', ')}.</p>` : '';
     const tmin = k => k === 'ride' ? x.m : k === 'str' ? sm.m : mb.m;

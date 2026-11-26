@@ -128,11 +128,11 @@ const EVTY = {
 const _evpC = new Map();
 function evProfile(p){
   if (!p || p.goal !== 'event' || !(p.dist > 0)) return null;
-  const e = EVS.find(x => x.id === p.evId), key = [p.dist, p.hm, p.targetTime, p.ftp, p.weight, p.evId, p.fmt, p.draft, p.evTy, p.course ? p.course.seg.length + ':' + p.course.hm + ':' + (p.course.laps || 1) : 0].join('|');
+  const e = EVS.find(x => x.id === p.evId), key = [p.dist, p.hm, p.targetTime, p.ftp, p.weight, p.evId, p.fmt, p.draft, p.evTy, p.course ? p.course.seg.length + ':' + p.course.hm + ':' + (p.course.laps || 1) : 0, p.ifd].join('|');
   if (_evpC.has(key)) return _evpC.get(key);
   const hm = p.hm || 0, hk = hm / p.dist, tm = /^(\d+):(\d{1,2})$/.exec(String(p.targetTime || '').trim());
   let tev = e && e.dur ? e.dur : 0;
-  if (!tev) { const r = evCheck({...p, targetTime:'5:00'}), est = r && r.real ? r.real : Math.round(p.dist / 25 * 60), tg = tm ? +tm[1] * 60 + +tm[2] : 0; tev = tg ? Math.round(Math.min(est * 1.6, Math.max(est * .75, tg))) : est; }
+  if (!tev) { const r = evCheck({...p, targetTime:'5:00', _ifd:p.ifd}), /* Paket C: ältere Pläne (ifd = 0) behalten ihre Eventdauer */ est = r && r.real ? r.real : Math.round(p.dist / 25 * 60), tg = tm ? +tm[1] * 60 + +tm[2] : 0; tev = tg ? Math.round(Math.min(est * 1.6, Math.max(est * .75, tg))) : est; }
   const race = p.fmt ? p.fmt === 'race' : e ? !!e.race : /(rennen|race|preis|kriterium|criterium)/i.test(p.eventName || '');
   let climbs = null, nS = 0, nM = 0, nL = 0, tL = 0, sc;
   if (p.course && p.course.seg && p.course.seg.length) {
@@ -191,7 +191,7 @@ function evProfCard(p, compact){
 
 /* Woche w erzeugen. Reihenfolge: Zeitbudget des Monats anwenden (Punkt 7, tbApply), Woche bauen (genWeekCore), dann
    gespeicherte Änderungen kommender Wochen einspielen (B4, woApply; nur für den aktiven Plan, nicht für Statistik-Läufe mit base). */
-function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base), Q = !base && p && S.p && p === S.p ? sickCarry(woApply(P, w), p, w) : P; return rzApply(Q, p, w); /* F29: angenommene Reisen gehören wie Urlaub zum Plan, auch in der Vergleichsbasis */ }
+function genWeek(p, w, base){ const P = genWeekCore(tbApply(p, w), w, base), Q = !base && p && S.p && p === S.p ? sickCarry(woApply(P, w), p, w) : P; return snEstNote(rzApply(Q, p, w), p); /* Paket C: Hinweis bei geschätztem FTP. F29: angenommene Reisen gehören wie Urlaub zum Plan, auch in der Vergleichsbasis */ }
 /* Einheit auf Hin- und Rückweg verteilen (auch für nachträglich gewählte Pendeltage) */
 function splitComDay(p, x, i){
   const L = legOf(p, i), cp = capOf(p, i), y = {...x, unsplit: x};
@@ -366,15 +366,18 @@ function genWeekCore(p, w, base){
   let sum = out.reduce((x, y) => x + (y ? y.m : 0), 0); const target = hE * 60 * ramp;
   /* M4: Eine Grundlagenfahrt ist nie länger als der Long Ride der Woche */
   const lgMax = () => { const L = p.longDay >= 0 ? out[p.longDay] : null; return L && L.t === 'long' ? Math.max(60, L.m) : 120; };
-  let rides = out.filter(Boolean).length; const need = k === 'taper' ? Math.min(5, av.filter(Boolean).length - 1) : 0;
+  /* Paket C, Punkt 7 (Fachregel 7.2): neue Pläne behalten mindestens rdMin freie Tage pro Woche (Einsteiger und Rhythmus 2:1: zwei), auch im Tapering */
+  const rdM = rdMinOf(p0, w);
+  let rides = out.filter(Boolean).length; const need = k === 'taper' ? Math.min(5, av.filter(Boolean).length - 1, 7 - rdM) : 0;
+  const rdFull = () => rdM > 0 && out.filter(x => !x).length <= rdM;
   [0,1,2,3,4,5,6].filter(i => av[i] && !out[i]).forEach(i => {
-    const more = sum < target - 20, cp = cap(i); if (cp < 30) return;
+    const more = sum < target - 20, cp = cap(i); if (cp < 30 || rdFull()) return;
     if (more || rides < need) { const m = Math.min(cp, more ? Math.min(120, lgMax(), Math.max(45, Math.round((target - sum) / 15) * 15)) : 30); out[i] = baseVar(m, i); sum += m; rides++; }
   });
   /* Zusätzliche Zeit an Pendeltagen (Zeit pro Tag): als Umweg auf dem Heimweg nutzen, wenn noch Umfang fehlt */
   /* M4: Sind alle Trainingstage belegt und fehlt noch Wochenzeit, werden die vorhandenen Einheiten verlängert: erst der Long Ride (bis zur
      Hälfte der Wochenzeit, bei höchstens zwei Trainingstagen 60 %, und höchstens ein Viertel über dem Zielwert aus dem Event), dann Grundlagenfahrten, zuletzt das Ausfahren der Intervalleinheiten. */
-  if (k !== 'taper' && sum < target - 20 && ![0,1,2,3,4,5,6].some(i => av[i] && !out[i] && cap(i) >= 30)) {
+  if (k !== 'taper' && sum < target - 20 && (rdFull() || ![0,1,2,3,4,5,6].some(i => av[i] && !out[i] && cap(i) >= 30))) {
     const li = p.longDay, L = li >= 0 ? out[li] : null;
     if (L && L.t === 'long' && !L.parts) { const mx = Math.min(cap(li), ty === 'ultra' ? 480 : 390, Math.round(target * (nDays <= 2 ? .6 : .5) / 15) * 15, Math.max(L.m, Math.round(lb * Math.max(1, Math.min(1.4, hE / 8)) * 1.25 / 15) * 15)), add = Math.floor(Math.min(mx - L.m, target - sum) / 15) * 15; if (add >= 15) { out[li] = {...L, m:L.m + add}; sum += add; } }
     out.forEach((x, i) => { if (!x || x.t !== 'base' || x.parts) return; const add = Math.floor(Math.min(Math.min(cap(i), 120, lgMax()) - x.m, target - sum) / 15) * 15; if (add >= 15) { out[i] = {...x, m:x.m + add}; sum += add; } });
@@ -389,13 +392,48 @@ function genWeekCore(p, w, base){
     res = res.map((x, j) => j > e ? {...REST, n:'Erholung nach dem Event', st:'Locker auslaufen lassen, essen, schlafen.', tip:'Wiederaufbau vor dem nächsten Ziel.'}
       : j === e ? D('long', 'Eventtag: ' + p.eventName, em, 60, 85, '85–95 U/min', 'Erste Stunde bewusst kontrolliert, gleichmäßig pacen. Ab dem Start 30–60 g Kohlenhydrate pro Std., über 2,5 Std. bis 90 g (Glukose-Fruktose-Mix, im Training erprobt).', 'Du hast dich vorbereitet. Genieße es.')
       : j === e - 1 ? D('rec', 'Aktivierung vor dem Event', 30, 50, 60, '90 U/min', '30 Min. locker, dazu 3×1 Min. @ 106–110 %, danach Material und Verpflegung prüfen.', 'Früh ins Bett, nichts Neues essen.') : x);
+    /* Paket C: auch in der Eventwoche bleibt mindestens rdMin freie Tage (die kürzeste Grundlage vor der Aktivierung entfällt) */
+    while (rdM && res.filter(x => !x.m).length < rdM) { const c = res.map((x, i) => [x, i]).filter(([x, i]) => x.t === 'base' && i < e - 1 && !x.parts).sort((q, r) => q[0].m - r[0].m)[0]; if (!c) break; res[c[1]] = {...REST}; }
   }
   if (lev.pace && prof) res = res.map(x => /^Eventtag/.test(x.n || '') ? {...x, st:paceTxt(p0, prof) + ' ' + x.st} : x);
   if (p.goal === 'fitness' && p.ffocus === 'endur' && p.ftour && k === 'taper' && w === P.to) { const j = p.longDay >= 0 ? p.longDay : 6; res[j] = D('long', 'Deine Zieltour: ' + hm2(p.ftour) + ' Std.', p.ftour, 56, 75, '85–95 U/min', 'Ruhig in Zone 2 starten, gleichmäßig fahren, ab der ersten Stunde 30–60 g Kohlenhydrate pro Std. und regelmäßig trinken. Pausen sind erlaubt.', 'Das ist dein Ziel. Genieße die Tour.'); if (j > 0 && res[j - 1].m && ['sst','thr','vo2'].includes(res[j - 1].t)) res[j - 1] = {...REC}; }
   /* M6: Urlaubstage kennzeichnen */
   res = res.map((x, j) => vacDay(p0, w, j) && !x.m ? {...REST, n:'Urlaub', st:'Keine Einheit geplant. Bewegung nach Lust und Laune, zum Beispiel Wandern oder Schwimmen.', tip:'Erholung gehört zum Training.', vac:1} : x);
   if (reE) res = res.map(x => x.m && (x.t === 'base' || x.t === 'long' || HARD.includes(x.t)) && !/^Eventtag|^Aktivierung/.test(x.n || '') ? {...x, tip:(x.tip || '') + (reE.src === 'vac' ? ' Wiedereinstieg nach dem Urlaub: weniger Umfang, damit du gut reinkommst.' : ' Wiedereinstieg nach der Pause: weniger Umfang, damit du gut reinkommst.')} : x);
-  return applyCyc(placeTest(applySubs(fitBudget(res, p), p, w), p, w), p, w);
+  return applyCyc(blkWeek(snWeek(placeTest(applySubs(fitBudget(res, p), p, w), p, w), p0, w), p, w, k, rec, prof, p0), p, w);
+}
+/* Paket C, Punkt 4 (Fachregel 4.5): „2–3 lange Wochenend-Blöcke“ (p.wkBlk, nur nach Zustimmung im Plan-Check, im laufenden Plan ab
+   p.wkBlkFrom). Nur in der letzten Belastungswoche vor einer Entlastungswoche (einmal pro Belastungsblock), höchstens 3 im Plan, der letzte
+   mindestens 14 Tage vor dem Event; nicht im Tapering, bei Einsteigern nicht in den ersten 6 Wochen, nur mit Samstag und Sonntag.
+   Samstag: längste Fahrt der letzten 4 Wochen + 45 Min. (+30 Min. je weiterem Block), mindestens 3, höchstens 6 Std.; Sonntag 2:00–2:30.
+   Die Blockwoche hat höchstens 125 % der Minuten und der Belastung der Woche ohne Block: zuerst werden Grundlagenfahrten unter der Woche
+   gekürzt oder gestrichen, dann die zweite harte Einheit. Die Rekom am Montag bleibt. Passt es nicht, gibt es in dieser Woche keinen Block. */
+/* Ruhetage je Woche: mit Verlauf p.rdLog [[ab Woche, rdMin], …] gilt der letzte Eintrag bis zur Woche w, sonst rdMin ab rdFrom (ältere Stände) */
+const rdMinOf = (p, w) => { if (!p) return 0; if (Array.isArray(p.rdLog) && p.rdLog.length) { let m = 0; p.rdLog.forEach(e => { if (Array.isArray(e) && e[0] <= w) m = +e[1] || 0; }); return m; } return p.rdMin > 0 && w >= (p.rdFrom || 1) ? p.rdMin : 0; };
+const blkRec = (p, ph, q) => { const P = ph.find(x => q >= x.from && q <= x.to); return !P || !!P.rec || P.key === 'taper' || recWk(p, q) || (p.recW || []).includes(q); };
+function blkWeeks(p){
+  if (!p || !p.wkBlk || p.goal !== 'event' || !p.avail[5] || !p.avail[6] || !p.eventDate) return [];
+  const ph = phases(p), tot = ph[ph.length - 1].to, out = [];
+  for (let q = Math.max(1, p.wkBlkFrom || 1); q < tot; q++) { const P = ph.find(x => q >= x.from && q <= x.to);
+    if (!P || !(P.key === 'build' || P.key === 'peak') || blkRec(p, ph, q) || !blkRec(p, ph, q + 1) || (p.lvl === 'new' && q <= 6) || addD(p.start, (q - 1) * 7 + 5) > addD(p.eventDate, -14)) continue; out.push(q); }
+  return out.slice(-3);
+}
+/* Angebot nur, wenn mindestens ein Block in die Wochen passt (Zeitbudget, Ruhetage) */
+function blkWorks(p){ try { const q = JSON.parse(JSON.stringify({...p, wkBlk:true})); q.wkBlkFrom = p.start && hasStarted(p) ? curWeek(p) + 1 : 1; /* eigene Kopie, nur kommende Wochen */ return blkWeeks(q).some(w => /^Wochenend-Block/.test((genWeek(q, w, true)[5] || {}).n || '')); } catch (e) { elog(e); return false; } }
+function blkWeek(res, p, w, k, rec, prof, p0){
+  p0 = p0 || p; const L = blkWeeks(p0), n = L.indexOf(w); if (n < 0 || rec) return res;
+  if (res.some(x => x && (x.sub || x.t === 'test' || /^Eventtag|^Aktivierung/.test(x.n || '')))) return res;
+  let l4 = 0; for (let q = Math.max(1, w - 4); q < w; q++) { try { genWeek(p0, q, true).forEach(x => { if (x && x.t === 'long' && !/^Wochenend-Block|^Eventtag/.test(x.n || '')) l4 = Math.max(l4, x.m); }); } catch (e) { elog(e); } }
+  const m1 = Math.min(360, capOf(p, 5), Math.floor((l4 + 45 + 30 * n) / 15) * 15), m2 = Math.min(150, capOf(p, 6));
+  if (m1 < 180 || m2 < 120) return res;
+  const frei = res.filter(x => !(x && x.m)).length - [5, 6].filter(j => !(res[j] && res[j].m)).length; if (frei < Math.max(1, rdMinOf(p0, w))) return res; /* Ruhetage bleiben */
+  const out = res.map(x => x ? {...x} : x);
+  out[5] = D('long', 'Wochenend-Block: langer Tag', m1, 56, 75, '85–95 U/min', 'Lang und ruhig in Zone 2, Verpflegung wie am Eventtag (60–90 g Kohlenhydrate pro Std.). Morgen folgt der zweite Tag.', 'Der Block übt lange Tage hintereinander, ohne eine Einzelfahrt über 6 Std.');
+  out[6] = D('base', 'Wochenend-Block: zweiter Tag', m2, 56, 75, '85–95 U/min', 'Mit müden Beinen ruhig in Zone 2, Gespräch muss möglich sein.', 'So gewöhnst du dich an lange Tage hintereinander.');
+  const M = a => a.reduce((q, x) => q + (x && x.m || 0), 0), T = a => a.reduce((q, x) => q + (x && x.m ? tss(x) : 0), 0), M0 = M(res) * 1.25, T0 = T(res) * 1.25, over = () => M(out) > M0 || T(out) > T0;
+  for (let j = 4; j >= 0 && over(); j--) { const x = out[j]; if (!x || x.t !== 'base' || x.parts) continue; while (over() && out[j].m - 15 >= 45) out[j] = {...out[j], m:out[j].m - 15, cut:1}; if (over()) out[j] = {...REST}; }
+  if (over()) { const h = [0, 1, 2, 3, 4].filter(j => out[j] && HARD.includes(out[j].t)); if (h.length >= 2) out[h[1]] = {...REST}; }
+  return over() ? res : out;
 }
 /* Wochenbudget: Die Summe der Einheiten darf die verfügbare Wochenzeit nicht überschreiten.
    Gekürzt wird zuerst Grundlage, dann Erholungsfahrt, dann der Long Ride. Event, Zieltour und Pendeln bleiben. */

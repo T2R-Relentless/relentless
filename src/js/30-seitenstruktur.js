@@ -43,7 +43,7 @@ function stSubs(){
   const p = S.p, o = {};
   try { const tot = phases(p).slice(-1)[0].to; o.shist = `Woche ${Math.min(S.wk || 1, tot)} von ${tot}, FTP-Verlauf, Wochenrückblicke`; } catch (e) { elog(e); o.shist = 'FTP-Verlauf und Wochenrückblicke'; }
   try { const R0 = vzRows(), c = R0 && (R0.rows.find(r => r.day === R0.today) || R0.rows[R0.rows.length - 1]), m = c ? [0, Math.round(c.ctl), (c.tsb >= 0.5 ? '+' : '') + Math.round(c.tsb)] : null; o.sform = m ? `Fitness ${m[1]}, Form ${m[2]}` + (p.goal === 'event' ? ', Prognose für den Renntag' : '') : 'Fitness, Ermüdung und Form, sobald Fahrten da sind'; } catch (e) { elog(e); o.sform = 'Fitness, Ermüdung und Form'; }
-  try { const fe = ftpCalc(perfRides(60)); o.sperf = `FTP ${p.ftp} W` + (fe && fe.v ? `, Schätzung aus Fahrten ${fe.v} W` : '') + ', Effizienz, Ermüdungsresistenz'; } catch (e) { elog(e); o.sperf = `FTP ${p.ftp} W, Effizienz, Ermüdungsresistenz`; }
+  try { const fe = ftpCalc(perfRides(60)); o.sperf = `FTP ${p.ftp} W` + (hkEst(p) && !noPwr() ? ' (geschätzt)' : '') + (fe && fe.v ? `, Schätzung aus Fahrten ${fe.v} W` : '') + ', Effizienz, Ermüdungsresistenz'; } catch (e) { elog(e); o.sperf = `FTP ${p.ftp} W, Effizienz, Ermüdungsresistenz`; }
   try { const pb = S.pb || {}, prev = vzPrev({id:null}), v = Math.max((pb.m20 && pb.m20.w) || 0, prev.m20 || 0), v5 = Math.max((pb.m5 && pb.m5.w) || 0, prev.m5 || 0); o.spb = v || v5 ? [v5 ? `5 Min.: ${v5} W` : '', v ? `20 Min.: ${v} W` : ''].filter(Boolean).join(' · ') : 'Noch keine Fahrten mit Leistungsdaten'; } catch (e) { elog(e); o.spb = 'Deine besten Leistungen'; }
   try { const C = mmCats(mmBest(...mmRange('8w')), mmG()), T = mmType(C, kgOf(p)); o.sprof = `<span data-noi18n>${esc(T ? T.name + ' · ' + wkL('Netz und Kurve von 15 s bis 60 min', 'web and curve from 15 s to 60 min') : wkL('Bestwerte von 15 s bis 60 min als Netz und Kurve', 'Best efforts from 15 s to 60 min as web and curve'))}</span>`; } catch (e) { elog(e); o.sprof = 'Stärken, Fahrertyp und FTP-Schätzung'; }
   try { const n = (S.log || []).length, h = ((p.logH) || []).length; o.slog = n ? `Diese Woche ${n} ${n === 1 ? 'Anpassung' : 'Anpassungen'}` : h ? 'Diese Woche keine, Archiv der letzten Wochen' : 'Noch keine Anpassungen'; } catch (e) { elog(e); o.slog = 'Was die App am Plan geändert hat'; }
@@ -100,6 +100,31 @@ function zxItems(kind, range){
   } catch (e) { elog(e); }
   try { if (sw !== null) strWeek = sw; } catch (e) { elog(e); }
   return out;
+}
+/* ---------- Paket C, Punkt 13: ganze Woche als .fit-Paket (ZIP mit je einer .fit-Datei pro Radeinheit, Pendeltage je Weg) ---------- */
+let fwMsg = null, fwW = null;
+function fwItems(w){
+  const p = S.p; if (!p) return []; const cur = w === S.wk && S.plan, pl = cur ? S.plan : genWeek(p, w), out = [];
+  const day = i => addD(p.start, (w - 1) * 7 + i), end = endOf(p);
+  pl.forEach((x, i) => { if (!x || !(x.m > 0) || x.t === 'rest' || x.t === 'race' || /^Eventtag/.test(x.n || '') || (cur && S.done && S.done[i]) || day(i) < iso(0) || day(i) > end) return; /* keine vergangenen Tage, nichts nach dem Planende */
+    if (x.parts) x.parts.forEach((q, k) => out.push({i, k, x, label:(q.lbl === 'Hinweg' ? 'Hin ' : 'Rueck ') + x.n})); else out.push({i, k:-1, x, label:x.n}); });
+  return out;
+}
+async function fwExport(w){
+  w = w || S.wk || 1; const items = fwItems(w); if (!items.length) { fwMsg = {err:true, w, t:'In dieser Woche gibt es keine offenen Radeinheiten.'}; return render(); }
+  const slug = t => asc(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const files = items.map(({i, k, x, label}) => ({name:`relentless-w${String(w).padStart(2, '0')}-${i + 1}-${SD[i].toLowerCase()}-${slug(label)}.fit`, data:fitBytes(asc(label).trim().slice(0, 15).trim(), fitSteps(S.p, x, k >= 0 ? x.parts[k] : null))}));
+  try { const f = await saveFile(`relentless-woche-${w}-fit.zip`, zipMany(files)); fwMsg = {w, t:`${files.length} Workouts gespeichert (${f}).`}; try { track('fit-woche'); } catch (e) { elog(e); } }
+  catch (e) { fwMsg = e && e.code === 'declined' ? null : {err:true, w, t:'Speichern nicht möglich.'}; }
+  render();
+}
+function fwBtn(w){
+  if (!S.p) return ''; const n = fwItems(w).length; if (!n) return '';
+  return `<div class="mt-3"><button class="ghost w-full text-sm" style="min-height:44px" onclick="fwExport(${ja(w)})">Ganze Woche als .fit-Paket (${n} ${n === 1 ? 'Workout' : 'Workouts'})</button>${fwMsg && fwMsg.w === w ? `<p class="mt-1 text-sm" style="color:${esc(fwMsg.err ? '#c0392b' : 'var(--ok)')}">${fwMsg.err ? icWarn() : '✓'} ${esc(fwMsg.t)}</p>` : ''}</div>`;
+}
+function fwCard(){
+  if (!S.p) return ''; const w = S.wk || 1, tot = phases(S.p).slice(-1)[0].to, w2 = Math.min(tot, w + 1);
+  return `<section class="panel p-4" id="fx-fw"><h2 class="hd text-xl font-semibold">Ganze Woche aufs Gerät</h2><p class="mt-1 text-sm" style="color:var(--mute)">Eine ZIP-Datei mit je einem Workout (.fit) pro Radeinheit der Woche. Entpacken und die Dateien per USB in den Ordner GARMIN/NewFiles kopieren.</p><div class="mt-3 space-y-2">${fwBtn(w)}${w2 !== w ? fwBtn(w2).replace('Ganze Woche als', 'Nächste Woche als') : ''}</div></section>`;
 }
 async function zxExport(){
   const items = zxItems(zxKind, zxRange); if (!items.length) { zxMsg = {err:true, t:'Im gewählten Zeitraum gibt es keine passenden Einheiten.'}; return render(); }
@@ -231,7 +256,7 @@ function iaSetParts(){
 }
 const SET_PAGES = {
   'set-lang':() => { const x = iaSetParts(); return iaNoHead(x.lang || '') + iaNoHead(x.theme || '') + elogUi(); },
-  'set-ali':() => { const x = iaSetParts(); return iaNoHead(x.ali || '') + tbCard() + vacCard() + (x.shift || ''); },
+  'set-ali':() => { const x = iaSetParts(); return iaNoHead(x.ali || '') + rdCard() + tbCard() + vacCard() + (x.shift || ''); },
   'set-hr':() => iaNoHead(iaSetParts().hr || ''),
   'set-wf':() => wfPage() + cmpUi(),
   'set-age':() => agPage(),
@@ -256,14 +281,14 @@ function setPage(){
     + `<div class="mt-6">${x.dz || ''}</div>` + verLine();
 }
 /* ---------- Export ---------- */
-const EXP_PAGES = {'exp-ics':() => iaNoHead(icsCard()), 'exp-zwo':() => iaNoHead(zxCard()), 'exp-fit':() => iaNoHead(garminHelp())};
+const EXP_PAGES = {'exp-ics':() => iaNoHead(icsCard()), 'exp-zwo':() => iaNoHead(zxCard()), 'exp-fit':() => fwCard() + iaNoHead(garminHelp())};
 const EXP_T = {'exp-ics':'Kalender', 'exp-zwo':'Zwift', 'exp-fit':'Garmin-Gerät'};
 function expPage(){
   const n = (() => { try { return calItems(icsScope, true).length; } catch (e) { elog(e); return 0; } })(), d = typeof zxDiff === 'function' ? zxDiff() : null;
   return `<p class="text-sm" style="color:var(--mute)">Bring deine Einheiten in deinen Kalender, auf die Rolle oder auf deinen Radcomputer.</p>`
     + iaGrp('Ziel', iaRow('exp-ics', 'ics', 'Kalender', `Apple, Google, Outlook · ${n} Termine ab heute`)
       + iaRow('exp-zwo', 'zwo', 'Zwift', d ? 'Plan geändert: Workouts neu exportieren' : S.zxExp ? `Alle Einheiten als ZIP · zuletzt ${fmt(lstr(new Date(S.zxExp.at)))}` : 'Alle Einheiten auf einmal als ZIP', !!d)
-      + iaRow('exp-fit', 'fit', 'Garmin-Gerät', 'Einzelne Einheit als Workout (.fit), so kommt sie aufs Gerät'))
+      + iaRow('exp-fit', 'fit', 'Garmin-Gerät', 'Einzelne Einheit oder ganze Woche als Workout (.fit)'))
     + `<p class="mt-3 text-xs" style="color:var(--mute)">Einzelne Einheiten exportierst du direkt bei der Einheit im Wochenplan: „Garmin (.fit)“ oder „Zwift (.zwo)“.</p>`;
 }
 /* ---------- Übungen: nach Gruppe filtern ---------- */
@@ -320,7 +345,7 @@ function evFuelPage(){
 const EV_PAGES = {
   'ev-goal':() => `<section class="panel p-5">${goalCard(true)}</section>`,
   'ev-prof':() => epPage(),
-  'ev-pace':() => efPacePage() || `<section class="panel p-4"><p class="text-sm">${paceTxt(p0(), evProfile(p0()))}</p><p class="mt-2 text-xs" style="color:var(--mute)">Steht auch am Eventtag und bei den Eventsimulationen im Plan. Grundlage: haltbarer Anteil der FTP über die erwartete Fahrzeit (IF ≈ 1 − 0,10 · ln Std.).</p></section>`,
+  'ev-pace':() => efPacePage() || `<section class="panel p-4"><p class="text-sm">${paceTxt(p0(), evProfile(p0()))}</p><p class="mt-2 text-xs" style="color:var(--mute)">Steht auch am Eventtag und bei den Eventsimulationen im Plan. Grundlage: haltbarer Anteil der FTP über die erwartete Fahrzeit (IF ≈ 1 − 0,10 · ln Std., ab 3 Std. mit Abschlag für nachlassende Ermüdungsresistenz).</p></section>`,
   'ev-fuel':() => evFuelPage(),
   'ev-saison':() => (evSeasonPage() || `<section class="panel p-4"><p class="text-sm">Keine Events im Plan.</p></section>`) + rzSeason(),
   'ev-subs':() => iaNoHead(subsCard(p0())) || `<section class="panel p-4"><p class="text-sm" style="color:var(--mute)">Noch keine weiteren Events. Trag alle Rennen deiner Saison ein, beliebig viele: als A-Event mit eigenem Formhöhepunkt oder als B- und C-Rennen auf dem Weg zum Hauptevent.</p><button class="ghost mt-3 !py-2 text-sm" onclick="editSubs()">Events hinzufügen</button></section>`

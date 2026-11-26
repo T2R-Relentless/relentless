@@ -112,7 +112,29 @@ function subsCard(p){
 const subsInWeek = (p, w) => (p.subs || []).filter(s => { const a = absDay(p, s.date); return a >= (w - 1) * 7 && a < w * 7 && s.date < p.eventDate; });
 /* tss: siehe 08-belastung.js (M5) */
 const watt = (pct) => Math.round(S.p.ftp * pct / 100);
-const zone = hi => hi <= 55 ? 'Z1' : hi <= 75 ? 'Z2' : hi <= 90 ? 'Z3' : hi <= 105 ? 'Z4' : 'Z5';
+/* Paket C (Fachregel 6.6): ein Zonenmodell nach Coggan, alle Grenzen nur in dieser Tabelle. lo/hi in % FTP, lt in % Schwellenpuls,
+   rpe = Empfinden 0 bis 10, b = Band im 3-Zonen-Modell (niedrig bis 75 %, moderat bis 100 %, hoch darüber). Sweet Spot (88–94 %) liegt
+   zwischen Tempo und Schwelle und bekommt ein eigenes Etikett. */
+const ZN = [
+  {k:'Z1', n:'Erholung', lo:0, hi:55, lt:'unter 69', rpe:'1–2', b:'niedrig'},
+  {k:'Z2', n:'Grundlage', lo:56, hi:75, lt:'69–83', rpe:'2–4', b:'niedrig'},
+  {k:'Z3', n:'Tempo', lo:76, hi:90, lt:'84–94', rpe:'4–6', b:'moderat'},
+  {k:'SST', n:'Sweet Spot', lo:88, hi:94, lt:'92–97', rpe:'5–7', b:'moderat'},
+  {k:'Z4', n:'Schwelle', lo:91, hi:105, lt:'95–105', rpe:'6–8', b:'moderat'},
+  {k:'Z5', n:'VO2max', lo:106, hi:120, lt:'über 106', rpe:'7–9', b:'hoch'},
+  {k:'Z6', n:'Anaerob und Sprint', lo:121, hi:999, lt:'', rpe:'9–10', b:'hoch'}];
+/* Zone zu einem Wert in % FTP (ganzzahlige Grenzen wie in der Tabelle, Zwischenwerte zählen zur unteren Zone bis zur nächsten Grenze) */
+function znRow(v){ const Z = ZN.filter(z => z.k !== 'SST'); for (const z of Z) if (v < z.hi + 1) return z; return Z[Z.length - 1]; }
+/* Zone einer Einheit (Fachregel 6.1): Mitte des Arbeitsintervalls, bei Wechseln (Over-Under) nach Zeit gewichtet. Sweet Spot hat Vorrang. */
+function znMid(x){
+  if (!x) return 0; const v = x.iv;
+  if (v && v.lo > 0) { const w = (v.lo + v.hi) / 2; if (!v.rlo) return w; const r = (v.rlo + v.rhi) / 2, a = v.work || 1, b = v.rest || 0; return (w * a + r * b) / (a + b); }
+  return ((x.lo || 56) + (x.hi || 75)) / 2;
+}
+function znOf(x){ const m = znMid(x); if (x && x.t === 'sst' && m >= 86 && m <= 94) return ZN.find(z => z.k === 'SST'); return znRow(m); }
+const znLbl = x => { const z = znOf(x); return z.k === 'SST' ? 'Sweet Spot' : z.k; };
+/* Bisherige Zone aus der Obergrenze (Z1 bis Z5), für ältere Aufrufer */
+const zone = hi => { const k = znRow(hi).k; return k === 'Z6' ? 'Z5' : k; };
 const mm = m0 => { const m = Math.round(Number(m0) || 0); return mmI(m); };
 const mmI = m => m >= 60 ? (m % 60 ? `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')} Std.` : `${m / 60} Std.`) : `${m} Min.`;
 
