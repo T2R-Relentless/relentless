@@ -94,6 +94,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     http.server.ThreadingHTTPServer.allow_reuse_address = True
+    http.server.ThreadingHTTPServer.request_queue_size = 128  # Chrome lädt viele Testdateien parallel, sonst gehen Verbindungen verloren
     with http.server.ThreadingHTTPServer(('127.0.0.1', PORT), Handler) as srv:
         print(f'Relentless-Tests: http://localhost:{PORT}/tests/  (Beenden mit Ctrl+C)', flush=True)
         srv.serve_forever()
