@@ -104,3 +104,66 @@ test('Sicherung: nach 14 Tagen ohne Sicherungsdatei genau einmal erinnern', asyn
   const b = await boot(); makePlan(b, {goal:'event', eventName:'Testrennen', eventDate:'2027-03-20'}); b.$('S.bkAt = 0; S.bkAt0 = Date.now() - 20 * 864e5; S.bkSnooze = 0');
   ok(/Seit 20 Tagen gibt es keine Sicherungsdatei/.test(b.page(null)), 'auch ohne jede Sicherung'); b.w.bkLater(); ok(!/Zeit für eine Sicherung/.test(b.page(null)), 'nach „Später“ 3 Tage Pause');
 });
+
+/* ---------- 12 B: Sicherung in der eigenen Cloud ---------- */
+const dsPlan = a => makePlan(a, {goal:'event', eventName:'Testrennen', eventDate:'2027-03-20'});
+/* Teilen-Menü nachbilden: canShare/share, gespeicherte Dateien in __shared */
+const dsShare = (a, how = 'ok') => a.$(`window.__shared = []; navigator.canShare = o => !!(o && o.files && o.files.length);
+  navigator.share = async o => { if (${JSON.stringify(how)} === 'abort') { const e = new Error('abgebrochen'); e.name = 'AbortError'; throw e; } if (${JSON.stringify(how)} === 'fail') throw new Error('nicht erlaubt'); __shared.push(...o.files); };`);
+
+test('Cloud-Sicherung: Abschnitt unter Pläne und Sicherung, Tippflächen 44 pt, Hinweis je Gerät', async () => {
+  const a = await boot(); dsPlan(a); const t = a.page('plans');
+  ok(/Auf einem anderen Gerät nutzen/.test(t), 'Abschnitt sichtbar'); ok(/iCloud Drive, Google Drive oder OneDrive/.test(t), 'Clouds genannt');
+  ok(/nichts an einen Server/.test(t), 'kein Server');
+  const d = a.w.document, b = d.getElementById('bkCloudB'), l = [...d.querySelectorAll('#fx-bkcloud label')].find(x => /Aus der Cloud laden/.test(x.textContent));
+  ok(b && l, 'Knöpfe Sichern und Laden'); ok(b.getBoundingClientRect().height >= 44 && l.getBoundingClientRect().height >= 44, 'mindestens 44 pt hoch');
+  ok(l.querySelector('input[type=file][accept*=json]'), 'Laden über den Dateidialog');
+  a.$(`Object.defineProperty(navigator, 'userAgent', {configurable:true, get:() => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'})`);
+  ok(/„In Dateien sichern“ und wähle iCloud Drive/.test(a.page('plans')), 'iPhone: In Dateien sichern');
+  a.$(`Object.defineProperty(navigator, 'userAgent', {configurable:true, get:() => 'Mozilla/5.0 (Linux; Android 15)'})`);
+  ok(/Drive oder OneDrive/.test(a.page('plans')), 'Android: Teilen-Menü'); a.noErrors();
+});
+
+test('Cloud-Sicherung: Teilen-Menü mit der vollständigen Datei, sonst Download wie bisher', async () => {
+  const a = await boot(); dsPlan(a); dsShare(a); a.page('plans'); a.w.document.getElementById('bkCloudB').click(); await a.tick(50);
+  const sh = a.$('__shared'); eq(sh.length, 1, 'eine Datei geteilt'); ok(/^relentless-sicherung-\d{4}-\d{2}-\d{2}\.json$/.test(sh[0].name), 'Dateiname');
+  const o = JSON.parse(await sh[0].text()); eq(o.app, 'relentless'); ok(o.state && o.lib && o.plans.length === 1, 'vollständige Sicherung');
+  ok(a.$('S.bkAt') > 0, 'als Sicherung gezählt'); eq(a.$('__downloads.length'), 0, 'kein zusätzlicher Download');
+  /* Ohne Teilen-Menü (z. B. Desktop-Browser) oder bei Fehler: Download */
+  const b = await boot(); dsPlan(b); await b.w.exportPlans(true); eq(b.$('__downloads.length'), 1, 'ohne Teilen-Menü: Download');
+  const c = await boot(); dsPlan(c); dsShare(c, 'fail'); await c.w.exportPlans(true); eq(c.$('__downloads.length'), 1, 'Teilen scheitert: Download');
+  /* Abbrechen im Teilen-Menü: keine Fehlermeldung, nicht als Sicherung gezählt */
+  const d = await boot(); dsPlan(d); dsShare(d, 'abort'); d.$('S.bkAt = 0'); await d.w.exportPlans(true);
+  eq(d.$('S.bkAt'), 0, 'nicht gezählt'); ok(!/Sicherung nicht möglich/.test(d.page('plans')), 'keine Fehlermeldung'); eq(d.$('__downloads.length'), 0);
+  /* Der bisherige Knopf „Sicherung speichern“ bleibt unverändert (kein Teilen-Menü außerhalb von iOS) */
+  const e = await boot(); dsPlan(e); dsShare(e); await e.w.exportPlans(); eq(e.$('__shared.length'), 0); eq(e.$('__downloads.length'), 1); e.noErrors();
+});
+
+test('Cloud-Sicherung: Laden auf dem zweiten Gerät, Hinweis bei älterer Datei, Rückgängig', async () => {
+  const a = await boot(); dsPlan(a); await a.w.exportPlans(); const txt = await a.$('__downloads[0].blob').text();
+  const imp = async (x, s) => { x.$(`bkImp = {o:bkParse(${JSON.stringify(s)}), name:'relentless-sicherung.json', full:true, n:1, date:''}`); x.w.render(); return x.text(); };
+  const b = await boot(); dsPlan(b); b.$('S.bkAt = 0; S.bkChg = 0; S.bkEx = bkExeN()');
+  ok(!/älter als deine letzte Sicherung|seit der letzten Sicherung etwas geändert/.test(await imp(b, txt)), 'neues Gerät ohne Änderungen: kein Hinweis');
+  b.$('S.bkAt = Date.now() + 3600e3'); ok(/Diese Datei ist älter als deine letzte Sicherung auf diesem Gerät/.test(await imp(b, txt)), 'Datei älter als hiesige Sicherung');
+  b.$('S.bkAt = 0; S.bkChg = 2'); ok(/Auf diesem Gerät hast du seit der letzten Sicherung etwas geändert/.test(await imp(b, txt)), 'ungesicherte Änderungen');
+  ok(/Alles wiederherstellen/.test(b.text()) && /rückgängig machen/.test(b.text()), 'Wahl und Rückgängig wie bisher'); b.noErrors();
+});
+
+test('Cloud-Sicherung: 14-Tage-Erinnerung führt zur Cloud, Hinweis mit Anker, Englisch vollständig', async () => {
+  const a = await boot(); dsPlan(a); dsShare(a); a.$('S.bkAt = Date.now() - 15 * 864e5; S.bkAt0 = S.bkAt - 864e5; S.bkChg = 0; S.bkSnooze = 0');
+  const t = a.page(null); ok(/Deine letzte Sicherung ist 15 Tage alt/.test(t) && /in deiner eigenen Cloud/.test(t), 'Erinnerung nennt die Cloud');
+  const bs = [...a.w.document.querySelectorAll('#app section button')].filter(x => /^(Jetzt sichern|Später|Anderes Gerät)$/.test(x.textContent.trim()));
+  eq(bs.length, 3, 'drei Knöpfe'); ok(bs.every(x => x.getBoundingClientRect().height >= 44), '44 pt');
+  bs[0].click(); await a.tick(50); eq(a.$('__shared.length'), 1, '„Jetzt sichern“ öffnet das Teilen-Menü');
+  a.w.bkCloudGo(); await a.tick(150); eq(a.$('pg'), 'plans', 'zur Seite Pläne und Sicherung'); ok(a.w.document.getElementById('fx-bkcloud'), 'Abschnitt da');
+  eq(a.w.document.activeElement && a.w.document.activeElement.id, 'bkCloudB', 'Fokus auf dem Knopf');
+  const dy = a.$(`DYK.find(x => x[0] === 'bkcloud')`); ok(dy && dy[3] === 'bkCloudGo()' && dy[4](), 'Hinweis in „Wusstest du schon?“ mit Anker');
+  ok(a.$(`WN_DATA[226].some(x => x.go === 'set:plans' && /Cloud/.test(x.de) && /cloud/.test(x.en))`), 'Neuigkeiten-Eintrag');
+  /* Englisch: keine fehlenden Übersetzungen in Abschnitt, Erinnerung, Hinweis beim Laden */
+  a.w.__iMiss = new Map(); await a.en(); a.$('S.bkSnooze = 0; S.bkRem = 0'); a.page(null); a.page('plans');
+  a.$(`Object.defineProperty(navigator, 'userAgent', {configurable:true, get:() => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'})`); a.page('plans');
+  a.$(`Object.defineProperty(navigator, 'userAgent', {configurable:true, get:() => 'Mozilla/5.0 (Linux; Android 15)'})`); a.page('plans');
+  for (const w of ['S.bkAt = Date.now() + 3600e3', 'S.bkAt = 0; S.bkChg = 2']) { a.$(w); a.$(`bkImp = {o:{exported:new Date(Date.now() - 864e5).toISOString(), plans:[]}, name:'x.json', full:true, n:1, date:''}`); a.w.render(); }
+  eq([...a.w.__iMiss.keys()].filter(k => /Cloud|Gerät|Teilen|Datei|Sicherung|Server/.test(k)), [], 'alles übersetzt');
+  ok(a.w.trText(dy[1]) !== dy[1] && a.w.trText(dy[2]) !== dy[2], 'Hinweis auf Englisch'); a.noErrors();
+});

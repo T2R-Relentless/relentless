@@ -88,13 +88,13 @@ async function bkInit(){
 }
 
 /* ---------- Sicherungsdatei ---------- */
-async function exportPlans(){
+async function exportPlans(cloud){
   save(); const raw = bkRaw(!!S.bkKey); if (storeErr || !raw.state) raw.state = JSON.stringify(S); if (!bkPlansOf(raw.lib) && !S.p) return;
   const body = {app:'relentless', v:4, exported:new Date().toISOString(), active:(readLib().active || null), state:JSON.parse(raw.state || 'null'), lib:JSON.parse(raw.lib || 'null'), side:raw.side, plans:Object.values(readLib().plans)};
   /* F25 (v4): Streckendaten aus IndexedDB, abschaltbar (S.bkTrk === false). Ältere Sicherungen (v1–v3) haben kein trk und laden wie bisher. */
   if (S.bkTrk !== false && typeof trkAll === 'function') { try { const t = await trkAll(); if (Object.keys(t).length) body.trk = t; } catch (e) { elog(e); } }
   const data = new TextEncoder().encode(JSON.stringify(body));
-  try { await saveFile('relentless-sicherung-' + iso(0) + '.json', data); track('sicherung-gespeichert'); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.now(); S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
+  try { await bkSave('relentless-sicherung-' + iso(0) + '.json', data, cloud); track('sicherung-gespeichert'); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.now(); S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
   catch (e) { impMsg = e && e.code === 'declined' ? '' : 'Sicherung nicht möglich.'; }
   render();
 }
@@ -125,7 +125,7 @@ function bkModal(){
     const i = bkImp;
     return `<div class="exov" onclick="if(event.target===this){bkImp=null;render()}" role="dialog" aria-modal="true" aria-label="Sicherung laden"><div class="exbox" style="max-width:440px">
       <p class="eyebrow mb-2">Sicherung laden</p><h3 class="hd text-2xl font-semibold">Was soll passieren?</h3>
-      <p class="mt-2 text-sm" style="color:var(--mute)"><span data-noi18n>${esc(i.name)}</span>${i.date ? ' · ' + i.date : ''} · ${i.n} ${i.n === 1 ? 'Plan' : 'Pläne'}${i.full ? ' mit Einstellungen und Fahrten' : ''}</p>
+      <p class="mt-2 text-sm" style="color:var(--mute)"><span data-noi18n>${esc(i.name)}</span>${i.date ? ' · ' + i.date : ''} · ${i.n} ${i.n === 1 ? 'Plan' : 'Pläne'}${i.full ? ' mit Einstellungen und Fahrten' : ''}</p>${i.full ? bkAgeNote(i.o) : ''}
       <div class="mt-4 space-y-2">
         ${i.full ? `<button class="btn w-full text-left" onclick="bkReplaceAll()">Alles wiederherstellen<span class="block text-xs font-normal" style="opacity:.85">Ersetzt Pläne, Einstellungen und Fahrten auf diesem Gerät durch den Stand der Sicherung.</span></button>` : ''}
         <button class="${esc(i.full ? 'ghost' : 'btn')} w-full text-left" onclick="bkAddPlans()">Nur Pläne hinzufügen<span class="block text-xs font-normal" style="opacity:.85">Deine jetzigen Pläne und Einstellungen bleiben, die Pläne aus der Datei kommen dazu.</span></button>
@@ -178,7 +178,40 @@ function bkHint(){
   const now = Date.now(); if (!S.bkAt0) { S.bkAt0 = now; try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
   const why = bkReason(); if (!why) return '';
   const ios = typeof instOs === 'function' && instOs() === 'ios';
-  return `<section class="panel p-4" style="border-left:4px solid var(--ice)"><p class="font-semibold">Zeit für eine Sicherung</p><p class="mt-1 text-sm" style="color:var(--mute)">${why} Speichere eine Sicherungsdatei, dann geht auch bei einem neuen Handy nichts verloren.${ios ? ' Tipp: Wähle danach „In Dateien sichern“ und dann iCloud Drive.' : ''}</p><div class="mt-3 flex gap-2"><button class="btn !py-2" onclick="exportPlans()">Jetzt sichern</button><button class="ghost !py-2" onclick="bkLater()">Später</button></div></section>`;
+  return `<section class="panel p-4" style="border-left:4px solid var(--ice)"><p class="font-semibold">Zeit für eine Sicherung</p><p class="mt-1 text-sm" style="color:var(--mute)">${why} Speichere eine Sicherungsdatei, dann geht auch bei einem neuen Handy nichts verloren.${ios ? ' Tipp: Wähle danach „In Dateien sichern“ und dann iCloud Drive.' : ''}</p><p class="mt-1 text-sm" style="color:var(--mute)">Liegt die Datei in deiner eigenen Cloud (iCloud Drive, Google Drive, OneDrive), lädst du sie auch auf einem anderen Gerät.</p><div class="mt-3 flex flex-wrap gap-2"><button class="btn !w-auto !py-2" style="min-height:44px" onclick="exportPlans(true)">Jetzt sichern</button><button class="ghost !py-2" style="min-height:44px" onclick="bkLater()">Später</button><button class="ghost !py-2" style="min-height:44px" onclick="bkCloudGo()">Anderes Gerät</button></div></section>`;
 }
 function bkMarkChange(){ S.bkChg = (S.bkChg || 0) + 1; }
 
+/* ---------- F36 (12 B): Sicherung in der eigenen Cloud ----------
+   Kein eigener Server und kein automatischer Abgleich: Die Sicherungsdatei geht über das Teilen-Menü bzw. den Dateidialog
+   in die Cloud der Nutzerin oder des Nutzers (iCloud Drive, Google Drive, OneDrive). Auf dem zweiten Gerät lädt sie
+   „Sicherung laden“ wie jede andere Sicherung (Ersetzen oder Pläne hinzufügen, vorher Schnappschuss mit Rückgängig).
+   Die App selbst baut keine Verbindung zu einem Cloud-Dienst auf. Keine neuen gespeicherten Daten. */
+const bkCanShare = () => { try { return typeof File === 'function' && !!navigator.canShare && !(window.claude && window.claude.use) && navigator.canShare({files:[new File(['{}'], 'relentless.json', {type:'application/json'})]}); } catch (e) { elog(e); return false; } };
+/* cloud: zuerst das Teilen-Menü (dort stehen Drive, OneDrive, „In Dateien sichern“), sonst wie bisher saveFile (Download) */
+async function bkSave(name, data, cloud){
+  if (cloud && bkCanShare()) {
+    try { await navigator.share({files:[new File([data], name, {type:'application/json'})]}); return name; }
+    catch (e) { if (e && e.name === 'AbortError') { const er = new Error('declined'); er.code = 'declined'; throw er; } elog(e); }
+  }
+  return saveFile(name, data);
+}
+/* Vor „Alles wiederherstellen“: Hinweis, wenn die Datei älter ist als die letzte Sicherung dieses Geräts oder hier
+   seitdem etwas geändert wurde (sonst überschreibt man aus Versehen den neueren Stand des anderen Geräts) */
+function bkAgeNote(o){
+  const ex = Date.parse(o && o.exported || '') || 0, here = S.bkAt || 0;
+  const t = ex && here > ex ? `Diese Datei ist älter als deine letzte Sicherung auf diesem Gerät (${bkWhen(here)}).`
+    : S.p && ((S.bkChg || 0) > 0 || bkExeN() > (S.bkEx || 0)) ? 'Auf diesem Gerät hast du seit der letzten Sicherung etwas geändert.' : '';
+  return t ? `<p role="note" class="bk-warn mt-2 text-sm">${t} „Alles wiederherstellen“ ersetzt diesen Stand. Nimm die Datei mit deinem neuesten Stand.</p>` : '';
+}
+function bkCloudGo(){ S.fold = S.fold || {}; S.fold.plans = true; goPg('plans'); dykFocus('fx-bkcloud', '#bkCloudB'); }
+function bkCloudUi(){
+  const os = typeof instOs === 'function' ? instOs() : '';
+  const s1 = os === 'ios' ? 'Tippe auf „In meiner Cloud sichern“, dann im Teilen-Menü auf „In Dateien sichern“ und wähle iCloud Drive. Google Drive und OneDrive erscheinen dort, wenn die App installiert ist.'
+    : os === 'android' ? 'Tippe auf „In meiner Cloud sichern“ und wähle im Teilen-Menü Drive oder OneDrive. Erscheint kein Teilen-Menü, liegt die Datei unter Downloads; lade sie von dort in deine Cloud hoch.'
+    : 'Klicke auf „In meiner Cloud sichern“ und speichere die Datei in deinem Ordner von iCloud Drive, Google Drive oder OneDrive.';
+  return `<div id="fx-bkcloud" class="mt-4 rounded-xl p-3" style="border:1px solid var(--line)"><p class="font-semibold">Auf einem anderen Gerät nutzen</p>
+    <p class="mt-1 text-sm" style="color:var(--mute)">Leg die Sicherungsdatei in deiner eigenen Cloud ab, zum Beispiel iCloud Drive, Google Drive oder OneDrive. Die App schickt dabei nichts an einen Server und gleicht nichts automatisch ab.</p>
+    <ol class="mt-2 list-decimal space-y-1 pl-5 text-sm" style="color:var(--mute)"><li>${s1}</li><li>Auf dem anderen Gerät: Einstellungen → Pläne und Sicherung → „Aus der Cloud laden“, die Datei wählen, dann „Alles wiederherstellen“.</li><li>Es gilt immer der Stand der Datei. Änderst du danach etwas, sichere auf diesem Gerät erneut.</li></ol>
+    <div class="mt-3 flex flex-wrap gap-2"><button id="bkCloudB" class="btn !w-auto" style="min-height:44px" onclick="exportPlans(true)">In meiner Cloud sichern</button><label class="ghost cursor-pointer" style="min-height:44px;display:inline-flex;align-items:center">Aus der Cloud laden<input type="file" accept=".json,application/json" class="hidden" style="display:none" onchange="importPlans(this)"></label></div></div>`;
+}

@@ -557,3 +557,6 @@ button.btn,button.ghost{min-height:44px}
 @media (max-width:430px){ .hact .hib{flex:1 1 calc(33.333% - 6px)} }
 .brand{flex-wrap:wrap}
 @media (max-width:359px){ .brand .hd.text-2xl{font-size:1.25rem} .brand img{height:16px!important} }
+/* F36 (12 B): Hinweis beim Laden einer älteren Sicherung, in beiden Designs lesbar */
+.bk-warn{color:#8a5a00}
+:root[data-theme=dark] .bk-warn{color:#f6d58a}
