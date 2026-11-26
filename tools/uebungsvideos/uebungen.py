@@ -218,7 +218,8 @@ def openbook(ph):
         q['open'] = 168 - math.degrees(math.atan2(d0.z, -d0.x))   # Bogen von vorn unten über die Decke bis 12° über der Matte hinten
     d = Matrix.Rotation(math.radians(q['open'] * t), 3, Y) @ d0
     aim('LeftArm', d); aim('LeftForeArm', d); aim('LeftHand', V(-1, .05, 0).lerp(d, sm(t * 5)))
-EXS['openbook'] = dict(pose=openbook, keys=((1, 0), (12, 0), (48, 1), (62, 1), (98, 0), (108, 0)), perframe=True, cam=V(-.35, .85, .6), zone=None)
+    if t > 0: relax_hands(); bpy.context.view_layer.update(); rig.location.z -= low(); bpy.context.view_layer.update()   # Auflage je Bild (nach dem Entspannen der Hände): Beim Aufdrehen verlagert sich das Gewicht, die Figur bleibt auf der Matte
+EXS['openbook'] = dict(pose=openbook, keys=((1, 0), (12, 0), (48, 1), (62, 1), (98, 0), (108, 0)), perframe=True, cam=V(-.35, .85, .6), zone=None, wurzel=True)
 
 if EX == 'pallof':
     # Griff mit beiden Händen: Linien zwischen den Fingern weglassen (sonst wird der Griff ein dunkles Strichknäuel)
@@ -410,17 +411,28 @@ def ground():
             if abs(dz) < .001: break
         return
     rig.location.z = 0; bpy.context.view_layer.update(); m = low(); rig.location.z = -m; bpy.context.view_layer.update()
-if EX == 'thread':
-    q = P['thread']
-    pose(.5); z0 = wpos('LeftArm').z; twist('Spine2', 10, (0, -1, 0)); q['sgn'] = 1 if wpos('LeftArm').z > z0 else -1
+def vf_kalibrieren(q, ph, f=.975, tol=.012):
+    """Vierfüßlerstand (thread, birddog): Knie und Fußrücken auf der Matte (root), Hände auf der Matte (hz, nach dem Entspannen
+    der Hände in pose()), Stützarm fast gestreckt (st: Neigung des Rumpfs; f: Anteil der Armlänge, tol: Toleranz)"""
     for _ in range(25):
-        q.pop('HL', None); pose(.5)
+        q.pop('HL', None); pose(ph)
         gl = min(lowg(['LeftLeg', 'RightLeg'], .5), lowpts(lambda co, ob: True, [shoes])); gh = lowg(HAND('Left') + HAND('Right'))
         S_ = wpos('RightArm'); La = (wpos('RightArm', True) - S_).length + (wpos('RightForeArm', True) - wpos('RightForeArm')).length
-        gap = (S_ - wpos('RightHand')).length - La * .975      # > 0: Arm überstreckt (Schulter zu hoch), < 0: Ellbogen zu stark gebeugt
+        gap = (S_ - wpos('RightHand')).length - La * f      # > 0: Arm überstreckt (Schulter zu hoch), < 0: Ellbogen zu stark gebeugt
         print('VIERFUSS root', round(q['root'], 3), 'Knie', round(gl, 3), 'Hände', round(gh, 3), 'Armspalt', round(gap, 3), 'st', round(q['st'], 3))
-        if abs(gl) < .004 and abs(gh) < .005 and abs((S_.z - q['hz']) - La * .975) < .012: break
-        q['root'] -= gl; q['hz'] -= gh * .8; q['st'] -= ((S_.z - q['hz']) - La * .975) * 1.2
+        if abs(gl) < .004 and abs(gh) < .005 and abs((S_.z - q['hz']) - La * f) < tol: break
+        q['root'] -= gl; q['hz'] -= gh * .8; q['st'] -= ((S_.z - q['hz']) - La * f) * 1.2
+if EX == 'catcow': cc_kalibrieren()
+elif EX == 'tspine': ts_kalibrieren()
+elif EX == 'addrock': ar_kalibrieren()
+elif EX == 'wallsit': ws_kalibrieren()
+elif EX == 'pushup': pu_kalibrieren()
+elif EX == 'revlunge': rl_geometrie()
+elif EX == 'birddog': vf_kalibrieren(P['birddog'], 0, BD_ARM, .002); bd_kalibrieren()   # Stützarme fast gestreckt (Ellbogen unter 10°)
+elif EX == 'thread':
+    q = P['thread']
+    pose(.5); z0 = wpos('LeftArm').z; twist('Spine2', 10, (0, -1, 0)); q['sgn'] = 1 if wpos('LeftArm').z > z0 else -1
+    vf_kalibrieren(q, .5)
     for _ in range(25):
         pose(1); g_ = min(lowg(['Head'], .5), lowg(['LeftShoulder', 'LeftArm'], .5))
         print('FAEDELN s1', round(q['s1'], 3), 'Kopf/Schulter', round(g_, 3))
@@ -476,11 +488,12 @@ if EX == 'openbook':
     print('KISSEN unter', [round(c, 3) for c in hp])
     pil = bpy.data.objects.new('kissen', bpy.data.meshes.new('kissen')); sc.collection.objects.link(pil)
     # Kissen: Quader mit je einem Zwischenschnitt, dann geglättet → weiche, kissenartige Form ohne Kantenartefakte
-    g = bmesh.new(); bmesh.ops.create_cube(g, size=1); bmesh.ops.scale(g, vec=(.46, .26, hz * 1.08), verts=g.verts[:])
+    kh_ = hz * 1.08 - .005    # Kissenhöhe: Kopf liegt auf, ohne einzusinken (vorher 3–4 mm im Kissen)
+    g = bmesh.new(); bmesh.ops.create_cube(g, size=1); bmesh.ops.scale(g, vec=(.46, .26, kh_), verts=g.verts[:])
     bmesh.ops.subdivide_edges(g, edges=g.edges[:], cuts=2, use_grid_fill=True); g.to_mesh(pil.data); g.free()
     for f in pil.data.polygons: f.use_smooth = True
     sp_ = pil.modifiers.new('weich', 'SUBSURF'); sp_.levels = 2; sp_.render_levels = 2
-    pil.location = (hp.x + .10, hp.y + .02, hz * 1.08 / 2)      # Kissen mittig unter dem Kopf, Rand zum Körper etwa 11 cm unter der Schläfe: Hals und untere Schulter bleiben frei; setmat(pil, toon('kissen', srgb('#f4f7f8'), srgb('#c6d3d8')))
+    pil.location = (hp.x + .10, hp.y + .02, kh_ / 2)      # Kissen mittig unter dem Kopf, Rand zum Körper etwa 11 cm unter der Schläfe: Hals und untere Schulter bleiben frei; setmat(pil, toon('kissen', srgb('#f4f7f8'), srgb('#c6d3d8')))
     print('KISSEN Hoehe', round(hz, 3))
 if EX == 'clam':
     # Kopf in Verlängerung der Wirbelsäule; nur so weit zur Matte neigen, bis die Schläfe auf dem unteren Oberarm liegt
@@ -539,6 +552,22 @@ if EX == 'pallof':
         v = hc - AX; band.location = (hc + AX) / 2; band.rotation_euler = v.to_track_quat('Z', 'Y').to_euler(); band.scale = (1, 1, v.length)
         for ob in (handle, band): ob.keyframe_insert('location', frame=fr); ob.keyframe_insert('rotation_euler', frame=fr); ob.keyframe_insert('scale', frame=fr)
     pts += [Vector((AX.x - .2, AX.y, 0)), Vector((AX.x, AX.y, 1.75))]
+if cfg.get('band_fuss'):
+    # Band um die rechte Fußsohle: zwei Stränge von den Händen zur Sohle, dazwischen das Stück unter der Sohle
+    def _bcyl(name, r, mat):
+        ob = bpy.data.objects.new(name, bpy.data.meshes.new(name)); sc.collection.objects.link(ob)
+        g = bmesh.new(); bmesh.ops.create_cone(g, cap_ends=True, segments=16, radius1=r, radius2=r, depth=1); g.to_mesh(ob.data); g.free()
+        for f in ob.data.polygons: f.use_smooth = True
+        setmat(ob, mat); return ob
+    _bm = toon('band', srgb('#00bcb3'), srgb('#00897f')); _bs = [_bcyl('band' + str(i), .009 if i < 2 else .006, _bm) for i in range(3)]
+    def _bsetz(ob, a_, b_):
+        v = b_ - a_; ob.location = (a_ + b_) / 2; ob.rotation_euler = v.to_track_quat('Z', 'Y').to_euler(); ob.scale = (1, 1, max(.01, v.length))
+    for fr in range(1, cfg['keys'][-1][0] + 1):
+        sc.frame_set(fr); S_, n_, f_ = _ham_sohle()
+        L_ = wpos('LeftHand') + (wpos('LeftHand') - wpos('LeftForeArm')).normalized() * .045; R_ = wpos('RightHand') + (wpos('RightHand') - wpos('RightForeArm')).normalized() * .045
+        bq = P['ham']['_bq']; hb = (P['ham']['_br'] - P['ham']['_bl']) / 2 - .002; bl_ = S_ + bq * hb - n_ * .006; br_ = S_ - bq * hb - n_ * .006     # Querstück liegt bündig an der Sohle, Stränge an Innen- und Außenkante
+        _bsetz(_bs[0], L_, bl_); _bsetz(_bs[1], R_, br_); _bsetz(_bs[2], bl_, br_)
+        for ob in _bs: ob.keyframe_insert('location', frame=fr); ob.keyframe_insert('rotation_euler', frame=fr); ob.keyframe_insert('scale', frame=fr)
 if KR_GERAET.get(EX) or cfg.get('hanteln'):
     # Geräte und Kurzhanteln (vor dem Festlegen der Strichstärke, sonst fehlt ihre Kontur)
     pts += kr_bauen(); kr_hanteln_anlegen()
@@ -549,9 +578,13 @@ g = bmesh.new(); bmesh.ops.create_cube(g, size=1); g.to_mesh(floor.data); g.free
 floor.scale = (max(xs) - min(xs) + .24 + 2 * cfg.get('matte_rand', 0), max(ys) - min(ys) + .3 + 2 * cfg.get('matte_rand', 0), .035); floor.location = ((max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, -.0175)
 setmat(floor, toon('mat', srgb('#cfdde2'), srgb('#b9cbd1')))
 for _kr_g in KR_GERAET.get(EX, ()):
-    if _kr_g['art'] == 'wand':   # Matte endet an der Wandfläche (die Person steht auf der +Y-Seite der Wand)
+    if _kr_g['art'] == 'wand' and _kr_g['b'][3] <= 0:   # Matte endet an der Wandfläche (Wand vor der Person, -Y)
         _kr_y0 = _kr_g['b'][3]; _kr_y1 = floor.location.y + floor.scale.y / 2
         if floor.location.y - floor.scale.y / 2 < _kr_y0: floor.scale.y = _kr_y1 - _kr_y0; floor.location.y = (_kr_y0 + _kr_y1) / 2
+    elif _kr_g['art'] == 'wand':   # Wand hinter der Person (+Y): Boden läuft unter der Wand durch und weit nach vorn (über die Bildbreite)
+        _kr_y1 = _kr_g['b'][2]; _kr_y0 = floor.location.y - floor.scale.y / 2 - (3.0 if cfg.get('matte_wand') else 0)
+        floor.scale.y = _kr_y1 - _kr_y0; floor.location.y = (_kr_y0 + _kr_y1) / 2
+        if cfg.get('matte_wand'): floor.scale.z = 1.0; floor.location.z = -.5     # Boden als Fläche bis zum unteren Bildrand
 # Kamera: orthografisch aus Richtung cfg['cam'], Ausschnitt eng um Figur und Matte
 d = cfg['cam']; cen = sum(pts, Vector()) / len(pts)
 cam.rotation_euler = (-d).to_track_quat('-Z', 'Y').to_euler(); cam.location = cen + d * 8; bpy.context.view_layer.update()
@@ -578,6 +611,14 @@ if cfg.get('zoom'):
     for fr in range(1, K_[-1][0] + 1):
         w_ = sm((ph_at(fr) - .3) / .22); cam.location = locA.lerp(locB, w_); cam.data.ortho_scale = scA + (scB - scA) * w_
         cam.keyframe_insert('location', frame=fr); cam.data.keyframe_insert('ortho_scale', frame=fr)
+if cfg.get('cam_spiegel'):
+    # Kamera je Seite gespiegelt (an der Körpermitte x = 0): bis Bild cam_spiegel von der anderen Seite, damit die gestreckte
+    # Seite immer der Kamera zugewandt ist. Schnitt in der Pause zwischen den Seiten (konstante Schlüsselbilder)
+    _sp_L, _sp_R = cam.location.copy(), cam.rotation_euler.to_matrix(); _sp_S = Matrix.Diagonal((-1, 1, 1))
+    for _sp_fr, _sp_m in ((1, True), (cfg['cam_spiegel'] - 1, True), (cfg['cam_spiegel'], False), (cfg['keys'][-1][0], False)):
+        cam.location = Vector((-_sp_L.x, _sp_L.y, _sp_L.z)) if _sp_m else _sp_L
+        cam.rotation_euler = ((_sp_S @ _sp_R @ _sp_S) if _sp_m else _sp_R).to_euler()     # S·R·S: gespiegelte Blickrichtung, Bild nicht seitenverkehrt
+        cam.keyframe_insert('location', frame=_sp_fr); cam.keyframe_insert('rotation_euler', frame=_sp_fr)
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 MESS = []
