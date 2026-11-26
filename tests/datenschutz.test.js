@@ -108,7 +108,8 @@ test('Sicherung: nach 14 Tagen ohne Sicherungsdatei genau einmal erinnern', asyn
 /* ---------- 12 B: Sicherung in der eigenen Cloud ---------- */
 const dsPlan = a => makePlan(a, {goal:'event', eventName:'Testrennen', eventDate:'2027-03-20'});
 /* Teilen-Menü nachbilden: canShare/share, gespeicherte Dateien in __shared */
-const dsShare = (a, how = 'ok') => a.$(`window.__shared = []; navigator.canShare = o => !!(o && o.files && o.files.length);
+const dsUa = (a, ua) => a.$(`Object.defineProperty(navigator, 'userAgent', {configurable:true, get:() => ${JSON.stringify(ua)}})`);
+const dsShare = (a, how = 'ok') => a.$(`Object.defineProperty(navigator, 'userAgent', {configurable:true, get:() => 'Mozilla/5.0 (Linux; Android 15)'}); window.__shared = []; navigator.canShare = o => !!(o && o.files && o.files.length);
   navigator.share = async o => { if (${JSON.stringify(how)} === 'abort') { const e = new Error('abgebrochen'); e.name = 'AbortError'; throw e; } if (${JSON.stringify(how)} === 'fail') throw new Error('nicht erlaubt'); __shared.push(...o.files); };`);
 
 test('Cloud-Sicherung: Abschnitt unter Pläne und Sicherung, Tippflächen 44 pt, Hinweis je Gerät', async () => {
@@ -135,6 +136,9 @@ test('Cloud-Sicherung: Teilen-Menü mit der vollständigen Datei, sonst Download
   /* Abbrechen im Teilen-Menü: keine Fehlermeldung, nicht als Sicherung gezählt */
   const d = await boot(); dsPlan(d); dsShare(d, 'abort'); d.$('S.bkAt = 0'); await d.w.exportPlans(true);
   eq(d.$('S.bkAt'), 0, 'nicht gezählt'); ok(!/Sicherung nicht möglich/.test(d.page('plans')), 'keine Fehlermeldung'); eq(d.$('__downloads.length'), 0);
+  /* Desktop: auch mit Teilen-Funktion des Browsers direkt der Download in den Cloud-Ordner (wie der Text sagt) */
+  const f = await boot(); dsPlan(f); dsShare(f); dsUa(f, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)'); await f.w.exportPlans(true);
+  eq(f.$('__shared.length'), 0, 'Desktop: kein Teilen-Menü'); eq(f.$('__downloads.length'), 1, 'Desktop: Download');
   /* Der bisherige Knopf „Sicherung speichern“ bleibt unverändert (kein Teilen-Menü außerhalb von iOS) */
   const e = await boot(); dsPlan(e); dsShare(e); await e.w.exportPlans(); eq(e.$('__shared.length'), 0); eq(e.$('__downloads.length'), 1); e.noErrors();
 });
@@ -146,7 +150,16 @@ test('Cloud-Sicherung: Laden auf dem zweiten Gerät, Hinweis bei älterer Datei,
   ok(!/älter als deine letzte Sicherung|seit der letzten Sicherung etwas geändert/.test(await imp(b, txt)), 'neues Gerät ohne Änderungen: kein Hinweis');
   b.$('S.bkAt = Date.now() + 3600e3'); ok(/Diese Datei ist älter als deine letzte Sicherung auf diesem Gerät/.test(await imp(b, txt)), 'Datei älter als hiesige Sicherung');
   b.$('S.bkAt = 0; S.bkChg = 2'); ok(/Auf diesem Gerät hast du seit der letzten Sicherung etwas geändert/.test(await imp(b, txt)), 'ungesicherte Änderungen');
-  ok(/Alles wiederherstellen/.test(b.text()) && /rückgängig machen/.test(b.text()), 'Wahl und Rückgängig wie bisher'); b.noErrors();
+  ok(/Alles wiederherstellen/.test(b.text()) && /rückgängig machen/.test(b.text()), 'Wahl und Rückgängig wie bisher');
+  b.noErrors();
+  /* Gerade auf diesem Gerät gespeicherte Datei wieder laden: kein Hinweis „älter“ (S.bkAt = Zeitstempel der Datei) */
+  const c = await boot(); dsPlan(c); c.$('{ const sf = saveFile; saveFile = async (n, d) => { __setNow(Date.now() + 5000); return sf(n, d); }; }'); /* Speichern dauert: Uhr läuft weiter */
+  await c.w.exportPlans(); const t1 = await c.$('__downloads[0].blob').text(); c.$('S.bkChg = 0; S.bkEx = bkExeN()');
+  eq(c.$('S.bkAt'), Date.parse(JSON.parse(t1).exported), 'S.bkAt = exported');
+  ok(!/älter als deine letzte Sicherung/.test(await imp(c, t1)), 'eigene, gerade gespeicherte Datei: kein Hinweis');
+  c.setNow(NOW0 + 60e3); c.$('bkImp = null'); await c.w.exportPlans(); const t2 = await c.$('__downloads[1].blob').text(); c.$('S.bkChg = 0');
+  ok(/Diese Datei ist älter als deine letzte Sicherung/.test(await imp(c, t1)), 'frühere Datei nach neuerer Sicherung: Hinweis');
+  ok(!/älter als deine letzte Sicherung/.test(await imp(c, t2)), 'neueste Datei: kein Hinweis'); c.noErrors();
 });
 
 test('Cloud-Sicherung: 14-Tage-Erinnerung führt zur Cloud, Hinweis mit Anker, Englisch vollständig', async () => {

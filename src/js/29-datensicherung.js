@@ -94,7 +94,7 @@ async function exportPlans(cloud){
   /* F25 (v4): Streckendaten aus IndexedDB, abschaltbar (S.bkTrk === false). Ältere Sicherungen (v1–v3) haben kein trk und laden wie bisher. */
   if (S.bkTrk !== false && typeof trkAll === 'function') { try { const t = await trkAll(); if (Object.keys(t).length) body.trk = t; } catch (e) { elog(e); } }
   const data = new TextEncoder().encode(JSON.stringify(body));
-  try { await bkSave('relentless-sicherung-' + iso(0) + '.json', data, cloud); track('sicherung-gespeichert'); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.now(); S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
+  try { await bkSave('relentless-sicherung-' + iso(0) + '.json', data, cloud); track('sicherung-gespeichert'); impMsg = 'Sicherung gespeichert: Pläne, Einstellungen und Fahrten' + (S.bkKey ? ', mit Garmin-Schlüssel' : '') + '.'; S.bkAt = Date.parse(body.exported) || Date.now(); /* gleich dem Zeitstempel der Datei, damit bkAgeNote sie nicht als älter einstuft */ S.bkChg = 0; S.bkEx = bkExeN(); try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { elog(e); } }
   catch (e) { impMsg = e && e.code === 'declined' ? '' : 'Sicherung nicht möglich.'; }
   render();
 }
@@ -187,8 +187,9 @@ function bkMarkChange(){ S.bkChg = (S.bkChg || 0) + 1; }
    in die Cloud der Nutzerin oder des Nutzers (iCloud Drive, Google Drive, OneDrive). Auf dem zweiten Gerät lädt sie
    „Sicherung laden“ wie jede andere Sicherung (Ersetzen oder Pläne hinzufügen, vorher Schnappschuss mit Rückgängig).
    Die App selbst baut keine Verbindung zu einem Cloud-Dienst auf. Keine neuen gespeicherten Daten. */
-const bkCanShare = () => { try { return typeof File === 'function' && !!navigator.canShare && !(window.claude && window.claude.use) && navigator.canShare({files:[new File(['{}'], 'relentless.json', {type:'application/json'})]}); } catch (e) { elog(e); return false; } };
-/* cloud: zuerst das Teilen-Menü (dort stehen Drive, OneDrive, „In Dateien sichern“), sonst wie bisher saveFile (Download) */
+const bkCanShare = () => { try { return typeof instOs === 'function' && ['ios', 'android'].includes(instOs()) && typeof File === 'function' && !!navigator.canShare && !(window.claude && window.claude.use) && navigator.canShare({files:[new File(['{}'], 'relentless.json', {type:'application/json'})]}); } catch (e) { elog(e); return false; } };
+/* cloud: auf iPhone/iPad und Android zuerst das Teilen-Menü (dort stehen Drive, OneDrive, „In Dateien sichern“), sonst und
+   am Desktop wie bisher saveFile (Download in den Cloud-Ordner) */
 async function bkSave(name, data, cloud){
   if (cloud && bkCanShare()) {
     try { await navigator.share({files:[new File([data], name, {type:'application/json'})]}); return name; }
