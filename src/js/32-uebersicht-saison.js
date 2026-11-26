@@ -42,7 +42,7 @@ function tdFix(p){
     const c = [0, 1, 2, 3, 4, 5, 6].filter(ok), j = c.find(q => HARD.includes(S.plan[q].t)) ?? c.find(q => ['base', 'rec', 'tempo'].includes(S.plan[q].t)) ?? c.find(q => S.plan[q].t === 'long') ?? c.find(q => !S.plan[q].m);
     if (curOn) { p.tdCur = [...(p.tdCur || []), S.wk]; save(); }
     if (j == null) return;
-    S.plan[j] = {...TESTX(), ...(dueOn ? {n:'Fitness-Check (nachgeholt): 20-Min-Test'} : {}), adapted:true, orig:S.plan[j].m ? S.plan[j] : undefined};
+    S.plan[j] = {...TESTX(), ...(dueOn ? {n:p.testArt === 'ramp' ? 'Fitness-Check (nachgeholt): Rampentest' : 'Fitness-Check (nachgeholt): 20-Min-Test'} : {}), adapted:true, orig:S.plan[j].m ? S.plan[j] : undefined};
     S.log.unshift(dueOn ? {title:'Fitness-Check nachgeholt', day:j, text:`Der ausgefallene Fitness-Check steht jetzt am ${DAYS[j]}.`} : {title:'Fitness-Check eingeplant', day:j, text:`Der Fitness-Check dieser Woche fehlte im Plan. Er steht jetzt am ${DAYS[j]}.`}); flashIdx = j; save();
   } catch (e) { elog(e); }
 }
@@ -127,7 +127,7 @@ function efFuelPage(){
 function efPacePage(){
   const p = S.p, L = efList(p); if (L.length < 2) return null;
   const x = efPick(p); let t = ''; try { t = paceTxt(x.pp, x.r); } catch (e) { elog(e); }
-  return `<section class="panel p-4"><p class="eyebrow mb-2">Pacing je Event</p>${efChips(L, x)}<p class="mt-3 text-sm"><b data-noi18n>${esc(x.name)}</b>, <span>${fmt(x.date)}</span> · <span>${EVTY[x.r.ty][0]}</span>, <span>ca. ${hm2(x.r.tev)} Std.</span></p><p class="mt-2 text-sm">${t}</p><p class="mt-2 text-xs" style="color:var(--mute)">Grundlage: haltbarer Anteil der FTP über die erwartete Fahrzeit (IF ≈ 1 − 0,10 · ln Std.).${x.prio === 'C' ? ' Bei einem C-Rennen darfst du ruhig mutiger fahren und testen, was geht.' : ''}</p></section>`;
+  return `<section class="panel p-4"><p class="eyebrow mb-2">Pacing je Event</p>${efChips(L, x)}<p class="mt-3 text-sm"><b data-noi18n>${esc(x.name)}</b>, <span>${fmt(x.date)}</span> · <span>${EVTY[x.r.ty][0]}</span>, <span>ca. ${hm2(x.r.tev)} Std.</span></p><p class="mt-2 text-sm">${t}</p><p class="mt-2 text-xs" style="color:var(--mute)">Grundlage: haltbarer Anteil der FTP über die erwartete Fahrzeit (IF ≈ 1 − 0,10 · ln Std., ab 3 Std. mit Abschlag für nachlassende Ermüdungsresistenz).${x.prio === 'C' ? ' Bei einem C-Rennen darfst du ruhig mutiger fahren und testen, was geht.' : ''}</p></section>`;
 }
 /* ---------- F17: Zielzeit, Form und Pacing für jedes Event der Saison ----------
    Je Event (A, B, C und Hauptevent) rechnet die App mit denselben Modellen wie beim Hauptevent:
@@ -150,7 +150,8 @@ function evSrc(p, x){ return x.main ? p : (p.subs || []).find(s => s.id === x.id
    Long-Ride-Abschlag: wie im Plan-Check bis zu 5 % weniger Dauerleistung bei Events über 3 Std., wenn der längste Ride kurz ist.
    Trainingswochen bis zum Event: einschließlich der laufenden Woche. */
 const evDraftOf = (src, kind, main) => src && src.draft ? src.draft : main && !(src && src.kind) ? 'grp' : EV_KIND[kind][1];
-const evPen = (tev, maxL) => tev > 180 ? Math.max(0, Math.min(.05, (.7 - maxL / Math.min(tev, 420)) * .25)) : 0;
+/* Paket C: Abschlag d (ifEv) und pen zusammen höchstens 10 % gegenüber IF(T), sonst würde doppelt abgezogen */
+const evPen = (tev, maxL) => tev > 180 ? Math.max(0, Math.min(.05, (.7 - maxL / Math.min(tev, 420)) * .25, 1 - .9 * ifEv(tev, 0) / ifEv(tev))) : 0;
 const evWeeks = (p, ds, cw) => Math.max(0, seasWk(p, ds) - cw + 1);
 const evHrPct = t => t > 300 ? [78, 85] : t > 180 ? [81, 89] : t > 90 ? [85, 92] : [90, 96];
 function seasonForecast(p){

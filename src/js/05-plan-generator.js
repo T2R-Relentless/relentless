@@ -128,11 +128,11 @@ const EVTY = {
 const _evpC = new Map();
 function evProfile(p){
   if (!p || p.goal !== 'event' || !(p.dist > 0)) return null;
-  const e = EVS.find(x => x.id === p.evId), key = [p.dist, p.hm, p.targetTime, p.ftp, p.weight, p.evId, p.fmt, p.draft, p.evTy, p.course ? p.course.seg.length + ':' + p.course.hm + ':' + (p.course.laps || 1) : 0].join('|');
+  const e = EVS.find(x => x.id === p.evId), key = [p.dist, p.hm, p.targetTime, p.ftp, p.weight, p.evId, p.fmt, p.draft, p.evTy, p.course ? p.course.seg.length + ':' + p.course.hm + ':' + (p.course.laps || 1) : 0, p.ifd].join('|');
   if (_evpC.has(key)) return _evpC.get(key);
   const hm = p.hm || 0, hk = hm / p.dist, tm = /^(\d+):(\d{1,2})$/.exec(String(p.targetTime || '').trim());
   let tev = e && e.dur ? e.dur : 0;
-  if (!tev) { const r = evCheck({...p, targetTime:'5:00'}), est = r && r.real ? r.real : Math.round(p.dist / 25 * 60), tg = tm ? +tm[1] * 60 + +tm[2] : 0; tev = tg ? Math.round(Math.min(est * 1.6, Math.max(est * .75, tg))) : est; }
+  if (!tev) { const r = evCheck({...p, targetTime:'5:00', _ifd:p.ifd}), /* Paket C: ältere Pläne (ifd = 0) behalten ihre Eventdauer */ est = r && r.real ? r.real : Math.round(p.dist / 25 * 60), tg = tm ? +tm[1] * 60 + +tm[2] : 0; tev = tg ? Math.round(Math.min(est * 1.6, Math.max(est * .75, tg))) : est; }
   const race = p.fmt ? p.fmt === 'race' : e ? !!e.race : /(rennen|race|preis|kriterium|criterium)/i.test(p.eventName || '');
   let climbs = null, nS = 0, nM = 0, nL = 0, tL = 0, sc;
   if (p.course && p.course.seg && p.course.seg.length) {

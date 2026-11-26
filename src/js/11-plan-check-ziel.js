@@ -41,7 +41,10 @@ const LEV = {
 };
 const levMult = (p, tev) => Object.keys(LEV).reduce((m, k) => m * (p.lev && p.lev[k] ? 1 + LEV[k].a(tev) / 100 : 1), 1);
 function paceTxt(p, pr){
-  const tev = pr && pr.tev ? pr.tev : 180, ifs = Math.max(.6, 1 - .1 * Math.log(Math.max(1, tev / 60))), hi = Math.round(ifs * 100), lo = hi - 8, cl = Math.min(100, hi + 10), W = x => Math.round(p.ftp * x / 100);
+  const tev = pr && pr.tev ? pr.tev : 180, ifs = Math.max(.6, ifEv(tev)), hi = Math.round(ifs * 100), lo = hi - 8, cl = Math.min(100, hi + 10), W = x => Math.round(p.ftp * x / 100);
+  /* Paket C, Punkt 5: ab 6 Std. Anstiege in der ersten Hälfte höchstens IF + 8, im letzten Drittel IF + 3, nie über 85 % */
+  if (tev >= 360) { const c1 = Math.min(85, hi + 8), c2 = Math.min(85, hi + 3);
+    return `Pacing-Plan: erste Stunde höchstens ${hi} % FTP, im Flachen ${lo} bis ${hi} %, an Anstiegen in der ersten Hälfte höchstens ${c1} %, im letzten Drittel höchstens ${c2} % (mit deinem heutigen FTP ${W(lo)} bis ${W(hi)} W, am Berg bis ${W(c1)} W, später bis ${W(c2)} W, nach einem neuen FTP-Test anpassen). In der zweiten Hälfte nur steigern, wenn es sich gut anfühlt.`; }
   return `Pacing-Plan: erste Stunde höchstens ${hi} % FTP, im Flachen ${lo} bis ${hi} %, an Anstiegen höchstens ${cl} % (mit deinem heutigen FTP ${W(lo)} bis ${W(hi)} W, am Berg bis ${W(cl)} W, nach einem neuen FTP-Test anpassen). In der zweiten Hälfte nur steigern, wenn es sich gut anfühlt.`;
 }
 /* Der Nutzer entscheidet: bewusst beibehaltenes Ziel (gilt nur für genau diesen Zielwert) */
@@ -51,7 +54,8 @@ function planCheck(p, live){
   const st = planStats(p), cw = live && hasStarted(p) ? curWeek(p) : 1, weeks = Math.max(0, st.tot - cw + 1), h = st.hAvg, pr = p.goal === 'event' ? evProfile(p) : null;
   const tev = pr ? pr.tev : 0, rec = hRec(p, tev), notes = [], kg = kgOf(p);
   const lRec = p.goal !== 'event' ? (p.goal === 'fitness' ? (p.ffocus === 'endur' && p.ftour ? Math.min(300, Math.round(p.ftour * .8 / 15) * 15) : p.ffocus === 'health' || p.ffocus === 'restart' ? 90 : p.ffocus === 'speed' ? 120 : 150) : 150) : tev <= 180 ? 150 : Math.min(360, Math.round(.7 * Math.min(tev, 420) / 15) * 15);
-  const pen = p.goal === 'event' && tev > 180 ? Math.max(0, Math.min(.05, (.7 - st.maxL / Math.min(tev, 420)) * .25)) : 0;
+  /* Paket C: Abschlag d (ifEv) und pen zusammen höchstens 10 % gegenüber IF(T), sonst würde doppelt abgezogen */
+  const pen = p.goal === 'event' ? evPen(tev, st.maxL) : 0;
   const base = ftpProj(p, h, weeks);
   const ratio = hAv(p) > 0 && h > 0 ? Math.min(1, h / hAv(p)) : .85, toH = x => Math.min(20, Math.ceil(x / ratio * 2) / 2);
   const boost = (hA, L, why) => { const H = toH(hA); if (H <= hAv(p) + .1 && !(L && p.perDay && (p.dayMin[p.longDay] || 0) < L)) return null; const dm = p.perDay ? boostDays(p, H, L) : null, nh = dm ? dsum({...p, dayMin:dm}) / 60 : H;

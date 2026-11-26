@@ -47,7 +47,7 @@ function wkBlocks(x){
   else if (x.t === 'test' && x.ramp) { out.push(wkB(10 * 60, 50, 60, 45, 65, 'wu')); out.push(wkB(20 * 60, 50, 130, 50, 130, 'test', {cad:x.cad})); out.push(wkB(10 * 60, 55, 45, 45, 60, 'cd')); if (x.m > 40.5) out.push(wkB((x.m - 40) * 60, 55, 55, 50, 60, 'easy')); }
   else if (x.iv) wkIv(x.iv, x.m, out, x.cad);
   else if (x.t === 'test') wkTest(x, out);
-  else if (x.t === 'race' || /^Eventtag/.test(x.n || '')) { const f = Math.max(.6, Math.min(1.02, 1 - .1 * Math.log(Math.max(1, x.m / 60)))) * (x.subPrio === 'C' ? 93 : 100); out.push(wkB(x.m * 60, f, f, Math.round(f - 5), Math.round(f + 5), 'race')); }
+  else if (x.t === 'race' || /^Eventtag/.test(x.n || '')) { const f = Math.max(.6, Math.min(1.02, ifEv(x.m))) * (x.subPrio === 'C' ? 93 : 100); out.push(wkB(x.m * 60, f, f, Math.round(f - 5), Math.round(f + 5), 'race')); }
   else if (x.t === 'long' && x.fin) { const f = x.fin, t = f.reps * f.work + (f.reps - 1) * f.rest, w = (f.lo + f.hi) / 2; steady(x.m - t, 56, 75);
     for (let k = 0; k < f.reps; k++) { out.push(wkB(f.work * 60, w, w, f.lo, f.hi, 'work', {no:k + 1, of:f.reps, cad:x.cad})); if (k < f.reps - 1) out.push(wkB(f.rest * 60, 55, 55, 50, 60, 'rest')); } }
   else if (x.t === 'long' && x.hi >= 82) { const t = Math.min(60, x.m * .25), a = Math.round((x.m - t) * .6); steady(a, 56, 75); out.push(wkB(t * 60, 83, 83, 76, 88, 'tempo', {cad:x.cad})); steady(x.m - t - a, 56, 75); }

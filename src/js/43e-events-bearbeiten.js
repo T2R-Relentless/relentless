@@ -274,13 +274,13 @@ function evPropUi(){
 }
 
 /* ---- Pacing je Art (Richtwerte, Quellen im Bericht F31) ----
-   IF solo über die Dauer: 1 − 0,10 · ln(Std.) (Richtwert der App, wie bisher).
+   IF solo über die Dauer: ifEv (1 − 0,10 · ln(Std.), ab 3 Std. mit Abschlag für Ermüdungsresistenz, Paket C).
    Feld (Rennen, Jedermann): Ø im Feld IF − 25 bis IF − 15 Prozentpunkte, weil der Windschatten im Feld den Luftwiderstand
    stark senkt (Blocken et al. 2018); Führung 95–105 %, Antritte unter 1 Min. 110–130 %, lange Anstiege bis IF + 5.
    Zeitfahren (solo): gleichmäßig IF − 4 bis IF, am Berg und bei Gegenwind bis IF + 5 (Atkinson et al. 2007, Abbiss und Laursen 2008).
    RTF/Radmarathon: Ø IF − 15 bis IF − 8, Anstiege höchstens IF + 2 und nie über 85 % FTP, Verpflegung (Jeukendrup 2014). */
 function evPace(kind, T, F){
-  const IF = Math.round(Math.max(.6, 1 - .1 * Math.log(Math.max(1, T / 60))) * 100), w = v => Math.round(F * v / 100), R = [];
+  const IF = Math.round(Math.max(.6, ifEv(T)) * 100), w = v => Math.round(F * v / 100), R = [];
   let lo, hi, cl, note;
   if (kind === 'tt') { lo = IF - 4; hi = IF; cl = Math.min(105, IF + 5);
     R.push([evL('Gleichmäßig (Ø)', 'Steady (avg)'), lo, hi], [evL('Anstiege, Gegenwind', 'Climbs, headwind'), hi, cl]);
