@@ -318,7 +318,7 @@ const EV_ICO = {
   fuel:'<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z"/>',
   subs:'<path d="M5 21V4h11l-2 4 2 4H5"/><path d="M19 9v6M16 12h6"/>',
   goal:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
-  plans:ICO.plans /* F37: Mehr → „Event und meine Pläne“ führt hierher, deshalb auch die Pläne */
+  check:ICO.check, plans:ICO.plans /* F37: Mehr → „Event und meine Pläne“ führt hierher, deshalb auch die Pläne */
 };
 let evFT = null, evFTon = false;
 const evPh = (when, title) => /^(Wochen davor|2 Tage vorher|Tag vorher|Vorabend)$/.test(String(when)) ? 0 : title === 'Danach' ? 2 : 1;
@@ -332,7 +332,7 @@ function evPage(){
   return `<section class="panel p-5">${goalCard(false)}</section>${evCycNote(p)}`
     + `<p class="eyebrow mb-2 mt-5">Vorbereitung auf das Event</p><div class="mlist">`
     + (efList(p).length > 1 ? evRow('ev-saison', 'goal', 'Saisonübersicht', 'Zielzeit, Form und Pacing für jedes Event') : '')
-    + evRow('check', 'goal', 'Plan-Check', (p.targetTime ? 'Zielzeit: ' : '') + ch[0], ch[1])
+    + evRow('check', 'check', 'Plan-Check', (p.targetTime ? 'Zielzeit: ' : '') + ch[0], ch[1])
     + evRow('ev-prof', 'prof', 'Anforderungsprofil', epSub(p) || prof)
     + (pace ? evRow('ev-pace', 'pace', 'Pacing-Plan', pace) : '')
     + evRow('ev-fuel', 'fuel', 'Ernährungsstrategie', fuel)

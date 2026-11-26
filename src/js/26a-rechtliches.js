@@ -1,5 +1,5 @@
 /* ---------- F36: Impressum und Datenschutz ----------
-   Erreichbar unter Mehr → App, unter Einstellungen → Datenschutz, aus der Statistik-Abfrage und vor der Planerstellung
+   Erreichbar (wenn RL_LEGAL_ON) unter Mehr → Extras, unter Einstellungen → Datenschutz, aus der Statistik-Abfrage und vor der Planerstellung
    (Fußzeile der Planung). Als Fenster, damit es auch ohne Plan geht. Platzhalter sind gelb markiert und müssen vor der
    Veröffentlichung ersetzt werden; der Text ist ein Entwurf und juristisch zu prüfen.
    F37: Vorerst ausgeblendet (Entscheidung der Nutzerin bzw. des Nutzers). RL_LEGAL_ON = true schaltet alle Zugänge wieder ein:

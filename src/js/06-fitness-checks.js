@@ -226,7 +226,7 @@ function testRes(w, compact){
   const beh = r.st === 'behind' ? `<button class="btn !w-auto lbl mt-2 mr-2 !py-1.5" onclick="addRecW()">Erholungswoche einlegen</button><button class="ghost lbl mt-2 mr-2 !py-1.5" onclick="retest(${ja(w)})">Check in 2 Wochen wiederholen</button><button class="ghost lbl mt-2 mr-2 !py-1.5" onclick="openGoal('dash')">Optionen für mein Ziel</button>` : '';
   return `<div class="p-3" style="background:${esc(s[2])};border:1px solid ${esc(s[1])}"><p class="text-sm"><b style="color:${esc(s[1])}">${s[0]}</b> · Woche ${w}, ${fmt(r.date)}</p>
     <p class="hd mt-1 text-2xl font-semibold">FTP etwa ${r.ftp} W</p><p class="text-xs" style="color:var(--mute)">${how}.${r.st === 'base' ? ` Geschätzt waren ${r.base} W.` : ` Erwartet waren ${r.lo} bis ${r.hi} W.`}</p>
-    ${compact ? '' : `<p class="mt-2 text-sm">${txt}</p>${!r.adopted && Math.abs(d) >= 3 ? `<p class="mt-1 text-xs" style="color:var(--mute)">Übernehmen heißt: Alle Wattvorgaben im Plan passen sich um ${pct > 0 ? '+' : ''}${pct} % an, und die Prognose rechnet von diesem Wert aus. Du kannst den FTP jederzeit unter Mehr → Meine Pläne → „Plan anpassen“ ändern.</p>` : ''}`}
+    ${compact ? '' : `<p class="mt-2 text-sm">${txt}</p>${!r.adopted && Math.abs(d) >= 3 ? `<p class="mt-1 text-xs" style="color:var(--mute)">Übernehmen heißt: Alle Wattvorgaben im Plan passen sich um ${pct > 0 ? '+' : ''}${pct} % an, und die Prognose rechnet von diesem Wert aus. Du kannst den FTP jederzeit unter Mehr bei deinen Plänen mit „Plan anpassen“ ändern.</p>` : ''}`}
     <div>${adopt}${beh}<button class="ghost lbl mt-2 !py-1.5" onclick="delTest(${ja(w)})">Ergebnis löschen</button></div></div>`;
 }
 function testBox(w, i, cur){

@@ -42,7 +42,7 @@ const ICO = {
   state:'<path d="M3 12h4l3-7 4 14 3-7h4"/>',
   check:'<path d="M4 12l5 5L20 6"/>',
   event:'<path d="M5 21V4h11l-2 4 2 4H5"/>',
-  overview:'<path d="M3 18h18M5 18V9M10 18V5M15 18v-7M20 18v-4"/>',
+  overview:'<path d="M4 3v18"/><path d="M4 6h7M8 11h8M12 16h8"/>', /* F37: Phasen als Balken über die Zeit, eigenes Symbol (nicht wie „Verlauf und Wochenumfang“) */
   rides:'<circle cx="6" cy="16" r="4"/><circle cx="18" cy="16" r="4"/><path d="M6 16l5-8h4l3 8M9 8h4"/>',
   ex:'<path d="M3 10v4M6 8v8M18 8v8M21 10v4M6 12h12"/>',
   export:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
