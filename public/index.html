@@ -8857,10 +8857,12 @@ const zxMap = items => Object.fromEntries(items.map(q => [q.day, [asc(q.x.n).tri
 let zxMemo = {k:null, v:null};
 function zxDiff(){
   const ex = S.zxExp; if (!ex || !S.p || !S.plan) return null;
-  const k = JSON.stringify([ex.at, S.wk, S.plan, S.p.ftp, S.p.recW, S.p.subs, S.p.hours, S.p.tb && S.p.tb.on ? S.p.tb : 0, S.p.avail, S.p.start, S.p.lev, S.p.res, iso(0)]);
+  const k = JSON.stringify([ex.at, S.wk, S.plan, S.done, S.p.ftp, S.p.recW, S.p.subs, S.p.hours, S.p.tb && S.p.tb.on ? S.p.tb : 0, S.p.avail, S.p.start, S.p.lev, S.p.res, iso(0)]);
   if (zxMemo.k === k) return zxMemo.v;
   const today = iso(0), now = zxMap(zxItems(ex.kind, 'all').filter(q => q.day <= ex.last)), ch = [];
-  Object.entries(ex.m).forEach(([d, v]) => { if (d < today) return; const n = now[d]; if (!n) ch.push({d, t:'entfällt', n:v[0]}); else if (n[1] !== v[1]) ch.push({d, t:'geändert', n:n[0]}); });
+  /* Erledigte Einheiten der laufenden Woche fehlen in zxItems absichtlich; sie gelten nicht als „entfallen“ */
+  const dn = new Set(); try { if (S.done && S.p.start) { const b0 = new Date(S.p.start + 'T12:00:00'); b0.setDate(b0.getDate() + (S.wk - 1) * 7); Object.keys(S.done).forEach(i => { if (!S.done[i]) return; const d = new Date(b0); d.setDate(d.getDate() + +i); dn.add(lstr(d)); }); } } catch (e) { elog(e); }
+  Object.entries(ex.m).forEach(([d, v]) => { if (d < today || dn.has(d)) return; const n = now[d]; if (!n) ch.push({d, t:'entfällt', n:v[0]}); else if (n[1] !== v[1]) ch.push({d, t:'geändert', n:n[0]}); });
   Object.entries(now).forEach(([d, v]) => { if (d >= today && !ex.m[d]) ch.push({d, t:'neu', n:v[0]}); });
   ch.sort((a, b) => a.d.localeCompare(b.d)); const r = ch.length ? {ch, sig:JSON.stringify(ch)} : null; zxMemo = {k, v:r}; return r;
 }
