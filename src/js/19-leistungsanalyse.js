@@ -207,7 +207,7 @@ function morCard(compact){
 function morHint(){
   if (!S.p || !hasStarted(S.p) || !S.plan) return ''; const st = morStat(), t = todayIdx(), x = S.plan[t];
   const ask = S.moOn && S.moHide !== lstr(new Date()) && !(st.today && (st.today.hr || st.today.hrv || st.today.sleep)) ? morCard(true) : '';
-  if (!st.flags.length || !x || !HARD.includes(x.t) || S.done[t] || x.adapted || S.moSkip === lstr(new Date())) return ask;
+  if (!st.flags.length || !x || !HARD.includes(x.t) || S.done[t] || x.adapted || S.moSkip === lstr(new Date()) || coHide('R4')) return ask;
   return ask + `<div class="panel p-4" style="border-left:4px solid #d9a400"><p class="font-semibold">Erholung vielleicht noch nicht komplett</p><p class="mt-1 text-sm">${st.flags.map(f => `<span>${f}</span>`).join(', ')}. Ein einzelner Morgenwert ist kein Beweis. Fühlst du dich auch schlapp, ist heute locker die bessere Wahl.</p>
     <div class="mt-3 flex flex-wrap gap-2"><button class="btn !w-auto lbl !py-2" onclick="easyDay(${ja(t)})">Heute locker statt hart</button><button class="ghost !py-2 text-sm" onclick="S.moSkip=lstr(new Date());save();render()">Plan so lassen</button></div></div>`;
 }

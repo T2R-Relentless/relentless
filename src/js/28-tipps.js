@@ -72,6 +72,8 @@ const DYK = [
   ['priv', 'Du entscheidest, ob die App anonym zählen darf. Unter Einstellungen → Datenschutz änderst du das jederzeit' + (RL_LEGAL_ON ? ', dort findest du auch Impressum und Datenschutzerklärung.' : '.'), 'Datenschutz öffnen', "dykSet('settings','priv')", () => true],
   ['gmdel', 'Garmin nicht mehr nutzen? Unter Einstellungen → Garmin Connect trennst du die Verbindung und löschst den Schlüssel von diesem Gerät.', 'Zu Garmin Connect', "dykSet('settings','gm')", () => { try { return gmHasData(); } catch (e) { return false; } }],
   ['team', 'Neuigkeiten, Ausfahrten und Termine des Teams findest du auf teamrelentlessriders.de, verlinkt unter Mehr → Team.', 'Zur Homepage', "dykTeam()", () => true],
+  /* F39: persönlicher Coach ohne Server */
+  ['coach', 'Dein persönlicher Coach schreibt dir jeden Tag auf Heute drei kurze Absätze: was sich bei dir tut, was heute ansteht und einen Spruch. Spricht etwas gegen die Einheit, schlägt er eine Änderung vor, die du mit einem Tipp annimmst. Einschalten unter Einstellungen → Persönlicher Coach.', 'Coach einschalten', "dykSet('settings','coach')", () => !!S.p && !(S.coach && S.coach.on)],
   ['bkcloud', 'Deine Pläne auch auf Tablet oder neuem Handy: Speichere die Sicherung in deiner eigenen Cloud, etwa iCloud Drive, Google Drive oder OneDrive, und lade sie auf dem anderen Gerät. Die App schickt dabei nichts an einen Server.', 'So geht’s', "bkCloudGo()", () => !!S.p],
 ];
 /* Ziel eines Hinweises: [Unterseite, Abschnitt, Eingabefeld]. Der Knopf landet direkt am Feld, nicht nur oben auf der Seite. */
@@ -119,7 +121,7 @@ function dykRun(st){
 function dykGo(a){ try { track('tipp-genutzt'); } catch (e) { elog(e); } try { String(a || '').split(';').map(x => x.trim()).filter(Boolean).forEach(dykRun); } catch (e) { elog(e); } }
 function dykCard(){
   try {
-    const st = dykGet(); if (st.off || st.hide === iso(0) || !S.p || (S.plan && hasStarted(S.p) && (S.plan[todayIdx()] || {}).feel === 'sick')) return '';
+    const st = dykGet(); if (st.off || st.hide === iso(0) || !S.p || (S.plan && hasStarted(S.p) && ['sick', 'inj'].includes((S.plan[todayIdx()] || {}).feel))) return '';
     const t = dykPick(false); if (!t) return '';
     const ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/></svg>';
     const act = DYK.indexOf(t);

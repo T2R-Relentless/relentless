@@ -45,7 +45,7 @@ function gapInfo(){
   return {L, g, ...RE_LV(g)};
 }
 function gapCard(){
-  const x = gapInfo(); if (!x) return '';
+  const x = gapInfo(); if (!x || coHide('R1')) return '';
   const what = x.lvl === 1 ? 'Diese Woche mit etwa 70 % des Umfangs und nur einer harten Einheit.' : `Zwei Wochen mit etwa 60 % und 80 % des Umfangs, nur Grundlage und Sweet Spot.${x.lvl === 3 ? ' Nach so langer Pause ist dein FTP wahrscheinlich etwas gesunken. Die App schlägt dir danach vor, ihn um 5 % zu senken und einen Fitness-Check einzuplanen.' : ''}`;
   return `<section class="panel p-4" style="border-left:4px solid var(--teal)"><p class="font-semibold">Längere Pause?</p><p class="mt-1 text-sm">Seit ${fmt(x.L)} ist keine Fahrt und keine erledigte Einheit eingetragen (${x.g} Tage). Nach einer Pause ist ein sanfter Wiedereinstieg sinnvoll, damit du dich nicht überforderst.</p><p class="mt-1 text-sm"><b>Vorschlag:</b> ${what} Danach läuft der Plan normal weiter.</p>
     <div class="mt-3 flex flex-wrap gap-2"><button class="btn !w-auto !px-3" style="min-height:44px" onclick="reentGo()">Wiedereinstieg einplanen</button><button class="ghost !w-auto !px-3" style="min-height:44px" onclick="gapNo()">Nein, ich habe trainiert</button></div></section>`;
