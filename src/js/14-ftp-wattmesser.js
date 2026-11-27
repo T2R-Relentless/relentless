@@ -228,6 +228,7 @@ const sources = () => fold('src', 'Wissenschaftliche Grundlage', `<div class="te
   <p class="mt-3 text-xs" style="color:var(--mute)">Grenzen: FTP-Prozentzonen sind Näherungen, individuelle Laktatschwellen weichen ab. Die Drei-Wochen-Belastung plus Erholungswoche ist eine Praxisregel mit begrenzter Evidenz. Viele Studien nutzen trainierte, meist männliche Probanden. Schwellenwerte der Auswirkungskarte sind Faustwerte. Der Zielzeit-Check ist ein physikalisches Faustmodell mit etwa ±10 % Genauigkeit. Kein Ersatz für Trainer- oder ärztlichen Rat.</p></div>`, false);
 function undo(i){
   const x = S.plan[i]; if (!x || !x.orig) return;
+  if (x.feel === 'inj') { try { S.coach = S.coach || {on:false}; S.coach.inj = {...(S.coach.inj || {}), ok:iso(0)}; } catch (e) { elog(e); } } /* F39: „Wieder schmerzfrei“ wirkt wie „Heute geht es wieder“ (VL-4) */
   if (x.orig.t === 'test' && S.p && S.p.testDue && S.p.testDue.w === S.wk) { delete S.p.testDue; if (S.d) delete S.d.testDue; }
   S.plan[i] = x.orig; S.log = S.log.filter(l => l.day !== i); [i + 1, i + 2].forEach(k => { const z = S.plan[k]; if (z && z.fu === i && z.orig) { S.plan[k] = z.orig; S.log = S.log.filter(l => l.day !== k); } }); save(); render();
 }

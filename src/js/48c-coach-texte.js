@@ -87,7 +87,9 @@ const CO_TXT = {
   r7w:{over:['über Plan', 'above plan'], extra:['eine Zusatzfahrt', 'an extra ride'], hard:['hart', 'hard']},
   r7p:['Zu deiner Zusatzfahrt gibt es schon einen Vorschlag auf der Startseite.', "There's already a suggestion for your extra ride on the home screen."],
   r8:['Bis {tempC} °C in deiner Trainingszeit. Wenn möglich früh oder spät fahren, etwas unter den Zielwerten bleiben und mehr trinken. Oder ein kühlerer Tag.', 'Up to {tempC} °C during your usual ride time. Ride early or late if you can, stay a little below the targets and drink more. Or pick a cooler day.'],
-  r8T:{a:['Schlau ist schneller als heiß.', 'Smart beats hot.']},
+  r8T:{k:['Heute ist Schatten das beste Material.', "Shade is today's best upgrade."], a:['Schlau ist schneller als heiß.', 'Smart beats hot.']},
+  r9d:['Bei {tempC} °C ist die Rolle heute die angenehmere Wahl, die Einheit bleibt gleich.', 'At {tempC} °C, the trainer is the more comfortable choice today. The session stays the same.'],
+  erkNeu:['Fahr heute nur locker und kürzer, und nur, wenn du dich auf dem Rad gut fühlst. Kommen Fieber oder Beschwerden unterhalb des Halses dazu, stell auf „Krank“ um.', 'Ride only easy and shorter today, and only if you feel good on the bike. If fever or symptoms below the neck appear, switch to "Ill".'],
   r9:{k:['Bei {tempC} Grad und {regen} % Regenrisiko ist die Rolle heute die bessere Straße. Die Einheit bleibt gleich.', "At {tempC} degrees and {regen} % chance of rain, the trainer is today's better road. Same session."], a:['Draußen {tempC} Grad und {regen} % Regenrisiko: heute auf die Rolle, gleiche Einheit.', '{tempC} degrees and {regen} % rain risk outside: trainer today, same session.'], s:['Bei {tempC} °C und {regen} % Regenwahrscheinlichkeit besser auf der Rolle fahren, die Einheit bleibt gleich.', 'At {tempC} °C and {regen} % chance of rain, better ride indoors. The session stays the same.']},
   r10a:['Gestern ist die lockere Einheit ausgefallen. Nachholen musst du nichts.', "Yesterday's easy ride didn't happen. No need to make it up."],
   r10b:['Gestern ist {titelG} ausgefallen. Heute ist {lf} geplant, du kannst sie heute fahren, ohne dass zwei harte Tage aufeinanderfolgen. Musst du aber nicht.', "Yesterday's {titelG} didn't happen. Today is {lf}, so you could ride it today without two hard days in a row. You don't have to."],
@@ -101,15 +103,18 @@ const CO_TXT = {
   teaser:['Morgen: {next}, {nextDauer} Minuten.', 'Tomorrow: {next}, {nextDauer} minutes.'],
   evArt:{alpin:['Radmarathon', 'sportive'], huegel:['Radmarathon', 'sportive'], punch:['Rennen', 'race'], flach:['Rennen', 'race'], ultra:['Ultra-Event', 'ultra event'], event:['Event', 'event']},
   /* §6.6 Sprüche: Lage → Ton */
+  /* §6.6 und §6.8 Sprüche: Lage → Ton → Varianten (SP-1: erste in 7 Tagen unbenutzte Variante) */
   sp:{
-    vor:{k:['Der Plan ist ein Vorschlag, kein Vertrag.', 'The plan is a suggestion, not a contract.'], a:['Wer heute klug fährt, fährt morgen stark.', 'Ride smart today, ride strong tomorrow.'], s:['Anpassen ist Teil des Plans.', 'Adjusting is part of the plan.']},
-    wetter:{k:['Die Rolle hat noch nie über Gegenwind geklagt.', 'The trainer has never complained about headwind.'], a:['Drinnen gibt es keinen Gegenwind. Nur dich und die Intervalle.', 'No headwind indoors. Just you and the intervals.'], s:['Das Wetter bestimmt den Ort, nicht das Training.', 'Weather decides where, not whether.']},
-    rt:{k:['Ein Spaziergang zählt. Ein heimliches Intervall zählt auch, nur leider gegen dich.', 'A walk counts. A secret interval counts too, just against you.'], a:['Selbst dein Sofa ist beeindruckt. Gib ihm heute, was es verdient.', 'Even your sofa is impressed. Give it what it deserves today.'], s:['Der Ruhetag ist Teil des Plans, nicht seine Lücke.', 'The rest day is part of the plan, not a gap in it.']},
-    neu:{k:['Noch keine Ausreden gesammelt. Starker Anfang.', 'No excuses collected yet. Strong start.'], a:['Tag {datentage}, null Ausreden. Dein Plan ist beeindruckt, und der ist schwer zu beeindrucken.', "Day {datentage}, zero excuses. Your plan is impressed, and it's hard to impress."], s:['Der Anfang ist der wichtigste Teil der Gewohnheit.', 'The start is the most important part of a habit.']},
-    verp:{k:['Die Einheit von gestern schreibt noch an ihrer Entschuldigung.', "Yesterday's session is still writing its apology."], a:['Gestern war gestern. Der Plan fragt nur nach heute.', 'Yesterday was yesterday. The plan only asks about today.'], s:['Eine verpasste Einheit ändert wenig, die nächste zählt.', 'One missed session changes little, the next one counts.']},
-    erf:{k:['{erf7} Einheiten. Die Statistik grinst.', '{erf7} sessions. The stats are grinning.'], a:['{erf7} Einheiten in sieben Tagen. Heute ist ein guter Tag, das so zu halten.', '{erf7} sessions in seven days. Good day to keep it that way.'], s:['Konstanz schlägt Heldentaten. {erf7} Einheiten zeigen, dass du das verstanden hast.', 'Consistency beats heroics. {erf7} sessions show you get it.']},
-    hart:{k:['Die Intervalle wissen noch nicht, was auf sie zukommt.', "The intervals have no idea what's coming."], a:['Heute wird die Zahl im Plan zur Zahl in der Datei.', 'Today the number in the plan becomes the number in the file.'], s:['Qualität vor Menge, heute zählt jedes Intervall.', 'Quality over quantity, every interval counts today.']},
-    locker:{k:['Locker heißt locker. Auch wenn der Wattmesser anderer Meinung ist.', 'Easy means easy. Even if the power meter disagrees.'], a:['Heute langsam fahren ist die Kunst. Zeig, dass du sie kannst.', "Riding slow is the skill today. Show you've got it."], s:['Lockere Einheiten bauen die Grundlage, auf der die harten wirken.', 'Easy rides build the base the hard ones work on.']}}
+    vor:{k:[['Der Plan ist ein Vorschlag, kein Vertrag.', 'The plan is a suggestion, not a contract.'], ["Pläne mögen Flexibilität. Meistens jedenfalls.", "Plans like flexibility. Mostly."], ["Heute ein Gang leichter. Der Plan kommt damit klar.", "One gear easier today. The plan can handle it."]], a:[['Wer heute klug fährt, fährt morgen stark.', 'Ride smart today, ride strong tomorrow.'], ["Klug anpassen ist auch eine Stärke.", "Adjusting smartly is a strength too."], ["Heute geht es um morgen.", "Today is about tomorrow."]], s:[['Anpassen ist Teil des Plans.', 'Adjusting is part of the plan.'], ["Ein Vorschlag, keine Pflicht. Du entscheidest.", "A suggestion, not an obligation. You decide."], ["Training wirkt über Wochen, nicht über einen einzelnen Tag.", "Training works over weeks, not over a single day."]]},
+    wetter:{k:[['Die Rolle hat noch nie über Gegenwind geklagt.', 'The trainer has never complained about headwind.'], ["Draußen macht das Wetter heute die Regeln. Drinnen machst du sie.", "Outside the weather makes the rules today. Indoors, you do."]], a:[['Drinnen gibt es keinen Gegenwind. Nur dich und die Intervalle.', 'No headwind indoors. Just you and the intervals.'], ["Drinnen ist das Wetter immer gleich. Heute ist das ein Vorteil.", "Indoors the weather never changes. Today that's an advantage."]], s:[['Das Wetter bestimmt den Ort, nicht das Training.', 'Weather decides where, not whether.'], ["Bei schlechtem Wetter ist die Rolle die sichere Wahl.", "In bad weather, the trainer is the safe choice."]]},
+    rt:{k:[['Ein Spaziergang zählt. Ein heimliches Intervall zählt auch, nur leider gegen dich.', 'A walk counts. A secret interval counts too, just against you.'], ["Nichts tun ist heute die Einheit. Du schaffst das.", "Doing nothing is today's session. You've got this."], ["Das Rad hat heute frei. Du auch.", "The bike has the day off. So do you."]], a:[['Selbst dein Sofa ist beeindruckt. Gib ihm heute, was es verdient.', 'Even your sofa is impressed. Give it what it deserves today.'], ["Ruhetag heißt Ruhetag. Kein heimliches Ausrollen um den Block.", "Rest day means rest day. No sneaky spin around the block."], ["Heute ist die stärkste Einheit die, die du nicht fährst.", "Today the strongest session is the one you don't ride."]], s:[['Der Ruhetag ist Teil des Plans, nicht seine Lücke.', 'The rest day is part of the plan, not a gap in it.'], ["Ohne Erholung kein Trainingseffekt. Heute ist Erholung dran.", "No recovery, no training effect. Today is for recovery."], ["Ein freier Tag gibt dem Körper Zeit, sich an das Training anzupassen.", "A day off gives your body time to adapt to the training."]]},
+    neu:{k:[['Noch keine Ausreden gesammelt. Starker Anfang.', 'No excuses collected yet. Strong start.'], ["Die ersten Tage bringen die meisten Fragen. Gut, dass du hier bist.", "The first days bring the most questions. Good to have you here."], ["Du und der Plan lernt euch gerade kennen. Läuft.", "You and the plan are just getting to know each other. So far so good."]], a:[['Tag {datentage}, null Ausreden. Dein Plan ist beeindruckt, und der ist schwer zu beeindrucken.', "Day {datentage}, zero excuses. Your plan is impressed, and it's hard to impress."], ["Der Anfang ist gemacht. Jetzt wird daraus ein Plan, der gefahren wird.", "You've started. Now let's make it a plan that gets ridden."], ["Woche eins. Die wichtigste Einheit ist die nächste.", "Week one. The most important session is the next one."]], s:[['Der Anfang ist der wichtigste Teil der Gewohnheit.', 'The start is the most important part of a habit.'], ["Am Anfang zählt Regelmäßigkeit mehr als Tempo.", "At the start, regularity matters more than pace."], ["In den ersten Wochen lieber etwas zu locker als zu hart.", "In the first weeks, rather a bit too easy than too hard."]]},
+    verp:{k:[['Die Einheit von gestern schreibt noch an ihrer Entschuldigung.', "Yesterday's session is still writing its apology."], ["Gestern hatte das Rad frei. Heute geht es weiter.", "Yesterday the bike had a day off. Today it's back on."]], a:[['Gestern war gestern. Der Plan fragt nur nach heute.', 'Yesterday was yesterday. The plan only asks about today.'], ["Ein Tag fehlt, der Plan steht noch.", "One day missing, the plan still stands."]], s:[['Eine verpasste Einheit ändert wenig, die nächste zählt.', 'One missed session changes little, the next one counts.'], ["Ein ausgefallener Tag ändert an deinem Trainingsstand praktisch nichts.", "One missed day makes practically no difference to your fitness."]]},
+    erf:{k:[['{erf7} Einheiten. Die Statistik grinst.', '{erf7} sessions. The stats are grinning.'], ["{erf7} Einheiten geschafft. Der Plan fühlt sich ernst genommen.", "{erf7} sessions done. The plan feels taken seriously."]], a:[['{erf7} Einheiten in sieben Tagen. Heute ist ein guter Tag, das so zu halten.', '{erf7} sessions in seven days. Good day to keep it that way.'], ["{erf7} Einheiten. So sieht ein Plan aus, der gefahren wird.", "{erf7} sessions. That's what a plan looks like when it's ridden."]], s:[['Konstanz schlägt Heldentaten. {erf7} Einheiten zeigen, dass du das verstanden hast.', 'Consistency beats heroics. {erf7} sessions show you get it.'], ["{erf7} Einheiten erledigt. Regelmäßigkeit bringt im Ausdauertraining am meisten.", "{erf7} sessions done. Regularity pays off most in endurance training."]]},
+    hart:{k:[['Die Intervalle wissen noch nicht, was auf sie zukommt.', "The intervals have no idea what's coming."], ["Harte Einheit heute. Das Gute: Sie dauert nicht ewig.", "Hard session today. The good news: it doesn't last forever."], ["Zwischen den Intervallen ist Pause. Die ist eingeplant, nicht nur geduldet.", "There's rest between the intervals. It's planned, not just tolerated."]], a:[['Heute wird die Zahl im Plan zur Zahl in der Datei.', 'Today the number in the plan becomes the number in the file.'], ["Heute zählt Qualität. Jedes Intervall sauber, das letzte genauso wie das erste.", "Quality counts today. Every interval clean, the last one just like the first."], ["Du hast dich für diesen Plan entschieden. Heute zeigt er, was er kann.", "You chose this plan. Today it shows what it can do."]], s:[['Qualität vor Menge, heute zählt jedes Intervall.', 'Quality over quantity, every interval counts today.'], ["Harte Einheiten wirken nur mit ausreichender Erholung davor und danach.", "Hard sessions only work with enough recovery before and after."], ["Gleichmäßig fahren: das erste Intervall nicht zu schnell beginnen.", "Pace evenly: don't start the first interval too fast."]]},
+    locker:{k:[['Locker heißt locker. Auch wenn der Wattmesser anderer Meinung ist.', 'Easy means easy. Even if the power meter disagrees.'], ["Wer heute überholt wird, macht alles richtig.", "If you get overtaken today, you're doing it right."], ["Heute ist Kaffeepausen-Tempo erlaubt. Ausdrücklich.", "Coffee-stop pace is allowed today. Officially."]], a:[['Heute langsam fahren ist die Kunst. Zeig, dass du sie kannst.', "Riding slow is the skill today. Show you've got it."], ["Locker fahren ist schwerer, als es klingt. Beweis das Gegenteil.", "Easy riding is harder than it sounds. Prove it isn't."], ["Heute gewinnt, wer sich bremsen kann.", "Today the winner is whoever can hold back."]], s:[['Lockere Einheiten bauen die Grundlage, auf der die harten wirken.', 'Easy rides build the base the hard ones work on.'], ["Locker heißt: Du könntest dich die ganze Zeit unterhalten.", "Easy means you could chat the whole time."], ["Der größte Teil der Trainingszeit ist locker. Genau dort entsteht die Ausdauer.", "Most training time is easy. That's where endurance is built."]]},
+    check:{k:[['Heute misst du nur, was schon da ist. Kein Grund für Nervosität.', "Today you only measure what's already there. No need for nerves."]], a:[['Heute siehst du, was die letzten Wochen gebracht haben. Gleichmäßig einteilen.', 'Today you see what the last few weeks brought. Pace it evenly.']], s:[['Gleichmäßig einteilen gibt beim Fitness-Check das genaueste Ergebnis.', 'Even pacing gives the most accurate fitness check result.']]},
+    event:{k:[['Heute ist der Tag, für den du trainiert hast. Genieß ihn.', 'Today is the day you trained for. Enjoy it.']], a:[['Das Training ist gemacht. Heute holst du es ab.', 'The training is done. Today you collect.']], s:[['Ruhig beginnen, früh verpflegen, den Rest erledigt das Training.', 'Start calmly, fuel early, the training does the rest.']]}}
 };
 /* §5 Verbotene Wörter (Prüfung ohne Groß-/Kleinschreibung, Stämme am Wortanfang; '=' = nur als ganzes Wort; Fehlalarm-Liste in coBanHits).
    g: Gesundheit (in festen R0-Texten erlaubt), d: Druck (nur bei R3–R10 und im ruhigen Modus verboten), s: zusätzlich nur im Spruch */
@@ -123,7 +128,7 @@ const CO_BAN = {
     d:['wimp', '=lazy', '=weak', 'weakness', 'loser', 'shame', 'no pain', 'push through', 'no excuses'],
     s:['sleep', 'tired', 'wiped', '=cold', 'pain']}};
 /* erlaubte Wendungen aus der Vorgabe („harte Arbeit“ ist keine Ursache aus dem Alltag; „two hard days in a row“ ist keine Serie) */
-const CO_OK = ['harte arbeit', 'wochen arbeit', 'hard work', 'of work', 'two hard days in a row', 'ein anderer tag', 'anderer tag', 'resting heart rate', 'work on', 'to work'];
+const CO_OK = ['harte arbeit', 'wochen arbeit', 'hard work', 'of work', 'two hard days in a row', 'ein anderer tag', 'anderer tag', 'resting heart rate', 'work on', 'to work', 'only work'];
 function coBanHits(text, L, opt){
   opt = opt || {}; const B = CO_BAN[L === 'en' ? 'en' : 'de'], low = ' ' + String(text || '').toLowerCase().replace(/[.,:;!?“”„"()–-]/g, ' ').replace(/\s+/g, ' ') + ' ';
   let s = low; CO_OK.forEach(q => { s = s.split(' ' + q + ' ').join(' ~ '); });
@@ -167,12 +172,13 @@ function coReport(pk, r, o){
   const g = a => a ? a[L] : '', gt = (m, k) => m ? (m[k] || m.s || m.k) : null, vv = (tab, arr) => arr && arr.length ? arr[coVar(tab, arr.length, ctx)] : null;
   const name = pk.vorname ? pk.vorname : '';
   const evT = pk.plan.eventInTagen, ev = pk.plan.eventArt ? g(T.evArt[pk.plan.eventArt] || T.evArt.event) : null;
-  const titel0 = e ? coTr(e.titel, Lc) : null;
+  const tn = s => s ? String(s).replace(/(\d)\s*×\s*(\d)/g, '$1 × $2') : s, qq = s => s ? (L ? '“' + s + '”' : '„' + s + '“') : s;
+  const titelR = e ? tn(coTr(e.titel, Lc)) : null, titel0 = qq(titelR);
   const V = {name:'{name}', wo:pk.plan.woche, woGes:pk.plan.wochenGesamt, phase:coTr(pk.plan.phase, Lc), evTage:evT != null && evT >= 1 ? evT : null, ev, datentage:dt};
   const fin = (ins, ein, spr, calm) => {
     const nameIn = s => s.replace(/\{name\}/g, name);
     const rep = {insight:nameIn(ins.filter(Boolean).join(' ')), einheit:nameIn(ein.filter(Boolean).join(' ')), spruch:calm ? '' : spr || '', teaser:''};
-    if (!calm && pk.naechste) rep.teaser = coFill(g(T.teaser), {next:coTr(pk.naechste.titel, Lc), nextDauer:pk.naechste.dauerMin});
+    if (!calm && pk.naechste) rep.teaser = coFill(g(T.teaser), {next:qq(tn(coTr(pk.naechste.titel, Lc))), nextDauer:pk.naechste.dauerMin});
     if (evT === 1 && rep.insight) rep.insight = L ? rep.insight.replace(/\b1 days\b/, '1 day') : rep.insight.replace(/\b1 Tage\b/, '1 Tag');
     rep.calm = !!calm; rep.rule = r.id; rep.used = ctx.used; rep.words = coWords(rep.insight) + coWords(rep.einheit) + coWords(rep.spruch);
     return rep;
@@ -182,7 +188,7 @@ function coReport(pk, r, o){
     const C = {R0k:T.krank, R0e:T.erk, R0v:T.verl, R1:T.pause, R2:T.ueber}[r.id];
     const wann = r.id === 'R0v' ? (r.wann === 0 || r.wann === 1 ? g(T.wann[r.wann]) : (L ? 'on ' : 'am ') + coTr(DAYS[(todayIdx() - r.wann + 70) % 7], Lc)) : null;
     const ins = coNameFirst([coFill(g(C[0]), {name:'{name}', wann, lage:r.lage})], name, Lc);
-    const ein = [r.id === 'R0v' && e && e.hart && !I.xAd ? g(T.verlHart) : '', g(C[1])];
+    const ein = [r.id === 'R0v' && e && e.hart && !I.xAd ? g(T.verlHart) : '', r.erkNeu ? g(T.erkNeu) : g(C[1])];
     return fin(ins, ein, '', true);
   }
   /* ---- Insight: (1) Trend bzw. Neuling/Lücke/Stunden, (2) Form (+ Morgen am Ruhetag), (3) Ausblick ---- */
@@ -201,7 +207,7 @@ function coReport(pk, r, o){
     else if (r.id === 'R6') s2 = '';
     else if (stg <= 2 && lim84) s2 = g(T.fs5);
     else { const arr = stg === 1 && tk === 'a' ? T.fs[1].s : gt(T.fs[stg], tk); s2 = g(vv('fs', arr)); if (stg === 5 && tk === 's' && !quiet) s2 += ' ' + g(T.fs5s); if (dt <= 41) s2 += ' ' + g(T.fs2); }
-    if (rest && dt >= 28 && stg != null && f.frischeMorgen != null) { const sm = coFS(f.frischeMorgen); const M = sm > stg ? T.mo.up : sm === stg ? T.mo.eq : null; if (M) s2b = coFill(g(M[tk]), {mstufe:T.mst[sm] ? g(T.mst[sm]) : null}); }
+    if (rest && dt >= 28 && stg != null && f.frischeMorgen != null && !(stg <= 2 && lim84)) { const sm = coFS(f.frischeMorgen); const M = sm > stg ? T.mo.up : sm === stg ? T.mo.eq : null; if (M) s2b = coFill(g(M[tk]), {mstufe:T.mst[sm] ? g(T.mst[sm]) : null}); }
   }
   if (V.evTage != null) { s3 = coFill(g(gt(T.ev, tk)), V); if (dt >= 42 && evT <= 14 && pk.plan.formAmEvent != null) { const se = coFS(pk.plan.formAmEvent); if (se >= 4) s3 += ' ' + g(T.evf.hi); else if (se === 3) s3 += ' ' + g(T.evf.mid); } }
   else s3 = coFill(g(T.ziel), V);
@@ -220,16 +226,17 @@ function coReport(pk, r, o){
   let ein = [];
   const neu = e ? coFill(g(T.neuMin), {m:Math.max(30, Math.min(60, e.dauerMin || 60))}) : null;
   if (e) {
-    let kern = null, titel = titel0;
+    let kern = null, titel = titelR;
     if (e.test) kern = g(T.kwTest);
     else if (e.iv && !e.iv.seq && e.iv.reps > 0) { const kw = coKw(e.iv.lo, e.iv.hi), wk = e.iv.work, sek = wk < 1, n = (e.iv.sets || 1) > 1 ? e.iv.sets + ' × ' + e.iv.reps : e.iv.reps;
       kern = coFill(g(sek ? T.ivSek : T.ivMin), {reps:n, work:sek ? Math.round(wk * 60) : coNum(wk, Lc), wort:kw ? kw[1 + L] : null}) + (aTone === 's' && e.iv.rest >= 1 ? coFill(g(T.ivRest), {rest:coNum(e.iv.rest, Lc)}) : '');
       titel = String(titel || '').replace(/\s+\d+(?:\s*[×x/]\s*\d+)+(?:\s*(?:Sek\.|Min\.|sec|min|s))?\s*$/, '') || titel; }
     else if (e.iv && e.iv.lo) { const kw = coKw(e.iv.lo, e.iv.hi); kern = kw ? kw[1 + L] : null; }
     else if (e.lo > 0 && e.hi > 0 && e.t !== 'race') { const kw = coKw(e.lo, e.hi); kern = kw ? kw[1 + L] : null; }
+    titel = qq(titel);
     if (r.id !== 'R5') ein.push(kern ? coFill(g(T.e0[aTone]), {titel, kernWort:kern, dauer:e.dauerMin}) : coFill(g(T.e0n[aTone]), {titel, dauer:e.dauerMin}));
   } else {
-    const RT = T.rt[tk]; ein.push(g(RT[0])); if (pk.naechste) ein.push(coFill(g(RT[1]), {next:coTr(pk.naechste.titel, Lc), nextDauer:pk.naechste.dauerMin}));
+    const RT = T.rt[tk]; ein.push(g(RT[0])); if (pk.naechste) ein.push(coFill(g(RT[1]), {next:qq(tn(coTr(pk.naechste.titel, Lc))), nextDauer:pk.naechste.dauerMin}));
     if (pk.kraft) ein.push(coFill(g(T.rtKraft), {kraft:g(T.kraftW[pk.kraft])}));
   }
   const w = pk.wetter || {}, wxw = w.gewitter ? g(T.wxG) : coFill(g(T.wxB), {boeen:w.boeen});
@@ -243,29 +250,36 @@ function coReport(pk, r, o){
   else if (r.id === 'R7') add(coFill(g(T.r7), {why:g(T.r7w[r.why]), titel:titel0}));
   else if (r.id === 'R7p') add(g(T.r7p));
   else if (r.id === 'R8') { add(coFill(g(T.r8), {tempC:w.tmax})); if (T.r8T[tk]) add(g(T.r8T[tk])); }
-  else if (r.id === 'R9') add(coFill(g(T.r9[tk]), {tempC:w.tempC, regen:w.regenProzent}));
+  else if (r.id === 'R9') add(w.regenProzent != null && w.regenProzent < 30 ? coFill(g(T.r9d), {tempC:w.tempC}) : coFill(g(T.r9[tk]), {tempC:w.tempC, regen:w.regenProzent}));
   else if (r.id === 'R10a') add(g(T.r10a));
-  else if (r.id === 'R10b') add(coFill(g(T.r10b), {titelG:coTr(I.yd.titel, Lc), lf:g(T.r10lf[r.frei ? 'f' : 'l'])}));
+  else if (r.id === 'R10b') add(coFill(g(T.r10b), {titelG:qq(tn(coTr(I.yd.titel, Lc))), lf:g(T.r10lf[r.frei ? 'f' : 'l'])}));
   else if (r.id === 'VL4') add(g(T.vl4));
   if (r.id === 'R5a') add(g(T.frage));
   /* ---- Spruch: Lage nach Rang, kein Spruch zweimal in 7 Tagen ---- */
   const sug = act || /^(R3|R4|R6|R7|R8|R9|VL4)/.test(r.id), cands = [];
+  const kind = !e ? '' : e.test ? 'check' : e.eventTag ? 'event' : e.hart ? 'hart' : 'locker';
   if (sug) cands.push(/^R(3|9)/.test(r.id) ? 'wetter' : 'vor');
   if (rest) cands.push('rt');
   if (dt < 7) cands.push('neu');
   if (I.yd.miss) cands.push('verp');
   if (w.nass || (w.gefuehlt != null && w.gefuehlt < 5)) cands.push('wetter');
+  if (kind === 'check' || kind === 'event') cands.push(kind);
   if (dt >= 7 && pk.erfuellung.letzte7Tage && pk.erfuellung.letzte28TageProzent >= 85) cands.push('erf');
-  if (e && e.hart) cands.push('hart'); if (e) cands.push('locker');
-  const used = (c.hist || []).filter(h => !String(h).startsWith(pk.wochentag + ' |')).join(' ');
-  const mk = k => coFill(g(T.sp[k][tk]), {erf7:pk.erfuellung.letzte7Tage, datentage:dt >= 1 ? dt : null});
-  /* Bei aktivem Auslöser R3–R10 kein Druck-Wort im Spruch (§5, T2) */
-  const press = /^R(3|4|6|7|8|9|10)/.test(r.id);
-  let spr = ''; const tried = cands.map(mk).filter(Boolean).filter(s => !press || !coBanHits(s, Lc, {press:true}).length); spr = tried.find(s => !used.includes(s.slice(0, 30))) || tried[0] || '';
+  if (kind) cands.push(kind);
+  /* SP-1: erste Variante der Lage, die in den letzten 7 Tagen nicht vorkam; SP-2: sonst nur in eine verträgliche Lage ausweichen;
+     sind alle benutzt, die am längsten zurückliegende der Lage. Bei aktivem Auslöser R3–R10 kein Druck-Wort (§5, T2). */
+  const hist = (c.hist || []).filter(h => !String(h).startsWith(pk.wochentag + ' |')), lastUse = s => { let k = -1; hist.forEach((h, i) => { if (String(h).includes(s.slice(0, 30))) k = i; }); return k; };
+  const press = /^R(3|4|6|7|8|9|10)/.test(r.id), vals = {erf7:pk.erfuellung.letzte7Tage, datentage:dt >= 1 ? dt : null};
+  const vars = L0 => ((T.sp[L0] || {})[tk] || []).map(v => coFill(g(v), vals)).filter(s => s && (!press || !coBanHits(s, Lc, {press:true}).length));
+  const SP2 = {vor:['wetter'], wetter:['vor'], verp:['vor'], erf:[kind], neu:[kind === 'hart' || kind === 'locker' ? kind : '']};
+  const L0 = cands[0]; let spr = '';
+  if (L0) { spr = vars(L0).find(s => lastUse(s) < 0) || '';
+    if (!spr) (SP2[L0] || []).filter(Boolean).some(L1 => (spr = vars(L1).find(s => lastUse(s) < 0) || ''));
+    if (!spr) spr = vars(L0).sort((x, y) => lastUse(x) - lastUse(y))[0] || ''; }
   /* ---- Länge: über 80 Wörter fällt zuerst (2), dann (1) weg; der Ausblick bleibt ---- */
   let rep = fin(ins, ein, spr, false);
   /* Unter 60 Wörtern: Kraft/Mobilität und die Einheit von morgen ergänzen (nur Platzhalter aus dem Paket) */
-  if (rep.words < 60 && e) { const more = []; if (pk.kraft) more.push(coFill(g(T.rtKraft), {kraft:g(T.kraftW[pk.kraft])})); if (pk.naechste) more.push(coFill(g(T.rt[tk][1]), {next:coTr(pk.naechste.titel, Lc), nextDauer:pk.naechste.dauerMin}));
+  if (rep.words < 60 && e && r.id !== 'VL4') { const more = []; if (pk.kraft) more.push(coFill(g(T.rtKraft), {kraft:g(T.kraftW[pk.kraft])})); if (pk.naechste) more.push(coFill(g(T.rt[tk][1]), {next:qq(tn(coTr(pk.naechste.titel, Lc))), nextDauer:pk.naechste.dauerMin}));
     for (const m of more) { if (rep.words >= 60 || !m) break; const i = ein.length - (r.id === 'R5a' ? 1 : 0); ein.splice(i, 0, m); rep = fin(ins, ein, spr, false); } }
   for (const drop of [2, 1]) { if (rep.words <= 80) break; if (!parts.some(q => q[0] === drop)) continue; parts = parts.filter(q => q[0] !== drop); rep = fin(insOf(parts), ein, spr, false); }
   return rep;

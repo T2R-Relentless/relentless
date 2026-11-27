@@ -36,7 +36,7 @@ function coYesterday(){
   const ride = a && a.o && a.o.m > 0 && a.o.t !== 'rest' && a.o.t !== 'com';
   const ill = f => f === 'sick' || f === 'neck' || f === 'inj';
   if (ride && !a.done && !a.blk && !exs.length && !vacOn(p, y) && !ill(a.x && a.x.feel)) {
-    o.miss = true; o.missHard = paHard(a.o) || a.o.t === 'test'; o.titel = a.o.n || ''; o.test = a.o.t === 'test';
+    o.miss = true; o.missHard = paHard(a.o) || a.o.t === 'test'; o.titel = a.o.n || ''; o.test = a.o.t === 'test'; o.m = a.o.m;
     const b = coAt(iso(-2)); o.miss2 = !!(b && b.o && b.o.m > 0 && b.o.t !== 'rest' && b.o.t !== 'com' && !b.done && !b.blk);
   }
   const ftp = p.ftp || 0;
@@ -58,7 +58,7 @@ function coIll(){
   out.injOk = inj.ok && ddiff(inj.ok, t0) <= 1 && ddiff(inj.ok, t0) >= 0 ? inj.ok : null;
   return out;
 }
-function coInjMark(ds){ S.coach = S.coach || {on:false}; S.coach.inj = {...(S.coach.inj || {}), last:ds}; }
+function coInjMark(ds){ S.coach = S.coach || {on:false}; S.coach.inj = {last:ds}; } /* neuer Eintrag hebt ein früheres „Heute geht es wieder“ auf */
 
 function coPack(){
   const p = S.p; if (!p || !S.plan || !hasStarted(p)) return null;

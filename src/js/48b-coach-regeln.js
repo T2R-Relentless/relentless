@@ -6,9 +6,9 @@
 const CO_KN = {
   rest:'Heute Ruhetag', ok:'Heute geht es wieder', ack:'Verstanden', reent:'Wiedereinstieg einplanen', recw:'Erholungswoche einlegen',
   mv:'Auf einen anderen Tag legen', light:'Heute etwas leichter', easy:'Heute locker statt hart', mvtest:'Fitness-Check verschieben',
-  mvmiss:'Verpasste Einheit verlegen', feel:'Wie fühlst du dich heute?', keep:'Plan so lassen'};
+  mvmiss:'Verpasste Einheit verlegen', feel:'Wie fühlst du dich heute?', keep:'Plan so lassen', neck:'An Erkältung anpassen'};
 /* Knöpfe, die den Plan ändern (bzw. den Verschiebe-Dialog öffnen): höchstens einer pro Tag */
-const CO_PLAN = ['rest', 'reent', 'recw', 'mv', 'light', 'easy', 'mvtest', 'mvmiss'];
+const CO_PLAN = ['rest', 'reent', 'recw', 'mv', 'light', 'easy', 'mvtest', 'mvmiss', 'neck'];
 function coRule(pk){
   if (!pk) return null;
   const I = pk._i, e = pk.einheit, dt = pk.datentage, w = pk.wetter, ill = I.ill, t = I.t, x = S.plan[t] || {};
@@ -16,7 +16,8 @@ function coRule(pk){
   /* R0: krank, erkältet, verletzt (ruhiger Modus) */
   if (ill.lv === 'sick') return R('R0k', 'ack', {calm:true});
   if (ill.inj || (x.feel === 'inj' && !ill.injOk)) return R('R0v', e && !I.xAd ? 'rest' : null, {calm:true, kn2:'ok', wann:ill.inj ? ill.wann : 0});
-  if (ill.lv === 'neck') return R('R0e', 'ack', {calm:true});
+  /* C-ERK: Eintrag gestern/vorgestern, heute nicht angepasst → „An Erkältung anpassen“ (§6.8) */
+  if (ill.lv === 'neck') { const adj = !e || I.xAd || x.feel === 'neck' || e.eventTag; return R('R0e', adj ? 'ack' : 'neck', {calm:true, kn2:adj ? null : 'ack', erkNeu:!adj}); }
   /* VL-4: erste Fahrt nach „Heute geht es wieder“ besser locker */
   if (ill.injOk && e && e.hart && !e.test && !e.eventTag && !I.xAd) return R('VL4', 'easy');
   const lim = I.evDay || I.taper;
@@ -26,8 +27,8 @@ function coRule(pk){
   if (!lim && dt >= 14 && I.ovl.length >= 2 && !((S.p.recW || []).includes(S.wk + 1)) && !(S.ovlSeen && S.ovlSeen > iso(-7))) return R('R2', 'recw', {calm:true});
   const yd = I.yd;
   if (!e) {
-    /* R10b auch am freien Tag (E-R10b: „heute ist frei geplant“) */
-    const r10 = coR10(pk); if (r10 && r10.id === 'R10b') return r10;
+    /* R10b auch am freien Tag (E-R10b: „heute ist frei geplant“), nicht im Tapering und nicht am Eventtag */
+    const r10 = !lim ? coR10(pk) : null; if (r10 && r10.id === 'R10b') return r10;
     return R('RT', null);
   }
   /* R3: Gewitter oder Sturmböen, nur draußen, nur mit frischer Vorhersage (W-6) */
@@ -48,9 +49,9 @@ function coRule(pk){
   /* R7: harter Vortag, heute hart */
   if (yd.hard && HARD.includes(e.t) && !I.xAd) return yd.prop ? R('R7p', null, {why:yd.hard}) : R('R7', 'easy', {why:yd.hard});
   /* R8: Hitze ab 28 °C vor harter/langer Einheit oder Check */
-  if (w && w.src === 'api' && w.tmax >= HEAT_T && (e.hart || e.lang || e.test)) return R('R8', 'mv', {wx:true});
+  if (w && w.src === 'api' && I.wxOk && w.tmax >= HEAT_T && (e.hart || e.lang || e.test)) return R('R8', 'mv', {wx:true});
   /* R9: Kälte oder Nässe bei Kälte, draußen: nur Hinweis */
-  if (e.draussen && w && w.gefuehlt != null && (w.gefuehlt < 3 || (w.nass && w.gefuehlt < 5))) return R('R9', null, {wx:true});
+  if (e.draussen && w && w.src === 'api' && w.gefuehlt != null && (w.gefuehlt < 3 || (w.nass && w.gefuehlt < 5))) return R('R9', null, {wx:true});
   /* R10: gestern verpasst */
   const r10 = coR10(pk); if (r10) return r10;
   /* R5a: kein Befinden eingetragen (nur Frage, kein Vorschlag) */
@@ -60,14 +61,16 @@ function coRule(pk){
 function coR10(pk){
   const I = pk._i, yd = I.yd, t = I.t, e = pk.einheit; if (!yd.miss || !yd.sameWeek || t < 1) return null;
   if (!yd.missHard) return e ? {id:'R10a', kn:null, calm:false} : null;
-  if (yd.test || yd.miss2 || I.r10w === S.wk || I.ill.injOk || (e && (paHard(S.plan[t]) || e.test))) return null;
+  if (yd.test || yd.miss2 || I.r10w === S.wk || I.ill.injOk || (e && (paHard(S.plan[t]) || e.test || e.lang))) return null;
+  /* freier Tag nur, wenn er verfügbar ist und die Zeit reicht */
+  if (!e && (!(S.p.avail || [])[t] || capOf(S.p, t) < (yd.m || 0))) return null;
   try { if (mvCheck(t - 1, t, 'swap').warns.length) return null; } catch (er) { elog(er); return null; }
   return {id:'R10b', kn:'mvmiss', calm:false, frei:!e};
 }
 /* Karten mit derselben Regel ausblenden (Entscheidung D) */
 let coMemo = null;
 const coOn = () => !!(S.coach && S.coach.on);
-function coPrep(){ coMemo = null; if (!coOn() || !S.p || !hasStarted(S.p)) return null; try { const pk = coPack(); coMemo = {pk, r:coRule(pk)}; } catch (e) { elog(e); coMemo = null; } return coMemo; }
+function coPrep(){ coMemo = null; if (!coOn() || !S.p || !hasStarted(S.p)) return null; try { const pk = coPack(), r = coRule(pk), rep = r ? coReport(pk, r) : null; if (rep && (rep.insight || rep.einheit)) coMemo = {pk, r, rep}; } catch (e) { elog(e); coMemo = null; } return coMemo; } /* nur mit fertigem Bericht blenden andere Karten sich aus */
 const coHide = id => { try { return !!(coMemo && coMemo.r && (coMemo.r.id === id || (id === 'R4' && /^R4/.test(coMemo.r.id)))); } catch (e) { elog(e); return false; } };
 /* Knopf beim Tipp: Regel neu prüfen (V2), Schnappschuss vorher (V1), Herkunft Coach markieren (B3) */
 function coTake(kn){
@@ -78,16 +81,19 @@ function coTake(kn){
   if (plan && pk._i.act && !/^R0/.test(r.id)) { coMsg = 'Der Vorschlag ist nicht mehr aktuell.'; return render(); }
   coMsg = '';
   if (kn === 'feel') { heroTab = 'feel'; render(); try { dykFocus(null, '.feelb'); } catch (e) { elog(e); } return; }
-  S.coach.act = {d:today, r:r.id, k:kn};
-  const snap = () => { let u = null; try { bkPre('Vom Coach vorgeschlagen: ' + CO_KN[kn]); u = bkUndo; } catch (e) { elog(e); } return u; }, keepU = u => { if (u) bkUndo = u; };
+  const mvK = kn === 'mv' || kn === 'mvtest' || kn === 'mvmiss';
+  if (!mvK) S.coach.act = {d:today, r:r.id, k:kn}; /* Verschieben zählt erst, wenn es im Dialog ausgeführt wird (mvDo) */
+  /* ein Schnappschuss mit Herkunft Coach, der innere der aufgerufenen Funktion entfällt (bkMute) */
+  const run = f => { try { bkPre('Vom Coach vorgeschlagen: ' + CO_KN[kn]); } catch (e) { elog(e); } bkMute = true; try { f(); } finally { bkMute = false; } };
   if (kn === 'keep' || kn === 'ack') { if (r.id === 'R2') S.ovlSeen = iso(0); save(); return render(); }
   if (kn === 'ok') { S.coach.inj = {...(S.coach.inj || {}), ok:today}; save(); return render(); }
-  if (kn === 'rest') { const u = snap(); feelDay(t, 'inj'); keepU(u); render(); return; }
-  if (kn === 'light') { const u = snap(); feelDay(t, 'tired'); if (S.plan[t]) { S.plan[t].coSrc = 1; save(); } keepU(u); render(); return; }
-  if (kn === 'easy') { const u = snap(); easyDay(t); if (S.plan[t]) { S.plan[t].coSrc = 1; save(); } keepU(u); render(); return; }
-  if (kn === 'recw') { S.ovlSeen = iso(0); const u = snap(); addRecW(); keepU(u); render(); return; }
-  if (kn === 'reent') { const u = snap(); reentGo(); keepU(u); render(); return; }
-  if (kn === 'mv' || kn === 'mvtest' || kn === 'mvmiss') { if (kn === 'mvmiss') S.coach.r10w = S.wk; save(); mvAskGo(kn === 'mvmiss' ? t - 1 : t); if (mvAsk) { mvAsk.co = 1; render(); } return; }
+  if (kn === 'rest') { run(() => feelDay(t, 'inj')); render(); return; }
+  if (kn === 'neck') { run(() => feelDay(t, 'neck')); render(); return; }
+  if (kn === 'light') { run(() => feelDay(t, 'tired')); if (S.plan[t]) { S.plan[t].coSrc = 1; save(); } render(); return; }
+  if (kn === 'easy') { run(() => easyDay(t)); if (S.plan[t]) { S.plan[t].coSrc = 1; save(); } render(); return; }
+  if (kn === 'recw') { S.ovlSeen = iso(0); run(() => addRecW()); render(); return; }
+  if (kn === 'reent') { run(() => reentGo()); render(); return; }
+  if (mvK) { mvAskGo(kn === 'mvmiss' ? t - 1 : t); if (mvAsk) { mvAsk.co = kn; mvAsk.cor = r.id; render(); } return; }
   render();
 }
 let coMsg = '';

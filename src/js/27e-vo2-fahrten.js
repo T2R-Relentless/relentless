@@ -286,15 +286,18 @@ async function vo2rFillGo(){
         if (!vo2rHas(a.id)) { const rec = vo2rKeep({id:a.id, day:a.day, in:a.in}, r); if (!rec) vo2rAll()[a.id] = {d:a.day, x:'nodata', ...(a.in ? {in:1} : {})}; else if (!rec.x && rec.s) F.v++; }
         F.ok++;
       } catch (e) {
-        if (e && e.code === 'rate' && tries < IMP_WAIT.length) { F.wait = Math.round(IMP_WAIT[tries++] * VO2RF.waitF); render(); await impSleep(F.wait); F.wait = 0; k--; continue; }
+        if (e && e.code === 'rate' && tries < IMP_WAIT.length) { F.wait = Math.round(IMP_WAIT[tries++] * VO2RF.waitF); render(); await vo2rNap(F.wait, F); F.wait = 0; if (F.stop) break; k--; continue; }
         elog(e); F.fail++; tries = 0;
         if (typeof GmErr === 'function' && e instanceof GmErr && e.code !== 'tool') { F.err = e.message || wkL('Garmin ist gerade nicht erreichbar.', 'Garmin is not reachable right now.'); break; }
       }
       F.i = k + 1; if (F.i % 5 === 0) { try { save(); } catch (e) { elog(e); } } render();
-      if (k < L.length - 1 && !F.stop) await impSleep(VO2RF.pause);
+      if (k < L.length - 1 && !F.stop) await vo2rNap(VO2RF.pause, F);
     }
   } finally { F.run = 0; F.wait = 0; try { save(); } catch (e) { elog(e); } try { render(); } catch (e) { elog(e); } }
 }
+/* Pause in Stücken, damit „Abbrechen“ auch während einer Drosselpause sofort wirkt */
+async function vo2rNap(ms, F){ let left = ms; while (!F.stop && left > 0) { const d = Math.min(500, left); await impSleep(d); left -= d; } } /* nach Stücken gezählt, nicht nach Uhrzeit */
+const vo2rRun = () => !!(typeof vo2rFill !== 'undefined' && vo2rFill && vo2rFill.run);
 function vo2rFillStop(){ if (vo2rFill && vo2rFill.run) vo2rFill.stop = 1; render(); }
 function vo2rFillUi(){
   const F = vo2rFill, btn = (fn, l, main) => `<button class="${main ? 'btn' : 'ghost'} mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="${fn}">${l}</button>`;

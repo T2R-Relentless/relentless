@@ -40,7 +40,9 @@ function mvMode(mode){ const a = mvAsk; if (!a || (a.co && mode === 'both')) ret
 const mvEasy = o => ({...D('base', 'Grundlage Z2', Math.min(75, o.m), 56, 72, '90 U/min', `Locker in Zone 2 statt „${o.n}“, weil sonst zwei harte Tage aufeinander folgen.`, 'Zwei harte Tage hintereinander kosten mehr, als sie bringen.'), adapted:true, orig:o});
 function mvDo(easy){
   const a = mvAsk; if (!a) return; const w = mvW(), P0 = mvPlan(w), x = P0[a.i], y = P0[a.j];
-  bkPre('Vor dem Verschieben einer Einheit');
+  bkPre(a.co && typeof CO_KN !== 'undefined' ? 'Vom Coach vorgeschlagen: ' + CO_KN[a.co] : 'Vor dem Verschieben einer Einheit');
+  /* F39: Coach-Vorschlag gilt erst mit der Ausführung als genutzt (ein Vorschlag pro Tag), Abbrechen verbraucht ihn nicht */
+  if (a.co && S.coach) { S.coach.act = {d:iso(0), r:a.cor || '', k:a.co}; if (a.co === 'mvmiss') S.coach.r10w = S.wk; }
   const txt = a.mode === 'swap' ? `„${x.n}“ und „${y.n}“ haben die Tage getauscht (${DAYS[a.i]} ↔ ${DAYS[a.j]}).` : a.mode === 'both' ? `„${x.n}“ wurde von ${DAYS[a.i]} auf ${DAYS[a.j]} gelegt, zusammen mit „${y.n}“.` : `„${x.n}“ wurde von ${DAYS[a.i]} auf ${DAYS[a.j]} verschoben.`;
   if (mvFut(w)) {
     /* kommende Woche: als Änderung dieser Woche speichern, wird bei jedem Erzeugen der Woche wieder angewendet */

@@ -21,7 +21,7 @@ const mmEn = () => typeof lang === 'function' && lang() === 'en';
 const mmLbl = t => t < 60 ? t + ' s' : t <= 5400 ? Math.round(t / 60) + ' min' : Math.round(t / 3600) + ' h';
 const mmSayT = t => t < 60 ? t + wkL(' Sekunden', ' seconds') : t === 60 ? wkL('1 Minute', '1 minute') : t <= 5400 ? Math.round(t / 60) + wkL(' Minuten', ' minutes') : Math.round(t / 3600) + wkL(' Stunden', ' hours');
 const mmNum = (v, d = 0) => (Math.round(v * 10 ** d) / 10 ** d).toLocaleString(mmEn() ? 'en-GB' : 'de-DE', {minimumFractionDigits:d, maximumFractionDigits:d});
-const mmDay = d => { try { return dOnly(d).toLocaleDateString(mmEn() ? 'en-GB' : 'de-DE', {day:'2-digit', month:'2-digit', year:'numeric'}); } catch (e) { elog(e); return d; } };
+const mmDay = d => { try { return mmEn() ? dOnly(d).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : dOnly(d).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'}); } /* EN eindeutig: „9 Nov 2026“ */ catch (e) { elog(e); return d; } };
 
 /* ---------- Berechnung ---------- */
 function mmSeries(r){
@@ -396,7 +396,7 @@ let mmFill = null;
 function mmTodo(){ const all = mmAll(), v2 = id => typeof impVo2Done === 'function' ? impVo2Done(id) : true;
   return (S.arch || []).filter(a => a && a.gid && (!a.in || +a.np > 0 || a.m1) && (!all[a.id] ? (+a.np > 0 || a.m1 || !a.imp) : (all[a.id].s === 'a' && !all[a.id].nf) || (a.imp && +a.np > 0 && !v2(a.id) && !all[a.id].nf))).sort((a, b) => a.d.localeCompare(b.d)); }
 async function mmFillGo(){
-  if ((mmFill && mmFill.run) || typeof gmRide !== 'function' || !gmMode()) return;
+  if ((mmFill && mmFill.run) || typeof gmRide !== 'function' || !gmMode() || (typeof vo2rRun === 'function' && vo2rRun())) return; /* F39: nicht parallel zur VO2-Rückrechnung */
   try { if (typeof impVo2Pre === 'function') impVo2Pre(); } catch (e) { elog(e); } const L = mmTodo(); if (!L.length) return; mmFill = {run:1, i:0, n:L.length, ok:0, fail:0, msg:'', v:0}; render();
   for (const a of L) {
     if (!mmFill.run) break; mmFill.i++; render();

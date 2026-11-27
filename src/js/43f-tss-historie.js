@@ -67,7 +67,7 @@ function impRow(a, known){
 function impCtlNow(){ try { const R = vzRows(); if (!R) return null; const r = R.rows.find(x => x.day === R.today); return r ? Math.round(r.ctl) : null; } catch (e) { elog(e); return null; } }
 function impEvForm(){ try { const F = seasonForecast(S.p).find(o => o.main); return F && F.form ? F.form : null; } catch (e) { return null; } }
 function impStart(range){
-  if (impBusy || !gmMode()) return; const days = IMP_RANGE[range]; if (days == null) return;
+  if (impBusy || !gmMode() || (typeof vo2rRun === 'function' && vo2rRun())) return; const days = IMP_RANGE[range]; if (days == null) return;
   S.imp = {st:'run', range:String(range), from:days ? iso(-days) : '2000-01-01', to:iso(0), next:0, n:0, dup:0, skip:0, other:{}, page:0, oldest:null, at:Date.now(), ctl0:impCtlNow(), ev0:impEvForm(), wait:0};
   save(); try { track('garmin-historie-import'); } catch (e) { elog(e); } impRun();
 }
@@ -75,7 +75,7 @@ function impStop(){ if (S.imp && S.imp.st === 'run') { S.imp.st = 'pause'; save(
 function impResume(){ if (!S.imp || impBusy) return; S.imp.st = 'run'; S.imp.err = ''; save(); impRun(); }
 function impClose(){ if (!S.imp) return; S.imp.closed = 1; save(); render(); }
 async function impRun(){
-  if (impBusy || !S.imp) return; impBusy = true; render(); let tries = 0;
+  if (impBusy || !S.imp || (typeof vo2rRun === 'function' && vo2rRun())) return; impBusy = true; render(); let tries = 0;
   try {
     while (S.imp && S.imp.st === 'run') {
       const I = S.imp; let p;
@@ -172,7 +172,7 @@ function impMmList(){ try { impVo2Pre(); } catch (e) { elog(e); } return typeof 
 /* VO2max aus einer nachgeladenen Fahrt: dieselbe Prüfung wie beim Einlesen (5-min-Test nach Sitko et al. 2022), still übernommen */
 function impVo2(a, r){ S.vo2h = S.vo2h && typeof S.vo2h === 'object' ? S.vo2h : {}; let e = null; try { e = vo2FromRide({id:a.id, day:a.d, n:a.n}, r); } catch (er) { elog(er); } S.vo2h[a.id] = 1; return e; }
 async function impMmRun(){
-  if (impMm || !gmMode()) return; const L = impMmList(); if (!L.length) return; impMm = {i:0, n:L.length, stop:false, err:'', v:0}; render();
+  if (impMm || !gmMode() || (typeof vo2rRun === 'function' && vo2rRun())) return; const L = impMmList(); if (!L.length) return; impMm = {i:0, n:L.length, stop:false, err:'', v:0}; render();
   let tries = 0;
   for (let k = 0; k < L.length && !impMm.stop; k++) {
     const a = L[k];

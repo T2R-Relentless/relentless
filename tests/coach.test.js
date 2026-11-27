@@ -211,3 +211,67 @@ test('„Neu formulieren“ einmal pro Tag, Englisch ohne fehlende Übersetzunge
   const miss = [...a.w.__iMiss.keys()].filter(k => /Coach|Plan so lassen|Heute|formulieren|Wie fühlst/.test(k)); eq(miss, [], 'keine fehlenden Übersetzungen');
   a.page('set-coach'); const m2 = [...a.w.__iMiss.keys()].filter(k => /Coach|Ton|Vorname|Kumpel|Antreiber|Trainer/.test(k)); eq(m2, [], 'Einstellungen übersetzt'); a.noErrors();
 });
+
+/* ---------- Korrekturrunde 1 (Fachabnahme, Code- und Design-Prüfung) ---------- */
+test('Verletzt erneut nach „Heute geht es wieder“: wieder ruhig; „Wieder schmerzfrei“ setzt „geht wieder“; Zusatzfahrt und Check gesperrt', async () => {
+  const a = await coApp(); a.$("feelDay(3, 'inj')"); a.w.coTake('ok'); ok(coRun(a).r.id !== 'R0v', 'nach „geht wieder“ nicht ruhig');
+  a.$("undo(3); feelDay(3, 'inj')"); eq(coRun(a).r.id, 'R0v', 'neuer Eintrag: wieder ruhiger Modus'); eq(a.$('S.coach.inj.ok'), undefined, '„geht wieder“ zurückgesetzt');
+  a.$('undo(3)'); eq(a.$('S.coach.inj.ok'), a.$('iso(0)'), '„Wieder schmerzfrei“ zählt als „geht wieder“');
+  a.$("S.plan[3] = {...S.plan[3], feel:'inj'}"); eq(a.$('rdExtraOk(S.p, S.wk, S.plan, 4)'), false, 'keine Zusatzfahrt nach Schmerzen'); eq(a.$('hkTestOk(S.p)'), false, 'kein Check-Vorschlag');
+  a.noErrors();
+});
+
+test('R10b: nicht im Tapering, nicht vor langer Einheit, freier Tag nur mit Zeit; R9 und R8 nur mit aktueller Vorhersage', async () => {
+  const a = await coApp(), yd = "pk._i.yd = {miss:true, missHard:true, sameWeek:true, m:60, titel:'Sweet Spot 3×12'};";
+  a.$("mvCheck = () => ({warns:[]}); S.p.avail[3] = true; S.p.perDay = false");
+  eq(coRun(a, `pk => { pk.datentage = 160; pk.einheit = null; ${yd} }`).r.id, 'R10b', 'freier Tag mit Zeit');
+  eq(coRun(a, `pk => { pk.datentage = 160; pk.einheit = null; pk._i.taper = true; ${yd} }`).r.id, 'RT', 'Tapering: kein R10b');
+  a.$('S.p.avail[3] = false'); eq(coRun(a, `pk => { pk.datentage = 160; pk.einheit = null; ${yd} }`).r.id, 'RT', 'Tag ohne Zeit: kein R10b'); a.$('S.p.avail[3] = true');
+  a.$("S.plan[3] = {...D('base', 'Grundlage Z2', 180, 56, 70, '90 U/min', 'x', 'y')}"); ok(coRun(a, `pk => { pk.datentage = 160; pk.befinden = 'tired'; ${yd} }`).r.id !== 'R10b', 'lange Einheit heute: kein R10b');
+  ok(coRun(a, `pk => { pk.datentage = 160; pk.wetter = {gefuehlt:1, nass:true, src:'man'}; }`).r.id !== 'R9', 'eigenes Wetter: kein R9');
+  ok(coRun(a, CO_SC.r8.replace('pk._i.wxOk = true;', 'pk._i.wxOk = false;')).r.id !== 'R8', 'alte Vorhersage: kein R8');
+  ok(/angenehmere Wahl/.test(coRun(a, CO_SC.r9.replace('regenProzent:70', 'regenProzent:10')).rep.einheit), 'R9 ohne Regen: eigener Satz');
+  a.noErrors();
+});
+
+test('Erkältung von gestern, heute nicht angepasst: Ersatztext und „An Erkältung anpassen“ mit einem Schnappschuss', async () => {
+  const a = await coApp(); a.setNow(at(2026, 11, 11)); a.$("feelDay(2, 'neck'); S.plan[3] = {...D('base', 'Grundlage Z2', 90, 56, 70, '90 U/min', 'x', 'y')}"); a.setNow(coThu); a.$('bkUndo = null; window.__n = 0; const _bp = bkPre; bkPre = w => { if (!bkMute) window.__n++; return _bp(w); }');
+  const x = coRun(a); eq(x.r.id, 'R0e'); eq(x.r.kn, 'neck'); ok(/locker und kürzer/.test(x.rep.einheit) && !x.rep.spruch); ok(/An Erkältung anpassen/.test(a.page(null)) && /Verstanden/.test(a.text()));
+  a.w.coTake('neck'); eq(a.$('S.plan[3].feel'), 'neck'); eq(a.$('window.__n'), 1, 'genau ein Schnappschuss'); ok(/Vom Coach vorgeschlagen: An Erkältung anpassen/.test(a.$('bkUndo.why')));
+  ok(/Der Plan ist schon angepasst/.test(coRun(a).rep.einheit), 'danach der normale C-ERK-Text'); a.noErrors();
+});
+
+test('Sprüche: Varianten je Lage, keiner zweimal in 7 Tagen, Fitness-Check und Eventtag mit eigener Lage', async () => {
+  const a = await coApp(), T = a.$('CO_TXT');
+  ['vor', 'wetter', 'rt', 'neu', 'verp', 'erf', 'hart', 'locker', 'check', 'event'].forEach(k => ['k', 'a', 's'].forEach(t => ok(T.sp[k] && T.sp[k][t] && T.sp[k][t].length >= (['wetter', 'verp', 'erf'].includes(k) ? 2 : ['check', 'event'].includes(k) ? 1 : 3), `${k}/${t}`)));
+  const seen = []; for (let d = 0; d < 3; d++) { a.setNow(at(2026, 11, 12 + d)); a.$(`S.plan[${3 + d}] = {...D('sst', 'Sweet Spot 3×12', 75, 88, 93, '90 U/min', 'x', 'y'), iv:{wu:15, reps:3, work:12, rest:5, lo:88, hi:93, cd:10}}`);
+    const r = coRun(a, `pk => { pk.datentage = 160; pk.befinden = 'tired'; pk._i.xAd = false; pk._i.yd = {}; }`); a.$(`coCommit(coPack(), ${JSON.stringify(r.r)}, ${JSON.stringify(r.rep)})`); seen.push(r.rep.spruch); }
+  eq(new Set(seen).size, 3, 'drei harte Tage, drei verschiedene Sprüche: ' + seen.join(' | ')); ok(seen.every(s => T.sp.hart.k.some(v => v[0] === s)), 'nie „locker“ an harten Tagen');
+  const ck = coRun(a, `pk => { pk.datentage = 160; pk.einheit.test = true; pk.befinden = 'tired'; pk._i.yd = {}; }`).rep.spruch; ok(T.sp.check.k.some(v => v[0] === ck), 'Fitness-Check: S-CHECK');
+  a.noErrors();
+});
+
+test('Kein Lückenfüller bei erster Fahrt nach Schmerzen, kein Morgen-Satz vor Tag 84 bei „müde“, Titel in Anführung', async () => {
+  const a = await coApp(); const v = coRun(a, `pk => { pk.datentage = 160; pk._i.ill = {...pk._i.ill, injOk:'x'}; }`); eq(v.r.id, 'VL4'); ok(!/Morgen/.test(v.rep.einheit), 'VL-4 ohne „Morgen …“');
+  ok(!/frischer|erholst/.test(coRun(a, `pk => { pk.datentage = 60; ${coF(-15, -5, 5)} pk.einheit = null; pk.naechste = {titel:'Grundlage Z2', dauerMin:90}; }`).rep.insight), 'kein Morgen-Satz neben FS-5');
+  ok(/Heute „Sweet Spot“: 3 × 12 Minuten/.test(coRun(a, CO_SC.normal).rep.einheit), 'Titel in Anführung'); a.noErrors();
+});
+
+test('Prüfung: Verschieben verbraucht den Vorschlag erst beim Ausführen, Karten nur bei fertigem Bericht ausgeblendet, VO2-Rückrechnung nicht parallel', async () => {
+  const a = await coApp(); a.$("coRule = pk => ({id:'R8', kn:'mv', calm:false}); S.plan[4] = {...D('base', 'Grundlage Z2', 60, 56, 70, '90 U/min', 'x', 'y')}");
+  a.w.coTake('mv'); eq(a.$('mvAsk.co'), 'mv'); a.w.mvClose(); ok(!(a.$('S.coach.act')), 'Abbrechen: Vorschlag nicht verbraucht');
+  a.w.coTake('mv'); a.w.mvPickDay(3, 4); a.w.mvMode('swap'); if (a.$('mvAsk')) a.w.mvDo(false); eq(a.$('S.coach.act.k'), 'mv', 'Ausführen: verbraucht'); ok(/Vom Coach vorgeschlagen/.test(a.$('bkUndo.why')));
+  const b = await coApp(); b.$("S.ovlSeen = null; ovlSignals = () => ['a', 'b']; coDataDays = () => 160; coReport = () => { throw new Error('x'); }");
+  ok(/Viel Belastung, wenig Erholung/.test(b.page(null)), 'Bericht scheitert: Karte bleibt'); b.$('window.__errs.length = 0');
+  b.$('vo2rFill = {run:1}; mmFill = null'); await b.w.mmFillGo(); ok(!(b.$('mmFill') && b.$('mmFill.run')), 'Bestwerte warten auf die VO2-Rückrechnung');
+  const t0 = Date.now(); await b.w.vo2rNap(5000, {stop:1}); ok(Date.now() - t0 < 1000, 'Abbrechen wirkt sofort'); a.noErrors();
+});
+
+test('Design: Rückgängig-Leiste unter der Kopfzeile frei, Titel mit Trennstelle, Häkchenfarbe, Symbol und englisches Datum', async () => {
+  const a = await coApp(); a.$("bkPre('Vor dem Verschieben einer Einheit'); render()");
+  const h = a.$('bkUndoBar()'); ok(/Vorheriger Stand gesichert\./.test(h) && /margin:0 0 1\.25rem/.test(h));
+  const bar = a.w.document.querySelector('[role=status]'), br = a.w.document.querySelector('.brand'); ok(bar && br && bar.getBoundingClientRect().bottom <= br.getBoundingClientRect().top + 1, 'Leiste nicht verdeckt');
+  ok(/Persön&shy;licher/.test(a.$("SET_T['set-coach']"))); ok(/accent-color:var\(--teal\)/.test(a.w.document.documentElement.outerHTML));
+  ok(a.$("WN_DATA[226].some(x => x.ic === 'coach' && x.go === 'set:set-coach')") && a.$('!!WN_IC.coach'));
+  await a.en(); eq(a.$("mmDay('2026-11-09')"), '9 Nov 2026'); ok(!/Persön/.test(a.page('set-coach').split('\n').slice(0, 8).join(' ')), 'Titel übersetzt'); a.noErrors();
+});

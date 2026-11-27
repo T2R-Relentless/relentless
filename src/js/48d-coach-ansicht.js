@@ -18,14 +18,15 @@ function coCommit(pk, r, rep){
 function coBtn(kn, main){ return `<button class="${main ? 'btn' : 'ghost'} !w-auto !px-3 text-sm" style="min-height:44px" onclick="coTake('${ja(kn)}')">${CO_KN[kn]}</button>`; }
 function coCard(){
   if (!coOn() || !coMemo || !coMemo.r) return '';
-  const {pk, r} = coMemo; let rep = null; try { rep = coReport(pk, r); } catch (e) { elog(e); } if (!rep) return '';
+  const {pk, r, rep} = coMemo; if (!rep) return '';
   try { coCommit(pk, r, rep); } catch (e) { elog(e); }
   const today = iso(0), c = S.coach || {}, done = pk._i.act && !/^R0/.test(r.id), L = pk.sprache;
   let btns = '';
-  if (r.kn === 'feel') btns = coBtn('feel', true);
+  if (pk._i.act && pk._i.act.k === 'ack' && /^R0[ke]/.test(r.id)) btns = '';
+  else if (r.kn === 'feel') btns = coBtn('feel', true);
   else if (r.kn === 'ack') btns = done || (pk._i.act && pk._i.act.k === 'ack') ? '' : coBtn('ack', false);
   else if (r.kn && !(done && CO_PLAN.includes(r.kn))) btns = coBtn(r.kn, true) + (r.kn2 ? '' : coBtn('keep', false));
-  if (r.kn2 && !(c.inj && c.inj.ok === today)) btns += coBtn(r.kn2, !r.kn);
+  if (r.kn2 && !(c.inj && c.inj.ok === today) && !(pk._i.act && pk._i.act.k === 'ack' && /^R0[ke]/.test(r.id))) btns += coBtn(r.kn2, !r.kn);
   const alt = !rep.calm && !(c.alt && c.alt.d === today);
   const p = (t, st) => t ? `<p class="mt-2 text-sm" style="${st || ''}">${esc(t)}</p>` : '';
   return `<section class="panel p-4" id="fx-cocard" style="border-left:4px solid ${esc(rep.calm ? '#d9a400' : 'var(--teal)')}"><div class="flex items-center gap-2"><span aria-hidden="true" style="color:var(--teal);display:flex">${svgI(CO_IC, 22)}</span><p class="min-w-0 flex-1 font-semibold">Dein Coach</p>${alt ? `<button class="text-sm font-semibold" style="background:none;border:0;color:var(--teal);min-height:44px;padding:0 4px" onclick="coAlt()">Neu formulieren</button>` : ''}</div>
@@ -52,7 +53,7 @@ function coSetPage(){
     <p class="mt-3 text-xs" style="color:var(--mute)">Der Coach rechnet nur auf deinem Gerät, es verlassen keine Daten das Gerät. Form und Fitness beschreibt er in Worten. Bei Krankheit oder Schmerzen gibt es keine Sprüche und keinen Leistungsdruck, nur einen ruhigen Hinweis zur Erholung.</p></section>`;
 }
 SET_PAGES['set-coach'] = () => coSetPage();
-SET_T['set-coach'] = 'Persönlicher Coach';
+SET_T['set-coach'] = 'Persön&shy;licher Coach'; /* bricht bei 320 pt sauber um */
 IA_PAR['set-coach'] = 'settings';
 IA_ICO.coach = CO_IC;
 DYK_AT.coach = ['set-coach', 'fx-coach', '#coOn'];

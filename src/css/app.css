@@ -569,3 +569,5 @@ button.btn,button.ghost{min-height:44px}
 /* F36 (12 B): Hinweis beim Laden einer älteren Sicherung, in beiden Designs lesbar */
 .bk-warn{color:#8a5a00}
 :root[data-theme=dark] .bk-warn{color:#f6d58a}
+/* F39: Häkchen in der Markenfarbe, hell und dunkel */
+input[type=checkbox],input[type=radio]{accent-color:var(--teal)}
