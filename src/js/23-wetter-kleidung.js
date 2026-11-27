@@ -55,9 +55,9 @@ async function wxFetch(force){
   if (!force && S.wxFail && Date.now() - S.wxFail < 36e5) return;
   wxBusy = true;
   try {
-    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${L.lat}&longitude=${L.lon}&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m&timezone=auto&forecast_days=8`);
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${L.lat}&longitude=${L.lon}&hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,wind_gusts_10m&timezone=auto&forecast_days=8`);
     if (!r.ok) throw new Error('http'); const j = await r.json(), h = j.hourly;
-    S.wxData = {at:Date.now(), lat:L.lat, lon:L.lon, t:h.time, T:h.temperature_2m, P:h.precipitation_probability, R:h.precipitation, W:h.wind_speed_10m}; S.wxFail = 0; wxMsg = '';
+    S.wxData = {at:Date.now(), lat:L.lat, lon:L.lon, t:h.time, T:h.temperature_2m, P:h.precipitation_probability, R:h.precipitation, W:h.wind_speed_10m, C:h.weather_code || null, G:h.wind_gusts_10m || null}; /* F39: Gewitter-Code und Böen für den Coach (R3) */ S.wxFail = 0; wxMsg = '';
   } catch (e) { elog(e); S.wxFail = Date.now(); wxMsg = 'Die Wettervorhersage ließ sich nicht abrufen. In der Ansicht innerhalb von Claude ist das meist gesperrt. Tippe stattdessen beim Training an, wie warm es wird.'; }
   wxBusy = false; save(); render();
 }
@@ -88,7 +88,11 @@ function wxDay(date, i, x){
   const p = Math.max(...idx.map(j => D.P[j] || 0)), r = idx.reduce((a, j) => a + (D.R[j] || 0), 0), wnd = Math.max(...idx.map(j => D.W[j] || 0));
   const hard = HARD.includes(x.t) || x.t === 'test' || x.t === 'race', long = x.t === 'long' || x.m >= 150;
   const eff = (long ? tmin : tavg) + (hard ? 3 : 0) - (wnd >= 25 ? 2 : 0);
-  return {eff, band:cloBand(eff), tmin, tmax, tavg, p, r, wnd, wet:p >= 50 || r >= .5, maybe:p >= 30 && p < 50, hard, long, sh, eh:sh + n, src:'api'};
+  /* F39 (R3): Böen gelten für die vorangegangene Stunde, daher Stunden Start+1 bis Ende+1; Gewitter (Code 95 bis 99) im Fenster oder eine Stunde davor bzw. danach */
+  const at = hh => D.t.indexOf(`${date}T${String(hh).padStart(2, '0')}:00`), hrs = (a, b) => { const o = []; for (let hh = a; hh <= b; hh++) { const j = hh >= 0 && hh <= 23 ? at(hh) : -1; if (j >= 0) o.push(j); } return o; };
+  const gI = Array.isArray(D.G) ? hrs(sh + 1, sh + n) : [], cI = Array.isArray(D.C) ? hrs(sh - 1, sh + n) : [];
+  const gust = gI.length ? Math.max(...gI.map(j => D.G[j] || 0)) : null, storm = cI.length ? cI.some(j => D.C[j] >= 95 && D.C[j] <= 99) : null;
+  return {eff, band:cloBand(eff), tmin, tmax, tavg, p, r, wnd, wet:p >= 50 || r >= .5, maybe:p >= 30 && p < 50, hard, long, sh, eh:sh + n, gust, storm, src:'api'};
 }
 function wxSetMan(date, b, wet){ S.wxMan = {...(S.wxMan || {})}; if (b == null) delete S.wxMan[date]; else S.wxMan[date] = {b, wet:!!wet}; Object.keys(S.wxMan).forEach(k => { if (k < iso(-7)) delete S.wxMan[k]; }); save(); render(); }
 function cloBox(x, i, date){
