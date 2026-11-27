@@ -11,7 +11,8 @@
    Dateien; im Zweifel fällt ein Abschnitt oder die Fahrt weg, statt falsch zu zählen):
    - Puls unruhig: Abschnitt fällt weg bei Streuung um den gleitenden 30-s-Mittelwert über 4 Schlägen (SD) oder mehr als
      2 Sprüngen von 15 Schlägen und mehr in einer Sekunde. Puls „klebt“ an der Trittfrequenz: mehr als die Hälfte der Sekunden
-     mit |Puls − Trittfrequenz| ≤ 3. Betrifft das mindestens 2 und mindestens ein Drittel der Abschnitte mit gleichmäßiger
+     mit |Puls − Trittfrequenz| ≤ 3 und
+     Korrelation r ≥ 0,6 der Schwankungen beider um das eigene 30-s-Mittel (sonst liegen sie nur zufällig nah). Betrifft das mindestens 2 und mindestens ein Drittel der Abschnitte mit gleichmäßiger
      Leistung oder klebt der Puls in mindestens 30 % der getretenen Sekunden der ganzen Fahrt (mindestens 10 min), zählt die
      Fahrt nicht ('hrq', nur „Pulsdaten unruhig“, keine Vermutung zur Ursache).
    - Virtuelle Leistung (Zwift „zPower“ ohne Wattmesser) ist in den Dateien nicht sicher erkennbar (Untertyp 58 und Hersteller
@@ -19,13 +20,13 @@
    - Ruhepuls: Median der Morgenwerte (60 Tage, mindestens 5), sonst 60 mit breiterer Spanne und Hinweis.
    - Krank: „krank“ und „leicht erkältet“ (feel 'sick'/'neck') am Tag und 7 Tage danach; der Vermerk bleibt an der Fahrt (sk),
      auch wenn die Woche nicht mehr im Plan steht. Ältere Fahrten aus der Historie prüft nur der Ruhepuls am Morgen.
-   - Drift: Entkopplung über die ganze Fahrt wie perfExt (auch wenn sie erst nach Minute 90 entsteht, schließt sie die Fahrt aus).
+   - Drift: Entkopplung wie perfExt, aber nur im ausgewerteten Teil (Minute 10 bis min(Minute 90, 15 kJ/kg)).
    - Medikamente, die den Puls senken: Schalter S.vo2rOpt.med schaltet den Trend ab.
    Die Funktionen dieses Blocks nutzen nur S, elog, wkL, mmKgAt, hrMaxOf, addD, iso, dstr, vo2List, vo2TypeAt, vo2PlanAt,
    MM_GAP und MM_SPIKE (tools/vo2r-messen.js lädt den Block mit Ersatzfunktionen). */
 const VO2R = {minSec:2400, warm:600, seg:300, pre:180, maxSec:5400, kjkg:15, maxSeg:16, cov:.9, npap:1.05, zero:5, preTol:.10,
   hrLo:.65, hrHi:.90, wkgLo:1.5, wkgHi:4.5, drift:4, dec:8, heat:25, minSegs:4, iqr:.08, vLo:25, vHi:85, out:.15, win:42, nWin:7, nMin:3, rhrAss:60,
-  hrSd:4, jump:15, jumps:2, cadTol:3, cadRide:.3};
+  hrSd:4, jump:15, jumps:2, cadTol:3, cadRide:.3, cadR:.6};
 const vo2rAll = () => { S.vo2r = S.vo2r && typeof S.vo2r === 'object' && !Array.isArray(S.vo2r) ? S.vo2r : {}; return S.vo2r; };
 const vo2rAny = () => !!(S.vo2r && typeof S.vo2r === 'object' && Object.keys(S.vo2r).length);
 function vo2rMed(a){ const s = a.filter(x => isFinite(x)).sort((x, y) => x - y), n = s.length; if (!n) return null; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; }
@@ -58,20 +59,21 @@ function vo2rEval(r, kg){
   const v = p.map(x => x || 0), cW = [0], cP = [0], cH = [0], sH = [0];
   for (let i = 0; i < n; i++) { cW.push(cW[i] + v[i]); cP.push(cP[i] + (p[i] != null ? 1 : 0)); cH.push(cH[i] + (h[i] != null ? 1 : 0)); sH.push(sH[i] + (h[i] != null ? h[i] : 0)); }
   const hAv = (a, b) => cH[b] - cH[a] ? (sH[b] - sH[a]) / (cH[b] - cH[a]) : null;
-  /* Entkopplung wie perfExt (dec): ab 60 min, Puls in über 80 % der Sekunden, VI ≤ 1,15; Hälften nach 10 min Einfahren */
-  { let q = 0, q4 = 0, m = 0; for (let i = 0; i < n; i++) { q += v[i]; if (i >= 30) q -= v[i - 30]; if (i >= 29) { q4 += (q / 30) ** 4; m++; } }
-    const np = m ? Math.pow(q4 / m, .25) : 0, ap = cW[n] / n;
-    if (n >= 3600 && nH > .8 * n && ap > 0 && np / ap <= 1.15) {
+  /* Entkopplung wie perfExt (dec), aber nur im ausgewerteten Teil: Minute 10 bis min(Minute 90, 15 kJ/kg). Mindestens 60 min
+     Fahrt bis zum Ende dieses Teils, Puls in über 80 % seiner Sekunden, VI ≤ 1,15; zwei Hälften */
+  const lim = VO2R.kjkg * (kg || 75) * 1000; let E = Math.min(n, VO2R.maxSec); while (E > VO2R.warm && cW[E] > lim) E--;
+  { let q = 0, q4 = 0, m = 0; for (let i = VO2R.warm; i < E; i++) { q += v[i]; if (i >= VO2R.warm + 30) q -= v[i - 30]; if (i >= VO2R.warm + 29) { q4 += (q / 30) ** 4; m++; } }
+    const W0 = E - VO2R.warm, np = m ? Math.pow(q4 / m, .25) : 0, ap = W0 > 0 ? (cW[E] - cW[VO2R.warm]) / W0 : 0;
+    if (E >= 3600 && cH[E] - cH[VO2R.warm] > .8 * W0 && ap > 0 && np / ap <= 1.15) {
       const seg = (a, b) => { let ps = 0, hs = 0, c = 0; for (let i = a; i < b; i++) if (h[i] != null && p[i] != null) { ps += p[i]; hs += h[i]; c++; } return c > 300 ? [ps / c, hs / c] : null; };
-      const mid = 600 + Math.floor((n - 600) / 2), a = seg(600, mid), b = seg(mid, n);
+      const mid = VO2R.warm + Math.floor(W0 / 2), a = seg(VO2R.warm, mid), b = seg(mid, E);
       if (a && b && a[1] > 0 && b[1] > 0 && b[0] > 0) o.dec = Math.round(((a[0] / a[1]) / (b[0] / b[1]) - 1) * 1000) / 10;
     } }
   if (o.dec > VO2R.dec) { o.x = 'dec'; return o; }
-  /* Puls klebt an der Trittfrequenz (typisch für Messung am Handgelenk): über die ganze Fahrt */
-  { let nc = 0, lk = 0; for (let i = 0; i < n; i++) if (c[i] >= 50 && h[i] != null) { nc++; if (Math.abs(h[i] - c[i]) <= VO2R.cadTol) lk++; }
-    if (nc >= 600 && lk >= VO2R.cadRide * nc) { o.x = 'hrq'; return o; } }
+  /* Puls klebt an der Trittfrequenz (typisch für Messung am Handgelenk): über die ganze Fahrt nah beieinander und gemeinsam schwankend */
+  { const k = vo2rCad(h, c, 0, n); if (k.nc >= 600 && k.lk >= VO2R.cadRide * k.nc && k.r >= VO2R.cadR) { o.x = 'hrq'; return o; } }
   /* Abschnitte: nach 10 min, bis Minute 90 und bis 15 kJ/kg; 5 min ohne Pause, davor 3 min mit ±10 % Leistung */
-  const lim = VO2R.kjkg * (kg || 75) * 1000, end = Math.min(n, VO2R.maxSec), segs = [];
+  const end = Math.min(n, VO2R.maxSec), segs = [];
   const brkIn = (a, b) => brk.some(i => i > a && i < b);
   const okAt = s0 => {
     const e = s0 + VO2R.seg, L = VO2R.seg; if (brkIn(s0 - VO2R.pre, e)) return null;
@@ -97,13 +99,25 @@ function vo2rEval(r, kg){
 
 /* Pulsqualität eines Abschnitts [a, b): Streuung um den gleitenden 30-s-Mittelwert, Sprünge, Kleben an der Trittfrequenz */
 function vo2rHrBad(h, c, a, b){
-  let ss = 0, m = 0, jmp = 0, lk = 0;
+  let ss = 0, m = 0, jmp = 0;
   for (let k = a; k < b; k++) { if (h[k] == null) continue;
     let s = 0, q = 0; for (let j = Math.max(a, k - 15); j < Math.min(b, k + 15); j++) if (h[j] != null) { s += h[j]; q++; }
     const r = h[k] - s / q; ss += r * r; m++;
-    if (k > a && h[k - 1] != null && Math.abs(h[k] - h[k - 1]) >= VO2R.jump) jmp++;
-    if (c[k] >= 50 && Math.abs(h[k] - c[k]) <= VO2R.cadTol) lk++; }
-  return !m || Math.sqrt(ss / m) > VO2R.hrSd || jmp > VO2R.jumps || lk > .5 * m;
+    if (k > a && h[k - 1] != null && Math.abs(h[k] - h[k - 1]) >= VO2R.jump) jmp++; }
+  const cd = vo2rCad(h, c, a, b);
+  return !m || Math.sqrt(ss / m) > VO2R.hrSd || jmp > VO2R.jumps || (cd.lk > .5 * m && cd.r >= VO2R.cadR);
+}
+/* Puls gegen Trittfrequenz in [a, b): Sekunden mit Tritt (≥ 50/min) und Puls (nc), davon höchstens 3 auseinander (lk), und die
+   Korrelation r der Abweichungen beider vom eigenen gleitenden 30-s-Mittel. Nur nah beieinander reicht nicht: Ein Brustgurt mit
+   Puls 95 bei Trittfrequenz 92 liegt oft nah, schwankt aber unabhängig (r ≈ 0); ein „klebender“ Sensor folgt dem Tritt (r hoch). */
+function vo2rCad(h, c, a, b){
+  const ok = i => h[i] != null && c[i] != null && c[i] >= 50, sH = [0], sC = [0], q = [0];
+  for (let i = a; i < b; i++) { const y = ok(i); sH.push(sH[sH.length - 1] + (y ? h[i] : 0)); sC.push(sC[sC.length - 1] + (y ? c[i] : 0)); q.push(q[q.length - 1] + (y ? 1 : 0)); }
+  let nc = 0, lk = 0, xy = 0, xx = 0, yy = 0;
+  for (let i = a; i < b; i++) { if (!ok(i)) continue; nc++; if (Math.abs(h[i] - c[i]) <= VO2R.cadTol) lk++;
+    const lo = Math.max(a, i - 15) - a, hi = Math.min(b, i + 15) - a, m = q[hi] - q[lo], dh = h[i] - (sH[hi] - sH[lo]) / m, dc = c[i] - (sC[hi] - sC[lo]) / m;
+    xy += dh * dc; xx += dh * dh; yy += dc * dc; }
+  return {nc, lk, r:xx > 0 && yy > 0 ? xy / Math.sqrt(xx * yy) : 0};
 }
 /* Ruhepuls: Median der Morgenwerte der letzten 60 Tage (mindestens 5), sonst 60 als Annahme (breitere Spanne) */
 function vo2rRhr(){
@@ -231,6 +245,10 @@ function vo2rInOut(L){
   const a = addD(iso(0), -VO2R.win), g = L.filter(o => !o.x && o.v != null && o.d > a), i = g.filter(o => o.in).map(o => o.v), r = g.filter(o => !o.in).map(o => o.v);
   if (i.length < VO2R.nMin || r.length < VO2R.nMin) return null; const mi = vo2rMed(i), mr = vo2rMed(r); return Math.abs(mi - mr) / mr > .05 ? {mi, mr} : null;
 }
+/* Stecken Rollenfahrten im aktuellen Trend (die bis zu 7 Fahrten der letzten 6 Wochen)? */
+function vo2rTrIn(L){ const a = addD(iso(0), -VO2R.win); return L.filter(o => !o.x && o.v != null && o.d <= iso(0) && o.d > a).slice(-VO2R.nWin).some(o => o.in); }
+/* Zum Schalter „Rollenfahrten mitzählen“: Einstellungen aufklappen, Feld fokussieren */
+function vo2rInGo(){ const d = document.getElementById('fx-v2ropt'); if (d) d.open = true; if (typeof dykFocus === 'function') dykFocus('fx-v2ropt', '#v2rOpt-noIn'); }
 /* Hauptzahl oben auf der Seite, wenn es in 12 Wochen keinen Labor-, Test- oder Garmin-Wert gibt (vo2Page) */
 function vo2rTop(pk){
   try {
@@ -297,27 +315,28 @@ function vo2rFillUi(){
 function vo2rUi(){
   try {
     const fill = vo2rFillUi(); if (!vo2rAny() && !fill) return '';
-    const O = vo2rOpt(), muted = t => `<p class="mt-1 text-xs" style="color:var(--mute)">${t}</p>`, chk = (k, on, l) => `<label class="mt-1 flex items-center gap-2 text-sm" style="min-height:44px"><input type="checkbox" ${on ? 'checked' : ''} onchange="vo2rOptTog('${k}')" style="width:22px;height:22px;flex:none">${l}</label>`;
+    const O = vo2rOpt(), muted = t => `<p class="mt-1 text-xs" style="color:var(--mute)">${t}</p>`, chk = (k, on, l) => `<label class="mt-1 flex items-center gap-2 text-sm" style="min-height:44px"><input type="checkbox" id="v2rOpt-${k}" ${on ? 'checked' : ''} onchange="vo2rOptTog('${k}')" style="width:22px;height:22px;flex:none">${l}</label>`;
     const opts = `<details class="mt-3" id="fx-v2ropt"${O.med || O.noIn ? ' open' : ''}><summary class="cursor-pointer text-sm" style="color:var(--teal);min-height:44px;display:flex;align-items:center">${wkL('Einstellungen für den Trend', 'Settings for the trend')}</summary>
       ${chk('noIn', !O.noIn, wkL('Rollenfahrten mitzählen', 'Count indoor rides'))}${muted(wkL('Smarttrainer und Wattmesser auf der Rolle zählen als Wattmesser. Leistung, die nur aus der Rollengeschwindigkeit geschätzt ist (z. B. Zwift „zPower“), erkennt die App nicht sicher. Fährst du so, nimm die Rollenfahrten heraus.', 'Smart trainers and power meters on the trainer count as power meters. Power estimated only from trainer speed (e.g. Zwift “zPower”) cannot be detected reliably. If you ride like that, leave indoor rides out.'))}
       ${chk('med', !!O.med, wkL('Mein Puls wird durch Medikamente beeinflusst', 'My heart rate is affected by medication'))}${muted(wkL('Dann schaltet die App den Trend aus Fahrten ab: Pulsbasierte Schätzungen sind dann nicht verwertbar. Bei Fragen zu Medikamenten und Training: Ärztin oder Arzt.', 'The app then switches the trend from rides off: heart-rate based estimates are not usable then. For questions about medication and training: ask your doctor.'))}</details>`;
     const info = `<details class="mt-2 text-xs" style="color:var(--mute)"><summary class="cursor-pointer text-sm" style="color:var(--teal);min-height:44px;display:flex;align-items:center">${wkL('Wie wird das berechnet?', 'How is this calculated?')}</summary>
-      <p class="mt-1">${wkL('Die App vergleicht in gleichmäßigen Abschnitten deiner Fahrten Watt und Puls und rechnet hoch, wie viel Sauerstoff du bei deinem höchsten Puls (HFmax) aufnehmen würdest. So macht es auch Garmin.', 'The app compares power and heart rate in steady sections of your rides and extrapolates how much oxygen you would take up at your highest heart rate (max HR). Garmin works the same way.')}</p>
+      <p class="mt-1">${wkL('Die App vergleicht in gleichmäßigen Abschnitten deiner Fahrten Watt und Puls und rechnet hoch, wie viel Sauerstoff du bei deinem höchsten Puls (HFmax) aufnehmen würdest. Ähnlich arbeitet auch Garmin.', 'The app compares power and heart rate in steady sections of your rides and extrapolates how much oxygen you would take up at your highest heart rate (max HR). Garmin works in a similar way.')}</p>
       <p class="mt-1">${wkL('Eine einzelne Fahrt sagt wenig. Hitze, Müdigkeit, Koffein oder Stress verschieben den Puls. Aussagekräftig ist nur der Verlauf über Wochen: der Median der letzten 7 passenden Fahrten in 6 Wochen.', 'A single ride says little. Heat, fatigue, caffeine or stress shift your heart rate. Only the course over weeks is meaningful: the median of the last 7 suitable rides within 6 weeks.')}</p>
       <p class="mt-1">${wkL('Es zählen nur Abschnitte von 5 Minuten mit gleichmäßiger Leistung und ruhigem Puls zwischen 65 und 90 % der HFmax, ab Minute 10 und höchstens bis Minute 90. Fahrten bei Hitze, mit starker Puls-Drift, Rennen und Tests sowie Fahrten in den 7 Tagen nach einem Krank-Tag zählen nicht.', 'Only 5-minute sections with steady power and calm heart rate between 65 and 90% of max HR count, from minute 10 and up to minute 90. Rides in heat, with strong heart-rate drift, races and tests, and rides in the 7 days after a sick day do not count.')}</p>
       <p class="mt-1">${wkL('Ein Labortest ist genauer. Mit einem Laborwert kalibriert die App den Trend. ml/kg/min heißt Milliliter Sauerstoff je Kilogramm Körpergewicht und Minute. Der Trend ändert nie FTP, Zonen oder deinen Plan.', 'A lab test is more accurate. With a lab value the app calibrates the trend. ml/kg/min means millilitres of oxygen per kilogram of body weight per minute. The trend never changes your FTP, zones or plan.')}</p></details>`;
     const box = b => `<section class="panel mt-3 p-4" id="fx-v2r"><p class="hd text-lg font-semibold">${wkL('Trend aus Fahrten', 'Trend from rides')}</p>${b}${fill}${opts}${info}</section>`;
     if (O.med) return box(`<p class="mt-1 text-sm">${wkL('Ausgeschaltet: Dein Puls wird nach deiner Angabe durch Medikamente beeinflusst. Pulsbasierte Schätzungen sind dann nicht verwertbar.', 'Switched off: by your account your heart rate is affected by medication. Heart-rate based estimates are not usable then.')}</p>`);
     if (!vo2rAny()) return box(`<p class="mt-1 text-sm">${wkL('Noch keine Fahrt ausgewertet. Die App schätzt deine VO2max aus gleichmäßigen Fahrten mit Wattmesser und Puls, als Trend über mehrere Wochen.', 'No ride analysed yet. The app estimates your VO2max from steady rides with power meter and heart rate, as a trend over several weeks.')}</p>`);
-    if (!hrMaxOf()) return box(`<p class="mt-1 text-sm">${wkL('Für den Trend braucht die App deine gemessene HFmax (höchster Puls). Eine Schätzung nach Alter ist zu ungenau.', 'For the trend the app needs your measured max HR (highest heart rate). An estimate from age is too inaccurate.')}</p><p class="mt-1 text-sm" style="color:var(--mute)">${wkL('So bestimmst du sie: den höchsten Puls aus einem Rampentest, einem Rennen oder einem harten Anstieg am Ende eines Intervalls ablesen und unter Einstellungen → Training eintragen.', 'How to find it: take the highest heart rate from a ramp test, a race or a hard climb at the end of an interval and enter it under Settings → Training.')}</p>`);
+    if (!hrMaxOf()) return box(`<p class="mt-1 text-sm">${wkL('Für den Trend braucht die App deine gemessene HFmax (höchster Puls). Eine Schätzung nach Alter ist zu ungenau.', 'For the trend the app needs your measured max HR (highest heart rate). An estimate from age is too inaccurate.')}</p><p class="mt-1 text-sm" style="color:var(--mute)">${wkL('So bestimmst du sie: den höchsten Puls aus einem Rampentest, einem Rennen oder einem harten Anstieg am Ende eines Intervalls ablesen und unter Einstellungen → Herzfrequenz und Leistungsmesser eintragen.', 'How to find it: take the highest heart rate from a ramp test, a race or a hard climb at the end of an interval and enter it under Settings → Heart rate and power meter.')}</p>`);
     const s = vo2rSum(), last = s.L[s.L.length - 1], R = v => Math.round(v), ch = s.tr ? vo2rChg(s.L) : null, io = vo2rInOut(s.L);
-    const lastTx = last ? (last.x ? wkL(`Letzte Fahrt am ${mmDay(last.d)}: keine Schätzung, ${vo2rWhy(last.x)}.`, `Last ride on ${mmDay(last.d)}: no estimate, ${vo2rWhy(last.x)}.`) : wkL(`Letzte Fahrt am ${mmDay(last.d)}: etwa ${R(last.v)}.`, `Last ride on ${mmDay(last.d)}: about ${R(last.v)}.`)) : '';
-    const rhr = s.ctx.rhr.ass ? wkL('Ruhepuls angenommen (60), deshalb ist die Spanne breiter. Trag an mindestens 5 Morgen deinen Ruhepuls ein, dann rechnet die App mit deinem Wert.', 'Resting heart rate assumed (60), so the range is wider. Enter your resting heart rate on at least 5 mornings and the app uses your value.') : wkL(`Ruhepuls ${R(s.ctx.rhr.v)} (Median deiner Morgenwerte der letzten 60 Tage).`, `Resting heart rate ${R(s.ctx.rhr.v)} (median of your morning values of the last 60 days).`);
+    const lastTx = last ? (last.x ? wkL(`Letzte Fahrt am ${mmDay(last.d)}: keine Schätzung, ${vo2rWhy(last.x)}.`, `Last ride on ${mmDay(last.d)}: no estimate, ${vo2rWhy(last.x)}.`) : wkL(`Letzte Fahrt am ${mmDay(last.d)}: zählt zum Trend.`, `Last ride on ${mmDay(last.d)}: counts towards the trend.`)) : '';
+    const rhr = s.ctx.rhr.ass ? wkL('Ruhepuls angenommen (60), deshalb ist die Spanne breiter. Trag an mindestens 5 Morgen deinen Ruhepuls ein, dann rechnet die App mit deinem Wert. Ist dein Ruhepuls niedriger, liegt die Schätzung eher zu hoch.', 'Resting heart rate assumed (60), so the range is wider. Enter your resting heart rate on at least 5 mornings and the app uses your value. If your resting heart rate is lower, the estimate tends to be too high.') : wkL(`Ruhepuls ${R(s.ctx.rhr.v)} (Median deiner Morgenwerte der letzten 60 Tage).`, `Resting heart rate ${R(s.ctx.rhr.v)} (median of your morning values of the last 60 days).`);
     const chTx = ch ? (ch.sig ? wkL(`Gegenüber vor 4 Wochen: etwa ${ch.d > 0 ? '+' : '−'}${R(Math.abs(ch.d))} ml/kg/min.`, `Compared with 4 weeks ago: about ${ch.d > 0 ? '+' : '−'}${R(Math.abs(ch.d))} ml/kg/min.`) : wkL('Gegenüber vor 4 Wochen: unverändert im Rahmen der Genauigkeit.', 'Compared with 4 weeks ago: unchanged within the accuracy.')) : '';
     const pk = vo2Pick(), atTop = !pk || pk.old; /* steht der Trend schon oben als Hauptzahl, hier nicht wiederholen */
     const main = s.tr ? `${atTop ? '' : `<p class="mt-1"><span class="hd font-semibold" style="font-size:1.6rem">≈ ${R(s.tr.v)}</span> <span class="text-sm">ml/kg/min · ${wkL('wahrscheinlich', 'likely')} ${R(s.tr.lo)}–${R(s.tr.hi)}</span></p>`}<p class="${atTop ? 'mt-1 ' : ''}text-sm" style="color:var(--mute)">${wkL(`Trend aus ${s.tr.n} gleichmäßigen Fahrten der letzten 6 Wochen · Schätzung`, `Trend from ${s.tr.n} steady rides over the last 6 weeks · estimate`)}${s.tr.cal ? ' · ' + wkL(`kalibriert mit Laborwert vom ${mmDay(s.tr.cal.lab.date)}`, `calibrated with lab value of ${mmDay(s.tr.cal.lab.date)}`) : ''}</p>${chTx ? `<p class="mt-1 text-sm">${chTx}</p>` : ''}`
       : `<p class="mt-1 text-sm">${wkL('Noch kein Trend. Dafür braucht die App mindestens 3 gleichmäßige Fahrten mit Wattmesser und Puls in 6 Wochen.', 'No trend yet. The app needs at least 3 steady rides with power meter and heart rate within 6 weeks.')}</p>`;
-    const ioTx = io ? `<p class="mt-2 p-2.5 text-sm" role="note" style="border:1px solid var(--line);border-left:3px solid #d9a400">${wkL(`Rolle und Straße liegen um mehr als 5 % auseinander (etwa ${R(io.mi)} auf der Rolle, ${R(io.mr)} draußen). Auf der Rolle ohne Ventilator steigt der Puls, zwei Wattmesser messen oft etwas unterschiedlich. Betrachte beides getrennt.`, `Indoor and outdoor differ by more than 5% (about ${R(io.mi)} indoors, ${R(io.mr)} outdoors). Indoors without a fan heart rate rises, and two power meters often measure slightly differently. Look at both separately.`)}</p>` : '';
-    return box(`${main}${lastTx ? `<p class="mt-1 text-sm">${esc(lastTx)}</p>` : ''}${ioTx}${muted(esc(rhr))}`);
+    const ioTx = io ? `<p class="mt-2 p-2.5 text-sm" role="note" style="border:1px solid var(--line);border-left:3px solid #d9a400">${wkL(`Rolle und Straße liegen um mehr als 5 % auseinander (etwa ${R(io.mi)} auf der Rolle, ${R(io.mr)} draußen). Auf der Rolle ohne Ventilator steigt der Puls, zwei Wattmesser messen oft etwas unterschiedlich. Betrachte beides getrennt oder nimm Rollenfahrten unter „Einstellungen für den Trend“ heraus.`, `Indoor and outdoor differ by more than 5% (about ${R(io.mi)} indoors, ${R(io.mr)} outdoors). Indoors without a fan heart rate rises, and two power meters often measure slightly differently. Look at both separately or leave indoor rides out under “Settings for the trend”.`)}</p>` : '';
+    const inTx = s.tr && vo2rTrIn(s.L) ? `<div class="mt-2 p-2.5 text-sm" role="note" style="border:1px solid var(--line);border-left:3px solid #d9a400" id="fx-v2rin"><p>${wkL('Im Trend stecken Rollenfahrten. Stammt die Leistung dort nicht von einem Wattmesser oder Smarttrainer, sondern ist sie geschätzt (z. B. aus der Rollengeschwindigkeit), verfälscht das den Wert.', 'The trend includes indoor rides. If their power does not come from a power meter or smart trainer but is estimated (e.g. from trainer speed), the value is distorted.')}</p><button class="ghost mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="vo2rInGo()">${wkL('Rollenfahrten einstellen', 'Set indoor rides')}</button></div>` : '';
+    return box(`${main}${lastTx ? `<p class="mt-1 text-sm">${esc(lastTx)}</p>` : ''}${inTx}${ioTx}${muted(esc(rhr))}`);
   } catch (e) { elog(e); return ''; }
 }

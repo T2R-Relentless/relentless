@@ -402,3 +402,41 @@ test('F38: Hinweis „Wusstest du schon?“ führt direkt zum Bereich „Trend a
   eq([...a.w.__iMiss.keys()].filter(k => /gleichmäßigen Fahrten|Trend ansehen/.test(k)), [], 'keine fehlenden Übersetzungen');
   a.noErrors();
 });
+
+/* ---------- F38 Korrekturen nach Fachabnahme ---------- */
+/* Brustgurt-Simulation wie kad.py: Puls um hb mit kleinem Rauschen, Trittfrequenz um cb ± csd, beide unabhängig (Zufall mit Startwert) */
+function v2rSim(hb, cb, csd, n, seed){
+  let x = seed >>> 0; const u = () => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return (x + .5) / 4294967296; }, g = () => Math.sqrt(-2 * Math.log(u())) * Math.cos(2 * Math.PI * u());
+  const h = [], c = []; let hr = hb, cd = cb; for (let i = 0; i < n; i++) { hr += .05 * (hb - hr) + .5 * g(); cd += .3 * (cb - cd) + csd * .6 * g(); h.push(Math.round(hr)); c.push(Math.round(cd)); } return {h, c};
+}
+test('F38 Korrektur: Puls nah an der Trittfrequenz, aber unabhängig (Brustgurt) bleibt gültig; echtes Kleben fällt weg', async () => {
+  const a = await boot(); makePlan(a, v2rDat({hrMax:140})); v2rMo(a); const d = k => a.$(`iso(${k})`);
+  [[96, 92, 4, 1], [95, 92, 3, 2], [97, 92, 4, 3]].forEach(([hb, cb, csd, sd], j) => {
+    const {h, c} = v2rSim(hb, cb, csd, 3600, sd), id = v2rUp(a, v2rRideF(3600, i => [120, h[i], c[i]], d(-10 + j)), 'gurt' + j + '.fit'), o = v2rOf(a, id);
+    ok(o.x !== 'hrq' && o.x === '', `Puls ${hb} bei Trittfrequenz ${cb}±${csd}: gültig (${o.x}, ${o.n} Abschnitte)`);
+    const k = a.$(`(() => { const h = ${JSON.stringify(h)}, c = ${JSON.stringify(c)}; return vo2rCad(h, c, 0, h.length); })()`); ok(k.lk > .3 * k.nc && k.r < .6, `oft nah (${Math.round(k.lk / k.nc * 100)} %), aber r ${k.r.toFixed(2)}`);
+  });
+  /* Sensor folgt dem Tritt: Puls = Trittfrequenz + kleiner Versatz, gemeinsam schwankend */
+  const {c} = v2rSim(96, 92, 4, 3600, 9), lk = v2rUp(a, v2rRideF(3600, i => [120, c[i] + (i % 7 === 0 ? 1 : 0), c[i]], d(-3)), 'klebt.fit'); eq(v2rOf(a, lk).x, 'hrq', 'echtes Kleben');
+  a.noErrors();
+});
+
+test('F38 Korrektur: Drift nur im ausgewerteten Teil, Texte, Hinweis Rollenfahrten im Trend mit Sprung zum Schalter', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); const d = k => a.$(`iso(${k})`);
+  /* 90 min gleichmäßig, danach 60 min mit stark steigendem Puls: Drift liegt nach Minute 90 und zählt nicht */
+  const late = v2rUp(a, v2rRide([[5400, 200, 140, 140], [3600, 200, 140, 175]], d(-20)), 'spaet.fit'); ok(!(a.$(`S.vo2r['${late}'].dec`) > 8), 'Drift nach Minute 90 ohne Einfluss'); eq(v2rOf(a, late).x, '');
+  const early = v2rUp(a, v2rRide([[4800, 200, 125, 165]], d(-19)), 'frueh.fit'); eq(v2rOf(a, early).x, 'dec', 'Drift im ausgewerteten Teil');
+  const ids = [-12, -8, -4].map((k, j) => v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(k)), 'k' + j + '.fit')); a.$(`S.vo2r['${ids[2]}'].in = 1`);
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(40); let t = a.text();
+  ok(/Letzte Fahrt am .*: zählt zum Trend\./.test(t), 'Einzelfahrt ohne Zahl'); ok(/Ähnlich arbeitet auch Garmin\./.test(a.$("document.getElementById('fx-v2r').textContent")));
+  ok(/Ist dein Ruhepuls niedriger, liegt die Schätzung eher zu hoch\./.test(t), 'Ruhepuls angenommen: Richtung');
+  /* Richtung fachlich: angenommene 60 statt echter 50 → höherer Wert */
+  ok(a.$('vo2rCalc(200, 140, 75, 185, 60)') > a.$('vo2rCalc(200, 140, 75, 185, 50)'), 'mit 60 höher als mit 50');
+  ok(/Im Trend stecken Rollenfahrten/.test(t), 'sichtbare Zeile'); const b = a.w.document.querySelector('#fx-v2rin button'); ok(b && b.getBoundingClientRect().height >= 44, 'Knopf mindestens 44 pt');
+  a.w.vo2rInGo(); await a.tick(150); ok(a.$("document.getElementById('fx-v2ropt').open"), 'Einstellungen aufgeklappt'); eq(a.$('document.activeElement && document.activeElement.id'), 'v2rOpt-noIn', 'Schalter fokussiert');
+  a.w.vo2rOptTog('noIn'); await a.tick(20); ok(!/Im Trend stecken Rollenfahrten/.test(a.text()), 'ohne Rollenfahrten kein Hinweis'); a.w.vo2rOptTog('noIn');
+  a.$('S.p.hrMax = 0; if (S.d) S.d.hrMax = 0; render()'); await a.tick(20); ok(/Einstellungen → Herzfrequenz und Leistungsmesser/.test(a.text()), 'richtiger Seitenname');
+  a.$('S.p.hrMax = 185; render()'); await a.en(); a.$("navGo('state'); goPg('svo2')"); await a.tick(30); t = a.text();
+  ok(/counts towards the trend/.test(t) && /The trend includes indoor rides/.test(t) && /Set indoor rides/.test(t) && /tends to be too high/.test(t), 'Englisch');
+  a.noErrors();
+});
