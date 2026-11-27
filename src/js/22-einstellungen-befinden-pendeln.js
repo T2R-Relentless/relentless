@@ -132,6 +132,8 @@ function feelPlan(b, lv){
 }
 function feelDay(i, lv){
   const cur = S.plan[i]; if (!cur) return; const b = cur.adapted && cur.orig ? cur.orig : cur;
+  /* Schnappschuss nur bei echter Änderung, danach „Rückgängig“ (wie applyChk) */
+  if (JSON.stringify(cur) !== JSON.stringify({...feelPlan(b, lv), adapted:true, orig:b, feel:lv})) { try { bkPre('Vor dem Anpassen an dein Befinden'); } catch (e) { elog(e); } }
   /* Fällt der Fitness-Check weg (krank, leicht erkältet, richtig platt), wird er vorgemerkt und nachgeholt: krank frühestens nach 7 Tagen, sonst nach 3 bzw. 2 Tagen */
   if (b.t === 'test' && S.p) { const y0 = feelPlan(b, lv); if (y0.t !== 'test') { const dd = lv === 'sick' ? 7 : lv === 'neck' ? 3 : 2, from = addD(dstr(i), dd), why = lv === 'sick' ? 'Wegen Krankheit' : lv === 'neck' ? 'Wegen der Erkältung' : 'Weil du heute richtig platt bist,'; const nx0 = testWeeks(S.p).find(w => w > S.wk); S.p.testDue = {from, w:S.wk}; S.d.testDue = S.p.testDue;
     /* Folge-Check mit mindestens 5 Wochen Abstand zum Nachholtest (testWeeks): Verschiebung im Verlauf nennen */

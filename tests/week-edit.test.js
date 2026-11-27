@@ -160,3 +160,25 @@ test('Nachholtest schiebt den nächsten Check auf mindestens 5 Wochen Abstand, o
   /* Verschiebung bleibt, wenn die ursprüngliche Woche vorbei ist (kein „ausgelassen“, kein zweiter Nachholtest) */
   a.$(`S.wk = ${t3 + 1}`); eq(a.$('testWeeks(S.p)'), tw2, 'nach der ursprünglichen Woche unverändert'); a.noErrors();
 });
+
+/* Befinden und „Locker statt hart“: Schnappschuss vor der Änderung, „Rückgängig“ stellt den Plan exakt wieder her */
+async function weUndoBack(a){
+  const v = await a.$('bkGet(bkUndo.k)'); ok(v && v.state, 'Schnappschuss im Gerät'); a.w.bkWriteRaw(v);
+  const b = await boot({now:THU, store:a.store()}); return b.$('JSON.stringify(S.plan)');
+}
+for (const [nm, act] of [['Befinden „Richtig platt“', "feelDay(3, 'heavy')"], ['Befinden mit Grund', "feelDayWhy(3, 'tired', 'sleep')"], ['Locker statt hart', 'easyDay(3)']]) test(`${nm}: Schnappschuss, Rückgängig stellt den Plan wieder her`, async () => {
+  const a = await boot({now:THU}); makePlan(a, wDat({commute:[false, false, false, false, false, false, false]}));
+  a.$("S.plan[3] = {...D('sst', 'Sweet Spot 3×12', 75, 88, 93, '90 U/min', 'x', 'y'), iv:{wu:15, reps:3, work:12, rest:5, lo:88, hi:93, cd:10}}; save(); bkUndo = null; render()");
+  const before = a.$('JSON.stringify(S.plan)');
+  a.$(act); await a.tick(30); ok(a.$('JSON.stringify(S.plan)') !== before, 'Plan geändert');
+  ok(a.$('!!bkUndo'), 'Schnappschuss angelegt'); ok(/Rückgängig/.test(a.$('bkUndoBar()')), '„Rückgängig“ wird angeboten');
+  eq(await weUndoBack(a), before, 'Plan exakt wiederhergestellt'); a.noErrors();
+});
+test('Befinden und „Locker statt hart“ ohne Änderung: kein Schnappschuss', async () => {
+  const a = await boot({now:THU}); makePlan(a, wDat({commute:[false, false, false, false, false, false, false]}));
+  a.$("S.plan[3] = {...D('sst', 'Sweet Spot 3×12', 75, 88, 93, '90 U/min', 'x', 'y'), iv:{wu:15, reps:3, work:12, rest:5, lo:88, hi:93, cd:10}}; save(); render()");
+  a.$("feelDay(3, 'heavy')"); await a.tick(30); const p1 = a.$('JSON.stringify(S.plan)'); a.$('bkUndo = null');
+  a.$("feelDay(3, 'heavy')"); await a.tick(30); eq(a.$('JSON.stringify(S.plan)'), p1, 'gleiches Befinden: Plan unverändert'); ok(!a.$('bkUndo'), 'kein Schnappschuss');
+  a.$('easyDay(3)'); eq(a.$('JSON.stringify(S.plan)'), p1, 'schon angepasst: „Locker statt hart“ ändert nichts'); ok(!a.$('bkUndo'), 'kein Schnappschuss');
+  a.$('easyDay(99)'); ok(!a.$('bkUndo'), 'kein Tag: kein Schnappschuss'); a.noErrors();
+});

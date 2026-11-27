@@ -313,6 +313,7 @@ function cyclePage(p){
 }
 function easyDay(i){
   const x = S.plan[i]; if (!x || x.adapted) return;
+  try { bkPre('Vor dem Wechsel auf „Locker statt hart“'); } catch (e) { elog(e); } /* Schnappschuss, danach „Rückgängig“ */
   S.plan[i] = {...D('base', 'Locker statt hart', Math.max(30, Math.min(60, x.m || 60)), 56, 70, '90 U/min', 'Locker in Zone 2, so wie es sich heute gut anfühlt. Auf den Körper zu hören ist Teil des Trainings.', 'Die harte Einheit musst du nicht nachholen, der Plan läuft normal weiter.'), adapted:true, orig:x};
   note(`${DAYS[i]}: locker statt hart`, 'Auf deinen Wunsch hat die App die harte Einheit heute durch eine lockere Fahrt ersetzt.', i); save(); render();
 }
