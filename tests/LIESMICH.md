@@ -35,7 +35,7 @@ Ohne Klicken (Terminal, Claude Code, GitHub-CI): `node tools/test.mjs` startet S
 | `mehrfahrten.test.js` | F30: mehrere Fahrten an einem Tag (Zuordnung, Zusammenführen, Rückfrage, Pendeln, Rückgängig, Altdaten) |
 | `events.test.js` | F31: Events bearbeiten (Formular, Vorschlag mit Rückgängig, Löschen, Duplizieren, Karten, Pacing je Art) |
 | `tss-historie.test.js` | F32/F33: TSS-Rechnung, TSS im Logbuch, Import älterer Garmin-Fahrten (Seiten, Drosselung, Fortsetzen, FTP damals) |
-| `vo2max.test.js` | F27: VO2max (Formeln, Gültigkeit, Auswahl, Trend, Sicherung, Anzeige); Rampentest am Fitness-Check erkennen (Urteil, erledigt, Vorbelegung, Gegenproben, Englisch) |
+| `vo2max.test.js` | F27: VO2max (Formeln, Gültigkeit, Auswahl, Trend, Sicherung, Anzeige); F38: Trend aus Fahrten (Rechenbeispiel, Ausschlüsse, Median, Kalibrierung, Sicherung, Plan unverändert); Rampentest am Fitness-Check erkennen (Urteil, erledigt, Vorbelegung, Gegenproben, Englisch) |
 | `elog.test.js` | Fehlerprotokoll: Erfassen, Zusammenfassen, Speichern, Anzeige; normale Nutzung erzeugt keine Einträge |
 | `uebungen-pilot.test.js` | Übungsfenster: Pilotfiguren (Felder, Bodenkontakt, Englisch), Videos für Pilot- und Kraftübungen, Rückfall auf die gezeichnete Figur mit passender Bildunterschrift |
 | `datenschutz.test.js` | F36: Statistik erst nach Zustimmung (keine GoatCounter-Anfrage vorher, Altdaten, Sicherung), Impressum und Datenschutz, Garmin-Daten löschen, Build-Datum getrennt von der Reihenfolge-ID, Installationshinweis ab dem 3. Besuch, einmalige Sicherungs-Erinnerung |

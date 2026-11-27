@@ -207,3 +207,236 @@ test('Rampentest: englische Texte', async () => {
   eq([...a.w.__iMiss.keys()].filter(k => /Rampe|Ausbelastung|beste Minute|Testart/.test(k)), [], 'keine fehlenden Übersetzungen');
   a.noErrors();
 });
+
+/* ---------- F38: VO2max-Trend aus gleichmäßigen Fahrten (vo2rEval, vo2rKeep, vo2rRide, vo2rList, vo2rSum, S.vo2r) ---------- */
+/* Fahrt aus Abschnitten [Sekunden, Watt (null = kein Wattmesser), Puls von, Puls bis] am Tag day (8 Uhr); tc = Temperatur */
+function v2rRide(parts, day, tc){
+  const pts = []; let t = Math.round(Date.parse(day + 'T08:00:00') / 1000);
+  for (const [n, w, h0, h1] of parts) for (let i = 0; i < n; i++) pts.push({t:t++, p:w, h:h0 == null ? null : Math.round(h0 + (h1 - h0) * i / Math.max(1, n - 1)), d:null, a:null, lat:null, lon:null, tc:tc == null ? null : tc});
+  pts.push({t, p:null, h:null, d:null, a:null, lat:null, lon:null}); return {pts, ses:[], name:'Test'};
+}
+const v2rDat = d => v2Dat({weight:75, hrMax:185, ...d});
+/* Ruhepuls 50 aus 5 Morgenwerten der letzten 60 Tage */
+const v2rMo = (a, hr = 50) => a.$(`S.mo = {}; [3, 9, 15, 21, 27].forEach(k => { S.mo[iso(-k)] = {hr:${hr}}; })`);
+const v2rUp = (a, r, nm = 'gleich.fit') => { a.w.__r = r; return a.$(`summarize(__r, '${nm}').id`); };
+const v2rOf = (a, id) => a.$(`vo2rRide('${id}', S.vo2r['${id}'], vo2rCtx())`);
+
+test('F38: Rechenbeispiel 75 kg, HFmax 185, Ruhepuls 50, 200 W bei Puls 140 → etwa 52; Neuberechnung nach HFmax', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a);
+  near(a.$('vo2rCalc(200, 140, 75, 185, 50)'), 51.95, .01, '3,5 + (35,8 − 3,5) × 135 / 90');
+  const id = v2rUp(a, v2rRide([[2700, 200, 140, 140]], a.$('iso(-1)'))), rec = a.$(`S.vo2r['${id}']`);
+  ok(rec && !rec.x, 'gespeichert, ohne Ausschluss'); eq(rec.s.split(',').length, 7, '45 min − 10 min Einfahren = 7 Abschnitte'); eq(rec.s.split(',')[0], '200:140', 'Rohpaar Watt:Puls');
+  const o = v2rOf(a, id); eq(o.n, 7); near(o.v, 52.0, .5, 'Wert der Fahrt'); near(rec.v, 52.0, .5, 'Ergebnis mit abgelegt');
+  eq(a.$("vo2rRhr()").ass, false, 'Ruhepuls aus Morgenwerten');
+  a.$('S.p.hrMax = 190'); near(v2rOf(a, id).v, 53.7, .2, 'HFmax 190: neu gerechnet ohne die Datei');
+  /* ohne gemessene HFmax: kein Wert, Hinweis zum Bestimmen */
+  a.$('S.p.hrMax = 0; if (S.d) S.d.hrMax = 0'); eq(v2rOf(a, id).x, 'nohm'); eq(a.$('vo2rSum().tr'), null);
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(40); const t = a.text(); ok(/Trend aus Fahrten/.test(t) && /gemessene HFmax/.test(t) && /Rampentest, einem Rennen/.test(t), 'Hinweis ohne HFmax');
+  a.noErrors();
+});
+
+test('F38: Ausschlüsse (Hitze, Drift, zu kurz, Abschnitte driften, kein Wattmesser, krank, Ruhepuls, Vollgas, Ausreißer)', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a); const d = k => a.$(`iso(${k})`), x = id => v2rOf(a, id).x;
+  eq(x(v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(-20), 28), 'heiss.fit')), 'heat', 'Durchschnitt ≥ 25 °C');
+  const dr = v2rUp(a, v2rRide([[4200, 200, 125, 165]], d(-19)), 'drift.fit'); eq(x(dr), 'dec', 'Entkopplung über 8 %'); ok(a.$(`S.vo2r['${dr}'].dec`) > 8);
+  eq(x(v2rUp(a, v2rRide([[2100, 200, 140, 140]], d(-18)), 'kurz.fit')), 'short', 'unter 40 min');
+  const sd = v2rUp(a, v2rRide([[2700, 200, 115, 185]], d(-17)), 'anstieg.fit'); eq(x(sd), 'few', 'Puls steigt je Abschnitt über 4 Schläge'); eq(a.$(`S.vo2r['${sd}'].s || ''`), '', 'kein Abschnitt');
+  eq(x(v2rUp(a, v2rRide([[2700, null, 140, 140]], d(-16)), 'ohnewatt.fit')), 'nopm', 'ohne Wattmesser');
+  eq(x(v2rUp(a, v2rRide([[2700, 200, null, null]], d(-15)), 'ohnepuls.fit')), 'nohr', 'ohne Puls');
+  /* 6 min ohne Leistung mitten in der Fahrt: unter 90 % Leistung */
+  eq(x(v2rUp(a, v2rRide([[1500, 200, 140, 140], [360, 0, 140, 140], [1200, 200, 140, 140]].map(q => q[1] === 0 ? [q[0], null, q[2], q[3]] : q), d(-14)), 'luecke.fit')), 'gap', 'Leistung fehlt in über 10 % der Sekunden');
+  /* gültige Fahrten für den Trend, dann Vollgas und Ausreißer */
+  const g = [-13, -11, -9].map((k, j) => v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(k)), 'g' + j + '.fit')); g.forEach(id => eq(x(id), '', 'gültig'));
+  a.$(`S.allOut = {'${g[2]}':1}`); eq(x(g[2]), 'race', 'als Vollgas markiert'); a.$('S.allOut = {}');
+  const out = v2rUp(a, v2rRide([[2700, 260, 140, 140]], d(-8)), 'ausreisser.fit'); near(v2rOf(a, out).v, 64.9, .3); eq(a.$(`vo2rList().find(o => o.id === '${out}').x`), 'out', 'mehr als 15 % neben dem Trend');
+  /* auffälliger Ruhepuls am Morgen (mindestens 5 über dem Mittel der Tage 8 bis 37 davor) */
+  const rd = d(-7); a.$(`for (let k = 8; k <= 20; k++) S.mo[addD('${rd}', -k)] = {hr:50}; S.mo['${rd}'] = {hr:58}`); eq(x(v2rUp(a, v2rRide([[2700, 200, 140, 140]], rd), 'ruhepuls.fit')), 'rhr', 'Ruhepuls +5');
+  /* Krank-Tag gestern: Fahrt heute zählt nicht */
+  const i = a.$('todayIdx()'); ok(i > 0, 'Krank-Tag in derselben Woche'); a.$(`S.plan[${i - 1}].feel = 'sick'`);
+  const sk = v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(0)), 'krank.fit'); eq(x(sk), 'sick', 'krank'); eq(a.$(`S.vo2r['${sk}'].sk`), 1, 'beim Einlesen vermerkt');
+  /* Abschnitte außerhalb 65–90 % HFmax zählen nicht */
+  eq(x(v2rUp(a, v2rRide([[2700, 300, 172, 172]], d(-6)), 'hart.fit')), 'few', 'Puls über 90 % HFmax');
+  a.noErrors();
+});
+
+test('F38: Trend aus Fahrten (Median, Spanne, Kalibrierung mit Labor), Anzeige, Englisch', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a); const d = k => a.$(`iso(${k})`);
+  [[-30, 140], [-20, 138], [-12, 142], [-5, 140], [-2, 139]].forEach(([k, h], j) => v2rUp(a, v2rRide([[2700, 200, h, h]], d(k)), 't' + j + '.fit'));
+  const s = a.$('vo2rSum()'); ok(s.tr, 'Trend vorhanden'); eq(s.tr.n, 5); near(s.tr.v, 52.0, .5, 'Median der 5 Fahrten'); near(s.tr.hi - s.tr.lo, 2 * 5.2, .2, '± max(5; 10 %)');
+  eq(a.$('vo2rTrendAt(vo2rList(), iso(-25))'), null, 'unter 3 Fahrten kein Trendpunkt');
+  /* Ruhepuls nur angenommen: Spanne × 1,25 */
+  a.$('S.mo = {}'); const s2 = a.$('vo2rSum()'); eq(s2.ctx.rhr.ass, true); near(s2.tr.hi - s2.tr.lo, 2 * 1.25 * Math.max(5, .1 * s2.tr.v), .2); v2rMo(a);
+  /* Kalibrierung nur mit Laborwert (±14 Tage, mindestens 3 Fahrten), Garmin zählt nicht */
+  v2E(a, 'G', d(-10), 60); eq(a.$("vo2Cal('T')"), null, 'Garmin ist kein Anker');
+  v2E(a, 'L', d(-14), 55); const c = a.$("vo2Cal('T')"); ok(c, 'kalibriert'); near(c.off, 55 - a.$("vo2rMed(vo2rList().filter(o => !o.x && o.d >= iso(-28)).map(o => o.v))"), .1, 'Versatz gegen die 4 Fahrten ±14 Tage um den Labortag'); near(a.$('vo2rSum().tr.v'), 55, .6, 'Trend + Versatz');
+  ok(a.$('vo2rSum().tr.hi - vo2rSum().tr.lo') < 2 * 5, 'mit Labor engere Spanne'); a.w.vo2CalTog(); eq(a.$("vo2Cal('T')"), null, 'abschaltbar'); a.w.vo2CalTog();
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(40); const t = a.text(), h = a.$("document.getElementById('app').innerHTML");
+  ok(/Trend aus Fahrten/.test(t) && /≈ 55/.test(t) && /wahrscheinlich \d+–\d+/.test(t) && /Trend aus 5 gleichmäßigen Fahrten der letzten 6 Wochen · Schätzung/.test(t), 'Trendzeile: ' + t.slice(0, 300));
+  ok(/kalibriert mit Laborwert/.test(t)); ok(/Letzte Fahrt am/.test(t)); ok(/Trend aus Fahrten: \+/.test(t), 'Kalibrierung in der Liste');
+  ok((h.match(/class="v2-T"/g) || []).length >= 5, 'Fahrten als Punkte'); ok(/class="v2-tr v2-T"/.test(h) && /class="v2-tb"/.test(h), 'Trendlinie mit Band'); ok(/Punkt = eine Fahrt/.test(t), 'Legende');
+  a.w.vo2Set('unit', 'abs'); await a.tick(20); ok(/class="v2-tr v2-T"/.test(a.$("document.getElementById('app').innerHTML")), 'auch in l/min');
+  await a.en(); a.$("navGo('state'); goPg('svo2')"); await a.tick(30); const te = a.text(); ok(/Trend from rides/.test(te) && /likely \d+–\d+/.test(te) && /steady rides over the last 6 weeks/.test(te), 'Englisch');
+  a.noErrors();
+});
+
+test('F38: Sicherung mit Fahrten-Rohdaten, ältere Sicherung ohne, keine Änderung am Plan', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a); const d = k => a.$(`iso(${k})`);
+  const before = a.$("JSON.stringify({plan:S.plan, ftp:S.p.ftp, zones:typeof zones === 'function' ? zones(S.p.ftp) : null, vo2:S.vo2 || [], done:S.done, log:(S.log || []).length})"), tr0 = a.$("vo2TrendAt('R', iso(0))");
+  [-9, -6, -3].forEach((k, j) => v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(k)), 's' + j + '.fit')); a.$('save()');
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(40); a.$('S.p.hrMax = 190; render()'); await a.tick(20);
+  eq(a.$("JSON.stringify({plan:S.plan, ftp:S.p.ftp, zones:typeof zones === 'function' ? zones(S.p.ftp) : null, vo2:S.vo2 || [], done:S.done, log:(S.log || []).length})"), before, 'Plan, FTP, Zonen, VO2max-Werte unverändert');
+  eq(a.$("vo2TrendAt('R', iso(0))"), tr0, 'vo2TrendAt unverändert'); ok(!a.$("(S.vo2 || []).some(e => e.method === 'T')"), 'kein Eintrag in S.vo2');
+  const ref = a.$('JSON.stringify(S.vo2r)');
+  await a.w.exportPlans(); await a.tick(30); const f = a.w.__downloads.find(x => /\.json$/.test(x.name)), txt = await f.blob.text(), o = JSON.parse(txt), st = typeof o.state === 'string' ? JSON.parse(o.state) : o.state;
+  eq(JSON.stringify(st.vo2r), ref, 'Rohdaten in der Sicherung'); const p = a.w.bkParse(txt); eq(JSON.stringify(p.state.vo2r), ref, 'übersteht die Prüfung unverändert');
+  /* ältere Sicherung ohne vo2r */
+  const s0 = {...st}; delete s0.vo2r; const old = {...o, state:s0}; delete old.trk; const q = a.w.bkParse(JSON.stringify(old)); ok(q && !q.state.vo2r, 'ältere Sicherung lesbar');
+  /* Altdaten ohne vo2r im Speicher */
+  a.$('delete S.vo2r; save()'); const b = await boot({store:a.store()}); b.$("navGo('state'); goPg('svo2')"); await b.tick(30); eq(b.$('vo2rAny()'), false); eq(b.$('vo2rSum().tr'), null); ok(!/Trend aus Fahrten/.test(b.text()));
+  b.noErrors(); a.noErrors();
+});
+
+/* ---------- F38 Schritt 2/3: Pulsqualität, Schalter, Krank-Vermerk, Rückrechnung, Grafik, Hinweis mit Anker ---------- */
+/* Fahrt Sekunde für Sekunde: f(i) → [Watt, Puls, Trittfrequenz] */
+function v2rRideF(n, f, day){
+  const pts = []; let t = Math.round(Date.parse(day + 'T08:00:00') / 1000);
+  for (let i = 0; i < n; i++) { const [p, h, c] = f(i); pts.push({t:t++, p, h, c:c == null ? null : c, d:null, a:null, lat:null, lon:null}); }
+  pts.push({t, p:null, h:null, d:null, a:null, lat:null, lon:null}); return {pts, ses:[], name:'Test'};
+}
+
+test('F38: Pulsdaten unruhig oder an der Trittfrequenz → keine Schätzung; einzelne unruhige Abschnitte fallen nur weg', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a); const d = k => a.$(`iso(${k})`), x = id => v2rOf(a, id).x;
+  /* Puls springt jede Sekunde um ±12 (Messung am Handgelenk, Artefakte) */
+  const nz = v2rUp(a, v2rRideF(2700, i => [200, 140 + (i % 2 ? 12 : -12), 90], d(-10)), 'unruhig.fit'); eq(x(nz), 'hrq', 'unruhiger Puls');
+  eq(a.$("vo2rWhy('hrq')"), 'Pulsdaten unruhig', 'nur der Satz, keine Vermutung zur Ursache');
+  /* Puls folgt der Trittfrequenz (beide um 128) */
+  const lk = v2rUp(a, v2rRideF(2700, i => [200, 128 + (i % 60 < 30 ? 1 : -1), 128 + (i % 60 < 30 ? 1 : -1)], d(-9)), 'kadenz.fit'); eq(x(lk), 'hrq', 'Puls klebt an der Trittfrequenz');
+  /* sauberer Brustgurt mit Trittfrequenz 90: gültig */
+  const cl = v2rUp(a, v2rRideF(2700, () => [200, 140, 90], d(-8)), 'sauber.fit'); eq(x(cl), '', 'sauber'); near(v2rOf(a, cl).v, 52.0, .5);
+  /* ein einzelner unruhiger Abschnitt (Minute 20–25): nur er fällt weg */
+  const one = v2rUp(a, v2rRideF(3000, i => [200, i >= 1200 && i < 1500 ? 140 + (i % 2 ? 12 : -12) : 140, 90], d(-7)), 'einmal.fit'), r1 = a.$(`S.vo2r['${one}']`);
+  eq(x(one), '', 'Fahrt zählt'); ok(r1.s.split(',').length >= 5 && r1.s.split(',').length < 8, 'weniger Abschnitte: ' + r1.s);
+  /* Trittfrequenz aus der FIT-Datei (Feld 4) und aus der ausgedünnten Garmin-Aufzeichnung */
+  /* kleinste FIT-Datei: ein Datensatz mit Zeit, Puls 141 und Trittfrequenz 88 */
+  eq(a.$(`(() => { const rec = [0x40, 0, 0, 20, 0, 3, 253, 4, 0x86, 3, 1, 2, 4, 1, 2, 0, 0x10, 0x27, 0, 0, 141, 88], u = new Uint8Array(14 + rec.length + 2);
+    u.set([14, 0x10, 0, 0, rec.length, 0, 0, 0, 46, 70, 73, 84, 0, 0]); u.set(rec, 14); const p = parseFIT(u).pts[0]; return [p.h, p.c]; })()`), [141, 88], 'parseFIT liest die Trittfrequenz (Feld 4)');
+  a.noErrors();
+});
+
+test('F38: Schalter Rollenfahrten und Medikamente, Krank-Vermerk bleibt, „leicht erkältet“ zählt wie krank', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a); const d = k => a.$(`iso(${k})`);
+  const ids = [-12, -9, -6].map((k, j) => v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(k)), 'r' + j + '.fit')); a.$(`S.vo2r['${ids[0]}'].in = 1`);
+  ok(a.$('vo2rSum().tr'), 'Trend mit Rolle');
+  a.w.vo2rOptTog('noIn'); eq(v2rOf(a, ids[0]).x, 'inoff', 'Rolle herausgenommen'); eq(a.$('vo2rSum().tr'), null, 'nur noch 2 Fahrten'); eq(a.$('S.vo2rOpt.noIn'), true, 'in S, also in der Sicherung');
+  a.w.vo2rOptTog('noIn'); eq(a.$('S.vo2rOpt.noIn'), undefined); ok(a.$('vo2rSum().tr'), 'wieder mit Rolle');
+  a.w.vo2rOptTog('med'); eq(v2rOf(a, ids[1]).x, 'med'); eq(a.$('vo2rSum().tr'), null); eq(a.$("vo2rChart(iso(-90), 'rel')"), null, 'keine Punkte im Verlauf');
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(40); let t = a.text(); ok(/Ausgeschaltet: Dein Puls wird nach deiner Angabe durch Medikamente beeinflusst/.test(t) && /Ärztin oder Arzt/.test(t), 'Hinweis Medikamente');
+  a.w.vo2rOptTog('med'); ok(a.$('vo2rSum().tr'));
+  /* leicht erkältet gestern: Fahrt heute zählt nicht, Vermerk bleibt nach Ende der Woche */
+  const i = a.$('todayIdx()'); ok(i > 0); a.$(`S.plan[${i - 1}].feel = 'neck'`);
+  const sk = v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(0)), 'erkaeltet.fit'); eq(v2rOf(a, sk).x, 'sick'); a.$(`S.plan[${i - 1}].feel = ''; delete S.vo2r['${sk}'].sk`);
+  eq(v2rOf(a, sk).x, '', 'ohne Vermerk wieder gültig'); a.$(`S.plan[${i - 1}].feel = 'sick'`); a.$('vo2rList()'); a.$(`S.plan[${i - 1}].feel = ''`); eq(a.$(`S.vo2r['${sk}'].sk`), 1, 'beim Rechnen vermerkt'); eq(v2rOf(a, sk).x, 'sick', 'bleibt ausgeschlossen');
+  a.noErrors();
+});
+
+test('F38: Rückrechnung älterer Garmin-Fahrten (6 Monate, neueste zuerst, höchstens 150, Drosselung, Abbruch, Fehler)', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a); a.$('cheerShow = null');
+  a.w.localStorage.setItem('relentless.garmin.key', 'TESTSCHLUESSEL');
+  a.$("S.gm = {mode:'web', ok:true, last:new Date().toISOString()}; gmCall = async () => ({activities:[]}); VO2RF.pause = 0; VO2RF.waitF = .001");
+  /* Archiv: 5 passende Fahrten, dazu ohne Puls, ohne Leistung, zu kurz, älter als 6 Monate, ohne Garmin-ID */
+  a.$(`S.arch = [[-40, 1], [-30, 2], [-20, 3], [-10, 4], [-5, 5]].map(([k, g]) => ({id:'i' + g, d:iso(k), n:'F' + g, km:40, hm:200, sec:3000, np:200, hr:140, gid:String(g), imp:1}))
+    .concat([{id:'i6', d:iso(-8), n:'ohne Puls', sec:3000, np:200, gid:'6'}, {id:'i7', d:iso(-7), n:'ohne Watt', sec:3000, np:0, hr:140, gid:'7'}, {id:'i8', d:iso(-6), n:'kurz', sec:1800, np:200, hr:140, gid:'8'},
+      {id:'i9', d:iso(-200), n:'alt', sec:3000, np:200, hr:140, gid:'9'}, {id:'i10', d:iso(-4), n:'Datei', sec:3000, np:200, hr:140}]); save()`);
+  eq(a.$('vo2rTodo().map(x => x.id)'), ['i5', 'i4', 'i3', 'i2', 'i1'], 'nur Fahrten mit Rohdaten, neueste zuerst');
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(40); let t = a.text(); ok(/Trend aus Fahrten/.test(t) && /5 Fahrten der letzten 6 Monate mit Wattmesser, Puls und mindestens 40 Minuten sind noch nicht ausgewertet/.test(t), 'Bereich mit Angebot: ' + t.slice(0, 200));
+  ok(a.w.document.querySelector('#fx-v2rfill button.btn'), 'Knopf');
+  /* Garmin-Attrappe: Fahrt gid 3 ohne Aufzeichnung, gid 2 beim ersten Mal gedrosselt */
+  a.w.__got = []; a.w.__rated = 0;
+  a.$(`gmRide = async g => { __got.push(g.id); if (g.id === '2' && !__rated) { __rated = 1; throw new GmErr('rate', 'Zu viele Abrufe'); } const day = S.arch.find(x => x.gid === g.id).d;
+    if (g.id === '3') return {r:{pts:[], ses:[], name:'x'}, name:'x'}; const pts = []; let t = Math.round(Date.parse(day + 'T08:00:00') / 1000); for (let i = 0; i < 2700; i++) pts.push({t:t++, p:200, h:140, c:90}); pts.push({t, p:null, h:null}); return {r:{pts, ses:[], name:'x'}, name:'x'}; }`);
+  a.$('VO2RF.max = 3'); await a.w.vo2rFillGo();
+  eq(a.$('__got'), ['5', '4', '3'], 'höchstens VO2RF.max je Lauf'); eq(a.$('vo2rFill.ok'), 3); eq(a.$('vo2rFill.v'), 2, 'zwei mit Abschnitten'); eq(a.$("S.vo2r.i3.x"), 'nodata', 'ohne Aufzeichnung vermerkt');
+  a.$('VO2RF.max = 150'); eq(a.$('vo2rTodo().map(x => x.id)'), ['i2', 'i1'], 'Rest beim nächsten Lauf');
+  await a.w.vo2rFillGo(); eq(a.$('__got').slice(3), ['2', '2', '1'], 'nach Drosselung erneut versucht'); eq(a.$('vo2rTodo().length'), 0); ok(a.$('vo2rSum().tr'), 'Trend aus den nachgerechneten Fahrten');
+  eq(a.$('vo2rFill.fail'), 0);
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(30); t = a.text(); ok(/Zuletzt: 2 Fahrten ausgewertet, 2 davon mit gleichmäßigen Abschnitten/.test(t), 'Ergebnis');
+  /* Abbruch mitten im Lauf und Fehler der Verbindung */
+  a.$(`S.arch = S.arch.concat([1, 2, 3, 4].map(k => ({id:'j' + k, d:iso(-50 - k), n:'J', sec:3000, np:200, hr:140, gid:'j' + k})))`);
+  a.$(`gmRide = async g => { __got.push(g.id); if (g.id === 'j2') vo2rFillStop(); const pts = []; let t = Math.round(Date.parse(iso(-50) + 'T08:00:00') / 1000); for (let i = 0; i < 2700; i++) pts.push({t:t++, p:200, h:140}); return {r:{pts, ses:[], name:'x'}, name:'x'}; }`);
+  a.w.__got = []; await a.w.vo2rFillGo(); eq(a.$('__got'), ['j1', 'j2'], 'nach Abbrechen keine weitere Fahrt'); eq(a.$('vo2rFill.run'), 0); ok(a.$("vo2rHas('j2')"), 'laufende Fahrt noch übernommen');
+  a.$(`gmRide = async g => { __got.push(g.id); throw new GmErr('auth', 'Garmin-Anmeldung abgelaufen.'); }`); a.w.__got = []; await a.w.vo2rFillGo();
+  eq(a.$('__got'), ['j3'], 'Verbindungsfehler bricht ab'); eq(a.$('vo2rFill.err'), 'Garmin-Anmeldung abgelaufen.'); eq(a.$('vo2rFill.fail'), 1); eq(a.$('vo2rTodo().length'), 2, 'nicht ladbare kommen wieder');
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(30); ok(/Garmin-Anmeldung abgelaufen/.test(a.text()));
+  /* läuft schon ein anderer Abruf, startet die Rückrechnung nicht */
+  a.$('impMm = {i:0, n:1}'); a.w.__got = []; await a.w.vo2rFillGo(); eq(a.$('__got'), [], 'nicht gleichzeitig mit anderem Abruf'); a.$('render()'); ok(/Gerade lädt die App schon andere Fahrten/.test(a.text())); a.$('impMm = null');
+  await a.en(); a.$("navGo('state'); goPg('svo2')"); await a.tick(30); ok(/Analyse older rides/.test(a.text()) && /2 rides of the last 6 months/.test(a.text()), 'Englisch');
+  a.noErrors();
+});
+
+test('F38: Verlauf – Ausreißer bestimmen den Ausschnitt nicht; Veränderung erst ab 3 und 5 %; Hauptzahl ohne andere Werte', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a); const d = k => a.$(`iso(${k})`);
+  [-40, -36, -33, -12, -9, -6].forEach((k, j) => v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(k)), 'z' + j + '.fit'));
+  v2rUp(a, v2rRide([[2700, 280, 140, 140]], d(-3)), 'aus.fit'); ok(a.$('vo2rList().some(o => o.x === "out")'), 'Ausreißer');
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(40);
+  const ys = a.$(`[...document.querySelectorAll('#fx-v2hist svg.v2-ch text.tx')].map(e => +e.textContent).filter(v => v > 0)`); ok(Math.max(...ys) < 62, 'Achse nicht bis zum Ausreißer (~69): ' + ys.join(','));
+  ok(a.w.document.querySelector('circle.v2-Tout'), 'Ausreißer am Rand sichtbar');
+  ok(/Gegenüber vor 4 Wochen: unverändert im Rahmen der Genauigkeit/.test(a.text()), 'unverändert');
+  /* Hauptzahl oben: ohne Labor-, Test- oder Garmin-Wert steht der Trend dort */
+  const top = () => a.$("document.getElementById('fx-v2').textContent"); ok(/Deine VO2max · Trend aus Fahrten/.test(top()) && /Noch kein Test-, Labor- oder Garmin-Wert/.test(top()), 'Trend als Hauptzahl: ' + top().slice(0, 120));
+  v2E(a, 'G', d(-5), 50); a.$('render()'); await a.tick(20); ok(!/Trend aus Fahrten/.test(top()), 'mit Garmin-Wert in 12 Wochen: eigene Zeile');
+  /* Anstieg um 10 %: Veränderung wird gemeldet */
+  const b = await boot(); makePlan(b, v2rDat()); v2rMo(b); const e = k => b.$(`iso(${k})`);
+  [-40, -36, -33].forEach((k, j) => v2rUp(b, v2rRide([[2700, 200, 140, 140]], e(k)), 'y' + j + '.fit')); [-12, -9, -6, -3].forEach((k, j) => v2rUp(b, v2rRide([[2700, 220, 140, 140]], e(k)), 'w' + j + '.fit'));
+  const ch = b.$('vo2rChg(vo2rList())'); ok(ch && ch.sig && ch.d > 3, 'Veränderung: ' + JSON.stringify(ch)); b.$("navGo('state'); goPg('svo2')"); await b.tick(30); ok(/Gegenüber vor 4 Wochen: etwa \+\d+ ml\/kg\/min/.test(b.text()));
+  a.noErrors(); b.noErrors();
+});
+
+test('F38: Hinweis „Wusstest du schon?“ führt direkt zum Bereich „Trend aus Fahrten“, Englisch', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a);
+  const dy = a.$(`DYK.find(t => t[0] === 'v2r')`); ok(dy && dy[3] === "dykSet('svo2','v2r')", 'Eintrag mit Anker'); eq(a.$(`DYK.find(t => t[0] === 'v2r')[4]()`), false, 'ohne Daten und ohne Garmin kein Hinweis');
+  v2rUp(a, v2rRide([[2700, 200, 140, 140]], a.$('iso(-2)'))); ok(a.$(`DYK.find(t => t[0] === 'v2r')[4]()`), 'mit Fahrt sichtbar');
+  a.$(`dykGo(DYK.find(t => t[0] === 'v2r')[3])`); await a.tick(200); eq(a.$('pg'), 'svo2'); ok(a.w.document.getElementById('fx-v2r'), 'Bereich da'); eq(a.$('pgFrom'), 'state', 'Zurück führt zu Fortschritt');
+  ok(a.$(`document.getElementById('fx-v2r').classList.contains('dyk-hit')`), 'Bereich hervorgehoben');
+  a.w.__iMiss = new Map(); await a.en(); a.$(`dykPut({cur:'v2r', day:iso(0), seen:[]})`); a.w.navGo('home'); await a.tick(40); const t = a.text();
+  if (/Wusstest du schon|Did you know/.test(t)) ok(/now also estimates your VO2max from steady rides/.test(t) && /View trend/.test(t), 'Hinweis auf Englisch');
+  eq([...a.w.__iMiss.keys()].filter(k => /gleichmäßigen Fahrten|Trend ansehen/.test(k)), [], 'keine fehlenden Übersetzungen');
+  a.noErrors();
+});
+
+/* ---------- F38 Korrekturen nach Fachabnahme ---------- */
+/* Brustgurt-Simulation wie kad.py: Puls um hb mit kleinem Rauschen, Trittfrequenz um cb ± csd, beide unabhängig (Zufall mit Startwert) */
+function v2rSim(hb, cb, csd, n, seed){
+  let x = seed >>> 0; const u = () => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return (x + .5) / 4294967296; }, g = () => Math.sqrt(-2 * Math.log(u())) * Math.cos(2 * Math.PI * u());
+  const h = [], c = []; let hr = hb, cd = cb; for (let i = 0; i < n; i++) { hr += .05 * (hb - hr) + .5 * g(); cd += .3 * (cb - cd) + csd * .6 * g(); h.push(Math.round(hr)); c.push(Math.round(cd)); } return {h, c};
+}
+test('F38 Korrektur: Puls nah an der Trittfrequenz, aber unabhängig (Brustgurt) bleibt gültig; echtes Kleben fällt weg', async () => {
+  const a = await boot(); makePlan(a, v2rDat({hrMax:140})); v2rMo(a); const d = k => a.$(`iso(${k})`);
+  [[96, 92, 4, 1], [95, 92, 3, 2], [97, 92, 4, 3]].forEach(([hb, cb, csd, sd], j) => {
+    const {h, c} = v2rSim(hb, cb, csd, 3600, sd), id = v2rUp(a, v2rRideF(3600, i => [120, h[i], c[i]], d(-10 + j)), 'gurt' + j + '.fit'), o = v2rOf(a, id);
+    ok(o.x !== 'hrq' && o.x === '', `Puls ${hb} bei Trittfrequenz ${cb}±${csd}: gültig (${o.x}, ${o.n} Abschnitte)`);
+    const k = a.$(`(() => { const h = ${JSON.stringify(h)}, c = ${JSON.stringify(c)}; return vo2rCad(h, c, 0, h.length); })()`); ok(k.lk > .3 * k.nc && k.r < .6, `oft nah (${Math.round(k.lk / k.nc * 100)} %), aber r ${k.r.toFixed(2)}`);
+  });
+  /* Sensor folgt dem Tritt: Puls = Trittfrequenz + kleiner Versatz, gemeinsam schwankend */
+  const {c} = v2rSim(96, 92, 4, 3600, 9), lk = v2rUp(a, v2rRideF(3600, i => [120, c[i] + (i % 7 === 0 ? 1 : 0), c[i]], d(-3)), 'klebt.fit'); eq(v2rOf(a, lk).x, 'hrq', 'echtes Kleben');
+  a.noErrors();
+});
+
+test('F38 Korrektur: Drift nur im ausgewerteten Teil, Texte, Hinweis Rollenfahrten im Trend mit Sprung zum Schalter', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); const d = k => a.$(`iso(${k})`);
+  /* 90 min gleichmäßig, danach 60 min mit stark steigendem Puls: Drift liegt nach Minute 90 und zählt nicht */
+  const late = v2rUp(a, v2rRide([[5400, 200, 140, 140], [3600, 200, 140, 175]], d(-20)), 'spaet.fit'); ok(!(a.$(`S.vo2r['${late}'].dec`) > 8), 'Drift nach Minute 90 ohne Einfluss'); eq(v2rOf(a, late).x, '');
+  const early = v2rUp(a, v2rRide([[4800, 200, 125, 165]], d(-19)), 'frueh.fit'); eq(v2rOf(a, early).x, 'dec', 'Drift im ausgewerteten Teil');
+  const ids = [-12, -8, -4].map((k, j) => v2rUp(a, v2rRide([[2700, 200, 140, 140]], d(k)), 'k' + j + '.fit')); a.$(`S.vo2r['${ids[2]}'].in = 1`);
+  a.$("navGo('state'); goPg('svo2')"); await a.tick(40); let t = a.text();
+  ok(/Letzte Fahrt am .*: zählt zum Trend\./.test(t), 'Einzelfahrt ohne Zahl'); ok(/Ähnlich arbeitet auch Garmin\./.test(a.$("document.getElementById('fx-v2r').textContent")));
+  ok(/Ist dein Ruhepuls niedriger, liegt die Schätzung eher zu hoch\./.test(t), 'Ruhepuls angenommen: Richtung');
+  /* Richtung fachlich: angenommene 60 statt echter 50 → höherer Wert */
+  ok(a.$('vo2rCalc(200, 140, 75, 185, 60)') > a.$('vo2rCalc(200, 140, 75, 185, 50)'), 'mit 60 höher als mit 50');
+  ok(/Im Trend stecken Rollenfahrten/.test(t), 'sichtbare Zeile'); const b = a.w.document.querySelector('#fx-v2rin button'); ok(b && b.getBoundingClientRect().height >= 44, 'Knopf mindestens 44 pt');
+  a.w.vo2rInGo(); await a.tick(150); ok(a.$("document.getElementById('fx-v2ropt').open"), 'Einstellungen aufgeklappt'); eq(a.$('document.activeElement && document.activeElement.id'), 'v2rOpt-noIn', 'Schalter fokussiert');
+  a.w.vo2rOptTog('noIn'); await a.tick(20); ok(!/Im Trend stecken Rollenfahrten/.test(a.text()), 'ohne Rollenfahrten kein Hinweis'); a.w.vo2rOptTog('noIn');
+  a.$('S.p.hrMax = 0; if (S.d) S.d.hrMax = 0; render()'); await a.tick(20); ok(/Einstellungen → Herzfrequenz und Leistungsmesser/.test(a.text()), 'richtiger Seitenname');
+  a.$('S.p.hrMax = 185; render()'); await a.en(); a.$("navGo('state'); goPg('svo2')"); await a.tick(30); t = a.text();
+  ok(/counts towards the trend/.test(t) && /The trend includes indoor rides/.test(t) && /Set indoor rides/.test(t) && /tends to be too high/.test(t), 'Englisch');
+  a.noErrors();
+});

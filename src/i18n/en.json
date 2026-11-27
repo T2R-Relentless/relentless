@@ -7668,5 +7668,7 @@
 "Vorheriger Stand gesichert (Vom Coach vorgeschlagen: Heute etwas leichter).": "Previous state saved (suggested by the coach: a bit easier today).",
 "Vorheriger Stand gesichert (Vom Coach vorgeschlagen: Heute Ruhetag).": "Previous state saved (suggested by the coach: rest day today).",
 "Vorheriger Stand gesichert (Vom Coach vorgeschlagen: Erholungswoche einlegen).": "Previous state saved (suggested by the coach: add a recovery week).",
-"Vorheriger Stand gesichert (Vom Coach vorgeschlagen: Wiedereinstieg einplanen).": "Previous state saved (suggested by the coach: plan a return)."
+"Vorheriger Stand gesichert (Vom Coach vorgeschlagen: Wiedereinstieg einplanen).": "Previous state saved (suggested by the coach: plan a return).",
+"Unter Fortschritt → VO{0}max schätzt die App deine VO{1}max jetzt auch aus gleichmäßigen Fahrten mit Wattmesser und Puls, als Trend mit Spanne über mehrere Wochen. Ältere Garmin-Fahrten der letzten {2} Monate rechnet sie auf Wunsch nach.": "Under Progress → VO{0}max the app now also estimates your VO{1}max from steady rides with power meter and heart rate, as a trend with a range over several weeks. On request it recalculates older Garmin rides of the last {2} months.",
+"Trend ansehen": "View trend"
 }

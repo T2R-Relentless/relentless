@@ -176,7 +176,7 @@ async function impMmRun(){
   let tries = 0;
   for (let k = 0; k < L.length && !impMm.stop; k++) {
     const a = L[k];
-    try { const {r} = await gmRide({id:a.gid, n:a.n}); if (!(S.mm && S.mm[a.id] && S.mm[a.id].s === 'f')) { const rec = mmCalc(r); if (rec) mmPut(a.id, rec, {d:a.d, n:a.n}); else S.mm[a.id] = {...(S.mm[a.id] || {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a'}), nf:1}; } if (impVo2(a, r)) impMm.v++; tries = 0; }
+    try { const {r} = await gmRide({id:a.gid, n:a.n}); if (!(S.mm && S.mm[a.id] && S.mm[a.id].s === 'f')) { const rec = mmCalc(r); if (rec) mmPut(a.id, rec, {d:a.d, n:a.n}); else S.mm[a.id] = {...(S.mm[a.id] || {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a'}), nf:1}; } if (impVo2(a, r)) impMm.v++; try { if (typeof vo2rKeep === 'function' && !vo2rHas(a.id)) vo2rKeep(a, r); } catch (er) { elog(er); } tries = 0; }
     catch (e) { if (e && e.code === 'rate' && tries < IMP_WAIT.length) { await impSleep(IMP_WAIT[tries++]); k--; continue; } if (e instanceof GmErr && e.code !== 'tool') { impMm.err = e.message; break; } }
     impMm.i = k + 1; if (k % 5 === 4) save(); render(); await impSleep(2000);
   }
