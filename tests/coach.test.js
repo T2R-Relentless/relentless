@@ -55,7 +55,7 @@ test('Alte Sicherung ohne S.coach lädt, Coach bleibt aus; mit Coach bleibt er e
 test('Einstellungen: Schalter, Vorname, Ton; Hinweis springt zum Schalter', async () => {
   const a = await boot({now:coThu}); makePlan(a, coDat({}));
   let t = a.page('settings'); ok(/Persönlicher Coach/.test(t) && /Aus/.test(t), 'Zeile in den Einstellungen');
-  t = a.page('set-coach'); ok(/Coach auf Heute zeigen/.test(t) && /Kumpel mit trockenem Humor/.test(t) && /Frecher Antreiber/.test(t) && /Sachlicher Trainer/.test(t));
+  t = a.page('set-coach'); ok(/Coach auf Heute zeigen/.test(t) && /Kumpel mit trockenem Humor/.test(t) && /Klare Ansage/.test(t) && /Sachlicher Trainer/.test(t));
   ok(a.w.document.getElementById('coOn'), 'Schalter mit Anker #coOn');
   a.w.coSet('name', ' Al<ex> 1 '); eq(a.$('S.coach.name'), 'Alex', 'Vorname gesäubert'); a.w.coSet('ton', 'sachlich'); eq(a.$('S.coach.ton'), 'sachlich'); a.w.coSet('ton', 'quatsch'); eq(a.$('S.coach.ton'), 'sachlich');
   eq(a.$('DYK_AT.coach'), ['set-coach', 'fx-coach', '#coOn']); ok(a.$("DYK.some(x => x[0] === 'coach' && /dykSet\\('settings','coach'\\)/.test(x[3]))"), 'DYK mit Anker');

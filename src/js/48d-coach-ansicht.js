@@ -4,7 +4,7 @@
    Tag, nur per Knopf, mit Schnappschuss und „Rückgängig“ (coTake). Verlauf: höchstens 7 Kurzformen zu je 120 Zeichen.
    Speicher S.coach = {on, name, ton, hist, lv (letzte Variante je Tabelle), alt (Neu formulieren), act (Knopf heute),
    inj {last, ok}, r01 (letzter Tag im ruhigen Modus wegen R0/R1), r10w}. Kein Server, keine Daten nach außen. */
-const CO_TONL = {kumpel:['Kumpel mit trockenem Humor', 'Locker, mit einem Augenzwinkern'], antreiber:['Frecher Antreiber', 'Direkt und fordernd, nie bei Krankheit oder Schmerzen'], sachlich:['Sachlicher Trainer', 'Kurz und nüchtern, mit Begründung']};
+const CO_TONL = {kumpel:['Kumpel mit trockenem Humor', 'Locker, mit einem Augenzwinkern'], antreiber:['Klare Ansage', 'Direkt und fordernd, nie bei Krankheit oder Schmerzen'], sachlich:['Sachlicher Trainer', 'Kurz und nüchtern, mit Begründung']};
 const CO_IC = '<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/>';
 /* Verlauf und Variantenstand für heute festhalten (nur bei Änderung speichern) */
 function coCommit(pk, r, rep){
@@ -46,7 +46,7 @@ function coSet(k, v){
 function coSetRow(){ const c = S.coach || {}; return iaRow('set-coach', 'coach', 'Persönlicher Coach', c.on ? `An · ${CO_TONL[CO_TON.includes(c.ton) ? c.ton : 'kumpel'][0]}` : 'Aus'); }
 function coSetPage(){
   const c = S.coach || {}, on = !!c.on, ton = CO_TON.includes(c.ton) ? c.ton : 'kumpel';
-  return `<section class="panel p-4" id="fx-coach"><p class="text-sm" style="color:var(--mute)">Der Coach schreibt dir auf Heute jeden Tag drei kurze Absätze: was sich bei dir tut, was heute ansteht und einen Spruch. Spricht etwas gegen die Einheit, schlägt er eine Änderung vor. Den Plan ändert er nur, wenn du auf den Knopf tippst, und du kannst es rückgängig machen.</p>
+  return `<section class="panel p-4" id="fx-coach"><p class="text-sm" style="color:var(--mute)">Der Coach schreibt dir jeden Tag auf Heute, was sich bei dir tut und was heute ansteht. Spricht etwas gegen die Einheit, schlägt er eine Änderung vor. Den Plan ändert er nur, wenn du auf den Knopf tippst, und du kannst es rückgängig machen.</p>
     <label class="mt-3 flex items-center gap-3 font-semibold" style="min-height:44px"><input id="coOn" type="checkbox" style="width:22px;height:22px" ${on ? 'checked' : ''} onchange="coSet('on', this.checked)"> Coach auf Heute zeigen</label>
     <div class="mt-3">${field('Vorname (optional)', `<input id="coName" class="inp" maxlength="30" autocomplete="given-name" value="${esc(c.name || '')}" placeholder="z. B. Alex" onchange="coSet('name', this.value)">`)}</div>
     <p class="mt-4 text-sm font-semibold">Ton</p><div class="mt-2 grid gap-2">${CO_TON.map(k => `<button class="feelo${esc(ton === k ? ' on' : '')}" style="min-height:44px" aria-pressed="${ton === k}" onclick="coSet('ton', '${ja(k)}')"><b>${CO_TONL[k][0]}</b><span>${CO_TONL[k][1]}</span></button>`).join('')}</div>
