@@ -255,7 +255,7 @@ function vo2Chart(unit, rng){
   const val = (e, v) => unit === 'abs' ? v * e.basis.weight / 1000 : v, ad = vis.map(e => ({e, a:vo2Adj(e)}));
   const tp = rAny ? vo2rChart(from, unit) : null, tpOn = !!(tp && tp.dots.length);
   if (!ad.length && !tpOn) return `<p class="mt-2 text-sm" style="color:var(--mute)">${wkL('In diesem Zeitraum gibt es keine Werte.', 'No values in this period.')}</p>`;
-  const vs = ad.flatMap(({e, a}) => [val(e, a.lo), val(e, a.hi), val(e, a.v)]).concat(tpOn ? tp.dots.map(q => q.v).concat(tp.line.filter(Boolean).flatMap(q => [q.lo, q.hi])) : []), lo = Math.floor(Math.min(...vs) * .97), hi = Math.ceil(Math.max(...vs) * 1.02), Y = v => T + (H - T - B) * (1 - (v - lo) / Math.max(1, hi - lo));
+  const vs = ad.flatMap(({e, a}) => [val(e, a.lo), val(e, a.hi), val(e, a.v)]).concat(tpOn ? tp.dots.filter(q => !q.out).map(q => q.v).concat(tp.line.filter(Boolean).flatMap(q => [q.lo, q.hi])) : []).concat(tpOn && !ad.length && !tp.dots.some(q => !q.out) && !tp.line.some(Boolean) ? tp.dots.map(q => q.v) : []), lo = Math.floor(Math.min(...vs) * .97), hi = Math.ceil(Math.max(...vs) * 1.02), Y = v => T + (H - T - B) * (1 - (v - lo) / Math.max(1, hi - lo));
   let s = '';
   /* Entlastungswochen als Band, Events (F17) als Linie, FTP-Änderungen (F7) als Marke unten */
   try { const p = S.p; if (p && p.start) (p.recW || []).forEach(w => { const a = addD(p.start, (w - 1) * 7), b = addD(a, 7); if (b < from || a > today) return; s += `<rect x="${Math.max(Lm, X(a)).toFixed(1)}" y="${T}" width="${Math.max(2, X(b) - Math.max(Lm, X(a))).toFixed(1)}" height="${H - T - B}" class="v2-rec"/>`; }); } catch (e) { elog(e); }
@@ -267,7 +267,8 @@ function vo2Chart(unit, rng){
   /* F38: Trend aus Fahrten als Band und Linie, einzelne Fahrten als blasse Punkte ohne Fehlerbalken */
   if (tpOn) { const runs = [[]]; tp.line.forEach(q => { if (q) runs[runs.length - 1].push(q); else if (runs[runs.length - 1].length) runs.push([]); });
     runs.filter(r => r.length).forEach(r => { const up = r.map(q => X(q.d).toFixed(1) + ',' + Y(q.hi).toFixed(1)), dn = r.slice().reverse().map(q => X(q.d).toFixed(1) + ',' + Y(q.lo).toFixed(1)); if (r.length > 1) s += `<path d="M${up.join('L')}L${dn.join('L')}z" class="v2-tb"/>`; s += r.length > 1 ? `<path d="M${r.map(q => X(q.d).toFixed(1) + ',' + Y(q.v).toFixed(1)).join('L')}" class="v2-tr v2-T"/>` : ''; });
-    tp.dots.forEach(q => { s += `<circle cx="${X(q.d).toFixed(1)}" cy="${Y(q.v).toFixed(1)}" r="2.6" class="v2-T${q.out ? ' v2-Tout' : ''}"/>`; }); }
+    /* Ausreißer bestimmen den Ausschnitt nicht (sonst schrumpft der Trend zu einer flachen Linie); außerhalb liegen sie am Rand */
+    tp.dots.forEach(q => { s += `<circle cx="${X(q.d).toFixed(1)}" cy="${Y(Math.max(lo, Math.min(hi, q.v))).toFixed(1)}" r="2.6" class="v2-T${q.out ? ' v2-Tout' : ''}"/>`; }); }
   ad.forEach(({e, a}) => { const k = vo2Kind(e), x = X(e.date), y = Y(val(e, a.v)); if (a.hi > a.lo) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${Y(val(e, a.hi)).toFixed(1)}" y2="${Y(val(e, a.lo)).toFixed(1)}" class="v2-eb"/>`; s += `<g${e.valid ? '' : ' class="v2-inv"'}>${vo2Shape(k, x, y)}<title>${esc(vo2ML(k) + ' ' + mmDay(e.date) + ': ' + vo2N(val(e, a.v), unit === 'abs' ? 2 : 1))}</title></g>`; });
   const mt = []; for (let d = new Date(t0); d.getTime() <= t1; d.setDate(d.getDate() + 1)) if (d.getDate() === 1) mt.push(lstr(d));
   const MON = mmEn() ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'], every = Math.ceil(mt.length / 6);
@@ -290,8 +291,9 @@ function vo2HrWarn(){
 }
 function vo2Page(){
   const L = vo2List(), pk = vo2Pick(L), p = S.p || {}, sex = vo2Sex(), age = typeof ageAt === 'function' ? ageAt(p, iso(0)) : 0;
-  let top;
-  if (!pk) top = `<p class="text-sm" style="color:var(--mute)">${wkL('Noch kein Wert. Fahr einen VO2max-Test (Rampe oder 5 Minuten), trag einen Laborwert ein oder übernimm den Wert deiner Garmin-Uhr. Neue 5-min-Bestwerte aus harten Fahrten schätzt die App auch selbst.', 'No value yet. Ride a VO2max test (ramp or 5 minutes), enter a lab value or take over the value from your Garmin watch. The app also estimates new 5-min bests from hard rides.')}</p>`;
+  let top; const rTop = (!pk || pk.old) && typeof vo2rTop === 'function' ? vo2rTop(pk) : '';
+  if (rTop) top = rTop;
+  else if (!pk) top = `<p class="text-sm" style="color:var(--mute)">${wkL('Noch kein Wert. Fahr einen VO2max-Test (Rampe oder 5 Minuten), trag einen Laborwert ein oder übernimm den Wert deiner Garmin-Uhr. Neue 5-min-Bestwerte aus harten Fahrten schätzt die App auch selbst.', 'No value yet. Ride a VO2max test (ramp or 5 minutes), enter a lab value or take over the value from your Garmin watch. The app also estimates new 5-min bests from hard rides.')}</p>`;
   else { const e = pk.e, a = vo2Adj(e), k = vo2Kind(e), tr = d => { const n = vo2TrendAt(k, iso(0)), o = vo2TrendAt(k, iso(-d)); return n != null && o != null && iso(-d) >= L.filter(x => vo2Kind(x) === k)[0].date ? n - o : null; }, t4 = tr(28), t12 = tr(84), sg = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + vo2N(Math.abs(v));
     const med = vo2Median(age, sex), cyc = sex ? VO2_NORM.cyc[sex] : null, rel = Math.round((a.v / med - 1) * 100);
     top = `<p class="eyebrow">${wkL('Deine VO2max', 'Your VO2max')}${pk.old ? wkL(' (älter als 12 Wochen)', ' (older than 12 weeks)') : ''}</p><p class="mt-1"><span class="hd font-semibold" style="font-size:2.3rem;line-height:1.1">${vo2N(a.v)}</span> <span class="text-sm">ml/kg/min</span>${e.abs ? ` <span class="text-sm" style="color:var(--mute)">· ${vo2N(a.v * e.basis.weight / 1000, 2)} l/min</span>` : ''}</p>

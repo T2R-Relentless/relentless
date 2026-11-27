@@ -62,7 +62,7 @@ function parseFIT(u){
     const d = defs[loc]; if (!d) throw new Error('Die FIT-Datei ist beschädigt.');
     const m = {}; for (const [n, sz, bt] of d.f) { m[n] = rd(o, sz, bt, d.le); o += sz; } o += d.dsz;
     if (comp) { if (ts) { let t2 = (ts - (ts & 31)) + toff; if (t2 < ts) t2 += 32; ts = t2; m[253] = ts; } } else if (m[253] != null) ts = m[253];
-    if (d.g === 20 && m[253] != null) pts.push({t:m[253] + 631065600, d:m[5] != null ? m[5] / 100 : null, a:m[78] != null ? m[78] / 5 - 500 : m[2] != null ? m[2] / 5 - 500 : null, p:m[7], h:m[3], tc:m[13] != null && m[13] < 100 ? m[13] : null, lat:m[0] != null ? m[0] * 180 / 2147483648 : null, lon:m[1] != null ? m[1] * 180 / 2147483648 : null});
+    if (d.g === 20 && m[253] != null) pts.push({t:m[253] + 631065600, d:m[5] != null ? m[5] / 100 : null, a:m[78] != null ? m[78] / 5 - 500 : m[2] != null ? m[2] / 5 - 500 : null, p:m[7], h:m[3], tc:m[13] != null && m[13] < 100 ? m[13] : null, c:m[4] != null && m[4] < 255 ? m[4] : null, lat:m[0] != null ? m[0] * 180 / 2147483648 : null, lon:m[1] != null ? m[1] * 180 / 2147483648 : null});
     else if (d.g === 18) ses.push({sport:m[5], sub:m[6], sec:m[8] != null ? m[8] / 1000 : m[7] != null ? m[7] / 1000 : null, km:m[9] != null ? m[9] / 100000 : null, hm:m[22], np:m[34]});
   }
   return {pts, ses, name:''};

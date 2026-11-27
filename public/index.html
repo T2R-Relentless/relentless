@@ -3502,7 +3502,7 @@ function parseFIT(u){
     const d = defs[loc]; if (!d) throw new Error('Die FIT-Datei ist beschädigt.');
     const m = {}; for (const [n, sz, bt] of d.f) { m[n] = rd(o, sz, bt, d.le); o += sz; } o += d.dsz;
     if (comp) { if (ts) { let t2 = (ts - (ts & 31)) + toff; if (t2 < ts) t2 += 32; ts = t2; m[253] = ts; } } else if (m[253] != null) ts = m[253];
-    if (d.g === 20 && m[253] != null) pts.push({t:m[253] + 631065600, d:m[5] != null ? m[5] / 100 : null, a:m[78] != null ? m[78] / 5 - 500 : m[2] != null ? m[2] / 5 - 500 : null, p:m[7], h:m[3], tc:m[13] != null && m[13] < 100 ? m[13] : null, lat:m[0] != null ? m[0] * 180 / 2147483648 : null, lon:m[1] != null ? m[1] * 180 / 2147483648 : null});
+    if (d.g === 20 && m[253] != null) pts.push({t:m[253] + 631065600, d:m[5] != null ? m[5] / 100 : null, a:m[78] != null ? m[78] / 5 - 500 : m[2] != null ? m[2] / 5 - 500 : null, p:m[7], h:m[3], tc:m[13] != null && m[13] < 100 ? m[13] : null, c:m[4] != null && m[4] < 255 ? m[4] : null, lat:m[0] != null ? m[0] * 180 / 2147483648 : null, lon:m[1] != null ? m[1] * 180 / 2147483648 : null});
     else if (d.g === 18) ses.push({sport:m[5], sub:m[6], sec:m[8] != null ? m[8] / 1000 : m[7] != null ? m[7] / 1000 : null, km:m[9] != null ? m[9] / 100000 : null, hm:m[22], np:m[34]});
   }
   return {pts, ses, name:''};
@@ -6466,7 +6466,7 @@ async function gmRide(g){
   /* Anderer Garmin-Baustein (garmin-personal-mcp): ausgedünnte Aufzeichnung */
   if (!p || !p.records) throw new GmErr('tool', 'Die Fahrt enthält keine Aufzeichnung.');
   const num = v => v == null || v === '' || isNaN(+v) ? null : +v, se = p.session || {}, sp = String(se.sport || '').toLowerCase();
-  const pts = (p.records.samples || []).map(q => ({t:q.timestamp ? Date.parse(q.timestamp) / 1000 : null, d:num(q.distance), a:num(q.enhancedAltitude != null ? q.enhancedAltitude : q.altitude), p:num(q.power), h:num(q.heartRate), tc:num(q.temperature), lat:null, lon:null}));
+  const pts = (p.records.samples || []).map(q => ({t:q.timestamp ? Date.parse(q.timestamp) / 1000 : null, d:num(q.distance), a:num(q.enhancedAltitude != null ? q.enhancedAltitude : q.altitude), p:num(q.power), h:num(q.heartRate), tc:num(q.temperature), c:num(q.cadence), lat:null, lon:null}));
   return {r:{pts, ses:p.session ? [{sport:sp.includes('cycling') ? 2 : sp ? 99 : null, sec:num(se.totalTimerTime), km:se.totalDistance != null ? se.totalDistance / 1000 : null, hm:num(se.totalAscent), np:num(se.normalizedPower)}] : [], name:g.n, ty:g.ty}, name:g.n};
 }
 /* Abgleich: hist = Fahrten für die Auswertung beim Einstieg (90 Tage), man = Fahrten im laufenden Plan (42 Tage, mit Bewertung) */
@@ -8368,7 +8368,7 @@ function vo2Chart(unit, rng){
   const val = (e, v) => unit === 'abs' ? v * e.basis.weight / 1000 : v, ad = vis.map(e => ({e, a:vo2Adj(e)}));
   const tp = rAny ? vo2rChart(from, unit) : null, tpOn = !!(tp && tp.dots.length);
   if (!ad.length && !tpOn) return `<p class="mt-2 text-sm" style="color:var(--mute)">${wkL('In diesem Zeitraum gibt es keine Werte.', 'No values in this period.')}</p>`;
-  const vs = ad.flatMap(({e, a}) => [val(e, a.lo), val(e, a.hi), val(e, a.v)]).concat(tpOn ? tp.dots.map(q => q.v).concat(tp.line.filter(Boolean).flatMap(q => [q.lo, q.hi])) : []), lo = Math.floor(Math.min(...vs) * .97), hi = Math.ceil(Math.max(...vs) * 1.02), Y = v => T + (H - T - B) * (1 - (v - lo) / Math.max(1, hi - lo));
+  const vs = ad.flatMap(({e, a}) => [val(e, a.lo), val(e, a.hi), val(e, a.v)]).concat(tpOn ? tp.dots.filter(q => !q.out).map(q => q.v).concat(tp.line.filter(Boolean).flatMap(q => [q.lo, q.hi])) : []).concat(tpOn && !ad.length && !tp.dots.some(q => !q.out) && !tp.line.some(Boolean) ? tp.dots.map(q => q.v) : []), lo = Math.floor(Math.min(...vs) * .97), hi = Math.ceil(Math.max(...vs) * 1.02), Y = v => T + (H - T - B) * (1 - (v - lo) / Math.max(1, hi - lo));
   let s = '';
   /* Entlastungswochen als Band, Events (F17) als Linie, FTP-Änderungen (F7) als Marke unten */
   try { const p = S.p; if (p && p.start) (p.recW || []).forEach(w => { const a = addD(p.start, (w - 1) * 7), b = addD(a, 7); if (b < from || a > today) return; s += `<rect x="${Math.max(Lm, X(a)).toFixed(1)}" y="${T}" width="${Math.max(2, X(b) - Math.max(Lm, X(a))).toFixed(1)}" height="${H - T - B}" class="v2-rec"/>`; }); } catch (e) { elog(e); }
@@ -8380,7 +8380,8 @@ function vo2Chart(unit, rng){
   /* F38: Trend aus Fahrten als Band und Linie, einzelne Fahrten als blasse Punkte ohne Fehlerbalken */
   if (tpOn) { const runs = [[]]; tp.line.forEach(q => { if (q) runs[runs.length - 1].push(q); else if (runs[runs.length - 1].length) runs.push([]); });
     runs.filter(r => r.length).forEach(r => { const up = r.map(q => X(q.d).toFixed(1) + ',' + Y(q.hi).toFixed(1)), dn = r.slice().reverse().map(q => X(q.d).toFixed(1) + ',' + Y(q.lo).toFixed(1)); if (r.length > 1) s += `<path d="M${up.join('L')}L${dn.join('L')}z" class="v2-tb"/>`; s += r.length > 1 ? `<path d="M${r.map(q => X(q.d).toFixed(1) + ',' + Y(q.v).toFixed(1)).join('L')}" class="v2-tr v2-T"/>` : ''; });
-    tp.dots.forEach(q => { s += `<circle cx="${X(q.d).toFixed(1)}" cy="${Y(q.v).toFixed(1)}" r="2.6" class="v2-T${q.out ? ' v2-Tout' : ''}"/>`; }); }
+    /* Ausreißer bestimmen den Ausschnitt nicht (sonst schrumpft der Trend zu einer flachen Linie); außerhalb liegen sie am Rand */
+    tp.dots.forEach(q => { s += `<circle cx="${X(q.d).toFixed(1)}" cy="${Y(Math.max(lo, Math.min(hi, q.v))).toFixed(1)}" r="2.6" class="v2-T${q.out ? ' v2-Tout' : ''}"/>`; }); }
   ad.forEach(({e, a}) => { const k = vo2Kind(e), x = X(e.date), y = Y(val(e, a.v)); if (a.hi > a.lo) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${Y(val(e, a.hi)).toFixed(1)}" y2="${Y(val(e, a.lo)).toFixed(1)}" class="v2-eb"/>`; s += `<g${e.valid ? '' : ' class="v2-inv"'}>${vo2Shape(k, x, y)}<title>${esc(vo2ML(k) + ' ' + mmDay(e.date) + ': ' + vo2N(val(e, a.v), unit === 'abs' ? 2 : 1))}</title></g>`; });
   const mt = []; for (let d = new Date(t0); d.getTime() <= t1; d.setDate(d.getDate() + 1)) if (d.getDate() === 1) mt.push(lstr(d));
   const MON = mmEn() ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] : ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'], every = Math.ceil(mt.length / 6);
@@ -8403,8 +8404,9 @@ function vo2HrWarn(){
 }
 function vo2Page(){
   const L = vo2List(), pk = vo2Pick(L), p = S.p || {}, sex = vo2Sex(), age = typeof ageAt === 'function' ? ageAt(p, iso(0)) : 0;
-  let top;
-  if (!pk) top = `<p class="text-sm" style="color:var(--mute)">${wkL('Noch kein Wert. Fahr einen VO2max-Test (Rampe oder 5 Minuten), trag einen Laborwert ein oder übernimm den Wert deiner Garmin-Uhr. Neue 5-min-Bestwerte aus harten Fahrten schätzt die App auch selbst.', 'No value yet. Ride a VO2max test (ramp or 5 minutes), enter a lab value or take over the value from your Garmin watch. The app also estimates new 5-min bests from hard rides.')}</p>`;
+  let top; const rTop = (!pk || pk.old) && typeof vo2rTop === 'function' ? vo2rTop(pk) : '';
+  if (rTop) top = rTop;
+  else if (!pk) top = `<p class="text-sm" style="color:var(--mute)">${wkL('Noch kein Wert. Fahr einen VO2max-Test (Rampe oder 5 Minuten), trag einen Laborwert ein oder übernimm den Wert deiner Garmin-Uhr. Neue 5-min-Bestwerte aus harten Fahrten schätzt die App auch selbst.', 'No value yet. Ride a VO2max test (ramp or 5 minutes), enter a lab value or take over the value from your Garmin watch. The app also estimates new 5-min bests from hard rides.')}</p>`;
   else { const e = pk.e, a = vo2Adj(e), k = vo2Kind(e), tr = d => { const n = vo2TrendAt(k, iso(0)), o = vo2TrendAt(k, iso(-d)); return n != null && o != null && iso(-d) >= L.filter(x => vo2Kind(x) === k)[0].date ? n - o : null; }, t4 = tr(28), t12 = tr(84), sg = v => (v > 0 ? '+' : v < 0 ? '−' : '±') + vo2N(Math.abs(v));
     const med = vo2Median(age, sex), cyc = sex ? VO2_NORM.cyc[sex] : null, rel = Math.round((a.v / med - 1) * 100);
     top = `<p class="eyebrow">${wkL('Deine VO2max', 'Your VO2max')}${pk.old ? wkL(' (älter als 12 Wochen)', ' (older than 12 weeks)') : ''}</p><p class="mt-1"><span class="hd font-semibold" style="font-size:2.3rem;line-height:1.1">${vo2N(a.v)}</span> <span class="text-sm">ml/kg/min</span>${e.abs ? ` <span class="text-sm" style="color:var(--mute)">· ${vo2N(a.v * e.basis.weight / 1000, 2)} l/min</span>` : ''}</p>
@@ -8467,12 +8469,25 @@ function dykVo2(){ goPg('state'); goPg('svo2'); dykFocus('fx-v2'); }
    Gespeichert werden je Fahrt die Rohpaare Watt:Puls (S.vo2r[Fahrt-ID] = {d, s:"W:HF,…", x, in, t, dec, sk, v}). HFmax,
    Ruhepuls und Gewicht wirken erst beim Rechnen: Ändern sie sich, rechnet die App ohne erneutes Laden der Dateien neu.
    Eigener Speicher statt S.vo2 (dort kürzt vo2Add auf 400 Einträge). Kein Einfluss auf vo2TrendAt, FTP, Zonen oder den Plan.
-   Grenzen aus Tabelle 1.2 und Abschnitt 1.5 des Vorschlags. Nicht umgesetzt (offen): unruhiger Puls / Puls „klebt“ an der
-   Trittfrequenz, Erkennung virtueller Leistung ohne Wattmesser, Ruhepuls-Eingabe in den Einstellungen.
+   Grenzen aus Tabelle 1.2 und Abschnitt 1.5 des Vorschlags. Vorsichtige Standards der App (Schritt 2, ohne Messung an echten
+   Dateien; im Zweifel fällt ein Abschnitt oder die Fahrt weg, statt falsch zu zählen):
+   - Puls unruhig: Abschnitt fällt weg bei Streuung um den gleitenden 30-s-Mittelwert über 4 Schlägen (SD) oder mehr als
+     2 Sprüngen von 15 Schlägen und mehr in einer Sekunde. Puls „klebt“ an der Trittfrequenz: mehr als die Hälfte der Sekunden
+     mit |Puls − Trittfrequenz| ≤ 3. Betrifft das mindestens 2 und mindestens ein Drittel der Abschnitte mit gleichmäßiger
+     Leistung oder klebt der Puls in mindestens 30 % der getretenen Sekunden der ganzen Fahrt (mindestens 10 min), zählt die
+     Fahrt nicht ('hrq', nur „Pulsdaten unruhig“, keine Vermutung zur Ursache).
+   - Virtuelle Leistung (Zwift „zPower“ ohne Wattmesser) ist in den Dateien nicht sicher erkennbar (Untertyp 58 und Hersteller
+     Zwift gibt es auch mit Smarttrainer). Rollenfahrten zählen deshalb mit; ein Schalter nimmt sie heraus (S.vo2rOpt.noIn).
+   - Ruhepuls: Median der Morgenwerte (60 Tage, mindestens 5), sonst 60 mit breiterer Spanne und Hinweis.
+   - Krank: „krank“ und „leicht erkältet“ (feel 'sick'/'neck') am Tag und 7 Tage danach; der Vermerk bleibt an der Fahrt (sk),
+     auch wenn die Woche nicht mehr im Plan steht. Ältere Fahrten aus der Historie prüft nur der Ruhepuls am Morgen.
+   - Drift: Entkopplung über die ganze Fahrt wie perfExt (auch wenn sie erst nach Minute 90 entsteht, schließt sie die Fahrt aus).
+   - Medikamente, die den Puls senken: Schalter S.vo2rOpt.med schaltet den Trend ab.
    Die Funktionen dieses Blocks nutzen nur S, elog, wkL, mmKgAt, hrMaxOf, addD, iso, dstr, vo2List, vo2TypeAt, vo2PlanAt,
    MM_GAP und MM_SPIKE (tools/vo2r-messen.js lädt den Block mit Ersatzfunktionen). */
 const VO2R = {minSec:2400, warm:600, seg:300, pre:180, maxSec:5400, kjkg:15, maxSeg:16, cov:.9, npap:1.05, zero:5, preTol:.10,
-  hrLo:.65, hrHi:.90, wkgLo:1.5, wkgHi:4.5, drift:4, dec:8, heat:25, minSegs:4, iqr:.08, vLo:25, vHi:85, out:.15, win:42, nWin:7, nMin:3, rhrAss:60};
+  hrLo:.65, hrHi:.90, wkgLo:1.5, wkgHi:4.5, drift:4, dec:8, heat:25, minSegs:4, iqr:.08, vLo:25, vHi:85, out:.15, win:42, nWin:7, nMin:3, rhrAss:60,
+  hrSd:4, jump:15, jumps:2, cadTol:3, cadRide:.3};
 const vo2rAll = () => { S.vo2r = S.vo2r && typeof S.vo2r === 'object' && !Array.isArray(S.vo2r) ? S.vo2r : {}; return S.vo2r; };
 const vo2rAny = () => !!(S.vo2r && typeof S.vo2r === 'object' && Object.keys(S.vo2r).length);
 function vo2rMed(a){ const s = a.filter(x => isFinite(x)).sort((x, y) => x - y), n = s.length; if (!n) return null; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; }
@@ -8483,13 +8498,14 @@ function vo2rCalc(w, hr, kg, hm, rhr){ if (!(w > 0 && kg > 0 && hm > rhr && hr >
 /* Fahrt auswerten (unabhängig von HFmax und Ruhepuls): 1-s-Reihe ohne Pausen, Ausschlüsse der Fahrt, gleichmäßige 5-min-Abschnitte */
 function vo2rEval(r, kg){
   const pts = ((r && r.pts) || []).filter(q => q && q.t != null && isFinite(q.t)).sort((a, b) => a.t - b.t); if (pts.length < 2) return null;
-  const p = [], h = [], brk = [], tc = [];
+  const p = [], h = [], c = [], brk = [], tc = [];
   for (let k = 1; k < pts.length; k++) {
     const dt = Math.round(pts[k].t - pts[k - 1].t); if (dt <= 0) continue;
     if (dt > MM_GAP) { brk.push(p.length); continue; }
     let w = pts[k - 1].p != null ? pts[k - 1].p : pts[k].p; if (w != null && (!(w >= 0) || w > MM_SPIKE)) w = null;
     const h0 = pts[k - 1].h != null ? pts[k - 1].h : pts[k].h, hh = h0 != null && h0 > 30 && h0 < 230 ? h0 : null;
-    for (let j = 0; j < dt; j++) { p.push(w); h.push(hh); }
+    const c0 = pts[k - 1].c != null ? pts[k - 1].c : pts[k].c, cc = c0 != null && c0 >= 0 && c0 < 250 ? c0 : null;
+    for (let j = 0; j < dt; j++) { p.push(w); h.push(hh); c.push(cc); }
     const t = pts[k].tc; if (t != null && t > -30 && t < 60) tc.push(t);
   }
   const n = p.length, o = {n}; if (n < 60) return null;
@@ -8513,6 +8529,9 @@ function vo2rEval(r, kg){
       if (a && b && a[1] > 0 && b[1] > 0 && b[0] > 0) o.dec = Math.round(((a[0] / a[1]) / (b[0] / b[1]) - 1) * 1000) / 10;
     } }
   if (o.dec > VO2R.dec) { o.x = 'dec'; return o; }
+  /* Puls klebt an der Trittfrequenz (typisch für Messung am Handgelenk): über die ganze Fahrt */
+  { let nc = 0, lk = 0; for (let i = 0; i < n; i++) if (c[i] >= 50 && h[i] != null) { nc++; if (Math.abs(h[i] - c[i]) <= VO2R.cadTol) lk++; }
+    if (nc >= 600 && lk >= VO2R.cadRide * nc) { o.x = 'hrq'; return o; } }
   /* Abschnitte: nach 10 min, bis Minute 90 und bis 15 kJ/kg; 5 min ohne Pause, davor 3 min mit ±10 % Leistung */
   const lim = VO2R.kjkg * (kg || 75) * 1000, end = Math.min(n, VO2R.maxSec), segs = [];
   const brkIn = (a, b) => brk.some(i => i > a && i < b);
@@ -8524,27 +8543,44 @@ function vo2rEval(r, kg){
     let q = 0, q4 = 0, m = 0, run = 0, runMax = 0;
     for (let k = s0; k < e; k++) { q += v[k]; if (k >= s0 + 30) q -= v[k - 30]; if (k >= s0 + 29) { q4 += (q / 30) ** 4; m++; } run = v[k] < 20 ? run + 1 : 0; if (run > runMax) runMax = run; }
     if (runMax > VO2R.zero || Math.pow(q4 / m, .25) / ap > VO2R.npap) return null;
+    if (vo2rHrBad(h, c, s0, e)) return 'bad';
     const h1 = hAv(s0, s0 + 120), h2 = hAv(e - 120, e), ha = hAv(s0, e); if (h1 == null || h2 == null || ha == null || h2 - h1 > VO2R.drift) return null;
     return Math.round(ap) + ':' + Math.round(ha * 10) / 10;
   };
+  let bad = 0;
   for (let s0 = VO2R.warm; s0 + VO2R.seg <= end && segs.length < VO2R.maxSeg;) {
     if (cW[s0 + VO2R.seg] > lim) break;
-    const s = okAt(s0); if (s) { segs.push(s); s0 += VO2R.seg; } else s0 += 30;
+    const s = okAt(s0); if (s === 'bad') { bad++; s0 += VO2R.seg; } else if (s) { segs.push(s); s0 += VO2R.seg; } else s0 += 30;
   }
+  if (bad) o.hb = bad;
+  if (bad >= 2 && bad * 3 >= bad + segs.length) { o.x = 'hrq'; return o; }
   o.s = segs.join(','); return o;
 }
 
+/* Pulsqualität eines Abschnitts [a, b): Streuung um den gleitenden 30-s-Mittelwert, Sprünge, Kleben an der Trittfrequenz */
+function vo2rHrBad(h, c, a, b){
+  let ss = 0, m = 0, jmp = 0, lk = 0;
+  for (let k = a; k < b; k++) { if (h[k] == null) continue;
+    let s = 0, q = 0; for (let j = Math.max(a, k - 15); j < Math.min(b, k + 15); j++) if (h[j] != null) { s += h[j]; q++; }
+    const r = h[k] - s / q; ss += r * r; m++;
+    if (k > a && h[k - 1] != null && Math.abs(h[k] - h[k - 1]) >= VO2R.jump) jmp++;
+    if (c[k] >= 50 && Math.abs(h[k] - c[k]) <= VO2R.cadTol) lk++; }
+  return !m || Math.sqrt(ss / m) > VO2R.hrSd || jmp > VO2R.jumps || lk > .5 * m;
+}
 /* Ruhepuls: Median der Morgenwerte der letzten 60 Tage (mindestens 5), sonst 60 als Annahme (breitere Spanne) */
 function vo2rRhr(){
   const mo = S.mo || {}, a = iso(-60), b = iso(0), L = Object.keys(mo).filter(d => d >= a && d <= b).map(d => mo[d] && mo[d].hr).filter(x => x >= 30 && x <= 120);
   return L.length >= 5 ? {v:vo2rMed(L), ass:false, n:L.length} : {v:VO2R.rhrAss, ass:true, n:L.length};
 }
-const vo2rCtx = () => ({hm:hrMaxOf(), rhr:vo2rRhr()});
-/* Krank-Tage der laufenden und der vorigen Woche (wie 06-sicherheit-belastung); Fahrt am Tag oder bis 7 Tage danach zählt nicht */
+const vo2rOpt = () => (S.vo2rOpt && typeof S.vo2rOpt === 'object' ? S.vo2rOpt : {});
+const vo2rCtx = () => ({hm:hrMaxOf(), rhr:vo2rRhr(), med:!!vo2rOpt().med, noIn:!!vo2rOpt().noIn});
+function vo2rOptTog(k){ if (k !== 'med' && k !== 'noIn') return; S.vo2rOpt = {...vo2rOpt(), [k]:!vo2rOpt()[k]}; if (!S.vo2rOpt[k]) delete S.vo2rOpt[k]; save(); render(); }
+/* Krank-Tage („krank“, „leicht erkältet“) der laufenden und der vorigen Woche; Fahrt am Tag oder bis 7 Tage danach zählt nicht */
+const vo2rIll = f => f === 'sick' || f === 'neck';
 function vo2rSickDays(){
   const out = [];
-  try { if (S.p && S.p.start && S.plan) S.plan.forEach((x, i) => { if (x && x.feel === 'sick') out.push(dstr(i)); });
-    if (S.p && S.p.start && S.prevPlan && S.prevPlan.plan) S.prevPlan.plan.forEach((x, i) => { if (x && x.feel === 'sick') out.push(addD(S.p.start, (S.prevPlan.w - 1) * 7 + i)); }); } catch (e) { elog(e); }
+  try { if (S.p && S.p.start && S.plan) S.plan.forEach((x, i) => { if (x && vo2rIll(x.feel)) out.push(dstr(i)); });
+    if (S.p && S.p.start && S.prevPlan && S.prevPlan.plan) S.prevPlan.plan.forEach((x, i) => { if (x && vo2rIll(x.feel)) out.push(addD(S.p.start, (S.prevPlan.w - 1) * 7 + i)); }); } catch (e) { elog(e); }
   return out;
 }
 const vo2rSick = (day, L) => (L || vo2rSickDays()).some(s => day >= s && day <= addD(s, 7));
@@ -8576,9 +8612,11 @@ const vo2rHas = id => !!(S.vo2r && S.vo2r[id]);
 function vo2rRide(id, rec, ctx, sick){
   const o = {id, d:rec.d, in:!!rec.in, v:null, x:rec.x || '', n:0};
   if (o.x) return o;
+  if (ctx.med) { o.x = 'med'; return o; }
   if (!ctx.hm) { o.x = 'nohm'; return o; }
+  if (rec.in && ctx.noIn) { o.x = 'inoff'; return o; }
   if (vo2rRace(id)) { o.x = 'race'; return o; }
-  if (rec.sk || vo2rSick(rec.d, sick)) { o.x = 'sick'; return o; }
+  if (rec.sk || vo2rSick(rec.d, sick)) { if (!rec.sk) rec.sk = 1; o.x = 'sick'; return o; } /* Vermerk bleibt, auch wenn die Woche aus dem Plan fällt */
   if (vo2rRhrHigh(rec.d)) { o.x = 'rhr'; return o; }
   const kg = mmKgAt(rec.d), hm = ctx.hm, rhr = ctx.rhr.v, vals = []; o.kg = kg;
   String(rec.s || '').split(',').forEach(q => { const [w, hr] = q.split(':').map(Number); if (!(w > 0 && hr > 0)) return; const wkg = w / kg;
@@ -8624,7 +8662,7 @@ function vo2rSum(){
 }
 /* Punkte und Trendlinie für den Verlauf (vo2Chart); unit 'abs' = l/min mit dem Gewicht am Tag */
 function vo2rChart(from, unit){
-  if (!vo2rAny() || !hrMaxOf()) return null;
+  if (!vo2rAny() || !hrMaxOf() || vo2rOpt().med) return null;
   const ctx = vo2rCtx(), L = vo2rList(ctx), cal = vo2rCal(L), U = (v, kg) => unit === 'abs' ? v * kg / 1000 : v, today = iso(0);
   const dots = L.filter(o => o.v != null && (!o.x || o.x === 'out') && o.d >= from).map(o => ({d:o.d, v:U(o.v, o.kg), out:o.x === 'out'}));
   const days = [...new Set(L.filter(o => !o.x && o.v != null).map(o => o.d).concat([today]))].filter(d => d >= from && d <= today).sort(), line = [];
@@ -8636,24 +8674,112 @@ function vo2rWhy(x){
   const M = {nopm:['kein Wattmesser', 'no power meter'], nohr:['keine Pulsdaten', 'no heart-rate data'], short:['zu kurz (unter 40 Minuten)', 'too short (under 40 minutes)'],
     gap:['Puls oder Leistung fehlen zu oft', 'heart rate or power missing too often'], heat:['zu heiß (25 °C oder mehr)', 'too hot (25 °C or more)'],
     dec:['Puls stieg im Verlauf zu stark (Entkopplung über 8 %)', 'heart rate drifted too much (decoupling above 8%)'], race:['Rennen, Test oder Vollgas', 'race, test or all-out'],
-    sick:['krank oder in den 7 Tagen danach', 'sick or within the 7 days after'], rhr:['Ruhepuls am Morgen erhöht', 'resting heart rate raised that morning'],
+    sick:['krank oder erkältet, oder in den 7 Tagen danach', 'sick or with a cold, or within the 7 days after'], rhr:['Ruhepuls am Morgen erhöht', 'resting heart rate raised that morning'],
     few:['zu kurz gleichmäßig (weniger als 4 passende 5-min-Abschnitte)', 'not steady for long enough (fewer than 4 suitable 5-min sections)'],
     spread:['Abschnitte streuen zu stark', 'sections vary too much'], implaus:['Ergebnis unplausibel', 'implausible result'],
-    out:['Ausreißer, mehr als 15 % neben dem Trend', 'outlier, more than 15% away from the trend'], nohm:['keine gemessene HFmax eingetragen', 'no measured max HR set']};
+    out:['Ausreißer, mehr als 15 % neben dem Trend', 'outlier, more than 15% away from the trend'], nohm:['keine gemessene HFmax eingetragen', 'no measured max HR set'],
+    hrq:['Pulsdaten unruhig', 'heart-rate data unsteady'], nodata:['keine verwertbare Aufzeichnung', 'no usable recording'], inoff:['Rollenfahrt, nach deiner Einstellung nicht mitgezählt', 'indoor ride, left out by your setting'],
+    med:['Puls durch Medikamente beeinflusst (deine Einstellung)', 'heart rate affected by medication (your setting)']};
   const m = M[x]; return m ? wkL(m[0], m[1]) : '';
 }
-/* Anzeige auf der Seite VO2max: eigene Zeile „Trend aus Fahrten“ (einfache Form, Schritt 1) */
+/* Veränderung in 4 Wochen: erst ab 3 ml/kg/min und 5 % melden (Vorschlag 1.6; beide Schwellen, damit nichts unterhalb der
+   Genauigkeit als Veränderung erscheint), sonst „unverändert im Rahmen der Genauigkeit“ */
+function vo2rChg(L){
+  const n = vo2rTrendAt(L, iso(0)), o = vo2rTrendAt(L, iso(-28)); if (!n || !o) return null;
+  const d = n.v - o.v; return {d, sig:Math.abs(d) >= Math.max(3, .05 * o.v)};
+}
+/* Rolle und Straße weichen um mehr als 5 % voneinander ab (je mindestens 3 Fahrten in 6 Wochen): Hinweis, kein Abgleich */
+function vo2rInOut(L){
+  const a = addD(iso(0), -VO2R.win), g = L.filter(o => !o.x && o.v != null && o.d > a), i = g.filter(o => o.in).map(o => o.v), r = g.filter(o => !o.in).map(o => o.v);
+  if (i.length < VO2R.nMin || r.length < VO2R.nMin) return null; const mi = vo2rMed(i), mr = vo2rMed(r); return Math.abs(mi - mr) / mr > .05 ? {mi, mr} : null;
+}
+/* Hauptzahl oben auf der Seite, wenn es in 12 Wochen keinen Labor-, Test- oder Garmin-Wert gibt (vo2Page) */
+function vo2rTop(pk){
+  try {
+    if (!vo2rAny() || !hrMaxOf() || vo2rOpt().med) return ''; const s = vo2rSum(); if (!s.tr) return ''; const R = Math.round;
+    const why = pk ? wkL(`Dein letzter Einzelwert ist älter als 12 Wochen (${vo2ML(vo2Kind(pk.e))}, ${mmDay(pk.e.date)}), deshalb steht hier der Trend aus deinen Fahrten.`, `Your last single value is older than 12 weeks (${vo2ML(vo2Kind(pk.e))}, ${mmDay(pk.e.date)}), so the trend from your rides is shown here.`)
+      : wkL('Noch kein Test-, Labor- oder Garmin-Wert, deshalb steht hier der Trend aus deinen Fahrten.', 'No test, lab or Garmin value yet, so the trend from your rides is shown here.');
+    return `<p class="eyebrow">${wkL('Deine VO2max', 'Your VO2max')} · ${wkL('Trend aus Fahrten', 'Trend from rides')}</p><p class="mt-1"><span class="hd font-semibold" style="font-size:2.3rem;line-height:1.1">≈ ${R(s.tr.v)}</span> <span class="text-sm">ml/kg/min</span></p>
+      <p class="mt-1 text-sm">${wkL('Schätzung', 'Estimate')} · ${wkL('wahrscheinlich', 'likely')} ${R(s.tr.lo)}–${R(s.tr.hi)}</p><p class="mt-1 text-xs" style="color:var(--mute)">${why}</p>`;
+  } catch (e) { elog(e); return ''; }
+}
+
+/* ---------- F38 Schritt 2: ältere Fahrten nachrechnen (Garmin, letzte 6 Monate, höchstens 150 je Lauf, abbrechbar) ----------
+   Nur Fahrten, deren Rohdaten die App laden kann (Garmin-ID) und deren Zusammenfassung Leistung, Puls und mindestens 40 min zeigt.
+   Neueste zuerst. Drosselung wie beim Import (IMP_WAIT), andere Fehler brechen den Lauf mit Meldung ab. Fahrten ohne verwertbare
+   Aufzeichnung werden vermerkt (x 'nodata') und nicht erneut geladen; nicht ladbare Fahrten kommen beim nächsten Lauf wieder. */
+const VO2RF = {days:183, max:150, pause:2000, waitF:1};
+let vo2rFill = null;
+function vo2rTodo(){
+  try {
+    if (typeof gmMode !== 'function' || !gmMode() || typeof rideAll !== 'function') return [];
+    const from = iso(-VO2RF.days), have = S.vo2r && typeof S.vo2r === 'object' ? S.vo2r : {};
+    return rideAll().filter(a => a && a.gid && a.id && a.day && a.day >= from && !have[a.id] && +a.np > 0 && (+a.hr > 0 || +a.hrA > 0) && +a.sec >= VO2R.minSec).sort((a, b) => b.day.localeCompare(a.day));
+  } catch (e) { elog(e); return []; }
+}
+const vo2rGmBusy = () => (typeof mmFill !== 'undefined' && mmFill && mmFill.run) || (typeof impMm !== 'undefined' && !!impMm) || (typeof impBusy !== 'undefined' && impBusy);
+async function vo2rFillGo(){
+  if ((vo2rFill && vo2rFill.run) || typeof gmRide !== 'function' || !gmMode() || vo2rGmBusy()) return;
+  const all = vo2rTodo(), L = all.slice(0, VO2RF.max); if (!L.length) return;
+  const F = vo2rFill = {run:1, i:0, n:L.length, more:all.length - L.length, ok:0, v:0, fail:0, wait:0, err:'', stop:0}; render(); let tries = 0;
+  try {
+    for (let k = 0; k < L.length; k++) {
+      if (F.stop || !gmMode()) break; const a = L[k];
+      try {
+        const {r} = await gmRide({id:a.gid, n:a.n || ''}); tries = 0;
+        if (!vo2rHas(a.id)) { const rec = vo2rKeep({id:a.id, day:a.day, in:a.in}, r); if (!rec) vo2rAll()[a.id] = {d:a.day, x:'nodata', ...(a.in ? {in:1} : {})}; else if (!rec.x && rec.s) F.v++; }
+        F.ok++;
+      } catch (e) {
+        if (e && e.code === 'rate' && tries < IMP_WAIT.length) { F.wait = Math.round(IMP_WAIT[tries++] * VO2RF.waitF); render(); await impSleep(F.wait); F.wait = 0; k--; continue; }
+        elog(e); F.fail++; tries = 0;
+        if (typeof GmErr === 'function' && e instanceof GmErr && e.code !== 'tool') { F.err = e.message || wkL('Garmin ist gerade nicht erreichbar.', 'Garmin is not reachable right now.'); break; }
+      }
+      F.i = k + 1; if (F.i % 5 === 0) { try { save(); } catch (e) { elog(e); } } render();
+      if (k < L.length - 1 && !F.stop) await impSleep(VO2RF.pause);
+    }
+  } finally { F.run = 0; F.wait = 0; try { save(); } catch (e) { elog(e); } try { render(); } catch (e) { elog(e); } }
+}
+function vo2rFillStop(){ if (vo2rFill && vo2rFill.run) vo2rFill.stop = 1; render(); }
+function vo2rFillUi(){
+  const F = vo2rFill, btn = (fn, l, main) => `<button class="${main ? 'btn' : 'ghost'} mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="${fn}">${l}</button>`;
+  if (F && F.run) return `<div class="mt-3 pt-3" style="border-top:1px solid var(--line)" id="fx-v2rfill" role="status"><p class="text-sm font-semibold" aria-live="polite">${wkL(`Ältere Fahrten werden ausgewertet: ${F.i} von ${F.n}`, `Analysing older rides: ${F.i} of ${F.n}`)}${F.v ? wkL(`, ${F.v} mit gleichmäßigen Abschnitten`, `, ${F.v} with steady sections`) : ''} …</p>
+    <div class="mm-bar mt-2" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(F.i / Math.max(1, F.n) * 100)}"><i style="width:${Math.round(F.i / Math.max(1, F.n) * 100)}%"></i></div>
+    ${F.wait ? `<p class="mt-1 text-xs" style="color:var(--mute)">${wkL(`Garmin bremst gerade. Die App wartet ${Math.round(F.wait / 1000)} Sek. und macht dann weiter.`, `Garmin is throttling. The app waits ${Math.round(F.wait / 1000)} s and then continues.`)}</p>` : ''}
+    ${F.stop ? `<p class="mt-1 text-xs" style="color:var(--mute)">${wkL('Wird nach dieser Fahrt angehalten …', 'Stopping after this ride …')}</p>` : btn('vo2rFillStop()', wkL('Abbrechen', 'Cancel'))}</div>`;
+  const L = vo2rTodo(), busy = vo2rGmBusy();
+  const done = F ? `<p class="mt-1 text-sm">${wkL(`Zuletzt: ${F.ok} ${F.ok === 1 ? 'Fahrt' : 'Fahrten'} ausgewertet, ${F.v} davon mit gleichmäßigen Abschnitten${F.fail ? `, ${F.fail} nicht ladbar` : ''}${F.stop ? ', abgebrochen' : ''}.`, `Last run: ${F.ok} ${F.ok === 1 ? 'ride' : 'rides'} analysed, ${F.v} of them with steady sections${F.fail ? `, ${F.fail} could not be loaded` : ''}${F.stop ? ', cancelled' : ''}.`)}${F.err ? ' ' + esc(F.err) : ''}</p>` : '';
+  if (!L.length) return done ? `<div class="mt-3 pt-3" style="border-top:1px solid var(--line)" id="fx-v2rfill">${done}</div>` : '';
+  const n = Math.min(L.length, VO2RF.max);
+  return `<div class="mt-3 pt-3" style="border-top:1px solid var(--line)" id="fx-v2rfill"><p class="text-sm font-semibold">${wkL('Ältere Fahrten auswerten', 'Analyse older rides')}</p>
+    <p class="mt-1 text-sm" style="color:var(--mute)">${wkL(`${L.length} ${L.length === 1 ? 'Fahrt' : 'Fahrten'} der letzten 6 Monate mit Wattmesser, Puls und mindestens 40 Minuten ${L.length === 1 ? 'ist' : 'sind'} noch nicht ausgewertet. Die App lädt ${L.length > n ? `die neuesten ${n}` : L.length === 1 ? 'sie' : 'sie einzeln'} von Garmin, etwa 2 Sek. je Fahrt. Du kannst jederzeit abbrechen und später weitermachen.`, `${L.length} ${L.length === 1 ? 'ride' : 'rides'} of the last 6 months with power meter, heart rate and at least 40 minutes ${L.length === 1 ? 'has' : 'have'} not been analysed yet. The app loads ${L.length > n ? `the newest ${n}` : L.length === 1 ? 'it' : 'them one by one'} from Garmin, about 2 s per ride. You can cancel at any time and continue later.`)}</p>${done}
+    ${busy ? `<p class="mt-1 text-xs" style="color:var(--mute)">${wkL('Gerade lädt die App schon andere Fahrten von Garmin. Danach geht es hier weiter.', 'The app is already loading other rides from Garmin. You can continue here afterwards.')}</p>` : btn('vo2rFillGo()', wkL('Ältere Fahrten auswerten', 'Analyse older rides'), true)}</div>`;
+}
+
+/* Anzeige auf der Seite VO2max: Bereich „Trend aus Fahrten“ (Trend, Veränderung, letzte Fahrt, Nachrechnen, Einstellungen, Erklärung) */
 function vo2rUi(){
   try {
-    if (!vo2rAny()) return '';
-    const box = b => `<section class="panel mt-3 p-4" id="fx-v2r"><p class="hd text-lg font-semibold">${wkL('Trend aus Fahrten', 'Trend from rides')}</p>${b}</section>`;
+    const fill = vo2rFillUi(); if (!vo2rAny() && !fill) return '';
+    const O = vo2rOpt(), muted = t => `<p class="mt-1 text-xs" style="color:var(--mute)">${t}</p>`, chk = (k, on, l) => `<label class="mt-1 flex items-center gap-2 text-sm" style="min-height:44px"><input type="checkbox" ${on ? 'checked' : ''} onchange="vo2rOptTog('${k}')" style="width:22px;height:22px;flex:none">${l}</label>`;
+    const opts = `<details class="mt-3" id="fx-v2ropt"${O.med || O.noIn ? ' open' : ''}><summary class="cursor-pointer text-sm" style="color:var(--teal);min-height:44px;display:flex;align-items:center">${wkL('Einstellungen für den Trend', 'Settings for the trend')}</summary>
+      ${chk('noIn', !O.noIn, wkL('Rollenfahrten mitzählen', 'Count indoor rides'))}${muted(wkL('Smarttrainer und Wattmesser auf der Rolle zählen als Wattmesser. Leistung, die nur aus der Rollengeschwindigkeit geschätzt ist (z. B. Zwift „zPower“), erkennt die App nicht sicher. Fährst du so, nimm die Rollenfahrten heraus.', 'Smart trainers and power meters on the trainer count as power meters. Power estimated only from trainer speed (e.g. Zwift “zPower”) cannot be detected reliably. If you ride like that, leave indoor rides out.'))}
+      ${chk('med', !!O.med, wkL('Mein Puls wird durch Medikamente beeinflusst', 'My heart rate is affected by medication'))}${muted(wkL('Dann schaltet die App den Trend aus Fahrten ab: Pulsbasierte Schätzungen sind dann nicht verwertbar. Bei Fragen zu Medikamenten und Training: Ärztin oder Arzt.', 'The app then switches the trend from rides off: heart-rate based estimates are not usable then. For questions about medication and training: ask your doctor.'))}</details>`;
+    const info = `<details class="mt-2 text-xs" style="color:var(--mute)"><summary class="cursor-pointer text-sm" style="color:var(--teal);min-height:44px;display:flex;align-items:center">${wkL('Wie wird das berechnet?', 'How is this calculated?')}</summary>
+      <p class="mt-1">${wkL('Die App vergleicht in gleichmäßigen Abschnitten deiner Fahrten Watt und Puls und rechnet hoch, wie viel Sauerstoff du bei deinem höchsten Puls (HFmax) aufnehmen würdest. So macht es auch Garmin.', 'The app compares power and heart rate in steady sections of your rides and extrapolates how much oxygen you would take up at your highest heart rate (max HR). Garmin works the same way.')}</p>
+      <p class="mt-1">${wkL('Eine einzelne Fahrt sagt wenig. Hitze, Müdigkeit, Koffein oder Stress verschieben den Puls. Aussagekräftig ist nur der Verlauf über Wochen: der Median der letzten 7 passenden Fahrten in 6 Wochen.', 'A single ride says little. Heat, fatigue, caffeine or stress shift your heart rate. Only the course over weeks is meaningful: the median of the last 7 suitable rides within 6 weeks.')}</p>
+      <p class="mt-1">${wkL('Es zählen nur Abschnitte von 5 Minuten mit gleichmäßiger Leistung und ruhigem Puls zwischen 65 und 90 % der HFmax, ab Minute 10 und höchstens bis Minute 90. Fahrten bei Hitze, mit starker Puls-Drift, Rennen und Tests sowie Fahrten in den 7 Tagen nach einem Krank-Tag zählen nicht.', 'Only 5-minute sections with steady power and calm heart rate between 65 and 90% of max HR count, from minute 10 and up to minute 90. Rides in heat, with strong heart-rate drift, races and tests, and rides in the 7 days after a sick day do not count.')}</p>
+      <p class="mt-1">${wkL('Ein Labortest ist genauer. Mit einem Laborwert kalibriert die App den Trend. ml/kg/min heißt Milliliter Sauerstoff je Kilogramm Körpergewicht und Minute. Der Trend ändert nie FTP, Zonen oder deinen Plan.', 'A lab test is more accurate. With a lab value the app calibrates the trend. ml/kg/min means millilitres of oxygen per kilogram of body weight per minute. The trend never changes your FTP, zones or plan.')}</p></details>`;
+    const box = b => `<section class="panel mt-3 p-4" id="fx-v2r"><p class="hd text-lg font-semibold">${wkL('Trend aus Fahrten', 'Trend from rides')}</p>${b}${fill}${opts}${info}</section>`;
+    if (O.med) return box(`<p class="mt-1 text-sm">${wkL('Ausgeschaltet: Dein Puls wird nach deiner Angabe durch Medikamente beeinflusst. Pulsbasierte Schätzungen sind dann nicht verwertbar.', 'Switched off: by your account your heart rate is affected by medication. Heart-rate based estimates are not usable then.')}</p>`);
+    if (!vo2rAny()) return box(`<p class="mt-1 text-sm">${wkL('Noch keine Fahrt ausgewertet. Die App schätzt deine VO2max aus gleichmäßigen Fahrten mit Wattmesser und Puls, als Trend über mehrere Wochen.', 'No ride analysed yet. The app estimates your VO2max from steady rides with power meter and heart rate, as a trend over several weeks.')}</p>`);
     if (!hrMaxOf()) return box(`<p class="mt-1 text-sm">${wkL('Für den Trend braucht die App deine gemessene HFmax (höchster Puls). Eine Schätzung nach Alter ist zu ungenau.', 'For the trend the app needs your measured max HR (highest heart rate). An estimate from age is too inaccurate.')}</p><p class="mt-1 text-sm" style="color:var(--mute)">${wkL('So bestimmst du sie: den höchsten Puls aus einem Rampentest, einem Rennen oder einem harten Anstieg am Ende eines Intervalls ablesen und unter Einstellungen → Training eintragen.', 'How to find it: take the highest heart rate from a ramp test, a race or a hard climb at the end of an interval and enter it under Settings → Training.')}</p>`);
-    const s = vo2rSum(), last = s.L[s.L.length - 1], R = v => Math.round(v);
+    const s = vo2rSum(), last = s.L[s.L.length - 1], R = v => Math.round(v), ch = s.tr ? vo2rChg(s.L) : null, io = vo2rInOut(s.L);
     const lastTx = last ? (last.x ? wkL(`Letzte Fahrt am ${mmDay(last.d)}: keine Schätzung, ${vo2rWhy(last.x)}.`, `Last ride on ${mmDay(last.d)}: no estimate, ${vo2rWhy(last.x)}.`) : wkL(`Letzte Fahrt am ${mmDay(last.d)}: etwa ${R(last.v)}.`, `Last ride on ${mmDay(last.d)}: about ${R(last.v)}.`)) : '';
-    const rhr = s.ctx.rhr.ass ? wkL('Ruhepuls angenommen (60), deshalb ist die Spanne breiter. Mit mindestens 5 Morgenwerten rechnet die App mit deinem Ruhepuls.', 'Resting heart rate assumed (60), so the range is wider. With at least 5 morning values the app uses your resting heart rate.') : wkL(`Ruhepuls ${R(s.ctx.rhr.v)} (Median deiner Morgenwerte).`, `Resting heart rate ${R(s.ctx.rhr.v)} (median of your morning values).`);
-    const main = s.tr ? `<p class="mt-1"><span class="hd font-semibold" style="font-size:1.6rem">≈ ${R(s.tr.v)}</span> <span class="text-sm">ml/kg/min · ${wkL('wahrscheinlich', 'likely')} ${R(s.tr.lo)}–${R(s.tr.hi)}</span></p><p class="text-sm" style="color:var(--mute)">${wkL(`Trend aus ${s.tr.n} gleichmäßigen Fahrten der letzten 6 Wochen · Schätzung`, `Trend from ${s.tr.n} steady rides over the last 6 weeks · estimate`)}${s.tr.cal ? ' · ' + wkL(`kalibriert mit Laborwert vom ${mmDay(s.tr.cal.lab.date)}`, `calibrated with lab value of ${mmDay(s.tr.cal.lab.date)}`) : ''}</p>`
+    const rhr = s.ctx.rhr.ass ? wkL('Ruhepuls angenommen (60), deshalb ist die Spanne breiter. Trag an mindestens 5 Morgen deinen Ruhepuls ein, dann rechnet die App mit deinem Wert.', 'Resting heart rate assumed (60), so the range is wider. Enter your resting heart rate on at least 5 mornings and the app uses your value.') : wkL(`Ruhepuls ${R(s.ctx.rhr.v)} (Median deiner Morgenwerte der letzten 60 Tage).`, `Resting heart rate ${R(s.ctx.rhr.v)} (median of your morning values of the last 60 days).`);
+    const chTx = ch ? (ch.sig ? wkL(`Gegenüber vor 4 Wochen: etwa ${ch.d > 0 ? '+' : '−'}${R(Math.abs(ch.d))} ml/kg/min.`, `Compared with 4 weeks ago: about ${ch.d > 0 ? '+' : '−'}${R(Math.abs(ch.d))} ml/kg/min.`) : wkL('Gegenüber vor 4 Wochen: unverändert im Rahmen der Genauigkeit.', 'Compared with 4 weeks ago: unchanged within the accuracy.')) : '';
+    const main = s.tr ? `<p class="mt-1"><span class="hd font-semibold" style="font-size:1.6rem">≈ ${R(s.tr.v)}</span> <span class="text-sm">ml/kg/min · ${wkL('wahrscheinlich', 'likely')} ${R(s.tr.lo)}–${R(s.tr.hi)}</span></p><p class="text-sm" style="color:var(--mute)">${wkL(`Trend aus ${s.tr.n} gleichmäßigen Fahrten der letzten 6 Wochen · Schätzung`, `Trend from ${s.tr.n} steady rides over the last 6 weeks · estimate`)}${s.tr.cal ? ' · ' + wkL(`kalibriert mit Laborwert vom ${mmDay(s.tr.cal.lab.date)}`, `calibrated with lab value of ${mmDay(s.tr.cal.lab.date)}`) : ''}</p>${chTx ? `<p class="mt-1 text-sm">${chTx}</p>` : ''}`
       : `<p class="mt-1 text-sm">${wkL('Noch kein Trend. Dafür braucht die App mindestens 3 gleichmäßige Fahrten mit Wattmesser und Puls in 6 Wochen.', 'No trend yet. The app needs at least 3 steady rides with power meter and heart rate within 6 weeks.')}</p>`;
-    return box(`${main}${lastTx ? `<p class="mt-1 text-sm">${esc(lastTx)}</p>` : ''}<p class="mt-1 text-xs" style="color:var(--mute)">${esc(rhr)} ${wkL('Die App vergleicht in gleichmäßigen Abschnitten deiner Fahrten Watt und Puls und rechnet hoch, wie viel Sauerstoff du bei deinem höchsten Puls aufnehmen würdest. Eine einzelne Fahrt sagt wenig, aussagekräftig ist der Verlauf über Wochen.', 'The app compares power and heart rate in steady sections of your rides and extrapolates how much oxygen you would take up at your highest heart rate. A single ride says little; what matters is the course over weeks.')}</p>`);
+    const ioTx = io ? `<p class="mt-2 p-2.5 text-sm" role="note" style="border:1px solid var(--line);border-left:3px solid #d9a400">${wkL(`Rolle und Straße liegen um mehr als 5 % auseinander (etwa ${R(io.mi)} auf der Rolle, ${R(io.mr)} draußen). Auf der Rolle ohne Ventilator steigt der Puls, zwei Wattmesser messen oft etwas unterschiedlich. Betrachte beides getrennt.`, `Indoor and outdoor differ by more than 5% (about ${R(io.mi)} indoors, ${R(io.mr)} outdoors). Indoors without a fan heart rate rises, and two power meters often measure slightly differently. Look at both separately.`)}</p>` : '';
+    return box(`${main}${lastTx ? `<p class="mt-1 text-sm">${esc(lastTx)}</p>` : ''}${ioTx}${muted(esc(rhr))}`);
   } catch (e) { elog(e); return ''; }
 }
 /* ---------- „Wusstest du schon?“: täglich ein Tipp zu einer Funktion der App ----------

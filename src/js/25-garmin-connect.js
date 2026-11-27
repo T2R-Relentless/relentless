@@ -81,7 +81,7 @@ async function gmRide(g){
   /* Anderer Garmin-Baustein (garmin-personal-mcp): ausgedünnte Aufzeichnung */
   if (!p || !p.records) throw new GmErr('tool', 'Die Fahrt enthält keine Aufzeichnung.');
   const num = v => v == null || v === '' || isNaN(+v) ? null : +v, se = p.session || {}, sp = String(se.sport || '').toLowerCase();
-  const pts = (p.records.samples || []).map(q => ({t:q.timestamp ? Date.parse(q.timestamp) / 1000 : null, d:num(q.distance), a:num(q.enhancedAltitude != null ? q.enhancedAltitude : q.altitude), p:num(q.power), h:num(q.heartRate), tc:num(q.temperature), lat:null, lon:null}));
+  const pts = (p.records.samples || []).map(q => ({t:q.timestamp ? Date.parse(q.timestamp) / 1000 : null, d:num(q.distance), a:num(q.enhancedAltitude != null ? q.enhancedAltitude : q.altitude), p:num(q.power), h:num(q.heartRate), tc:num(q.temperature), c:num(q.cadence), lat:null, lon:null}));
   return {r:{pts, ses:p.session ? [{sport:sp.includes('cycling') ? 2 : sp ? 99 : null, sec:num(se.totalTimerTime), km:se.totalDistance != null ? se.totalDistance / 1000 : null, hm:num(se.totalAscent), np:num(se.normalizedPower)}] : [], name:g.n, ty:g.ty}, name:g.n};
 }
 /* Abgleich: hist = Fahrten für die Auswertung beim Einstieg (90 Tage), man = Fahrten im laufenden Plan (42 Tage, mit Bewertung) */
