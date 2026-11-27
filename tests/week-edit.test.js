@@ -182,3 +182,18 @@ test('Befinden und „Locker statt hart“ ohne Änderung: kein Schnappschuss', 
   a.$('easyDay(3)'); eq(a.$('JSON.stringify(S.plan)'), p1, 'schon angepasst: „Locker statt hart“ ändert nichts'); ok(!a.$('bkUndo'), 'kein Schnappschuss');
   a.$('easyDay(99)'); ok(!a.$('bkUndo'), 'kein Tag: kein Schnappschuss'); a.noErrors();
 });
+
+/* Erholungswoche einlegen: Schnappschuss nur bei echter Änderung, „Rückgängig“ stellt S.p exakt wieder her */
+test('Erholungswoche einlegen: Schnappschuss, Rückgängig stellt den Plan wieder her', async () => {
+  const a0 = await boot({now:THU}); makePlan(a0, wDat({commute:[false, false, false, false, false, false, false]}));
+  const a = await boot({now:THU, store:a0.store()}); a.$('bkUndo = null'); const before = a.$('JSON.stringify([S.p, S.plan])'); /* Vergleichsstand nach dem Laden: gleiche Schlüsselreihenfolge */
+  a.$('addRecW()'); await a.tick(30); ok(a.$('S.p.recW.includes(S.wk + 1)'), 'Erholungswoche eingeplant');
+  ok(a.$('!!bkUndo'), 'Schnappschuss angelegt'); ok(/Rückgängig/.test(a.$('bkUndoBar()')), '„Rückgängig“ wird angeboten');
+  const v = await a.$('bkGet(bkUndo.k)'); ok(v && v.state, 'Schnappschuss im Gerät'); a.w.bkWriteRaw(v);
+  const b = await boot({now:THU, store:a.store()}); ok(!b.$('(S.p.recW || []).includes(S.wk + 1)'), 'Erholungswoche entfernt'); eq(b.$('JSON.stringify([S.p, S.plan])'), before, 'Plan exakt wiederhergestellt'); a.noErrors();
+});
+test('Erholungswoche schon eingeplant: kein Schnappschuss', async () => {
+  const a = await boot({now:THU}); makePlan(a, wDat({commute:[false, false, false, false, false, false, false]}));
+  a.$('addRecW()'); await a.tick(30); const p1 = a.$('JSON.stringify(S.p.recW)'); a.$('bkUndo = null');
+  a.$('addRecW()'); await a.tick(30); eq(a.$('JSON.stringify(S.p.recW)'), p1, 'unverändert'); ok(!a.$('bkUndo'), 'kein Schnappschuss'); a.noErrors();
+});
