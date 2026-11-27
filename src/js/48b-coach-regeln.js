@@ -1,0 +1,102 @@
+/* ---------- F39 (18b): Persönlicher Coach, Teil 2: Regeln → Knopf (coach-bausteine §1) ----------
+   coRule(pack) wählt die erste zutreffende Regel nach Rang (V-1) und höchstens einen Vorschlag (V-2). Knöpfe rufen nur
+   vorhandene Funktionen auf: feelDay, easyDay, addRecW, reentGo, mvAskGo (aus dem Coach ohne „beide an einem Tag“, V4).
+   Ruhetag: nur R0, R1, R2 (V-3), Ausnahme R10b („heute frei“ steht ausdrücklich in R10b). Eventtag, Aktivierung,
+   Tapering: nur R0 und R3, R3 dort ohne Knopf (V-4). Ab welchem Datentag R2, R4, R6 gelten: §2 mit Entscheidung C. */
+const CO_KN = {
+  rest:'Heute Ruhetag', ok:'Heute geht es wieder', ack:'Verstanden', reent:'Wiedereinstieg einplanen', recw:'Erholungswoche einlegen',
+  mv:'Auf einen anderen Tag legen', light:'Heute etwas leichter', easy:'Heute locker statt hart', mvtest:'Fitness-Check verschieben',
+  mvmiss:'Verpasste Einheit verlegen', feel:'Wie fühlst du dich heute?', keep:'Plan so lassen', neck:'An Erkältung anpassen'};
+/* Knöpfe, die den Plan ändern (bzw. den Verschiebe-Dialog öffnen): höchstens einer pro Tag */
+const CO_PLAN = ['rest', 'reent', 'recw', 'mv', 'light', 'easy', 'mvtest', 'mvmiss', 'neck'];
+function coRule(pk){
+  if (!pk) return null;
+  const I = pk._i, e = pk.einheit, dt = pk.datentage, w = pk.wetter, ill = I.ill, t = I.t, x = S.plan[t] || {};
+  const R = (id, kn, o) => ({id, kn:kn || null, calm:false, ...(o || {})});
+  /* R0: krank, erkältet, verletzt (ruhiger Modus) */
+  if (ill.lv === 'sick') return R('R0k', 'ack', {calm:true});
+  if (ill.inj || (x.feel === 'inj' && !ill.injOk)) return R('R0v', e && !I.xAd ? 'rest' : null, {calm:true, kn2:'ok', wann:ill.inj ? ill.wann : 0});
+  /* C-ERK: Eintrag gestern/vorgestern, heute nicht angepasst → „An Erkältung anpassen“ (§6.8) */
+  if (ill.lv === 'neck') { const adj = !e || I.xAd || x.feel === 'neck' || e.eventTag; return R('R0e', adj ? 'ack' : 'neck', {calm:true, kn2:adj ? null : 'ack', erkNeu:!adj}); }
+  /* VL-4: erste Fahrt nach „Heute geht es wieder“ besser locker */
+  if (ill.injOk && e && e.hart && !e.test && !e.eventTag && !I.xAd) return R('VL4', 'easy');
+  const lim = I.evDay || I.taper;
+  /* R1: Pause ab 7 Tagen (gapInfo prüft Planlaufzeit, Urlaub, bereits beantwortet) */
+  if (!lim && I.gap) return R('R1', 'reent', {calm:true, lage:I.gap.g});
+  /* R2: mindestens zwei Überlastungszeichen, ab Tag 14, nächste Woche noch keine Erholungswoche */
+  if (!lim && dt >= 14 && I.ovl.length >= 2 && !((S.p.recW || []).includes(S.wk + 1)) && !(S.ovlSeen && S.ovlSeen > iso(-7))) return R('R2', 'recw', {calm:true});
+  const yd = I.yd;
+  if (!e) {
+    /* R10b auch am freien Tag (E-R10b: „heute ist frei geplant“), nicht im Tapering und nicht am Eventtag */
+    const r10 = !lim ? coR10(pk) : null; if (r10 && r10.id === 'R10b') return r10;
+    return R('RT', null);
+  }
+  /* R3: Gewitter oder Sturmböen, nur draußen, nur mit frischer Vorhersage (W-6) */
+  if (e.draussen && w && w.src === 'api' && I.wxOk && ((w.boeen != null && w.boeen >= 60) || w.gewitter === true)) return R('R3', I.evDay ? null : 'mv', {wx:true});
+  if (lim) return R(I.evDay ? 'EV' : 'TP', null);
+  /* R4: auffällige Morgenwerte vor harter oder langer Einheit (Tag 0–6: nur Schlaf) */
+  const mk = dt < 7 ? pk.morgen.k.filter(k => k === 'sleep') : pk.morgen.k;
+  if ((e.hart || e.lang) && !I.xAd && mk.length) {
+    if (e.test) return R('R4c', 'mvtest', {mk});
+    if (mk.length >= 2 || ['tired', 'heavy'].includes(pk.befinden)) return R('R4b', 'easy', {mk});
+    return R('R4a', 'light', {mk});
+  }
+  /* R5: Befinden schon eingetragen und angepasst */
+  if (['tired', 'heavy'].includes(pk.befinden) && I.xAd) return R('R5', null);
+  /* R6: Form sehr niedrig (Zahl nur intern), ab Tag 84 (Entscheidung C), ohne Datenlücke, nicht in der Erholungswoche */
+  const f = pk.form;
+  if (f && f.frische != null && dt >= 84 && !I.lucke && !I.rec && HARD.includes(e.t) && !I.xAd && (f.frische < -30 || (f.frische < -25 && (pk.morgen.n > 0 || pk.befinden === 'tired' || I.lastUnder)))) return R('R6', 'easy');
+  /* R7: harter Vortag, heute hart */
+  if (yd.hard && HARD.includes(e.t) && !I.xAd) return yd.prop ? R('R7p', null, {why:yd.hard}) : R('R7', 'easy', {why:yd.hard});
+  /* R8: Hitze ab 28 °C vor harter/langer Einheit oder Check */
+  if (w && w.src === 'api' && I.wxOk && w.tmax >= HEAT_T && (e.hart || e.lang || e.test)) return R('R8', 'mv', {wx:true});
+  /* R9: Kälte oder Nässe bei Kälte, draußen: nur Hinweis */
+  if (e.draussen && w && w.src === 'api' && w.gefuehlt != null && (w.gefuehlt < 3 || (w.nass && w.gefuehlt < 5))) return R('R9', null, {wx:true});
+  /* R10: gestern verpasst */
+  const r10 = coR10(pk); if (r10) return r10;
+  /* R5a: kein Befinden eingetragen (nur Frage, kein Vorschlag) */
+  if (!pk.befinden && !S.done[t] && !I.xAd && !(I.act && CO_PLAN.includes(I.act.k))) return R('R5a', 'feel'); /* nach angenommenem Vorschlag keine Frage mehr */
+  return R('OK', null);
+}
+function coR10(pk){
+  const I = pk._i, yd = I.yd, t = I.t, e = pk.einheit; if (!yd.miss || !yd.sameWeek || t < 1) return null;
+  if (!yd.missHard) return e ? {id:'R10a', kn:null, calm:false} : null;
+  if (yd.test || yd.miss2 || I.r10w === S.wk || I.ill.injOk || (e && (paHard(S.plan[t]) || e.test || e.lang))) return null;
+  /* freier Tag nur, wenn er verfügbar ist und die Zeit reicht */
+  if (!e && (!(S.p.avail || [])[t] || capOf(S.p, t) < (yd.m || 0))) return null;
+  try { if (mvCheck(t - 1, t, 'swap').warns.length) return null; } catch (er) { elog(er); return null; }
+  return {id:'R10b', kn:'mvmiss', calm:false, frei:!e};
+}
+/* Karten mit derselben Regel ausblenden (Entscheidung D) */
+let coMemo = null;
+const coOn = () => !!(S.coach && S.coach.on);
+function coPrep(){ coMemo = null; if (!coOn() || !S.p || !hasStarted(S.p)) return null; try { const pk = coPack(), r = coRule(pk), rep = r ? coReport(pk, r) : null; if (rep && (rep.insight || rep.einheit)) coMemo = {pk, r, rep}; } catch (e) { elog(e); coMemo = null; } return coMemo; } /* nur mit fertigem Bericht blenden andere Karten sich aus */
+const coHide = id => { try { return !!(coMemo && coMemo.r && (coMemo.r.id === id || (id === 'R4' && /^R4/.test(coMemo.r.id)))); } catch (e) { elog(e); return false; } };
+/* Knopf beim Tipp: Regel neu prüfen (V2), Schnappschuss vorher (V1), Herkunft Coach markieren (B3) */
+function coTake(kn){
+  const pk = coPack(), r = coRule(pk), t = todayIdx(), today = iso(0);
+  S.coach = S.coach || {on:false};
+  if (!r || (r.kn !== kn && r.kn2 !== kn && kn !== 'keep')) { coMsg = 'Der Vorschlag ist nicht mehr aktuell.'; return render(); }
+  const plan = CO_PLAN.includes(kn);
+  if (plan && pk._i.act && !/^R0/.test(r.id)) { coMsg = 'Der Vorschlag ist nicht mehr aktuell.'; return render(); }
+  coMsg = '';
+  if (kn === 'feel') { heroTab = 'feel'; render(); try { dykFocus(null, '.feelb'); } catch (e) { elog(e); } return; }
+  const mvK = kn === 'mv' || kn === 'mvtest' || kn === 'mvmiss';
+  if (!mvK) S.coach.act = {d:today, r:r.id, k:kn}; /* Verschieben zählt erst, wenn es im Dialog ausgeführt wird (mvDo) */
+  /* ein Schnappschuss mit Herkunft Coach, der innere der aufgerufenen Funktion entfällt (bkMute) */
+  const sig = () => JSON.stringify([S.plan, S.p && S.p.recW, S.p && S.p.reent]);
+  /* Schnappschuss nur bei echter Änderung: ändert die Funktion nichts, wird er verworfen und die vorige Leiste bleibt */
+  const run = f => { const u0 = bkUndo, s0 = sig(); let pr = null; try { pr = bkPre('Vom Coach vorgeschlagen: ' + CO_KN[kn]); } catch (e) { elog(e); } const mine = bkUndo; bkMute = true; try { f(); } finally { bkMute = false; }
+    if (sig() === s0 && mine && mine !== u0) { bkUndo = u0; try { Promise.resolve(pr).then(() => bkDel(mine.k)).catch(e => elog(e)); } catch (e) { elog(e); } } };
+  if (kn === 'keep' || kn === 'ack') { if (r.id === 'R2') S.ovlSeen = iso(0); save(); return render(); }
+  if (kn === 'ok') { S.coach.inj = {...(S.coach.inj || {}), ok:today}; save(); return render(); }
+  if (kn === 'rest') { run(() => feelDay(t, 'inj')); render(); return; }
+  if (kn === 'neck') { run(() => feelDay(t, 'neck')); render(); return; }
+  if (kn === 'light') { run(() => feelDay(t, 'tired')); if (S.plan[t]) { S.plan[t].coSrc = 1; save(); } render(); return; }
+  if (kn === 'easy') { run(() => easyDay(t)); if (S.plan[t]) { S.plan[t].coSrc = 1; save(); } render(); return; }
+  if (kn === 'recw') { S.ovlSeen = iso(0); run(() => addRecW()); render(); return; }
+  if (kn === 'reent') { run(() => reentGo()); render(); return; }
+  if (mvK) { mvAskGo(kn === 'mvmiss' ? t - 1 : t); if (mvAsk) { mvAsk.co = kn; mvAsk.cor = r.id; render(); } return; }
+  render();
+}
+let coMsg = '';

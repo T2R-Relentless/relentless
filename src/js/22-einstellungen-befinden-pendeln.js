@@ -106,12 +106,14 @@ function hrSettings(){
 
 /* ---------- Befinden am Tag: Einheit anpassen, wenn man müde oder angeschlagen ist ---------- */
 let feelOpen = null;
-const FEELS = [['tired', 'Etwas müde', 'Kurzer Schlaf, stressiger Tag, Beine nicht ganz frisch'], ['heavy', 'Richtig platt', 'Schwere Beine, schlecht geschlafen, Puls morgens erhöht'], ['neck', 'Leicht erkältet', 'Nur oberhalb des Halses: Schnupfen, Halskratzen, kein Fieber'], ['sick', 'Krank', 'Fieber, Gliederschmerzen, Husten oder Magen-Darm']];
-const FEELT = {tired:'etwas müde', heavy:'richtig platt', neck:'leicht erkältet', sick:'krank'};
+const FEELS = [['tired', 'Etwas müde', 'Kurzer Schlaf, stressiger Tag, Beine nicht ganz frisch'], ['heavy', 'Richtig platt', 'Schwere Beine, schlecht geschlafen, Puls morgens erhöht'], ['neck', 'Leicht erkältet', 'Nur oberhalb des Halses: Schnupfen, Halskratzen, kein Fieber'], ['sick', 'Krank', 'Fieber, Gliederschmerzen, Husten oder Magen-Darm'], ['inj', 'Schmerzen oder verletzt', 'Etwas tut weh, beim Fahren oder im Alltag, zum Beispiel nach einem Sturz']];
+const FEELT = {tired:'etwas müde', heavy:'richtig platt', neck:'leicht erkältet', sick:'krank', inj:'Schmerzen oder verletzt'};
 const isHardS = x => x && (HARD.includes(x.t) || x.t === 'test' || x.t === 'race');
 function feelPlan(b, lv){
   const recR = (m, extra) => ({...REC, m, st:`${m} Min. im kleinen Gang, Puls unter 60 % HFmax, flach.${extra || ''}`});
   if (lv === 'sick') return {...REST, n:'Ruhetag (krank)', st:'Heute kein Training, auch keine Kraft- oder Mobilitätsübungen. Viel trinken, schlafen, gesund werden. Wieder einsteigen, wenn du 24 Stunden fieberfrei bist, und dann zwei Tage locker fahren.', tip:'Training mit Fieber belastet Herz und Kreislauf und kann gefährlich werden.'};
+  /* F39: Schmerzen oder verletzt: Ruhetag, Folgetage bleiben (der Coach fragt jeden Tag nach, coach-bausteine §3) */
+  if (lv === 'inj') return {...REST, n:'Ruhetag (Schmerzen)', st:'Heute kein Training und keine Übungen, die die schmerzende Stelle belasten. Fahr erst wieder, wenn der Alltag schmerzfrei geht, und dann zuerst locker. Wird es beim Fahren schlimmer, hör auf. Werden die Schmerzen stärker, halten sie mehrere Tage an oder schränken sie dich ein, lass sie ärztlich oder physiotherapeutisch abklären.', tip:''};
   if (b.parts) {
     const tot = b.parts.reduce((a, q) => a + q.m, 0);
     if (lv === 'tired') return {...b, t:b.t === 'com' ? 'com' : 'base', n:(b.t === 'com' ? b.n : 'Grundlage Z2') + ' (locker)', iv:null, lo:50, hi:65, m:tot, parts:b.parts.map(q => ({lbl:q.lbl, m:q.m, lo:50, hi:65, st:'Locker in Zone 2, heute ohne Intervalle.'}))};
@@ -132,14 +134,17 @@ function feelPlan(b, lv){
 }
 function feelDay(i, lv){
   const cur = S.plan[i]; if (!cur) return; const b = cur.adapted && cur.orig ? cur.orig : cur;
+  /* Schnappschuss nur bei echter Änderung, danach „Rückgängig“ (wie applyChk) */
+  if (JSON.stringify(cur) !== JSON.stringify({...feelPlan(b, lv), adapted:true, orig:b, feel:lv})) { try { bkPre('Vor dem Anpassen an dein Befinden'); } catch (e) { elog(e); } }
   /* Fällt der Fitness-Check weg (krank, leicht erkältet, richtig platt), wird er vorgemerkt und nachgeholt: krank frühestens nach 7 Tagen, sonst nach 3 bzw. 2 Tagen */
-  if (b.t === 'test' && S.p) { const y0 = feelPlan(b, lv); if (y0.t !== 'test') { const dd = lv === 'sick' ? 7 : lv === 'neck' ? 3 : 2, from = addD(dstr(i), dd), why = lv === 'sick' ? 'Wegen Krankheit' : lv === 'neck' ? 'Wegen der Erkältung' : 'Weil du heute richtig platt bist,'; const nx0 = testWeeks(S.p).find(w => w > S.wk); S.p.testDue = {from, w:S.wk}; S.d.testDue = S.p.testDue;
+  if (b.t === 'test' && S.p) { const y0 = feelPlan(b, lv); if (y0.t !== 'test') { const dd = lv === 'sick' || lv === 'inj' ? 7 : lv === 'neck' ? 3 : 2, from = addD(dstr(i), dd), why = lv === 'sick' ? 'Wegen Krankheit' : lv === 'inj' ? 'Wegen der Schmerzen' : lv === 'neck' ? 'Wegen der Erkältung' : 'Weil du heute richtig platt bist,'; const nx0 = testWeeks(S.p).find(w => w > S.wk); S.p.testDue = {from, w:S.wk}; S.d.testDue = S.p.testDue;
     /* Folge-Check mit mindestens 5 Wochen Abstand zum Nachholtest (testWeeks): Verschiebung im Verlauf nennen */
     const nx1 = testWeeks(S.p).find(w => w > S.wk), gap = nx0 && nx0 !== nx1 ? (nx1 ? ` Der nächste Fitness-Check rückt deshalb in Woche ${nx1}.` : ' Der nächste Fitness-Check entfällt deshalb, weil vor dem Taper kein Platz mehr ist.') : '';
     setTimeout(() => { S.log.unshift({title:'Fitness-Check verschoben', day:i, text:`${why} fällt der Fitness-Check heute aus. Er wird frühestens am ${fmt(from)} nachgeholt, wenn du wieder ganz fit bist. Ausfallen lassen kann man ihn nicht: Nur mit aktuellem Wert stimmen deine Trainingsbereiche.${gap}`}); save(); render(); }, 0); } else if (S.p.testDue && S.p.testDue.w === S.wk) { delete S.p.testDue; delete S.d.testDue; } }
   [i + 1, i + 2].forEach(k => { const z = S.plan[k]; if (z && z.fu === i && z.orig) { S.plan[k] = z.orig; S.log = S.log.filter(l => l.day !== k); } });
   const y = feelPlan(b, lv); S.plan[i] = {...y, adapted:true, orig:b, feel:lv};
-  const what = lv === 'sick' ? 'Heute ist Ruhetag. Erst wieder trainieren, wenn du 24 Stunden fieberfrei bist.' : y.t === b.t && y.m === b.m && !y.iv === !b.iv ? 'Die Einheit bleibt, aber betont locker.' : `Statt „${b.n}“ (${mm(b.m)}) steht jetzt „${y.n}“ (${mm(y.m)}) im Plan.`;
+  if (lv === 'inj') { try { coInjMark(dstr(i)); } catch (e) { elog(e); } }
+  const what = lv === 'sick' ? 'Heute ist Ruhetag. Erst wieder trainieren, wenn du 24 Stunden fieberfrei bist.' : lv === 'inj' ? 'Heute ist Ruhetag. Fahr erst wieder, wenn der Alltag schmerzfrei geht, und dann zuerst locker.' : y.t === b.t && y.m === b.m && !y.iv === !b.iv ? 'Die Einheit bleibt, aber betont locker.' : `Statt „${b.n}“ (${mm(b.m)}) steht jetzt „${y.n}“ (${mm(y.m)}) im Plan.`;
   note(`${DAYS[i]}: ${FEELT[lv]}`, `${what} Du kannst das jederzeit mit „Originaleinheit wiederherstellen“ zurücknehmen.`, i);
   /* Nach Krankheit oder großer Müdigkeit langsam wieder einsteigen */
   const ease = (j, m, st) => { const o = S.plan[j]; S.plan[j] = {...D('base', 'Grundlage Z2', m, 50, 65, '90 U/min', st, 'Die harte Einheit holst du nicht nach, der Plan läuft danach normal weiter.'), adapted:true, orig:o, fu:i}; return o; };
@@ -188,10 +193,10 @@ let feelMsg = null;
 function feelBox(i){
   const x = S.plan[i];
   return `<div class="feelb"><p class="font-semibold">Wie geht es dir ${i === todayIdx() ? 'heute' : 'am ' + DAYS[i]}?</p><p class="mt-0.5 text-sm" style="color:var(--mute)">Die App passt die Einheit an. Du kannst das jederzeit zurücknehmen.</p>
-    ${x && x.feel ? `<p class="mt-2 text-sm" style="color:var(--ok)">✓ Angepasst: ${FEELT[x.feel]}.</p><button class="ghost mt-2 !py-1.5 text-sm" onclick="undo(${ja(i)})">${x.feel === 'sick' ? 'Wieder gesund: Originaleinheit zurück' : 'Anpassung zurücknehmen'}</button>` : ''}
+    ${x && x.feel ? `<p class="mt-2 text-sm" style="color:var(--ok)">✓ Angepasst: ${FEELT[x.feel]}.</p><button class="ghost mt-2 !py-1.5 text-sm" onclick="undo(${ja(i)})">${x.feel === 'sick' ? 'Wieder gesund: Originaleinheit zurück' : x.feel === 'inj' ? 'Wieder schmerzfrei: Originaleinheit zurück' : 'Anpassung zurücknehmen'}</button>` : ''}
     ${feelMsg && feelMsg.i === i && feelMsg.t ? `<p class="mt-2 p-2.5 text-sm" style="background:var(--tint);border:1px solid var(--line)">${esc(feelMsg.t)}</p>` : ''}
     ${feelAsk && feelAsk.i === i ? (() => { const ill = feelRecentIll(i), list = ill ? FEELWHY : [...FEELWHY.slice(1, 4), FEELWHY[0], FEELWHY[4]]; return `<div class="mt-3"><p class="font-semibold">${FEELT[feelAsk.lv][0].toUpperCase() + FEELT[feelAsk.lv].slice(1)}: Was steckt vermutlich dahinter?</p><p class="mt-0.5 text-sm" style="color:var(--mute)">Dann passt die App die Einheit und die nächsten Tage genauer an.${ill ? ' Du warst vor Kurzem krank oder erkältet. Oft steckt das noch in den Knochen.' : ''}</p><div class="mt-2 grid gap-2">${list.map(([k, l, d]) => `<button class="feelo${esc(ill && k === 'ill' ? ' on' : '')}" onclick="feelDayWhy(${ja(i)}, '${ja(feelAsk.lv)}', '${ja(k)}')"><b>${l}</b>${d ? `<span>${d}</span>` : ''}</button>`).join('')}</div><button class="mt-2 text-sm underline" style="color:var(--mute);background:none;border:0" onclick="feelAsk=null;render()">Zurück</button></div>`; })() : `<div class="mt-2 grid gap-2">${FEELS.map(([k, l, s]) => `<button class="feelo${esc(x && x.feel === k ? ' on' : '')}" onclick="${k === 'tired' || k === 'heavy' ? `feelAskWhy(${ja(i)}, '${ja(k)}')` : `feelMsg=null;feelDay(${ja(i)}, '${ja(k)}')`}"><b>${l}</b><span>${s}</span></button>`).join('')}</div>`}
-    <p class="mt-2 text-xs" style="color:var(--mute)">Faustregel bei Erkältung („Neck Check“): Symptome nur oberhalb des Halses erlauben lockeres Bewegen, Fieber oder Symptome unterhalb des Halses heißen Pause. Hohe Belastung bei Krankheit erhöht das Risiko für längere Ausfälle (${pLink('IOC-Konsens 2016', 'iocill')}). Bei Brustschmerzen, Atemnot oder Herzstolpern ärztlich abklären lassen.</p></div>`;
+    <p class="mt-2 text-xs" style="color:var(--mute)">Faustregel bei Erkältung („Neck Check“): Symptome nur oberhalb des Halses erlauben lockeres Bewegen, Fieber oder Symptome unterhalb des Halses heißen Pause. Hohe Belastung bei Krankheit erhöht das Risiko für längere Ausfälle (${pLink('IOC-Konsens 2016', 'iocill')}). Bei Brustschmerzen, Atemnot oder Herzstolpern ärztlich abklären lassen. Nach einem Sturz mit Kopfbeteiligung oder bei Schwindel sofort ärztlichen Rat holen.</p></div>`;
 }
 function feelCtl(x, i, cur){
   if (!cur || i < todayIdx() || x.blocked || S.done[i] || (!x.m && !strMap[i] && !mobMap[i] && !x.feel)) return '';

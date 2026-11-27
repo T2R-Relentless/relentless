@@ -86,7 +86,7 @@ function rdExtraOk(p, w, plan, i){
     const P = phases(p).find(z => w >= z.from && w <= z.to); if (recWk(p, w) || (p.recW || []).includes(w) || (P && (P.rec || P.key === 'taper'))) return false;
     const day = addD(p.start, (w - 1) * 7 + i), near = d => d && d >= day && d <= addD(day, 2);
     if ((p.goal === 'event' && near(p.eventDate)) || (p.subs || []).some(s => (s.prio === 'A' || s.prio === 'B') && near(s.date))) return false;
-    const bad = y => y && (y.feel === 'sick' || y.feel === 'heavy' || y.feel === 'tired' || y.feel === 'neck');
+    const bad = y => y && (y.feel === 'sick' || y.feel === 'heavy' || y.feel === 'tired' || y.feel === 'neck' || y.feel === 'inj');
     if (bad(plan[t]) || bad(plan[t - 1]) || (p.sickNext && p.sickNext.w === w) || reentOf(p, w)) return false;
     if (plan[i - 1] && plan[i - 1].t === 'test') return false;
     return true;

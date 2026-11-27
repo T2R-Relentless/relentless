@@ -57,8 +57,8 @@ function privSettings(){
    gesetzt (Datum in der Zukunft); alle folgenden IDs müssen darüber liegen, sonst sähen Geräte mit dieser ID keine Updates.
    APP_BUILT ist das echte Datum des Hochzählens (tools/version.py setzt es bei fix und neu aus der aktuellen Uhrzeit) und
    wird angezeigt. */
-const APP_BUILD = '20261213090500';
-const APP_BUILT = '20261126230515';
+const APP_BUILD = '20261213090600';
+const APP_BUILT = '20261127064001';
 const updNewer = (remote, local) => /^\d{8,20}$/.test(String(remote || '')) && String(remote) > String(local);
 let updNew = false, updAt = 0;
 const updWeb = () => { try { return /^https?:$/.test(location.protocol) && !(window.claude && window.claude.use) && !/claude|anthropic/.test(location.hostname); } catch (e) { elog(e); return false; } };

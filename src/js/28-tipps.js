@@ -68,16 +68,22 @@ const DYK = [
   ['inst', 'Leg die App auf deinen Home-Bildschirm. Dann startet sie wie eine echte App, ohne Browserleiste und auch offline.', 'So geht’s', "dykInst()", () => dykWeb() && !dykAlone() && typeof instOs === 'function' && !!instOs()],
   /* F37: neues Mehr-Menü */
   ['f37', 'Plan-Check und Gesamtplan findest du jetzt unter Fortschritt im Abschnitt „Plan“. Auf Heute führen zwei Knöpfe unter deinem Ziel direkt hin. Unter Mehr stehen die wichtigsten Punkte fest, alles Weitere unter „Extras“.', 'Zu Fortschritt', "dykSt()", () => !!S.p],
+  /* F38: VO2max-Trend aus Fahrten */
+  ['v2r', 'Unter Fortschritt → VO2max schätzt die App deine VO2max jetzt auch aus gleichmäßigen Fahrten mit Wattmesser und Puls, als Trend mit Spanne über mehrere Wochen. Ältere Garmin-Fahrten der letzten 6 Monate rechnet sie auf Wunsch nach.', 'Trend ansehen', "dykSet('svo2','v2r')", () => { try { return vo2rAny() || vo2rTodo().length > 0; } catch (e) { return false; } }],
   /* F36 (Version 223) */
   ['priv', 'Du entscheidest, ob die App anonym zählen darf. Unter Einstellungen → Datenschutz änderst du das jederzeit' + (RL_LEGAL_ON ? ', dort findest du auch Impressum und Datenschutzerklärung.' : '.'), 'Datenschutz öffnen', "dykSet('settings','priv')", () => true],
   ['gmdel', 'Garmin nicht mehr nutzen? Unter Einstellungen → Garmin Connect trennst du die Verbindung und löschst den Schlüssel von diesem Gerät.', 'Zu Garmin Connect', "dykSet('settings','gm')", () => { try { return gmHasData(); } catch (e) { return false; } }],
   ['team', 'Neuigkeiten, Ausfahrten und Termine des Teams findest du auf teamrelentlessriders.de, verlinkt unter Mehr → Team.', 'Zur Homepage', "dykTeam()", () => true],
+  /* F39: persönlicher Coach ohne Server */
+  ['coach', 'Dein persönlicher Coach schreibt dir jeden Tag auf Heute drei kurze Absätze: was sich bei dir tut, was heute ansteht und einen Spruch. Spricht etwas gegen die Einheit, schlägt er eine Änderung vor, die du mit einem Tipp annimmst. Einschalten unter Einstellungen → Persönlicher Coach.', 'Coach einschalten', "dykSet('settings','coach')", () => !!S.p && !(S.coach && S.coach.on)],
   ['bkcloud', 'Deine Pläne auch auf Tablet oder neuem Handy: Speichere die Sicherung in deiner eigenen Cloud, etwa iCloud Drive, Google Drive oder OneDrive, und lade sie auf dem anderen Gerät. Die App schickt dabei nichts an einen Server.', 'So geht’s', "bkCloudGo()", () => !!S.p],
 ];
 /* Ziel eines Hinweises: [Unterseite, Abschnitt, Eingabefeld]. Der Knopf landet direkt am Feld, nicht nur oben auf der Seite. */
 const DYK_AT = {priv:['set-priv', 'fx-priv', '#trChips button'], gm:['set-gm', null, '#gmWipeB'], wx:['set-wx', 'fx-wx', '#wxQ'], hr:['set-hr', 'fx-hr', '#hrMaxI'], wf:['set-wf', null, '#wfKg'], shift:['set-ali', 'fx-shift'], ali:['set-ali', 'fx-ali'],
   tb:['set-ali', 'fx-tb', '#fx-tb input'], vac:['set-ali', 'fx-vac', '#fx-vac input[type=date]'], age:['set-age', 'fx-age', '#bdD'], sq:['set-sq', null], sqh:['set-sq', null, ['#sqT-hints', '#sqT-voice']], sqk:['set-sq', null, ['#sqT-takt']], theme:['set-lang', 'fx-theme'], lang:['set-lang', 'fx-lang']};
-function dykSet(p, k){ const at = p === 'settings' && DYK_AT[k]; if (at) { goPg('settings'); goPg(at[0]); dykFocus(at[1], at[2]); return; } goPg(p); dykFocus('fx-' + k); }
+/* Unterseiten, die über ihre Hauptseite geöffnet werden (dann führt „Zurück“ dorthin) */
+const DYK_UP = {svo2:'state'};
+function dykSet(p, k){ const at = p === 'settings' && DYK_AT[k]; if (at) { goPg('settings'); goPg(at[0]); dykFocus(at[1], at[2]); return; } if (DYK_UP[p]) goPg(DYK_UP[p]); goPg(p); dykFocus('fx-' + k); }
 /* Zum Abschnitt scrollen, Feld fokussieren und den Abschnitt kurz hervorheben */
 function dykFocus(id, sel){ setTimeout(() => { try { const el = id ? document.getElementById(id) : null, f = sel ? [].concat(sel).map(q => document.querySelector(q)).find(Boolean) || null : null, tg = el || (f && f.closest('section')) || f;
   if (tg) tg.scrollIntoView({block:'start'}); if (f) try { f.focus({preventScroll:true}); } catch (e) { elog(e); }
@@ -119,7 +125,7 @@ function dykRun(st){
 function dykGo(a){ try { track('tipp-genutzt'); } catch (e) { elog(e); } try { String(a || '').split(';').map(x => x.trim()).filter(Boolean).forEach(dykRun); } catch (e) { elog(e); } }
 function dykCard(){
   try {
-    const st = dykGet(); if (st.off || st.hide === iso(0) || !S.p || (S.plan && hasStarted(S.p) && (S.plan[todayIdx()] || {}).feel === 'sick')) return '';
+    const st = dykGet(); if (st.off || st.hide === iso(0) || !S.p || (S.plan && hasStarted(S.p) && ['sick', 'inj'].includes((S.plan[todayIdx()] || {}).feel))) return '';
     const t = dykPick(false); if (!t) return '';
     const ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/></svg>';
     const act = DYK.indexOf(t);

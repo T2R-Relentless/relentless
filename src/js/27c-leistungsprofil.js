@@ -21,7 +21,7 @@ const mmEn = () => typeof lang === 'function' && lang() === 'en';
 const mmLbl = t => t < 60 ? t + ' s' : t <= 5400 ? Math.round(t / 60) + ' min' : Math.round(t / 3600) + ' h';
 const mmSayT = t => t < 60 ? t + wkL(' Sekunden', ' seconds') : t === 60 ? wkL('1 Minute', '1 minute') : t <= 5400 ? Math.round(t / 60) + wkL(' Minuten', ' minutes') : Math.round(t / 3600) + wkL(' Stunden', ' hours');
 const mmNum = (v, d = 0) => (Math.round(v * 10 ** d) / 10 ** d).toLocaleString(mmEn() ? 'en-GB' : 'de-DE', {minimumFractionDigits:d, maximumFractionDigits:d});
-const mmDay = d => { try { return dOnly(d).toLocaleDateString(mmEn() ? 'en-GB' : 'de-DE', {day:'2-digit', month:'2-digit', year:'numeric'}); } catch (e) { elog(e); return d; } };
+const mmDay = d => { try { return mmEn() ? dOnly(d).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) : dOnly(d).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'}); } /* EN eindeutig: „9 Nov 2026“ */ catch (e) { elog(e); return d; } };
 
 /* ---------- Berechnung ---------- */
 function mmSeries(r){
@@ -396,11 +396,11 @@ let mmFill = null;
 function mmTodo(){ const all = mmAll(), v2 = id => typeof impVo2Done === 'function' ? impVo2Done(id) : true;
   return (S.arch || []).filter(a => a && a.gid && (!a.in || +a.np > 0 || a.m1) && (!all[a.id] ? (+a.np > 0 || a.m1 || !a.imp) : (all[a.id].s === 'a' && !all[a.id].nf) || (a.imp && +a.np > 0 && !v2(a.id) && !all[a.id].nf))).sort((a, b) => a.d.localeCompare(b.d)); }
 async function mmFillGo(){
-  if ((mmFill && mmFill.run) || typeof gmRide !== 'function' || !gmMode()) return;
+  if ((mmFill && mmFill.run) || typeof gmRide !== 'function' || !gmMode() || (typeof vo2rBlock === 'function' && vo2rBlock())) return; /* F39: nicht parallel zur VO2-Rückrechnung, mit Hinweis */
   try { if (typeof impVo2Pre === 'function') impVo2Pre(); } catch (e) { elog(e); } const L = mmTodo(); if (!L.length) return; mmFill = {run:1, i:0, n:L.length, ok:0, fail:0, msg:'', v:0}; render();
   for (const a of L) {
     if (!mmFill.run) break; mmFill.i++; render();
-    try { const {r} = await gmRide({id:a.gid, n:''}); const old = S.mm && S.mm[a.id], rec = old && old.s === 'f' ? old : mmCalc(r); if (rec) { if (rec !== old) mmPut(a.id, rec, {d:a.d, n:a.n}); try { if (typeof impVo2 === 'function' && !impVo2Done(a.id) && impVo2(a, r)) mmFill.v++; } catch (er) { elog(er); } mmFill.ok++; } else { const o = S.mm[a.id]; if (o) o.nf = 1; else S.mm[a.id] = {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a', nf:1}; } }
+    try { const {r} = await gmRide({id:a.gid, n:''}); const old = S.mm && S.mm[a.id], rec = old && old.s === 'f' ? old : mmCalc(r); if (rec) { if (rec !== old) mmPut(a.id, rec, {d:a.d, n:a.n}); try { if (typeof impVo2 === 'function' && !impVo2Done(a.id) && impVo2(a, r)) mmFill.v++; } catch (er) { elog(er); } try { if (typeof vo2rKeep === 'function' && !vo2rHas(a.id)) vo2rKeep(a, r); } catch (er) { elog(er); } mmFill.ok++; } else { const o = S.mm[a.id]; if (o) o.nf = 1; else S.mm[a.id] = {d:a.d, n:String(a.n || '').slice(0, 50), v:MM_D.map(() => 0), o:null, s:'a', nf:1}; } }
     catch (e) { elog(e); mmFill.fail++; if (typeof GmErr === 'function' && e instanceof GmErr && e.code !== 'tool') { mmFill.msg = e.message; break; } }
     if (mmFill.i % 5 === 0) { try { save(); } catch (e) { elog(e); } }
   }
@@ -410,6 +410,7 @@ function mmFillStop(){ if (mmFill) mmFill.run = 0; render(); }
 function mmFillUi(){
   const can = typeof gmMode === 'function' && !!gmMode(); try { if (can && typeof impVo2Pre === 'function') impVo2Pre(); } catch (e) { elog(e); } const L = can ? mmTodo() : [], part = Object.values(S.mm || {}).filter(r => r && r.s === 'a' && !r.nf).length;
   if (mmFill && mmFill.run) return `<section class="panel mt-3 p-4" data-noi18n role="status"><p class="font-semibold">${wkL('Ältere Fahrten werden nachberechnet', 'Recalculating older rides')}</p><p class="mt-1 text-sm">${wkL(`Fahrt ${mmFill.i} von ${mmFill.n} …`, `Ride ${mmFill.i} of ${mmFill.n} …`)}</p><div class="mm-bar mt-2"><i style="width:${Math.round(mmFill.i / mmFill.n * 100)}%"></i></div><button class="ghost mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="mmFillStop()">${wkL('Abbrechen', 'Cancel')}</button></section>`;
+  const wn = typeof vo2rWaitNote === 'function' ? vo2rWaitNote() : ''; if (wn) return `<div id="fx-mmfill">${wn}</div>`;
   const done = mmFill && !mmFill.run ? `<p class="mt-1 text-sm">${wkL(`Zuletzt: ${mmFill.ok} Fahrten nachberechnet${mmFill.fail ? `, ${mmFill.fail} nicht ladbar` : ''}.`, `Last run: ${mmFill.ok} rides recalculated${mmFill.fail ? `, ${mmFill.fail} could not be loaded` : ''}.`)}${mmFill.msg ? ' ' + esc(mmFill.msg) : ''}</p>` : '';
   if (can && L.length) return `<section class="panel mt-3 p-4" id="fx-mmfill" data-noi18n><p class="font-semibold">${wkL('Ältere Fahrten nachberechnen', 'Recalculate older rides')}</p><p class="mt-1 text-sm" style="color:var(--mute)">${wkL(`${L.length} Fahrten von Garmin haben noch keine vollständige Kurve oder noch keine VO2max-Prüfung. Die App lädt sie einzeln von Garmin und berechnet alle Dauern. Du kannst jederzeit abbrechen und später weitermachen.`, `${L.length} rides from Garmin do not have a full curve or a VO2max check yet. The app loads them one by one from Garmin and calculates all durations. You can cancel at any time and continue later.`)}</p>${done}<button class="btn mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="mmFillGo()">${wkL('Nachberechnen', 'Recalculate')}</button></section>`;
   if (part) return `<p class="mt-3 text-xs" style="color:var(--mute)" data-noi18n>${wkL(`${part} ältere Fahrten haben nur einzelne Bestwerte (1, 5, 20, 60 min). Lädst du sie noch einmal hoch oder verbindest Garmin, berechnet die App alle Dauern.`, `${part} older rides only have a few best efforts (1, 5, 20, 60 min). Upload them again or connect Garmin and the app calculates all durations.`)}</p>${done}`;

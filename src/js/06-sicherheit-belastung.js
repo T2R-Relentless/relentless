@@ -11,8 +11,8 @@ function hlthPage(){ return `<section class="panel p-4"><p class="font-semibold"
 function ovlSignals(){
   const p = S.p, out = []; if (!p || !hasStarted(p)) return out; const today = iso(0);
   try { const R = vzRows(); if (R) { const L = R.rows.filter(r => r.day <= today && r.day > iso(-14)); if (L.length >= 10 && L.filter(r => r.tsb < -25).length >= 10) out.push('Deine Form lag an mindestens 10 der letzten 14 Tage unter −25.'); } } catch (e) { elog(e); }
-  try { const days = []; (S.plan || []).forEach((x, i) => { if (x && (x.feel === 'tired' || x.feel === 'heavy')) days.push(dstr(i)); });
-    if (S.prevPlan && S.prevPlan.plan) S.prevPlan.plan.forEach((x, i) => { if (x && (x.feel === 'tired' || x.feel === 'heavy')) days.push(addD(p.start, (S.prevPlan.w - 1) * 7 + i)); });
+  try { const days = []; (S.plan || []).forEach((x, i) => { if (x && (x.feel === 'tired' || x.feel === 'heavy') && !x.coSrc) days.push(dstr(i)); }); /* F39: vom Coach wegen Morgenwerten vorgeschlagen (coSrc) zählt nicht zusätzlich als Befinden */
+    if (S.prevPlan && S.prevPlan.plan) S.prevPlan.plan.forEach((x, i) => { if (x && (x.feel === 'tired' || x.feel === 'heavy') && !x.coSrc) days.push(addD(p.start, (S.prevPlan.w - 1) * 7 + i)); });
     if (days.filter(d => d > iso(-10) && d <= today).length >= 4) out.push('Du warst in den letzten 10 Tagen an 4 oder mehr Tagen müde oder platt.'); } catch (e) { elog(e); }
   try { if (Object.values(p.exe || {}).filter(v => v && v.verdict === 'under' && Date.now() - v.at < 14 * 864e5).length >= 2) out.push('Zwei harte Einheiten in 14 Tagen liefen nicht wie geplant.'); } catch (e) { elog(e); }
   try { const st = morStat(), mo = S.mo || {}; let n = 0; for (let k = 0; k < 5; k++) { const v = mo[iso(-k)]; if (v && ((st.hrBase && v.hr >= st.hrBase + 5) || v.sleep === 'bad')) n++; } if (n >= 3) out.push('An 3 der letzten 5 Tage waren deine Morgenwerte auffällig.'); } catch (e) { elog(e); }
@@ -20,7 +20,7 @@ function ovlSignals(){
 }
 function ovlCard(){
   const p = S.p; if (!p || (S.ovlSeen && S.ovlSeen > iso(-7)) || (p.recW || []).includes(S.wk + 1)) return '';
-  const L = ovlSignals(); if (L.length < 2) return '';
+  const L = ovlSignals(); if (L.length < 2 || coHide('R2')) return ''; /* F39: zeigt der Coach dieselbe Regel, nur dort (Entscheidung D) */
   return `<section class="panel p-4" style="border-left:4px solid #d9a400"><p class="font-semibold">Viel Belastung, wenig Erholung</p><ul class="mt-1 list-disc space-y-1 pl-5 text-sm">${L.map(t => `<li>${t}</li>`).join('')}</ul><p class="mt-2 text-sm">Zusammen kann das ein Zeichen sein, dass die Erholung nicht mehr mitkommt. Eine Erholungswoche hilft meistens. Halten Müdigkeit, Leistungseinbruch oder gedrückte Stimmung trotzdem an, sprich mit einer Ärztin oder einem Arzt.</p>
     <div class="mt-3 flex flex-wrap gap-2"><button class="btn !w-auto !px-3" style="min-height:44px" onclick="S.ovlSeen=iso(0);addRecW()">Erholungswoche einlegen</button><button class="ghost !w-auto !px-3" style="min-height:44px" onclick="S.ovlSeen=iso(0);save();render()">In einer Woche wieder prüfen</button></div></section>`;
 }

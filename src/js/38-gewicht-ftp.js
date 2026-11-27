@@ -64,11 +64,11 @@ function hkHomeCard(){
 /* Korrektur 6: kein „Test einplanen“ bei Krankheits-Folgetagen, Wiedereinstieg, Befinden „krank“ oder „richtig platt“ in den letzten
    48 Std. und in Erholungswochen */
 function hkTestOk(p){
-  try { const w = S.wk || 1, t = hasStarted(p) ? todayIdx() : 0, pl = S.plan || [], bad = x => x && (x.feel === 'sick' || x.feel === 'heavy');
+  try { const w = S.wk || 1, t = hasStarted(p) ? todayIdx() : 0, pl = S.plan || [], bad = x => x && (x.feel === 'sick' || x.feel === 'heavy' || x.feel === 'inj');
     if (p.sickNext && p.sickNext.w === w) return false;
     if (reentOf(p, w)) return false;
     if (bad(pl[t]) || (t > 0 ? bad(pl[t - 1]) : S.prevPlan && S.prevPlan.w === w - 1 && bad((S.prevPlan.plan || [])[6]))) return false;
-    if (pl.some((x, k) => k < t && x && x.feel === 'sick')) return false;
+    if (pl.some((x, k) => k < t && x && (x.feel === 'sick' || x.feel === 'inj'))) return false;
     const P = phases(p).find(x => w >= x.from && w <= x.to);
     if (recWk(p, w) || (p.recW || []).includes(w) || (P && P.rec)) return false;
   } catch (e) { elog(e); }

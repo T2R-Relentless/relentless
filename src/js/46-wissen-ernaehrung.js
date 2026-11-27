@@ -249,7 +249,7 @@ function eventFuelPlan(p){
 function dashboard(){
   const p = S.p, ph = phases(p), tot = ph[ph.length-1].to, cw = S.wk, page = pg || 'home', w = page === 'home' ? cw : (vw ?? cw), cur = w === cw && hasStarted(p);
   const plan = cur ? S.plan : genWeek(p, w), P = ph.find(x => w >= x.from && w <= x.to), rec = (w % 4 === 0 || (p.recW || []).includes(w)) && P.key !== 'taper';
-  viewPlan = plan; strWeek = w; strMap = strOf(p, w, plan); mobMap = mobOf(p, w, plan, strMap); if (cur) plan.forEach((x, k) => { if (x && (x.feel === 'sick' || x.feel === 'neck')) { delete strMap[k]; if (x.feel === 'sick') { delete mobMap[k]; delete strMap[k + 1]; } } });
+  viewPlan = plan; strWeek = w; strMap = strOf(p, w, plan); mobMap = mobOf(p, w, plan, strMap); if (cur) plan.forEach((x, k) => { if (x && (x.feel === 'sick' || x.feel === 'neck' || x.feel === 'inj')) { delete strMap[k]; if (x.feel === 'sick') { delete mobMap[k]; delete strMap[k + 1]; } if (x.feel === 'inj') delete mobMap[k]; } });
   const tm = plan.reduce((a, x) => a + x.m, 0), tt = plan.reduce((a, x) => a + tss(x), 0);
   const col = n => ph.find(x => n >= x.from && n <= x.to).color;
   const dots = Array.from({length: tot}, (_, i) => i + 1).map(n => `<button onclick="goWeek(${ja(n)});goPg('week')" aria-label="Woche ${esc(n)}" class="hd h-8 w-8 rounded-lg text-sm font-semibold" style="background:${esc(col(n))}${esc(n===w?'':'33')};color:${esc(n===w?'#06202f':'var(--ink)')};border:${esc(n===cw?'2px solid #0b1c49':n%4===0&&n<tot?'1px dashed var(--mute)':'1px solid transparent')}">${n}</button>`).join('');

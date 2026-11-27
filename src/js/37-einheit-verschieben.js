@@ -36,11 +36,13 @@ function mvPickDay(i, j){
   if (mvRide(mvPlan(mvW())[j])) { mvAsk.step = 'occ'; return render(); }
   mvMode('move');
 }
-function mvMode(mode){ const a = mvAsk; if (!a) return; a.mode = mode; const c = mvCheck(a.i, a.j, mode); if (!c.warns.length) return mvDo(false); a.step = 'warn'; a.warns = c.warns; a.easy = c.easy; render(); }
+function mvMode(mode){ const a = mvAsk; if (!a || (a.co && mode === 'both')) return; a.mode = mode; /* F39: aus dem Coach nie „beide an einem Tag“ (V4) */ const c = mvCheck(a.i, a.j, mode); if (!c.warns.length) return mvDo(false); a.step = 'warn'; a.warns = c.warns; a.easy = c.easy; render(); }
 const mvEasy = o => ({...D('base', 'Grundlage Z2', Math.min(75, o.m), 56, 72, '90 U/min', `Locker in Zone 2 statt „${o.n}“, weil sonst zwei harte Tage aufeinander folgen.`, 'Zwei harte Tage hintereinander kosten mehr, als sie bringen.'), adapted:true, orig:o});
 function mvDo(easy){
   const a = mvAsk; if (!a) return; const w = mvW(), P0 = mvPlan(w), x = P0[a.i], y = P0[a.j];
-  bkPre('Vor dem Verschieben einer Einheit');
+  bkPre(a.co && typeof CO_KN !== 'undefined' ? 'Vom Coach vorgeschlagen: ' + CO_KN[a.co] : 'Vor dem Verschieben einer Einheit');
+  /* F39: Coach-Vorschlag gilt erst mit der Ausführung als genutzt (ein Vorschlag pro Tag), Abbrechen verbraucht ihn nicht */
+  if (a.co && S.coach) { S.coach.act = {d:iso(0), r:a.cor || '', k:a.co}; if (a.co === 'mvmiss') S.coach.r10w = S.wk; }
   const txt = a.mode === 'swap' ? `„${x.n}“ und „${y.n}“ haben die Tage getauscht (${DAYS[a.i]} ↔ ${DAYS[a.j]}).` : a.mode === 'both' ? `„${x.n}“ wurde von ${DAYS[a.i]} auf ${DAYS[a.j]} gelegt, zusammen mit „${y.n}“.` : `„${x.n}“ wurde von ${DAYS[a.i]} auf ${DAYS[a.j]} verschoben.`;
   if (mvFut(w)) {
     /* kommende Woche: als Änderung dieser Woche speichern, wird bei jedem Erzeugen der Woche wieder angewendet */
@@ -62,7 +64,7 @@ function mvModal(){
   if (a.step === 'day') { const L = mvTargets(a.i, mvW());
     body = `<p class="mt-2 text-sm">Auf welchen Tag soll „<span data-noi18n>${esc(x.n)}</span>“?</p><div class="mt-3 flex flex-wrap gap-2">${L.map(j => `<button class="ghost !w-auto !px-3 text-sm" style="min-height:44px" onclick="mvPickDay(${ja(a.i)},${ja(j)})">${SD[j]}${mvRide(MP[j]) ? ' · belegt' : ' · frei'}</button>`).join('') || '<span class="text-sm" style="color:var(--mute)">Diese Woche ist kein Tag mehr frei.</span>'}</div>`; }
   else if (a.step === 'occ') { const y = MP[a.j];
-    body = `<p class="mt-2 text-sm">Am ${DAYS[a.j]} steht schon „<span data-noi18n>${esc(y.n)}</span>“ (${mm(y.m)}).</p><div class="mt-3 space-y-2">${btn("mvMode('swap')", `Tauschen: „${esc(y.n)}“ auf ${DAYS[a.i]}`, true)}${btn("mvMode('both')", 'Beide an diesem Tag', false)}</div>`; }
+    body = `<p class="mt-2 text-sm">Am ${DAYS[a.j]} steht schon „<span data-noi18n>${esc(y.n)}</span>“ (${mm(y.m)}).</p><div class="mt-3 space-y-2">${btn("mvMode('swap')", `Tauschen: „${esc(y.n)}“ auf ${DAYS[a.i]}`, true)}${a.co ? '' : btn("mvMode('both')", 'Beide an diesem Tag', false)}</div>`; }
   else if (a.step === 'warn') {
     body = `<div class="mt-2 space-y-2 text-sm">${a.warns.map(w => `<p class="flex gap-2">${ic('warn', 18, 'margin-top:2px;color:var(--teal)')}<span>${w}</span></p>`).join('')}</div><div class="mt-3 space-y-2">${a.easy != null ? btn('mvDo(true)', `Verschieben und ${DAYS[a.easy]} locker fahren`, true) : ''}${btn('mvDo(false)', 'Trotzdem so verschieben', a.easy == null)}</div>`; }
   return `<div class="exov" role="dialog" aria-modal="true" aria-label="Einheit verschieben" onclick="if(event.target===this)mvClose()"><div class="exbox"><div class="flex items-start gap-2"><p class="hd flex-1 text-xl font-semibold">Einheit verschieben</p><button class="ghost !px-3 !py-1" style="min-width:44px;min-height:44px" aria-label="Schließen" onclick="mvClose()">${ic('close', 22)}</button></div>${body}<button class="mt-3 text-sm" style="color:var(--mute);background:none;border:0;min-height:44px" onclick="mvClose()">Abbrechen</button></div></div>`;

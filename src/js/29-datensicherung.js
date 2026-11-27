@@ -10,7 +10,7 @@
    BK_SIDE: Sicherungen und Schnappschüsse nehmen sie nicht auf, und Wiederherstellen (auch alter Dateien, die stats.off noch
    enthalten) lässt die Wahl auf diesem Gerät unverändert. */
 const BK_SIDE = ['relentless.dyk', 'relentless.gmtip', 'relentless.inst.hide'], BK_GK = 'relentless.garmin.key';
-let bkImp = null, bkUndo = null, bkList = null, bkAsk = null, bkMsg = '', bkTimer = null, bkReady = false;
+let bkMute = false, bkImp = null, bkUndo = null, bkList = null, bkAsk = null, bkMsg = '', bkTimer = null, bkReady = false;
 /* Beim Laden der Seite festhalten, ob der normale Speicher leer war (bevor die App etwas hineinschreibt) */
 const bkEmpty0 = (() => { try { return !localStorage.getItem(K) && !localStorage.getItem(LIBK); } catch (e) { elog(e); return false; } })();
 const bkLS = k => { try { return localStorage.getItem(k); } catch (e) { elog(e); return null; } };
@@ -62,6 +62,7 @@ async function bkPrune(){
 }
 /* Schnappschuss vor einer riskanten Aktion: Daten jetzt (synchron) erfassen, dann ablegen */
 function bkPre(why){
+  if (bkMute) return Promise.resolve(); /* F39: im Coach-Pfad gilt nur der Schnappschuss des Coachs */
   const r = bkRaw(false), k = 'snap:p:' + Date.now(); bkUndo = {k, why, at:Date.now()};
   const pr = bkPut(k, {at:Date.now(), kind:'pre', why, ...r}).then(bkPrune).catch(() => {}); bkList = null;
   return pr;
@@ -141,7 +142,7 @@ function bkModal(){
 const bkWhen = t => { const d = new Date(t); return fmt(lstr(d)) + ', ' + d.toTimeString().slice(0, 5) + ' Uhr'; };
 function bkUndoBar(){
   if (!bkUndo || Date.now() - bkUndo.at > 10 * 60e3) return '';
-  return `<div class="flex items-center gap-2 text-sm" role="status" style="background:var(--tint);border:1px solid var(--ice);padding:8px 10px 8px 14px;margin:10px 16px 0;color:var(--ink)"><span class="min-w-0 flex-1">Vorheriger Stand gesichert (${esc(bkUndo.why.replace(/^Vor dem /, '').replace(/^Vor /, ''))}).</span><button class="ghost !px-3 !py-1 text-sm" onclick="bkUndoGo()">Rückgängig</button><button class="text-sm" style="min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--mute);padding:4px 6px;background:none;border:0" aria-label="Hinweis schließen" onclick="bkUndo=null;render()">${icX()}</button></div>`;
+  return `<div class="flex items-center gap-2 text-sm" role="status" style="background:var(--tint);border:1px solid var(--ice);padding:8px 10px 8px 14px;margin:0 0 1.25rem;position:relative;z-index:2;color:var(--ink)"><span class="min-w-0 flex-1"><span class="block">Vorheriger Stand gesichert.</span><span class="block text-xs" style="color:var(--mute)">${esc(bkUndo.why)}</span></span><button class="ghost !px-3 !py-1 text-sm" onclick="bkUndoGo()">Rückgängig</button><button class="text-sm" style="min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;color:var(--mute);padding:4px 6px;background:none;border:0" aria-label="Hinweis schließen" onclick="bkUndo=null;render()">${icX()}</button></div>`;
 }
 
 /* ---------- Automatische Sicherungen im Gerät (Liste unter „Meine Pläne“) ---------- */

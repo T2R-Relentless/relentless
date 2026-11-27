@@ -79,7 +79,7 @@ const ctl0 = (x, i, cur) => {
   if (x.comAdd && x.orig && !S.done[i]) return b(`toggleCom(${ja(i)})`, 'Doch nicht pendeln') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
   if (x.t === 'com' || (x.parts && !S.done[i])) return b(`toggleCom(${ja(i)})`, 'Heute nicht pendeln') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
   if (x.noCom && x.orig && !S.done[i]) return b(`toggleCom(${ja(i)})`, 'Doch pendeln') + b(`cutDay(${ja(i)})`, 'Kürzen (−30 %)') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
-  if (!x.m) return x.feel === 'sick' ? '' : b(`toggleBlock(${ja(i)})`, 'Tag sperren');
+  if (!x.m) return x.feel === 'sick' || x.feel === 'inj' ? '' : b(`toggleBlock(${ja(i)})`, 'Tag sperren');
   if (S.done[i]) return '';
   const fr = [0,1,2,3,4,5,6].filter(j => j >= todayIdx() && j !== i && freeDay(j));
   return (comAble(x) ? b(`toggleCom(${ja(i)})`, 'Pendeln') : '') + (x.cut || x.parts ? '' : b(`cutDay(${ja(i)})`, 'Kürzen (−30 %)')) + (mvTargets(i).length ? b(`mvAskGo(${ja(i)})`, 'Verschieben') : '') + (vaStim(x) ? b(`vaOpen(${ja(i)})`, 'Andere Variante') : '') + b(`toggleBlock(${ja(i)})`, 'Tag nicht möglich');
