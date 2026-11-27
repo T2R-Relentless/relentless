@@ -6768,8 +6768,8 @@ function privSettings(){
    gesetzt (Datum in der Zukunft); alle folgenden IDs müssen darüber liegen, sonst sähen Geräte mit dieser ID keine Updates.
    APP_BUILT ist das echte Datum des Hochzählens (tools/version.py setzt es bei fix und neu aus der aktuellen Uhrzeit) und
    wird angezeigt. */
-const APP_BUILD = '20261213090500';
-const APP_BUILT = '20261126230515';
+const APP_BUILD = '20261213090600';
+const APP_BUILT = '20261127064001';
 const updNewer = (remote, local) => /^\d{8,20}$/.test(String(remote || '')) && String(remote) > String(local);
 let updNew = false, updAt = 0;
 const updWeb = () => { try { return /^https?:$/.test(location.protocol) && !(window.claude && window.claude.use) && !/claude|anthropic/.test(location.hostname); } catch (e) { elog(e); return false; } };
@@ -13347,7 +13347,7 @@ function dykTss(){ lbCh.met = 'tss'; navGo('logbook'); setTimeout(() => { try { 
 /* ---------- F14: Versionsstand in der App ablesbar ----------
    Eine Quelle: APP_BUILD (aus build/BUILD_ID), APP_VERSION (aus build/APP_VERSION) und APP_SW (aus der Cache-Version
    in relentless/public/sw.js) setzt der Build ein; version.json enthält dieselben Werte, build.sh --check prüft das. */
-const APP_VERSION = 225, APP_SW = 'relentless-v62';
+const APP_VERSION = 226, APP_SW = 'relentless-v63';
 let viOpen = false, viMsg = '', updVer = 0;
 /* 20261107180000 → „07.11.2026, 18:00“ bzw. „07 Nov 2026, 18:00“ */
 function viDate(id){ const m = String(id || '').match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/); if (!m) return String(id || '');
