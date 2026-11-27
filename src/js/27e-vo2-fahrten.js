@@ -293,7 +293,7 @@ async function vo2rFillGo(){
       F.i = k + 1; if (F.i % 5 === 0) { try { save(); } catch (e) { elog(e); } } render();
       if (k < L.length - 1 && !F.stop) await vo2rNap(VO2RF.pause, F);
     }
-  } finally { F.run = 0; F.wait = 0; try { save(); } catch (e) { elog(e); } try { render(); } catch (e) { elog(e); } }
+  } finally { F.run = 0; F.wait = 0; vo2rWaitAt = 0; try { save(); } catch (e) { elog(e); } try { render(); } catch (e) { elog(e); } }
 }
 /* Pause in Stücken, damit „Abbrechen“ auch während einer Drosselpause sofort wirkt */
 async function vo2rNap(ms, F){ let left = ms; while (!F.stop && left > 0) { const d = Math.min(500, left); await impSleep(d); left -= d; } } /* nach Stücken gezählt, nicht nach Uhrzeit */
@@ -301,7 +301,7 @@ const vo2rRun = () => !!(typeof vo2rFill !== 'undefined' && vo2rFill && vo2rFill
 /* F39: Import oder Bestwerte-Nachrechnen gewünscht, während die VO2max-Nachberechnung läuft: nicht starten, kurz Bescheid geben */
 let vo2rWaitAt = 0;
 function vo2rBlock(){ if (!vo2rRun()) return false; vo2rWaitAt = Date.now(); try { render(); } catch (e) { elog(e); } return true; }
-const vo2rWaitNote = () => vo2rWaitAt && vo2rRun() ? `<p class="mt-2 text-sm" role="status" data-noi18n style="color:#9a6a00">${lang() === 'en' ? 'The VO2max recalculation is running right now. Please wait until it has finished, or cancel it.' : 'Gerade läuft die VO2max-Nachberechnung. Bitte warte, bis sie fertig ist, oder brich sie ab.'}</p>` : '';
+const vo2rWaitNote = () => vo2rWaitAt && vo2rRun() ? `<p class="mt-2 text-sm" role="status" data-noi18n style="color:#9a6a00">${lang() === 'en' ? 'The VO2max recalculation is running right now. Please wait until it has finished, or cancel it.' : 'Gerade läuft die VO2max-Nachberechnung. Bitte warte, bis sie fertig ist, oder brich sie ab.'}</p><button class="ghost mt-2 !w-auto !px-3 text-sm" style="min-height:44px" data-noi18n onclick="vo2rFillStop()">${lang() === 'en' ? 'Cancel recalculation' : 'Nachberechnung abbrechen'}</button>` : '';
 function vo2rFillStop(){ if (vo2rFill && vo2rFill.run) vo2rFill.stop = 1; render(); }
 function vo2rFillUi(){
   const F = vo2rFill, btn = (fn, l, main) => `<button class="${main ? 'btn' : 'ghost'} mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="${fn}">${l}</button>`;

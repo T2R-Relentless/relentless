@@ -97,7 +97,9 @@ test('Verbotene Wörter (§5) in allen Bausteinen, Fehlalarm-Liste', async () =>
         if (h1.length || h2.length) bad.push(`${lg}/${ton}/${k}: ${[...h1, ...h2].join(', ')}`); } } }
   /* alle Sprüche und alle Varianten der Form- und Trend-Tabellen */
   const T = a.$('CO_TXT'), walk = (v, sp) => { if (Array.isArray(v) && v.length >= 2 && typeof v[0] === 'string' && typeof v[1] === 'string') { [['de', v[0].replace(/\{[Aa]nr\}/g, 'Granate')], ['en', v[1].replace(/\{[Aa]nr\}/g, 'legend')]].forEach(([l, x]) => { const h = hit(x, l, sp ? {spruch:true} : {}); if (h.length) bad.push(x + ': ' + h); }); return; } if (v && typeof v === 'object') Object.values(v).forEach(y => walk(y, sp)); };
-  walk(T.sp, true); ['fs', 'ft', 'fs2', 'fs5', 'fs5s', 'fog', 'mo', 'evf', 'zeit', 'rtIn', 'rt0', 'neu', 'luecke', 'ev', 'ziel', 'e0', 'e0n', 'r3', 'r3ev', 'r4a', 'r4aK', 'r4aT', 'r4b', 'r4c', 'r6', 'r7', 'r7p', 'r8', 'r8T', 'r9', 'r10a', 'r10b', 'rt', 'rtKraft', 'frage', 'teaser'].forEach(k => walk(T[k], false));
+  walk(T.sp, true); ['fs', 'ft', 'fs2', 'fs5', 'fs5s', 'fog', 'mo', 'evf', 'zeit', 'rtIn', 'rt0', 'neu', 'luecke', 'ev', 'ziel', 'e0', 'e0n', 'r3', 'r3ev', 'r4a', 'r4aK', 'r4aT', 'r4b', 'r4c', 'r6', 'r7', 'r7p', 'r8', 'r8T', 'r9', 'r10a', 'r10b', 'rt', 'rtKraft', 'frage', 'teaser', 'r9d'].forEach(k => walk(T[k], false));
+  /* fester R0-Text: Gesundheitswörter erlaubt (§5), sonst dieselbe Liste */
+  [['de', T.erkNeu[0]], ['en', T.erkNeu[1]]].forEach(([l, x]) => { const h = hit(x, l, {health:true}); if (h.length) bad.push(x + ': ' + h); });
   ok(!bad.length, bad.slice(0, 5).join('\n')); a.noErrors();
 });
 
@@ -290,6 +292,20 @@ test('Anrede (AN-1 bis AN-6): nur K/A, nur erlaubte Regeln, nie ruhig, nie in Vo
         if (coAnrW.test(rep.spruch)) { hits++; if (ton === 'sachlich' || r.calm || !['OK', 'RT', 'TP', 'EV', 'R5a', 'R9', 'R10a'].includes(r.id)) bad.push(`${lg}/${ton}/${k}/${r.id}: ${rep.spruch}`); }
         if (coAnrW.test(rep.insight + rep.einheit)) bad.push(`${lg}/${ton}/${k}: Anrede außerhalb des Spruchs`);
         if (rep.words < 60 || rep.words > 80) bad.push(`${lg}/${ton}/${k}: ${rep.words} Wörter`); } } }
+  /* weitere Lagen (AN-6): erkältet, Pause, Überlastung, erste Fahrt nach Schmerzen, gestern verpasst (locker/hart), Check, Tapering, Kälte ohne Müdigkeit */
+  a.$("mvCheck = () => ({warns:[]}); S.p.avail[3] = true; S.p.perDay = false");
+  const MORE = {erk:`pk => { pk._i.ill = {lv:'neck'}; }`, pause:`pk => { pk.datentage = 160; pk._i.gap = {g:9}; }`, ueber:`pk => { pk.datentage = 160; pk._i.ovl = ['a', 'b']; }`,
+    vl4:`pk => { pk.datentage = 160; pk._i.ill = {...pk._i.ill, injOk:'x'}; }`, r10a:`pk => { pk.datentage = 160; pk._i.yd = {miss:true, missHard:false, sameWeek:true}; }`,
+    r10b:`pk => { pk.datentage = 160; pk.einheit = null; pk._i.yd = {miss:true, missHard:true, sameWeek:true, m:60, titel:'Sweet Spot 3×12'}; }`, check:`pk => { pk.datentage = 160; pk.einheit.test = true; }`,
+    taper:`pk => { pk.datentage = 160; pk._i.taper = true; }`, kalt:CO_SC.r9.replace("pk.befinden = 'tired';", '')};
+  const ids = {}, allow = ['OK', 'RT', 'TP', 'EV', 'R5a', 'R9', 'R10a'];
+  for (const lg of ['de', 'en']) { a.$(`S.lang = '${lg}'`); for (const ton of ['kumpel', 'antreiber', 'sachlich']) { a.$(`S.coach.ton = '${ton}'`);
+    for (const [k, mod] of Object.entries(MORE)) { coHistFull(a); const {r, rep} = coRun(a, mod); ids[k] = r.id; const has = coAnrW.test(rep.spruch);
+      if (has && (ton === 'sachlich' || r.calm || !allow.includes(r.id))) bad.push(`${lg}/${ton}/${k}/${r.id}: ${rep.spruch}`);
+      if (coAnrW.test(rep.insight + rep.einheit)) bad.push(`${lg}/${ton}/${k}: Anrede außerhalb des Spruchs`);
+      if (k === 'kalt' && ton !== 'sachlich' && !has) bad.push(`${lg}/${ton}/kalt: erlaubte Anrede fehlt: ${rep.spruch}`);
+      if (k === 'r10a' && has) bad.push(`${lg}/${ton}/r10a: Anrede in S-VERP`); } } }
+  eq(ids, {erk:'R0e', pause:'R1', ueber:'R2', vl4:'VL4', r10a:'R10a', r10b:'R10b', check:'R5a', taper:'TP', kalt:'R9'}, 'Lagen erreicht');
   ok(hits > 0, 'Anrede kommt vor'); ok(!bad.length, bad.slice(0, 5).join('\n'));
   /* krank und verletzt: ruhig, nie Anrede */
   for (const f of ['sick', 'inj']) { const b = await coApp(); b.$(`feelDay(3, '${f}')`); coHistFull(b); ok(!coAnrW.test(coTxt(coRun(b).rep)), f + ': keine Anrede'); b.noErrors(); }
@@ -313,4 +329,23 @@ test('Meldung, wenn Import oder Bestwerte-Nachrechnen auf die VO2max-Nachberechn
   a.$('mmFill = null'); await a.w.mmFillGo(); ok(/VO2max-Nachberechnung/.test(a.$('mmFillUi()')), 'Hinweis bei den Bestwerten');
   a.$("S.lang = 'en'"); ok(/VO2max recalculation is running/.test(a.$('vo2rWaitNote()')), 'englisch');
   a.$('vo2rFill.run = 0'); eq(a.$('vo2rWaitNote()'), '', 'danach weg'); a.noErrors();
+});
+
+/* ---------- Runde 3 ---------- */
+test('SP-1: Spruch mit und ohne Anrede gilt als derselbe; nach angenommenem Vorschlag keine Befindensfrage; Schnappschuss nur bei Änderung', async () => {
+  const a = await coApp(); a.$("S.coach.ton = 'antreiber'"); const T = a.$('CO_TXT');
+  const rtA = T.sp.rt.a; a.$(`S.coach.hist = ${JSON.stringify([...rtA.slice(0, 3).map(v => 'Mo | RT | Spruch: ' + v[0]), 'Mi | RT A:Rakete | Spruch: Ruhetag, Rakete. Kein Bolzen, kein „nur mal kurz“ aufs Rad.'])}; S.coach.lv = {}`);
+  const s = coRun(a, `pk => { pk.datentage = 160; pk.einheit = null; }`).rep.spruch; ok(!/^Ruhetag\. Kein Bolzen/.test(s), 'derselbe Spruch ohne Anrede zählt als Wiederholung: ' + s); eq(s, rtA.find(v => /Körner von heute/.test(v[0]))[0]);
+  const b = await coApp(); b.$("coDataDays = () => 160; S.mo = {}; for (let k = 8; k <= 20; k++) S.mo[iso(-k)] = {hr:50}; S.mo[iso(0)] = {hr:58, sleep:'bad'}; save()");
+  b.w.coTake('easy'); const x = coRun(b); ok(x.r.id !== 'R5a' && !/Wie fühlst du dich/.test(x.rep.einheit), 'keine Befindensfrage nach Annahme: ' + x.r.id);
+  const c = await coApp(); c.$("bkUndo = null; coRule = pk => ({id:'R4b', kn:'easy', calm:false}); S.plan[3].adapted = true; save()"); c.w.coTake('easy'); await c.tick(30); ok(!c.$('bkUndo'), 'keine Änderung: kein Schnappschuss');
+  c.$('delete S.plan[3].adapted; delete S.coach.act'); c.w.coTake('easy'); ok(c.$('!!bkUndo'), 'mit Änderung: Schnappschuss'); a.noErrors(); b.noErrors(); c.noErrors();
+});
+
+test('Englisch ohne gerade Anführungszeichen, Titel klein bei schmalen Bildschirmen, Abbrechen bei wartender Nachberechnung', async () => {
+  const a = await coApp(), bad = [], walk = v => { if (Array.isArray(v) && typeof v[1] === 'string') { if (/"/.test(v[1])) bad.push(v[1]); return; } if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  walk(a.$('CO_TXT')); eq(bad, [], 'keine geraden Anführungszeichen');
+  ok(/co-tt/.test(a.$("SET_T['set-coach']")) && /max-width:340px\)\{ \.co-tt/.test(a.w.document.documentElement.outerHTML.replace(/\s+\{/g, '{')), 'kleiner Titel bei ≤ 340 px');
+  a.$('vo2rFill = {run:1}; vo2rBlock()'); ok(/onclick="vo2rFillStop\(\)"/.test(a.$('vo2rWaitNote()')) && /min-height:44px/.test(a.$('vo2rWaitNote()')), 'Abbrechen-Knopf');
+  ok(/vo2rWaitAt = 0/.test(a.$('vo2rFillGo.toString()')), 'Hinweis endet mit dem Lauf'); a.noErrors();
 });

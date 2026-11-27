@@ -53,7 +53,7 @@ function coSetPage(){
     <p class="mt-3 text-xs" style="color:var(--mute)">Der Coach rechnet nur auf deinem Gerät, es verlassen keine Daten das Gerät. Form und Fitness beschreibt er in Worten. Bei Krankheit oder Schmerzen gibt es keine Sprüche und keinen Leistungsdruck, nur einen ruhigen Hinweis zur Erholung.</p></section>`;
 }
 SET_PAGES['set-coach'] = () => coSetPage();
-SET_T['set-coach'] = 'Persön&shy;licher Coach'; /* bricht bei 320 pt sauber um */
+SET_T['set-coach'] = '<span class="co-tt">Persön&shy;licher Coach</span>'; /* bricht bei 320 pt sauber um */
 IA_PAR['set-coach'] = 'settings';
 IA_ICO.coach = CO_IC;
 DYK_AT.coach = ['set-coach', 'fx-coach', '#coOn'];

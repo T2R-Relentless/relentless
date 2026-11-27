@@ -571,3 +571,4 @@ button.btn,button.ghost{min-height:44px}
 :root[data-theme=dark] .bk-warn{color:#f6d58a}
 /* F39: Häkchen in der Markenfarbe, hell und dunkel */
 input[type=checkbox],input[type=radio]{accent-color:var(--teal)}
+@media (max-width:340px){ .co-tt{font-size:.88em} } /* F39: langer Titel „Persönlicher Coach“ */

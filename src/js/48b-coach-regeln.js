@@ -55,7 +55,7 @@ function coRule(pk){
   /* R10: gestern verpasst */
   const r10 = coR10(pk); if (r10) return r10;
   /* R5a: kein Befinden eingetragen (nur Frage, kein Vorschlag) */
-  if (!pk.befinden && !S.done[t]) return R('R5a', 'feel');
+  if (!pk.befinden && !S.done[t] && !I.xAd && !(I.act && CO_PLAN.includes(I.act.k))) return R('R5a', 'feel'); /* nach angenommenem Vorschlag keine Frage mehr */
   return R('OK', null);
 }
 function coR10(pk){
@@ -84,7 +84,10 @@ function coTake(kn){
   const mvK = kn === 'mv' || kn === 'mvtest' || kn === 'mvmiss';
   if (!mvK) S.coach.act = {d:today, r:r.id, k:kn}; /* Verschieben zählt erst, wenn es im Dialog ausgeführt wird (mvDo) */
   /* ein Schnappschuss mit Herkunft Coach, der innere der aufgerufenen Funktion entfällt (bkMute) */
-  const run = f => { try { bkPre('Vom Coach vorgeschlagen: ' + CO_KN[kn]); } catch (e) { elog(e); } bkMute = true; try { f(); } finally { bkMute = false; } };
+  const sig = () => JSON.stringify([S.plan, S.p && S.p.recW, S.p && S.p.reent]);
+  /* Schnappschuss nur bei echter Änderung: ändert die Funktion nichts, wird er verworfen und die vorige Leiste bleibt */
+  const run = f => { const u0 = bkUndo, s0 = sig(); let pr = null; try { pr = bkPre('Vom Coach vorgeschlagen: ' + CO_KN[kn]); } catch (e) { elog(e); } const mine = bkUndo; bkMute = true; try { f(); } finally { bkMute = false; }
+    if (sig() === s0 && mine && mine !== u0) { bkUndo = u0; try { Promise.resolve(pr).then(() => bkDel(mine.k)).catch(e => elog(e)); } catch (e) { elog(e); } } };
   if (kn === 'keep' || kn === 'ack') { if (r.id === 'R2') S.ovlSeen = iso(0); save(); return render(); }
   if (kn === 'ok') { S.coach.inj = {...(S.coach.inj || {}), ok:today}; save(); return render(); }
   if (kn === 'rest') { run(() => feelDay(t, 'inj')); render(); return; }
