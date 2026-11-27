@@ -9,7 +9,7 @@ const CO_IC = '<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/>';
 /* Verlauf und Variantenstand für heute festhalten (nur bei Änderung speichern) */
 function coCommit(pk, r, rep){
   const c = S.coach; if (!c) return; const today = iso(0), before = JSON.stringify([c.hist, c.lv, c.r01]);
-  const kurz = `${pk.wochentag} | ${r.id}${pk.form && pk.form.frische != null ? ' F' + coFS(pk.form.frische) : ''} | Spruch: ${rep.spruch || '–'}`.slice(0, 120);
+  const kurz = `${pk.wochentag} | ${r.id}${pk.form && pk.form.frische != null ? ' F' + coFS(pk.form.frische) : ''}${rep.anr ? ' A:' + rep.anr : ''} | Spruch: ${rep.spruch || '–'}`.slice(0, 120);
   const H = (Array.isArray(c.hist) ? c.hist : []).filter(h => !String(h).startsWith(pk.wochentag + ' |')); c.hist = [...H, kurz].slice(-7);
   c.lv = {...(c.lv || {}), ...rep.used};
   if (/^R0|^R1/.test(r.id)) c.r01 = today;

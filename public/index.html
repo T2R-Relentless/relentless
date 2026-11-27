@@ -8069,7 +8069,7 @@ let mmFill = null;
 function mmTodo(){ const all = mmAll(), v2 = id => typeof impVo2Done === 'function' ? impVo2Done(id) : true;
   return (S.arch || []).filter(a => a && a.gid && (!a.in || +a.np > 0 || a.m1) && (!all[a.id] ? (+a.np > 0 || a.m1 || !a.imp) : (all[a.id].s === 'a' && !all[a.id].nf) || (a.imp && +a.np > 0 && !v2(a.id) && !all[a.id].nf))).sort((a, b) => a.d.localeCompare(b.d)); }
 async function mmFillGo(){
-  if ((mmFill && mmFill.run) || typeof gmRide !== 'function' || !gmMode() || (typeof vo2rRun === 'function' && vo2rRun())) return; /* F39: nicht parallel zur VO2-Rückrechnung */
+  if ((mmFill && mmFill.run) || typeof gmRide !== 'function' || !gmMode() || (typeof vo2rBlock === 'function' && vo2rBlock())) return; /* F39: nicht parallel zur VO2-Rückrechnung, mit Hinweis */
   try { if (typeof impVo2Pre === 'function') impVo2Pre(); } catch (e) { elog(e); } const L = mmTodo(); if (!L.length) return; mmFill = {run:1, i:0, n:L.length, ok:0, fail:0, msg:'', v:0}; render();
   for (const a of L) {
     if (!mmFill.run) break; mmFill.i++; render();
@@ -8083,6 +8083,7 @@ function mmFillStop(){ if (mmFill) mmFill.run = 0; render(); }
 function mmFillUi(){
   const can = typeof gmMode === 'function' && !!gmMode(); try { if (can && typeof impVo2Pre === 'function') impVo2Pre(); } catch (e) { elog(e); } const L = can ? mmTodo() : [], part = Object.values(S.mm || {}).filter(r => r && r.s === 'a' && !r.nf).length;
   if (mmFill && mmFill.run) return `<section class="panel mt-3 p-4" data-noi18n role="status"><p class="font-semibold">${wkL('Ältere Fahrten werden nachberechnet', 'Recalculating older rides')}</p><p class="mt-1 text-sm">${wkL(`Fahrt ${mmFill.i} von ${mmFill.n} …`, `Ride ${mmFill.i} of ${mmFill.n} …`)}</p><div class="mm-bar mt-2"><i style="width:${Math.round(mmFill.i / mmFill.n * 100)}%"></i></div><button class="ghost mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="mmFillStop()">${wkL('Abbrechen', 'Cancel')}</button></section>`;
+  const wn = typeof vo2rWaitNote === 'function' ? vo2rWaitNote() : ''; if (wn) return `<div id="fx-mmfill">${wn}</div>`;
   const done = mmFill && !mmFill.run ? `<p class="mt-1 text-sm">${wkL(`Zuletzt: ${mmFill.ok} Fahrten nachberechnet${mmFill.fail ? `, ${mmFill.fail} nicht ladbar` : ''}.`, `Last run: ${mmFill.ok} rides recalculated${mmFill.fail ? `, ${mmFill.fail} could not be loaded` : ''}.`)}${mmFill.msg ? ' ' + esc(mmFill.msg) : ''}</p>` : '';
   if (can && L.length) return `<section class="panel mt-3 p-4" id="fx-mmfill" data-noi18n><p class="font-semibold">${wkL('Ältere Fahrten nachberechnen', 'Recalculate older rides')}</p><p class="mt-1 text-sm" style="color:var(--mute)">${wkL(`${L.length} Fahrten von Garmin haben noch keine vollständige Kurve oder noch keine VO2max-Prüfung. Die App lädt sie einzeln von Garmin und berechnet alle Dauern. Du kannst jederzeit abbrechen und später weitermachen.`, `${L.length} rides from Garmin do not have a full curve or a VO2max check yet. The app loads them one by one from Garmin and calculates all durations. You can cancel at any time and continue later.`)}</p>${done}<button class="btn mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="mmFillGo()">${wkL('Nachberechnen', 'Recalculate')}</button></section>`;
   if (part) return `<p class="mt-3 text-xs" style="color:var(--mute)" data-noi18n>${wkL(`${part} ältere Fahrten haben nur einzelne Bestwerte (1, 5, 20, 60 min). Lädst du sie noch einmal hoch oder verbindest Garmin, berechnet die App alle Dauern.`, `${part} older rides only have a few best efforts (1, 5, 20, 60 min). Upload them again or connect Garmin and the app calculates all durations.`)}</p>${done}`;
@@ -8774,6 +8775,10 @@ async function vo2rFillGo(){
 /* Pause in Stücken, damit „Abbrechen“ auch während einer Drosselpause sofort wirkt */
 async function vo2rNap(ms, F){ let left = ms; while (!F.stop && left > 0) { const d = Math.min(500, left); await impSleep(d); left -= d; } } /* nach Stücken gezählt, nicht nach Uhrzeit */
 const vo2rRun = () => !!(typeof vo2rFill !== 'undefined' && vo2rFill && vo2rFill.run);
+/* F39: Import oder Bestwerte-Nachrechnen gewünscht, während die VO2max-Nachberechnung läuft: nicht starten, kurz Bescheid geben */
+let vo2rWaitAt = 0;
+function vo2rBlock(){ if (!vo2rRun()) return false; vo2rWaitAt = Date.now(); try { render(); } catch (e) { elog(e); } return true; }
+const vo2rWaitNote = () => vo2rWaitAt && vo2rRun() ? `<p class="mt-2 text-sm" role="status" data-noi18n style="color:#9a6a00">${lang() === 'en' ? 'The VO2max recalculation is running right now. Please wait until it has finished, or cancel it.' : 'Gerade läuft die VO2max-Nachberechnung. Bitte warte, bis sie fertig ist, oder brich sie ab.'}</p>` : '';
 function vo2rFillStop(){ if (vo2rFill && vo2rFill.run) vo2rFill.stop = 1; render(); }
 function vo2rFillUi(){
   const F = vo2rFill, btn = (fn, l, main) => `<button class="${main ? 'btn' : 'ghost'} mt-2 !w-auto !px-3 text-sm" style="min-height:44px" onclick="${fn}">${l}</button>`;
@@ -13547,12 +13552,12 @@ function impRow(a, known){
 function impCtlNow(){ try { const R = vzRows(); if (!R) return null; const r = R.rows.find(x => x.day === R.today); return r ? Math.round(r.ctl) : null; } catch (e) { elog(e); return null; } }
 function impEvForm(){ try { const F = seasonForecast(S.p).find(o => o.main); return F && F.form ? F.form : null; } catch (e) { return null; } }
 function impStart(range){
-  if (impBusy || !gmMode() || (typeof vo2rRun === 'function' && vo2rRun())) return; const days = IMP_RANGE[range]; if (days == null) return;
+  if (impBusy || !gmMode() || (typeof vo2rBlock === 'function' && vo2rBlock())) return; const days = IMP_RANGE[range]; if (days == null) return;
   S.imp = {st:'run', range:String(range), from:days ? iso(-days) : '2000-01-01', to:iso(0), next:0, n:0, dup:0, skip:0, other:{}, page:0, oldest:null, at:Date.now(), ctl0:impCtlNow(), ev0:impEvForm(), wait:0};
   save(); try { track('garmin-historie-import'); } catch (e) { elog(e); } impRun();
 }
 function impStop(){ if (S.imp && S.imp.st === 'run') { S.imp.st = 'pause'; save(); render(); } }
-function impResume(){ if (!S.imp || impBusy) return; S.imp.st = 'run'; S.imp.err = ''; save(); impRun(); }
+function impResume(){ if (!S.imp || impBusy || (typeof vo2rBlock === 'function' && vo2rBlock())) return; S.imp.st = 'run'; S.imp.err = ''; save(); impRun(); }
 function impClose(){ if (!S.imp) return; S.imp.closed = 1; save(); render(); }
 async function impRun(){
   if (impBusy || !S.imp || (typeof vo2rRun === 'function' && vo2rRun())) return; impBusy = true; render(); let tries = 0;
@@ -13652,7 +13657,7 @@ function impMmList(){ try { impVo2Pre(); } catch (e) { elog(e); } return typeof 
 /* VO2max aus einer nachgeladenen Fahrt: dieselbe Prüfung wie beim Einlesen (5-min-Test nach Sitko et al. 2022), still übernommen */
 function impVo2(a, r){ S.vo2h = S.vo2h && typeof S.vo2h === 'object' ? S.vo2h : {}; let e = null; try { e = vo2FromRide({id:a.id, day:a.d, n:a.n}, r); } catch (er) { elog(er); } S.vo2h[a.id] = 1; return e; }
 async function impMmRun(){
-  if (impMm || !gmMode() || (typeof vo2rRun === 'function' && vo2rRun())) return; const L = impMmList(); if (!L.length) return; impMm = {i:0, n:L.length, stop:false, err:'', v:0}; render();
+  if (impMm || !gmMode() || (typeof vo2rBlock === 'function' && vo2rBlock())) return; const L = impMmList(); if (!L.length) return; impMm = {i:0, n:L.length, stop:false, err:'', v:0}; render();
   let tries = 0;
   for (let k = 0; k < L.length && !impMm.stop; k++) {
     const a = L[k];
@@ -13687,7 +13692,7 @@ function impCard(){
   const n = impMmList().length, mm = impMm ? `<p class="mt-2 text-sm" aria-live="polite">${tsL(`Bestwerte und VO2max: ${impMm.i} von ${impMm.n} Fahrten${impMm.v ? `, ${impMm.v} VO2max-Schätzungen` : ''}`, `Best efforts and VO2max: ${impMm.i} of ${impMm.n} rides${impMm.v ? `, ${impMm.v} VO2max estimates` : ''}`)}</p>${bar(Math.round(impMm.i / Math.max(1, impMm.n) * 100))}<div class="mt-2">${impBtn('impMmStop()', tsL('Anhalten', 'Pause'))}</div>`
     : n && !run ? `<div class="mt-3" style="border-top:1px solid var(--line);padding-top:10px"><p class="text-sm">${tsL(`Für ${n} Fahrten kann die App Bestwerte (Leistungsprofil) und VO2max vollständig nachrechnen. Dafür holt sie jede Fahrt einzeln, etwa 2 Sek. je Fahrt, die älteste zuerst.`, `For ${n} rides the app can calculate best efforts (power profile) and VO2max in full. It fetches each ride individually, about 2 s per ride, oldest first.`)}</p><div class="mt-2">${impBtn('impMmRun()', tsL('Bestwerte und VO2max nachrechnen', 'Calculate best efforts and VO2max'))}</div></div>` : '';
   const vInfo = !impMm && S.imp && S.imp.vo2At ? `<p class="mt-2 text-sm" role="status">${S.imp.vo2n ? tsL(`${S.imp.vo2n} VO2max-${S.imp.vo2n === 1 ? 'Schätzung' : 'Schätzungen'} aus der Historie übernommen.`, `${S.imp.vo2n} VO2max ${S.imp.vo2n === 1 ? 'estimate' : 'estimates'} taken from your history.`) : tsL('In der Historie war keine Fahrt, aus der sich die VO2max schätzen lässt (5 Min. am Anschlag mit passendem Puls).', 'No ride in your history allows a VO2max estimate (5 min all-out with matching heart rate).')} ${S.imp.vo2n ? `<button class="underline" style="color:var(--teal);background:none;border:0;min-height:44px" onclick="goPg('state');goPg('svo2')">${tsL('VO2max ansehen', 'View VO2max')}</button>` : ''}</p>` : '';
-  return `<div class="mt-4" data-noi18n id="imp-card" style="border-top:1px solid var(--line);padding-top:12px"><p class="font-semibold">${tsL('Ältere Fahrten importieren', 'Import older rides')}</p><p class="mt-1 text-sm" style="color:var(--mute)">${tsL('Damit Fitness und Formkurve von Anfang an stimmen. Die Fahrten erscheinen im Logbuch als „importiert“, ohne Bewertung und ohne Einfluss auf den Plan.', 'So that fitness and the fitness curve are right from the start. The rides appear in the logbook as “imported”, without evaluation and without effect on the plan.')}</p>${body}${mm}${vInfo}${impFtpUi()}${impInfoUi()}</div>`;
+  return `<div class="mt-4" data-noi18n id="imp-card" style="border-top:1px solid var(--line);padding-top:12px"><p class="font-semibold">${tsL('Ältere Fahrten importieren', 'Import older rides')}</p><p class="mt-1 text-sm" style="color:var(--mute)">${tsL('Damit Fitness und Formkurve von Anfang an stimmen. Die Fahrten erscheinen im Logbuch als „importiert“, ohne Bewertung und ohne Einfluss auf den Plan.', 'So that fitness and the fitness curve are right from the start. The rides appear in the logbook as “imported”, without evaluation and without effect on the plan.')}</p>${body}${typeof vo2rWaitNote === 'function' ? vo2rWaitNote() : ''}${mm}${vInfo}${impFtpUi()}${impInfoUi()}</div>`;
 }
 function impFtpUi(){
   const B = impBefore(); if (!B || (S.imp && S.imp.ftpSkip)) return ''; const sug = impFtpSug(B.oldest, B.first);
@@ -14749,6 +14754,42 @@ const CO_TXT = {
     check:{k:[['Heute misst du nur, was schon da ist. Kein Grund für Nervosität.', "Today you only measure what's already there. No need for nerves."]], a:[['Heute siehst du, was die letzten Wochen gebracht haben. Gleichmäßig einteilen.', 'Today you see what the last few weeks brought. Pace it evenly.']], s:[['Gleichmäßig einteilen gibt beim Fitness-Check das genaueste Ergebnis.', 'Even pacing gives the most accurate fitness check result.']]},
     event:{k:[['Heute ist der Tag, für den du trainiert hast. Genieß ihn.', 'Today is the day you trained for. Enjoy it.']], a:[['Das Training ist gemacht. Heute holst du es ab.', 'The training is done. Today you collect.']], s:[['Ruhig beginnen, früh verpflegen, den Rest erledigt das Training.', 'Start calmly, fuel early, the training does the rest.']]}}
 };
+/* §6.9 Radsport-Sprüche mit Anrede (Ton K und A). Drittes Feld: A = Anrede fest im Satz (ohne erlaubte Anrede überspringen),
+   fix = festes Anrede-Wort im Satz, r9/r3 = nur bei dieser Regel. „, {anr}“ fällt ohne erlaubte Anrede einfach weg (AN-5). */
+const CO_ANR = {de:['Rakete', 'Maschine', 'Granate'], en:['rocket', 'machine', 'legend']}; /* Wort entfernen: an derselben Stelle in de und en streichen */
+const CO_SP2 = {
+  rt:{k:[['Rad an den Haken, Füße hoch. Auch eine {Anr} braucht Boxenstopp.', 'Bike on the hook, feet up. Even a {anr} needs a pit stop.', {A:1}], ['Heute werden Körner gesammelt, nicht verbrannt.', 'Today you save matches. No burning allowed.'], ['Die einzige Kurbel, die sich heute dreht, gehört zur Kaffeemühle.', 'The only crank turning today is on the coffee grinder.']],
+    a:[['Ruhetag, {anr}. Kein Bolzen, kein „nur mal kurz“ aufs Rad.', 'Rest day, {anr}. No hammering, no "just a quick spin".'], ['Heute wird die Maschine gewartet, nicht gefahren.', 'Today the machine gets serviced, not ridden.', {fix:'Maschine'}], ['Die Körner von heute brauchst du am nächsten harten Tag.', "Today's matches are for the next hard day."]]},
+  locker:{k:[['Locker rollen, Kaffee im Blick. Watt sind heute Nebensache.', "Spin the legs, eyes on the coffee stop. Watts don't matter today."], ['Lockere Grundlage ist wie Zinsen: unspektakulär, aber sie kommt, {anr}.', 'Base miles are like interest: boring, but they add up, {anr}.'], ['Kette links ist heute kein Makel, sondern Plan.', "Small ring today isn't a flaw. It's the plan."]],
+    a:[['Auch eine {Anr} fährt mal im Schongang. Heute ist so ein Tag.', "Even a {anr} has an easy gear. Today's the day.", {A:1}], ['Wer heute ballert, hat am harten Tag nichts mehr übrig.', "Hammer today, and there's nothing left for the hard day."], ['Plaudertempo, {anr}. Kannst du nicht mehr reden, bist du zu schnell.', "Chatting pace, {anr}. If you can't talk, you're too fast."]]},
+  hart:{k:[['Heute darf die Kette rechts liegen, aber nur in den Intervallen.', 'Big ring today, but only in the intervals.'], ['Die Körner für heute sind eingeplant. Für die Intervalle, nicht fürs Einrollen.', "Today's matches are budgeted. For the intervals, not the warm-up."], ['Intervalltag, {anr}. Der Wattmesser ist schon ganz nervös.', 'Interval day, {anr}. The power meter is already nervous.']],
+    a:[['Zeit, Watt zu drücken, {anr}. Genau so viele, wie im Plan stehen.', 'Time to put the power down, {anr}. Exactly what the plan says.'], ['Heute wird gebolzt, aber nach Plan. Die Pausen gehören dazu.', 'Today we go hard, by the book. The rests are part of it.'], ['Die Maschine ist warm. Jetzt zeigt sie, was im Plan steht.', "The machine is warmed up. Now it shows what's in the plan.", {fix:'Maschine'}]]},
+  wetter:{k:[['Rolle statt Regenjacke. Kein Spritzwasser, kein Gegenwind, {anr}.', 'Trainer over rain jacket. No spray, no headwind, {anr}.', {r9:1}], ['Das Rad bleibt sauber, du bleibst trocken. Klingt nach einem guten Deal.', 'The bike stays clean, you stay dry. Sounds like a deal.', {r9:1}], ['Das Wetter hat heute Vorfahrt. Dein Training kommt danach.', 'The weather has right of way today. Your session comes after.', {r3:1}]],
+    a:[['Wetter egal, {anr}. Die Rolle hat heute geöffnet.', "Weather doesn't matter, {anr}. The trainer is open.", {r9:1}], ['Auch eine Maschine läuft drinnen. Heute ist Hallenbetrieb.', "Machines run indoors too. Today it's indoor season.", {r9:1, fix:'Maschine'}], ['Heldentum bei Gewitter gibt es nicht. Nur verlegte Einheiten.', 'There are no heroics in a thunderstorm. Just rescheduled sessions.', {r3:1}]]},
+  check:{k:[['Heute wird gemessen, nicht gewertet. Gleichmäßig losrollen, {anr}.', 'Today is for measuring, not judging. Roll out steady, {anr}.'], ['Ruhig anfangen. Die Körner gehören ans Ende, nicht in die erste Minute.', 'Start calm. Save your matches for the end, not the first minute.']],
+    a:[['Check-Tag, {anr}. Gleichmäßig treten, die letzte Minute gehört dir.', 'Test day, {anr}. Steady power, the last minute is yours.'], ['Nicht losballern. Wer zu schnell startet, misst nur seinen Start.', "Don't go out too hot. Start too fast and you only measure the start."]]},
+  event:{k:[['Kette rechts, {anr}. Heute ist dein Tag.', 'Have a good one, {anr}. Today is your day.'], ['Vorne im Wind ist schön, im Windschatten ankommen auch.', 'The front is fun. Sitting on a wheel gets you there too.'], ['Am Anfang Körner sparen, hinten raus genießen.', 'Save your matches early, enjoy the second half.']],
+    a:[['Die Maschine ist bereit. Ruhig starten, hinten raus Gas geben.', 'The machine is ready. Start calm, turn it up later.', {fix:'Maschine'}], ['Heute darfst du ballern, {anr}. Aber erst, wenn du warm bist.', "Today you can let rip, {anr}. Once you're warmed up."], ['Das harte Training ist erledigt. Heute fährst du die Ernte ein.', 'The hard training is done. Today is harvest day.']]},
+  erf:{k:[['{erf7} Einheiten. Läuft wie eine frisch gewachste Kette, {anr}.', '{erf7} sessions. Running like a freshly waxed chain, {anr}.']], a:[['{erf7} Einheiten. Die Maschine läuft rund.', '{erf7} sessions. The machine is running smooth.', {fix:'Maschine'}]]},
+  neu:{k:[['Willkommen an Bord. Jede Fahrt zählt, die lockeren auch.', 'Welcome aboard. Every ride counts, the easy ones too.']], a:[['Startschuss gefallen, {anr}. Jetzt erst mal Grundlage sammeln.', "You're off, {anr}. First up: build the base."]]},
+  vor:{k:[['Ein Gang runter ist auch ein Gang. Du entscheidest.', 'Shifting down is still shifting. Your call.']], a:[['Klug fahren schlägt stur fahren. Du hast die Wahl.', 'Smart beats stubborn. Your call.']]},
+  verp:{k:[['Gestern blieb die Kette sauber. Heute rollt es wieder.', 'Yesterday the chain stayed clean. Today it rolls again.']], a:[['Abgehakt. Heute zählt die Einheit, die im Plan steht.', "Done and dusted. Today it's the session in the plan."]]}};
+Object.entries(CO_SP2).forEach(([l, T0]) => Object.entries(T0).forEach(([k, v]) => { CO_TXT.sp[l][k].push(...v); }));
+/* AN-1 bis AN-4: Anrede nur K/A, nur ohne Regel bzw. R5a, R9, R10a, nicht nach Krankheit, Schmerzen oder Müdigkeit in den letzten 3 Tagen,
+   höchstens jeder zweite Spruch, nie zwei Tage in Folge, dasselbe Wort höchstens einmal in 7 Tagen. Liefert das Wort oder null. */
+function coAnr(pk, r, hist){
+  try {
+    if (!pk || !r || r.calm || !['kumpel', 'antreiber'].includes(pk.ton) || !['OK', 'RT', 'TP', 'EV', 'R5a', 'R9', 'R10a'].includes(r.id)) return null;
+    for (let k = 0; k <= 3; k++) if (['sick', 'neck', 'inj', 'tired', 'heavy'].includes(coFeelAt(iso(-k)))) return null;
+    if (pk.befinden && pk.befinden !== 'inj' && ['tired', 'heavy', 'sick', 'neck'].includes(pk.befinden)) return null;
+    const mk = h => (String(h).match(/\bA:([^\s|]+)/) || [])[1], y = CO_WD[(pk._i.t + 6) % 7] + ' |';
+    if (hist.length && mk(hist[hist.length - 1])) return null; if (hist.some(h => String(h).startsWith(y) && mk(h))) return null;
+    const used = hist.map(mk).filter(Boolean), n = CO_ANR.de.length; if (!n) return null;
+    for (let j = 0; j < n; j++) { const i = (coDay(iso(0)) + j) % n; if (!used.includes(CO_ANR.de[i])) return {de:CO_ANR.de[i], en:CO_ANR.en[i], free:CO_ANR.de.filter(w => !used.includes(w))}; }
+    return null;
+  } catch (e) { elog(e); return null; }
+}
+const coAnrIn = s => { const t = String(s || '').toLowerCase(); const i = CO_ANR.de.findIndex((w, k) => t.includes(w.toLowerCase()) || t.includes(CO_ANR.en[k].toLowerCase())); return i < 0 ? null : CO_ANR.de[i]; };
 /* §5 Verbotene Wörter (Prüfung ohne Groß-/Kleinschreibung, Stämme am Wortanfang; '=' = nur als ganzes Wort; Fehlalarm-Liste in coBanHits).
    g: Gesundheit (in festen R0-Texten erlaubt), d: Druck (nur bei R3–R10 und im ruhigen Modus verboten), s: zusätzlich nur im Spruch */
 const CO_BAN = {
@@ -14813,7 +14854,7 @@ function coReport(pk, r, o){
     const rep = {insight:nameIn(ins.filter(Boolean).join(' ')), einheit:nameIn(ein.filter(Boolean).join(' ')), spruch:calm ? '' : spr || '', teaser:''};
     if (!calm && pk.naechste) rep.teaser = coFill(g(T.teaser), {next:qq(tn(coTr(pk.naechste.titel, Lc))), nextDauer:pk.naechste.dauerMin});
     if (evT === 1 && rep.insight) rep.insight = L ? rep.insight.replace(/\b1 days\b/, '1 day') : rep.insight.replace(/\b1 Tage\b/, '1 Tag');
-    rep.calm = !!calm; rep.rule = r.id; rep.used = ctx.used; rep.words = coWords(rep.insight) + coWords(rep.einheit) + coWords(rep.spruch);
+    rep.calm = !!calm; rep.rule = r.id; rep.anr = calm ? null : coAnrIn(rep.spruch); rep.used = ctx.used; rep.words = coWords(rep.insight) + coWords(rep.einheit) + coWords(rep.spruch);
     return rep;
   };
   /* ---- Ruhiger Modus (R0–R2), für alle Töne gleich ---- */
@@ -14826,7 +14867,7 @@ function coReport(pk, r, o){
   }
   /* ---- Insight: (1) Trend bzw. Neuling/Lücke/Stunden, (2) Form (+ Morgen am Ruhetag), (3) Ausblick ---- */
   const rest = !e, stg = f && f.frische != null ? coFS(f.frische) : null, lim84 = dt < 84, quiet = I.taper || I.rec;
-  let s1 = '', s2 = '', s2b = '', s3 = '';
+  let s1 = '', s2 = '', s2a = '', s2b = '', s3 = '';
   if (I.lucke) s1 = g(T.luecke);
   else if (dt < 7) s1 = g(T.neu);
   else if (dt >= 126 && f && f.fitnessVor28Tagen != null) {
@@ -14839,7 +14880,7 @@ function coReport(pk, r, o){
     if (dt < 28 || stg == null) s2 = g(T.fog);
     else if (r.id === 'R6') s2 = '';
     else if (stg <= 2 && lim84) s2 = g(T.fs5);
-    else { const arr = stg === 1 && tk === 'a' ? T.fs[1].s : gt(T.fs[stg], tk); s2 = g(vv('fs', arr)); if (stg === 5 && tk === 's' && !quiet) s2 += ' ' + g(T.fs5s); if (dt <= 41) s2 += ' ' + g(T.fs2); }
+    else { const arr = stg === 1 && tk === 'a' ? T.fs[1].s : gt(T.fs[stg], tk); s2 = g(vv('fs', arr)); if (stg === 5 && tk === 's' && !quiet) s2 += ' ' + g(T.fs5s); if (dt <= 41) s2a = g(T.fs2); }
     if (rest && dt >= 28 && stg != null && f.frischeMorgen != null && !(stg <= 2 && lim84)) { const sm = coFS(f.frischeMorgen); const M = sm > stg ? T.mo.up : sm === stg ? T.mo.eq : null; if (M) s2b = coFill(g(M[tk]), {mstufe:T.mst[sm] ? g(T.mst[sm]) : null}); }
   }
   if (V.evTage != null) { s3 = coFill(g(gt(T.ev, tk)), V); if (dt >= 42 && evT <= 14 && pk.plan.formAmEvent != null) { const se = coFS(pk.plan.formAmEvent); if (se >= 4) s3 += ' ' + g(T.evf.hi); else if (se === 3) s3 += ' ' + g(T.evf.mid); } }
@@ -14848,9 +14889,9 @@ function coReport(pk, r, o){
   let parts;
   if (rest) {
     if (dt < 28) parts = [[0, g(T.rt0)], [1, s1], [3, s3]];
-    else if (tk === 'k') parts = [[0, g(T.rtIn.k)], [1, s1], [2, s2], [2, s2b], [3, s3]];
-    else parts = [[1, s1], [2, s2], [0, g(T.rtIn[tk])], [2, s2b], [3, s3]];
-  } else parts = [[1, s1], [2, s2], [3, s3]];
+    else if (tk === 'k') parts = [[0, g(T.rtIn.k)], [1, s1], [2, s2], [5, s2a], [2, s2b], [3, s3]];
+    else parts = [[1, s1], [2, s2], [5, s2a], [0, g(T.rtIn[tk])], [2, s2b], [3, s3]];
+  } else parts = [[1, s1], [2, s2], [5, s2a], [3, s3]];
   parts = parts.filter(q => q[1]);
   const insOf = P => coNameFirst(P.map(q => q[1]), name, Lc);
   let ins = insOf(parts);
@@ -14903,7 +14944,13 @@ function coReport(pk, r, o){
      sind alle benutzt, die am längsten zurückliegende der Lage. Bei aktivem Auslöser R3–R10 kein Druck-Wort (§5, T2). */
   const hist = (c.hist || []).filter(h => !String(h).startsWith(pk.wochentag + ' |')), lastUse = s => { let k = -1; hist.forEach((h, i) => { if (String(h).includes(s.slice(0, 30))) k = i; }); return k; };
   const press = /^R(3|4|6|7|8|9|10)/.test(r.id), vals = {erf7:pk.erfuellung.letzte7Tage, datentage:dt >= 1 ? dt : null};
-  const vars = L0 => ((T.sp[L0] || {})[tk] || []).map(v => coFill(g(v), vals)).filter(s => s && (!press || !coBanHits(s, Lc, {press:true}).length));
+  const anr = coAnr(pk, r, hist);
+  const one = (L1, v) => { const o = v[2] || {}; if ((o.r9 && r.id !== 'R9') || (o.r3 && r.id !== 'R3')) return ''; let s = g(v);
+    if (/\{[Aa]nr\}/.test(s) || o.fix) { const ok = anr && L1 !== 'vor' && L1 !== 'verp' && (!o.fix || anr.free.includes(o.fix) && CO_ANR.de.includes(o.fix));
+      if (!ok) { if (o.A || o.fix) return ''; s = s.replace(/,\s*\{[Aa]nr\}/g, ''); if (/\{[Aa]nr\}/.test(s)) return ''; }
+      else if (!o.fix) s = s.replace(/\{[Aa]nr\}/g, anr[Lc]); }
+    return coFill(s, vals); };
+  const vars = L0 => ((T.sp[L0] || {})[tk] || []).map(v => one(L0, v)).filter(s => s && (!press || !coBanHits(s, Lc, {press:true}).length));
   const SP2 = {vor:['wetter'], wetter:['vor'], verp:['vor'], erf:[kind], neu:[kind === 'hart' || kind === 'locker' ? kind : '']};
   const L0 = cands[0]; let spr = '';
   if (L0) { spr = vars(L0).find(s => lastUse(s) < 0) || '';
@@ -14911,10 +14958,11 @@ function coReport(pk, r, o){
     if (!spr) spr = vars(L0).sort((x, y) => lastUse(x) - lastUse(y))[0] || ''; }
   /* ---- Länge: über 80 Wörter fällt zuerst (2), dann (1) weg; der Ausblick bleibt ---- */
   let rep = fin(ins, ein, spr, false);
+  /* der Anhang „erste Einschätzung“ (5) hängt am Formsatz und fällt nur mit ihm weg */
+  for (const drop of [2, 1]) { if (rep.words <= 80) break; if (!parts.some(q => q[0] === drop)) continue; parts = parts.filter(q => q[0] !== drop && !(drop === 2 && q[0] === 5)); rep = fin(insOf(parts), ein, spr, false); }
   /* Unter 60 Wörtern: Kraft/Mobilität und die Einheit von morgen ergänzen (nur Platzhalter aus dem Paket) */
   if (rep.words < 60 && e && r.id !== 'VL4') { const more = []; if (pk.kraft) more.push(coFill(g(T.rtKraft), {kraft:g(T.kraftW[pk.kraft])})); if (pk.naechste) more.push(coFill(g(T.rt[tk][1]), {next:qq(tn(coTr(pk.naechste.titel, Lc))), nextDauer:pk.naechste.dauerMin}));
-    for (const m of more) { if (rep.words >= 60 || !m) break; const i = ein.length - (r.id === 'R5a' ? 1 : 0); ein.splice(i, 0, m); rep = fin(ins, ein, spr, false); } }
-  for (const drop of [2, 1]) { if (rep.words <= 80) break; if (!parts.some(q => q[0] === drop)) continue; parts = parts.filter(q => q[0] !== drop); rep = fin(insOf(parts), ein, spr, false); }
+    for (const m of more) { if (rep.words >= 60 || !m) break; const i = ein.length - (r.id === 'R5a' ? 1 : 0), E2 = ein.slice(); E2.splice(i, 0, m); const r2 = fin(insOf(parts), E2, spr, false); if (r2.words <= 80) { ein = E2; rep = r2; } } }
   return rep;
 }
 /* ---------- F39 (18b): Persönlicher Coach, Teil 4: Karte auf Heute und Einstellungen ----------
@@ -14928,7 +14976,7 @@ const CO_IC = '<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/>';
 /* Verlauf und Variantenstand für heute festhalten (nur bei Änderung speichern) */
 function coCommit(pk, r, rep){
   const c = S.coach; if (!c) return; const today = iso(0), before = JSON.stringify([c.hist, c.lv, c.r01]);
-  const kurz = `${pk.wochentag} | ${r.id}${pk.form && pk.form.frische != null ? ' F' + coFS(pk.form.frische) : ''} | Spruch: ${rep.spruch || '–'}`.slice(0, 120);
+  const kurz = `${pk.wochentag} | ${r.id}${pk.form && pk.form.frische != null ? ' F' + coFS(pk.form.frische) : ''}${rep.anr ? ' A:' + rep.anr : ''} | Spruch: ${rep.spruch || '–'}`.slice(0, 120);
   const H = (Array.isArray(c.hist) ? c.hist : []).filter(h => !String(h).startsWith(pk.wochentag + ' |')); c.hist = [...H, kurz].slice(-7);
   c.lv = {...(c.lv || {}), ...rep.used};
   if (/^R0|^R1/.test(r.id)) c.r01 = today;
