@@ -7617,5 +7617,7 @@
 "· {0} · {1} Plan mit Einstellungen und Fahrten": "· {0} · {1} plan with settings and rides",
 "Du entscheidest, ob die App anonym zählen darf. Unter Einstellungen → Datenschutz änderst du das jederzeit.": "You decide whether the app may count anonymously. You can change this at any time under Settings \u2192 Privacy.",
 "Gezählt werden nur diese Namen, ohne Cookies und ohne Trainingsdaten, Zahlen oder Namen.": "Only these names are counted, without cookies and without training data, figures or names.",
-"Zeitraum: Verlängere ihn um etwa {0} Woche(n) unter Mehr bei deinen Plänen mit {1}, damit die Grundlage reicht.": "Time frame: extend it by about {0} week(s) under More, with your plans, using {1}, so the base is sufficient."
+"Zeitraum: Verlängere ihn um etwa {0} Woche(n) unter Mehr bei deinen Plänen mit {1}, damit die Grundlage reicht.": "Time frame: extend it by about {0} week(s) under More, with your plans, using {1}, so the base is sufficient.",
+"Unter Fortschritt → VO{0}max schätzt die App deine VO{1}max jetzt auch aus gleichmäßigen Fahrten mit Wattmesser und Puls, als Trend mit Spanne über mehrere Wochen. Ältere Garmin-Fahrten der letzten {2} Monate rechnet sie auf Wunsch nach.": "Under Progress → VO{0}max the app now also estimates your VO{1}max from steady rides with power meter and heart rate, as a trend with a range over several weeks. On request it recalculates older Garmin rides of the last {2} months.",
+"Trend ansehen": "View trend"
 }

@@ -391,3 +391,14 @@ test('F38: Verlauf – Ausreißer bestimmen den Ausschnitt nicht; Veränderung e
   a.noErrors(); b.noErrors();
 });
 
+test('F38: Hinweis „Wusstest du schon?“ führt direkt zum Bereich „Trend aus Fahrten“, Englisch', async () => {
+  const a = await boot(); makePlan(a, v2rDat()); v2rMo(a);
+  const dy = a.$(`DYK.find(t => t[0] === 'v2r')`); ok(dy && dy[3] === "dykSet('svo2','v2r')", 'Eintrag mit Anker'); eq(a.$(`DYK.find(t => t[0] === 'v2r')[4]()`), false, 'ohne Daten und ohne Garmin kein Hinweis');
+  v2rUp(a, v2rRide([[2700, 200, 140, 140]], a.$('iso(-2)'))); ok(a.$(`DYK.find(t => t[0] === 'v2r')[4]()`), 'mit Fahrt sichtbar');
+  a.$(`dykGo(DYK.find(t => t[0] === 'v2r')[3])`); await a.tick(200); eq(a.$('pg'), 'svo2'); ok(a.w.document.getElementById('fx-v2r'), 'Bereich da'); eq(a.$('pgFrom'), 'state', 'Zurück führt zu Fortschritt');
+  ok(a.$(`document.getElementById('fx-v2r').classList.contains('dyk-hit')`), 'Bereich hervorgehoben');
+  a.w.__iMiss = new Map(); await a.en(); a.$(`dykPut({cur:'v2r', day:iso(0), seen:[]})`); a.w.navGo('home'); await a.tick(40); const t = a.text();
+  if (/Wusstest du schon|Did you know/.test(t)) ok(/now also estimates your VO2max from steady rides/.test(t) && /View trend/.test(t), 'Hinweis auf Englisch');
+  eq([...a.w.__iMiss.keys()].filter(k => /gleichmäßigen Fahrten|Trend ansehen/.test(k)), [], 'keine fehlenden Übersetzungen');
+  a.noErrors();
+});

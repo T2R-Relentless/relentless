@@ -68,6 +68,8 @@ const DYK = [
   ['inst', 'Leg die App auf deinen Home-Bildschirm. Dann startet sie wie eine echte App, ohne Browserleiste und auch offline.', 'So geht’s', "dykInst()", () => dykWeb() && !dykAlone() && typeof instOs === 'function' && !!instOs()],
   /* F37: neues Mehr-Menü */
   ['f37', 'Plan-Check und Gesamtplan findest du jetzt unter Fortschritt im Abschnitt „Plan“. Auf Heute führen zwei Knöpfe unter deinem Ziel direkt hin. Unter Mehr stehen die wichtigsten Punkte fest, alles Weitere unter „Extras“.', 'Zu Fortschritt', "dykSt()", () => !!S.p],
+  /* F38: VO2max-Trend aus Fahrten */
+  ['v2r', 'Unter Fortschritt → VO2max schätzt die App deine VO2max jetzt auch aus gleichmäßigen Fahrten mit Wattmesser und Puls, als Trend mit Spanne über mehrere Wochen. Ältere Garmin-Fahrten der letzten 6 Monate rechnet sie auf Wunsch nach.', 'Trend ansehen', "dykSet('svo2','v2r')", () => { try { return vo2rAny() || vo2rTodo().length > 0; } catch (e) { return false; } }],
   /* F36 (Version 223) */
   ['priv', 'Du entscheidest, ob die App anonym zählen darf. Unter Einstellungen → Datenschutz änderst du das jederzeit' + (RL_LEGAL_ON ? ', dort findest du auch Impressum und Datenschutzerklärung.' : '.'), 'Datenschutz öffnen', "dykSet('settings','priv')", () => true],
   ['gmdel', 'Garmin nicht mehr nutzen? Unter Einstellungen → Garmin Connect trennst du die Verbindung und löschst den Schlüssel von diesem Gerät.', 'Zu Garmin Connect', "dykSet('settings','gm')", () => { try { return gmHasData(); } catch (e) { return false; } }],
@@ -77,7 +79,9 @@ const DYK = [
 /* Ziel eines Hinweises: [Unterseite, Abschnitt, Eingabefeld]. Der Knopf landet direkt am Feld, nicht nur oben auf der Seite. */
 const DYK_AT = {priv:['set-priv', 'fx-priv', '#trChips button'], gm:['set-gm', null, '#gmWipeB'], wx:['set-wx', 'fx-wx', '#wxQ'], hr:['set-hr', 'fx-hr', '#hrMaxI'], wf:['set-wf', null, '#wfKg'], shift:['set-ali', 'fx-shift'], ali:['set-ali', 'fx-ali'],
   tb:['set-ali', 'fx-tb', '#fx-tb input'], vac:['set-ali', 'fx-vac', '#fx-vac input[type=date]'], age:['set-age', 'fx-age', '#bdD'], sq:['set-sq', null], sqh:['set-sq', null, ['#sqT-hints', '#sqT-voice']], sqk:['set-sq', null, ['#sqT-takt']], theme:['set-lang', 'fx-theme'], lang:['set-lang', 'fx-lang']};
-function dykSet(p, k){ const at = p === 'settings' && DYK_AT[k]; if (at) { goPg('settings'); goPg(at[0]); dykFocus(at[1], at[2]); return; } goPg(p); dykFocus('fx-' + k); }
+/* Unterseiten, die über ihre Hauptseite geöffnet werden (dann führt „Zurück“ dorthin) */
+const DYK_UP = {svo2:'state'};
+function dykSet(p, k){ const at = p === 'settings' && DYK_AT[k]; if (at) { goPg('settings'); goPg(at[0]); dykFocus(at[1], at[2]); return; } if (DYK_UP[p]) goPg(DYK_UP[p]); goPg(p); dykFocus('fx-' + k); }
 /* Zum Abschnitt scrollen, Feld fokussieren und den Abschnitt kurz hervorheben */
 function dykFocus(id, sel){ setTimeout(() => { try { const el = id ? document.getElementById(id) : null, f = sel ? [].concat(sel).map(q => document.querySelector(q)).find(Boolean) || null : null, tg = el || (f && f.closest('section')) || f;
   if (tg) tg.scrollIntoView({block:'start'}); if (f) try { f.focus({preventScroll:true}); } catch (e) { elog(e); }
