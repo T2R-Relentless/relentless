@@ -48,5 +48,5 @@ test('Plan-Check und Gesamtplan unter Fortschritt und auf Heute', async () => {
   ok(a.$(`[...document.querySelectorAll('.hm-pl button')].every(b => b.getBoundingClientRect().height >= 44)`), 'Tippflächen 44 pt');
   a.w.navGo('more'); ok(!/Plan-Check|Gesamtplan/.test(a.text()), 'nicht mehr unter Mehr');
   a.w.dykSt(); await a.tick(120); eq(a.$('pg'), 'state', 'Hinweis führt zu Fortschritt'); ok(a.$(`!!document.getElementById('fx-stplan')`), 'Anker vorhanden');
-  ok(a.$(`DYK.some(t => t[0] === 'f37' && t[3] === 'dykSt()')`) && a.$(`!!WN_DATA[String(APP_VERSION)]`), 'Hinweis und Neuigkeiten'); a.noErrors();
+  ok(a.$(`DYK.some(t => t[0] === 'f37' && t[3] === 'dykSt()')`) && a.$(`!!WN_DATA['225']`), 'Hinweis und Neuigkeiten'); a.noErrors();
 });

@@ -75,7 +75,7 @@ const DYK = [
   ['gmdel', 'Garmin nicht mehr nutzen? Unter Einstellungen → Garmin Connect trennst du die Verbindung und löschst den Schlüssel von diesem Gerät.', 'Zu Garmin Connect', "dykSet('settings','gm')", () => { try { return gmHasData(); } catch (e) { return false; } }],
   ['team', 'Neuigkeiten, Ausfahrten und Termine des Teams findest du auf teamrelentlessriders.de, verlinkt unter Mehr → Team.', 'Zur Homepage', "dykTeam()", () => true],
   /* F39: persönlicher Coach ohne Server */
-  ['coach', 'Dein persönlicher Coach schreibt dir jeden Tag auf Heute drei kurze Absätze: was sich bei dir tut, was heute ansteht und einen Spruch. Spricht etwas gegen die Einheit, schlägt er eine Änderung vor, die du mit einem Tipp annimmst. Einschalten unter Einstellungen → Persönlicher Coach.', 'Coach einschalten', "dykSet('settings','coach')", () => !!S.p && !(S.coach && S.coach.on)],
+  ['coach', 'Dein persönlicher Coach schreibt dir jeden Tag auf Heute, was sich bei dir tut und was heute ansteht. Spricht etwas gegen die Einheit, schlägt er eine Änderung vor, die du mit einem Tipp annimmst. Einschalten unter Einstellungen → Persönlicher Coach.', 'Coach einschalten', "dykSet('settings','coach')", () => !!S.p && !(S.coach && S.coach.on)],
   ['bkcloud', 'Deine Pläne auch auf Tablet oder neuem Handy: Speichere die Sicherung in deiner eigenen Cloud, etwa iCloud Drive, Google Drive oder OneDrive, und lade sie auf dem anderen Gerät. Die App schickt dabei nichts an einen Server.', 'So geht’s', "bkCloudGo()", () => !!S.p],
 ];
 /* Ziel eines Hinweises: [Unterseite, Abschnitt, Eingabefeld]. Der Knopf landet direkt am Feld, nicht nur oben auf der Seite. */
